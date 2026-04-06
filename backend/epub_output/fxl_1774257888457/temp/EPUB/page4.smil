@@ -1,0 +1,888 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1774257888457-page-4"/>
+    <meta name="dtb:totalElapsedTime" content="86.600"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page4.xhtml#p4_z1_w0"/>
+      <audio src="audio/page4.mp3" clipBegin="0.000s" clipEnd="0.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z2_w1"/>
+      <audio src="audio/page4.mp3" clipBegin="0.400s" clipEnd="0.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z3_w2"/>
+      <audio src="audio/page4.mp3" clipBegin="0.800s" clipEnd="1.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z4_w3"/>
+      <audio src="audio/page4.mp3" clipBegin="1.200s" clipEnd="1.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z5_w4"/>
+      <audio src="audio/page4.mp3" clipBegin="1.600s" clipEnd="2.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z6_w5"/>
+      <audio src="audio/page4.mp3" clipBegin="2.000s" clipEnd="2.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z7_w6"/>
+      <audio src="audio/page4.mp3" clipBegin="2.400s" clipEnd="2.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z8_w7"/>
+      <audio src="audio/page4.mp3" clipBegin="2.800s" clipEnd="3.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z9_w8"/>
+      <audio src="audio/page4.mp3" clipBegin="3.200s" clipEnd="3.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z10_w9"/>
+      <audio src="audio/page4.mp3" clipBegin="3.600s" clipEnd="4.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z11_w10"/>
+      <audio src="audio/page4.mp3" clipBegin="4.000s" clipEnd="4.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z12_w11"/>
+      <audio src="audio/page4.mp3" clipBegin="4.400s" clipEnd="4.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z13_w12"/>
+      <audio src="audio/page4.mp3" clipBegin="4.800s" clipEnd="5.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z14_w13"/>
+      <audio src="audio/page4.mp3" clipBegin="5.200s" clipEnd="5.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z15_w14"/>
+      <audio src="audio/page4.mp3" clipBegin="5.600s" clipEnd="6.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z16_w15"/>
+      <audio src="audio/page4.mp3" clipBegin="6.000s" clipEnd="6.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z17_w16"/>
+      <audio src="audio/page4.mp3" clipBegin="6.400s" clipEnd="6.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z18_w17"/>
+      <audio src="audio/page4.mp3" clipBegin="6.800s" clipEnd="7.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z19_w18"/>
+      <audio src="audio/page4.mp3" clipBegin="7.200s" clipEnd="7.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z20_w19"/>
+      <audio src="audio/page4.mp3" clipBegin="7.600s" clipEnd="8.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z21_w20"/>
+      <audio src="audio/page4.mp3" clipBegin="8.000s" clipEnd="8.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z22_w21"/>
+      <audio src="audio/page4.mp3" clipBegin="8.400s" clipEnd="8.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z23_w22"/>
+      <audio src="audio/page4.mp3" clipBegin="8.800s" clipEnd="9.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z24_w23"/>
+      <audio src="audio/page4.mp3" clipBegin="9.200s" clipEnd="9.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z25_w24"/>
+      <audio src="audio/page4.mp3" clipBegin="9.600s" clipEnd="10.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z26_w25"/>
+      <audio src="audio/page4.mp3" clipBegin="10.000s" clipEnd="10.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z27_w26"/>
+      <audio src="audio/page4.mp3" clipBegin="10.400s" clipEnd="10.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z28_w27"/>
+      <audio src="audio/page4.mp3" clipBegin="10.800s" clipEnd="11.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z29_w28"/>
+      <audio src="audio/page4.mp3" clipBegin="11.200s" clipEnd="11.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z30_w29"/>
+      <audio src="audio/page4.mp3" clipBegin="11.600s" clipEnd="12.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z31_w30"/>
+      <audio src="audio/page4.mp3" clipBegin="12.000s" clipEnd="12.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z32_w31"/>
+      <audio src="audio/page4.mp3" clipBegin="12.400s" clipEnd="12.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z33_w32"/>
+      <audio src="audio/page4.mp3" clipBegin="12.800s" clipEnd="13.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z34_w33"/>
+      <audio src="audio/page4.mp3" clipBegin="13.200s" clipEnd="13.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z35_w34"/>
+      <audio src="audio/page4.mp3" clipBegin="13.600s" clipEnd="14.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z36_w35"/>
+      <audio src="audio/page4.mp3" clipBegin="14.000s" clipEnd="14.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z37_w36"/>
+      <audio src="audio/page4.mp3" clipBegin="14.400s" clipEnd="14.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z38_w37"/>
+      <audio src="audio/page4.mp3" clipBegin="14.800s" clipEnd="15.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z39_w38"/>
+      <audio src="audio/page4.mp3" clipBegin="15.200s" clipEnd="15.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z40_w39"/>
+      <audio src="audio/page4.mp3" clipBegin="15.600s" clipEnd="16.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z41_w40"/>
+      <audio src="audio/page4.mp3" clipBegin="16.000s" clipEnd="16.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z42_w41"/>
+      <audio src="audio/page4.mp3" clipBegin="16.400s" clipEnd="16.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z43_w42"/>
+      <audio src="audio/page4.mp3" clipBegin="16.800s" clipEnd="17.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z44_w43"/>
+      <audio src="audio/page4.mp3" clipBegin="17.200s" clipEnd="17.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z45_w44"/>
+      <audio src="audio/page4.mp3" clipBegin="17.600s" clipEnd="18.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z46_w45"/>
+      <audio src="audio/page4.mp3" clipBegin="18.000s" clipEnd="18.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z47_w46"/>
+      <audio src="audio/page4.mp3" clipBegin="18.400s" clipEnd="18.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z48_w47"/>
+      <audio src="audio/page4.mp3" clipBegin="18.800s" clipEnd="19.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z49_w48"/>
+      <audio src="audio/page4.mp3" clipBegin="19.200s" clipEnd="19.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z50_w49"/>
+      <audio src="audio/page4.mp3" clipBegin="19.600s" clipEnd="20.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z51_w50"/>
+      <audio src="audio/page4.mp3" clipBegin="20.000s" clipEnd="20.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z52_w51"/>
+      <audio src="audio/page4.mp3" clipBegin="20.400s" clipEnd="20.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z53_w52"/>
+      <audio src="audio/page4.mp3" clipBegin="20.800s" clipEnd="21.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z54_w53"/>
+      <audio src="audio/page4.mp3" clipBegin="21.200s" clipEnd="21.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z55_w54"/>
+      <audio src="audio/page4.mp3" clipBegin="21.600s" clipEnd="22.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z56_w55"/>
+      <audio src="audio/page4.mp3" clipBegin="22.000s" clipEnd="22.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z57_w56"/>
+      <audio src="audio/page4.mp3" clipBegin="22.400s" clipEnd="22.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z58_w57"/>
+      <audio src="audio/page4.mp3" clipBegin="22.800s" clipEnd="23.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z59_w58"/>
+      <audio src="audio/page4.mp3" clipBegin="23.200s" clipEnd="23.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z60_w59"/>
+      <audio src="audio/page4.mp3" clipBegin="23.600s" clipEnd="24.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z61_w60"/>
+      <audio src="audio/page4.mp3" clipBegin="24.000s" clipEnd="24.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z62_w61"/>
+      <audio src="audio/page4.mp3" clipBegin="24.400s" clipEnd="24.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z63_w62"/>
+      <audio src="audio/page4.mp3" clipBegin="24.800s" clipEnd="25.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z64_w63"/>
+      <audio src="audio/page4.mp3" clipBegin="25.200s" clipEnd="25.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z65_w64"/>
+      <audio src="audio/page4.mp3" clipBegin="25.600s" clipEnd="26.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z66_w65"/>
+      <audio src="audio/page4.mp3" clipBegin="26.000s" clipEnd="26.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z67_w66"/>
+      <audio src="audio/page4.mp3" clipBegin="26.400s" clipEnd="26.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z68_w67"/>
+      <audio src="audio/page4.mp3" clipBegin="26.800s" clipEnd="27.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z69_w68"/>
+      <audio src="audio/page4.mp3" clipBegin="27.200s" clipEnd="27.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z70_w69"/>
+      <audio src="audio/page4.mp3" clipBegin="27.600s" clipEnd="28.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z71_w70"/>
+      <audio src="audio/page4.mp3" clipBegin="28.000s" clipEnd="28.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z72_w71"/>
+      <audio src="audio/page4.mp3" clipBegin="28.400s" clipEnd="28.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z73_w72"/>
+      <audio src="audio/page4.mp3" clipBegin="28.800s" clipEnd="29.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z74_w73"/>
+      <audio src="audio/page4.mp3" clipBegin="29.200s" clipEnd="29.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z75_w74"/>
+      <audio src="audio/page4.mp3" clipBegin="29.600s" clipEnd="30.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z76_w75"/>
+      <audio src="audio/page4.mp3" clipBegin="30.000s" clipEnd="30.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z77_w76"/>
+      <audio src="audio/page4.mp3" clipBegin="30.400s" clipEnd="30.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z78_w77"/>
+      <audio src="audio/page4.mp3" clipBegin="30.800s" clipEnd="31.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z79_w78"/>
+      <audio src="audio/page4.mp3" clipBegin="31.200s" clipEnd="31.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z80_w79"/>
+      <audio src="audio/page4.mp3" clipBegin="31.600s" clipEnd="32.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z81_w80"/>
+      <audio src="audio/page4.mp3" clipBegin="32.000s" clipEnd="32.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z82_w81"/>
+      <audio src="audio/page4.mp3" clipBegin="32.400s" clipEnd="32.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z83_w82"/>
+      <audio src="audio/page4.mp3" clipBegin="32.800s" clipEnd="33.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z84_w83"/>
+      <audio src="audio/page4.mp3" clipBegin="33.200s" clipEnd="33.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z85_w84"/>
+      <audio src="audio/page4.mp3" clipBegin="33.600s" clipEnd="34.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z86_w85"/>
+      <audio src="audio/page4.mp3" clipBegin="34.000s" clipEnd="34.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z87_w86"/>
+      <audio src="audio/page4.mp3" clipBegin="34.400s" clipEnd="34.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z88_w87"/>
+      <audio src="audio/page4.mp3" clipBegin="34.800s" clipEnd="35.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z89_w88"/>
+      <audio src="audio/page4.mp3" clipBegin="35.200s" clipEnd="35.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z90_w89"/>
+      <audio src="audio/page4.mp3" clipBegin="35.600s" clipEnd="36.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z91_w90"/>
+      <audio src="audio/page4.mp3" clipBegin="36.000s" clipEnd="36.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z92_w91"/>
+      <audio src="audio/page4.mp3" clipBegin="36.400s" clipEnd="36.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z93_w92"/>
+      <audio src="audio/page4.mp3" clipBegin="36.800s" clipEnd="37.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z94_w93"/>
+      <audio src="audio/page4.mp3" clipBegin="37.200s" clipEnd="37.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z95_w94"/>
+      <audio src="audio/page4.mp3" clipBegin="37.600s" clipEnd="38.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z96_w95"/>
+      <audio src="audio/page4.mp3" clipBegin="38.000s" clipEnd="38.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z97_w96"/>
+      <audio src="audio/page4.mp3" clipBegin="38.400s" clipEnd="38.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z98_w97"/>
+      <audio src="audio/page4.mp3" clipBegin="38.800s" clipEnd="39.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z99_w98"/>
+      <audio src="audio/page4.mp3" clipBegin="39.200s" clipEnd="39.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z100_w99"/>
+      <audio src="audio/page4.mp3" clipBegin="39.600s" clipEnd="40.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z101_w100"/>
+      <audio src="audio/page4.mp3" clipBegin="40.000s" clipEnd="40.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z102_w101"/>
+      <audio src="audio/page4.mp3" clipBegin="40.400s" clipEnd="40.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z103_w102"/>
+      <audio src="audio/page4.mp3" clipBegin="40.800s" clipEnd="41.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z104_w103"/>
+      <audio src="audio/page4.mp3" clipBegin="41.200s" clipEnd="41.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z105_w104"/>
+      <audio src="audio/page4.mp3" clipBegin="41.600s" clipEnd="42.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z106_w105"/>
+      <audio src="audio/page4.mp3" clipBegin="42.000s" clipEnd="42.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z107_w106"/>
+      <audio src="audio/page4.mp3" clipBegin="42.400s" clipEnd="42.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z108_w107"/>
+      <audio src="audio/page4.mp3" clipBegin="42.800s" clipEnd="43.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z109_w108"/>
+      <audio src="audio/page4.mp3" clipBegin="43.200s" clipEnd="43.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z110_w109"/>
+      <audio src="audio/page4.mp3" clipBegin="43.600s" clipEnd="44.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z111_w110"/>
+      <audio src="audio/page4.mp3" clipBegin="44.000s" clipEnd="44.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z112_w111"/>
+      <audio src="audio/page4.mp3" clipBegin="44.400s" clipEnd="44.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z113_w112"/>
+      <audio src="audio/page4.mp3" clipBegin="44.800s" clipEnd="45.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z114_w113"/>
+      <audio src="audio/page4.mp3" clipBegin="45.200s" clipEnd="45.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z115_w114"/>
+      <audio src="audio/page4.mp3" clipBegin="45.600s" clipEnd="46.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z116_w115"/>
+      <audio src="audio/page4.mp3" clipBegin="46.000s" clipEnd="46.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z117_w116"/>
+      <audio src="audio/page4.mp3" clipBegin="46.400s" clipEnd="46.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z118_w117"/>
+      <audio src="audio/page4.mp3" clipBegin="46.800s" clipEnd="47.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z119_w118"/>
+      <audio src="audio/page4.mp3" clipBegin="47.200s" clipEnd="47.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z120_w119"/>
+      <audio src="audio/page4.mp3" clipBegin="47.600s" clipEnd="48.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z122_w121"/>
+      <audio src="audio/page4.mp3" clipBegin="48.000s" clipEnd="48.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z123_w122"/>
+      <audio src="audio/page4.mp3" clipBegin="48.400s" clipEnd="48.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z124_w123"/>
+      <audio src="audio/page4.mp3" clipBegin="48.800s" clipEnd="49.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z125_w124"/>
+      <audio src="audio/page4.mp3" clipBegin="49.200s" clipEnd="49.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z126_w125"/>
+      <audio src="audio/page4.mp3" clipBegin="49.600s" clipEnd="50.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z127_w126"/>
+      <audio src="audio/page4.mp3" clipBegin="50.000s" clipEnd="50.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z128_w127"/>
+      <audio src="audio/page4.mp3" clipBegin="50.400s" clipEnd="50.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z129_w128"/>
+      <audio src="audio/page4.mp3" clipBegin="50.800s" clipEnd="51.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z130_w129"/>
+      <audio src="audio/page4.mp3" clipBegin="51.200s" clipEnd="51.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z131_w130"/>
+      <audio src="audio/page4.mp3" clipBegin="51.600s" clipEnd="52.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z132_w131"/>
+      <audio src="audio/page4.mp3" clipBegin="52.000s" clipEnd="52.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z133_w132"/>
+      <audio src="audio/page4.mp3" clipBegin="52.400s" clipEnd="52.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z134_w133"/>
+      <audio src="audio/page4.mp3" clipBegin="52.800s" clipEnd="53.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z135_w134"/>
+      <audio src="audio/page4.mp3" clipBegin="53.200s" clipEnd="53.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z136_w135"/>
+      <audio src="audio/page4.mp3" clipBegin="53.600s" clipEnd="54.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z137_w136"/>
+      <audio src="audio/page4.mp3" clipBegin="54.000s" clipEnd="54.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z138_w137"/>
+      <audio src="audio/page4.mp3" clipBegin="54.400s" clipEnd="54.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z139_w138"/>
+      <audio src="audio/page4.mp3" clipBegin="54.800s" clipEnd="55.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z140_w139"/>
+      <audio src="audio/page4.mp3" clipBegin="55.200s" clipEnd="55.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z141_w140"/>
+      <audio src="audio/page4.mp3" clipBegin="55.600s" clipEnd="56.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z142_w141"/>
+      <audio src="audio/page4.mp3" clipBegin="56.000s" clipEnd="56.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z143_w142"/>
+      <audio src="audio/page4.mp3" clipBegin="56.400s" clipEnd="56.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z144_w143"/>
+      <audio src="audio/page4.mp3" clipBegin="56.800s" clipEnd="57.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z145_w144"/>
+      <audio src="audio/page4.mp3" clipBegin="57.200s" clipEnd="57.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z146_w145"/>
+      <audio src="audio/page4.mp3" clipBegin="57.600s" clipEnd="58.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z147_w146"/>
+      <audio src="audio/page4.mp3" clipBegin="58.000s" clipEnd="58.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z148_w147"/>
+      <audio src="audio/page4.mp3" clipBegin="58.400s" clipEnd="58.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z149_w148"/>
+      <audio src="audio/page4.mp3" clipBegin="58.800s" clipEnd="59.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z150_w149"/>
+      <audio src="audio/page4.mp3" clipBegin="59.200s" clipEnd="59.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z151_w150"/>
+      <audio src="audio/page4.mp3" clipBegin="59.600s" clipEnd="60.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z152_w151"/>
+      <audio src="audio/page4.mp3" clipBegin="60.000s" clipEnd="60.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z153_w152"/>
+      <audio src="audio/page4.mp3" clipBegin="60.400s" clipEnd="60.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z154_w153"/>
+      <audio src="audio/page4.mp3" clipBegin="60.800s" clipEnd="61.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z155_w154"/>
+      <audio src="audio/page4.mp3" clipBegin="61.200s" clipEnd="61.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z156_w155"/>
+      <audio src="audio/page4.mp3" clipBegin="61.600s" clipEnd="62.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z157_w156"/>
+      <audio src="audio/page4.mp3" clipBegin="62.000s" clipEnd="62.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z158_w157"/>
+      <audio src="audio/page4.mp3" clipBegin="62.400s" clipEnd="62.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z159_w158"/>
+      <audio src="audio/page4.mp3" clipBegin="62.800s" clipEnd="63.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z160_w159"/>
+      <audio src="audio/page4.mp3" clipBegin="63.200s" clipEnd="63.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z161_w160"/>
+      <audio src="audio/page4.mp3" clipBegin="63.600s" clipEnd="64.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z162_w161"/>
+      <audio src="audio/page4.mp3" clipBegin="64.000s" clipEnd="64.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z163_w162"/>
+      <audio src="audio/page4.mp3" clipBegin="64.400s" clipEnd="64.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z164_w163"/>
+      <audio src="audio/page4.mp3" clipBegin="64.800s" clipEnd="65.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z165_w164"/>
+      <audio src="audio/page4.mp3" clipBegin="65.200s" clipEnd="65.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z166_w165"/>
+      <audio src="audio/page4.mp3" clipBegin="65.600s" clipEnd="66.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z167_w166"/>
+      <audio src="audio/page4.mp3" clipBegin="66.000s" clipEnd="66.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z168_w167"/>
+      <audio src="audio/page4.mp3" clipBegin="66.400s" clipEnd="66.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z169_w168"/>
+      <audio src="audio/page4.mp3" clipBegin="66.800s" clipEnd="67.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z170_w169"/>
+      <audio src="audio/page4.mp3" clipBegin="67.200s" clipEnd="67.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z171_w170"/>
+      <audio src="audio/page4.mp3" clipBegin="67.600s" clipEnd="68.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z172_w171"/>
+      <audio src="audio/page4.mp3" clipBegin="68.000s" clipEnd="68.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z173_w172"/>
+      <audio src="audio/page4.mp3" clipBegin="68.400s" clipEnd="68.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z174_w173"/>
+      <audio src="audio/page4.mp3" clipBegin="68.800s" clipEnd="69.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z175_w174"/>
+      <audio src="audio/page4.mp3" clipBegin="69.200s" clipEnd="69.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z176_w175"/>
+      <audio src="audio/page4.mp3" clipBegin="69.600s" clipEnd="70.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z177_w176"/>
+      <audio src="audio/page4.mp3" clipBegin="70.000s" clipEnd="70.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z178_w177"/>
+      <audio src="audio/page4.mp3" clipBegin="70.400s" clipEnd="70.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z179_w178"/>
+      <audio src="audio/page4.mp3" clipBegin="70.800s" clipEnd="71.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z180_w179"/>
+      <audio src="audio/page4.mp3" clipBegin="71.200s" clipEnd="71.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z181_w180"/>
+      <audio src="audio/page4.mp3" clipBegin="71.600s" clipEnd="72.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z182_w181"/>
+      <audio src="audio/page4.mp3" clipBegin="72.000s" clipEnd="72.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z183_w182"/>
+      <audio src="audio/page4.mp3" clipBegin="72.400s" clipEnd="72.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z184_w183"/>
+      <audio src="audio/page4.mp3" clipBegin="72.800s" clipEnd="73.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z185_w184"/>
+      <audio src="audio/page4.mp3" clipBegin="73.200s" clipEnd="73.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z186_w185"/>
+      <audio src="audio/page4.mp3" clipBegin="73.600s" clipEnd="74.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z187_w186"/>
+      <audio src="audio/page4.mp3" clipBegin="74.000s" clipEnd="74.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z188_w187"/>
+      <audio src="audio/page4.mp3" clipBegin="74.400s" clipEnd="74.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z189_w188"/>
+      <audio src="audio/page4.mp3" clipBegin="74.800s" clipEnd="75.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z190_w189"/>
+      <audio src="audio/page4.mp3" clipBegin="75.200s" clipEnd="75.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z191_w190"/>
+      <audio src="audio/page4.mp3" clipBegin="75.600s" clipEnd="76.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z192_w191"/>
+      <audio src="audio/page4.mp3" clipBegin="76.000s" clipEnd="76.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z193_w192"/>
+      <audio src="audio/page4.mp3" clipBegin="76.400s" clipEnd="76.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z194_w193"/>
+      <audio src="audio/page4.mp3" clipBegin="76.800s" clipEnd="77.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z195_w194"/>
+      <audio src="audio/page4.mp3" clipBegin="77.200s" clipEnd="77.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z196_w195"/>
+      <audio src="audio/page4.mp3" clipBegin="77.600s" clipEnd="78.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z197_w196"/>
+      <audio src="audio/page4.mp3" clipBegin="78.000s" clipEnd="78.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z198_w197"/>
+      <audio src="audio/page4.mp3" clipBegin="78.400s" clipEnd="78.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z199_w198"/>
+      <audio src="audio/page4.mp3" clipBegin="78.800s" clipEnd="79.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z200_w199"/>
+      <audio src="audio/page4.mp3" clipBegin="79.200s" clipEnd="79.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z202_w201"/>
+      <audio src="audio/page4.mp3" clipBegin="79.600s" clipEnd="80.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z203_w202"/>
+      <audio src="audio/page4.mp3" clipBegin="80.000s" clipEnd="80.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z204_w203"/>
+      <audio src="audio/page4.mp3" clipBegin="80.400s" clipEnd="80.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z205_w204"/>
+      <audio src="audio/page4.mp3" clipBegin="80.800s" clipEnd="81.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z206_w205"/>
+      <audio src="audio/page4.mp3" clipBegin="81.200s" clipEnd="81.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z207_w206"/>
+      <audio src="audio/page4.mp3" clipBegin="81.600s" clipEnd="82.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z208_w207"/>
+      <audio src="audio/page4.mp3" clipBegin="82.000s" clipEnd="82.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z209_w208"/>
+      <audio src="audio/page4.mp3" clipBegin="82.400s" clipEnd="82.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z210_w209"/>
+      <audio src="audio/page4.mp3" clipBegin="82.800s" clipEnd="83.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z211_w210"/>
+      <audio src="audio/page4.mp3" clipBegin="83.200s" clipEnd="83.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z213_w212"/>
+      <audio src="audio/page4.mp3" clipBegin="83.600s" clipEnd="84.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z214_w213"/>
+      <audio src="audio/page4.mp3" clipBegin="84.000s" clipEnd="84.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z215_w214"/>
+      <audio src="audio/page4.mp3" clipBegin="84.400s" clipEnd="84.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z216_w215"/>
+      <audio src="audio/page4.mp3" clipBegin="84.800s" clipEnd="85.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z217_w216"/>
+      <audio src="audio/page4.mp3" clipBegin="85.200s" clipEnd="85.600s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z121_w120"/>
+      <audio src="audio/page4.mp3" clipBegin="85.600s" clipEnd="85.800s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z201_w200"/>
+      <audio src="audio/page4.mp3" clipBegin="85.800s" clipEnd="86.000s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z212_w211"/>
+      <audio src="audio/page4.mp3" clipBegin="86.000s" clipEnd="86.200s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z218_w217"/>
+      <audio src="audio/page4.mp3" clipBegin="86.200s" clipEnd="86.400s"/>
+    </par>
+    <par>
+      <text src="page4.xhtml#p4_z219_w218"/>
+      <audio src="audio/page4.mp3" clipBegin="86.400s" clipEnd="86.600s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

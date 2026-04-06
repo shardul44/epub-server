@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1774272744934-page-9"/>
+    <meta name="dtb:totalElapsedTime" content="5.234"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page9.xhtml#p9_z1_w0"/>
+      <audio src="audio/page9.mp3" clipBegin="0.000s" clipEnd="0.387s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z2_w1"/>
+      <audio src="audio/page9.mp3" clipBegin="0.387s" clipEnd="0.775s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z3_w2"/>
+      <audio src="audio/page9.mp3" clipBegin="0.775s" clipEnd="1.162s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z4_w3"/>
+      <audio src="audio/page9.mp3" clipBegin="1.162s" clipEnd="1.549s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z5_w4"/>
+      <audio src="audio/page9.mp3" clipBegin="1.549s" clipEnd="1.937s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z6_w5"/>
+      <audio src="audio/page9.mp3" clipBegin="1.937s" clipEnd="2.324s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z7_w6"/>
+      <audio src="audio/page9.mp3" clipBegin="2.324s" clipEnd="2.710s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z8_w7"/>
+      <audio src="audio/page9.mp3" clipBegin="2.710s" clipEnd="3.098s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z9_w8"/>
+      <audio src="audio/page9.mp3" clipBegin="3.098s" clipEnd="3.485s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z10_w9"/>
+      <audio src="audio/page9.mp3" clipBegin="3.485s" clipEnd="3.872s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z11_w10"/>
+      <audio src="audio/page9.mp3" clipBegin="3.872s" clipEnd="4.260s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z12_w11"/>
+      <audio src="audio/page9.mp3" clipBegin="4.260s" clipEnd="4.647s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z13_w12"/>
+      <audio src="audio/page9.mp3" clipBegin="4.647s" clipEnd="5.034s"/>
+    </par>
+    <par>
+      <text src="page9.xhtml#p9_z14_w13"/>
+      <audio src="audio/page9.mp3" clipBegin="5.034s" clipEnd="5.234s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

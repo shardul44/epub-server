@@ -1,0 +1,126 @@
+
+
+@font-face {
+  font-family: "WHCWDU+MyriadPro-Bold";
+  src: local("Myriadpro Bold"), local("Myriad Pro Bold"), local("Myriadpro"), local("Myriad Pro"), url("../fonts/WHCWDU_MyriadPro-Bold.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+MyriadPro-Semibold";
+  src: local("Myriadpro Semibold"), local("Myriad Pro Semibold"), local("Myriadpro"), local("Myriad Pro"), url("../fonts/WHCWDU_MyriadPro-Semibold.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "ZFGOTO+HoboStd";
+  src: local("Hobostd"), local("Hobo Std"), url("../fonts/ZFGOTO_HoboStd.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+MyriadPro-Regular";
+  src: local("Myriadpro Regular"), local("Myriad Pro Regular"), local("Myriadpro"), local("Myriad Pro"), url("../fonts/WHCWDU_MyriadPro-Regular.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+MyriadPro-BlackSemiCn";
+  src: local("Myriadpro Blacksemicn"), local("Myriad Pro Black Semi Cn"), local("Myriad Pro Semi Cn"), local("Myriad Pro"), url("../fonts/WHCWDU_MyriadPro-BlackSemiCn.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+MyriadPro-It";
+  src: local("Myriadpro It"), local("Myriad Pro It"), local("Myriad Pro"), url("../fonts/WHCWDU_MyriadPro-It.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+AvenirLTStd-Black";
+  src: local("Avenirltstd Black"), local("Avenir Ltstd Black"), local("Avenirltstd"), local("Avenir Ltstd"), url("../fonts/WHCWDU_AvenirLTStd-Black.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+PalatinoLTStd-Bold";
+  src: local("Palatinoltstd Bold"), local("Palatino Ltstd Bold"), local("Palatinoltstd"), local("Palatino Ltstd"), url("../fonts/WHCWDU_PalatinoLTStd-Bold.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+PalatinoLTStd-Medium";
+  src: local("Palatinoltstd Medium"), local("Palatino Ltstd Medium"), local("Palatinoltstd"), local("Palatino Ltstd"), url("../fonts/WHCWDU_PalatinoLTStd-Medium.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+HMAvenir-Regular";
+  src: local("Hmavenir Regular"), local("Hmavenir"), url("../fonts/WHCWDU_HMAvenir-Regular.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+PalatinoLTStd-Black";
+  src: local("Palatinoltstd Black"), local("Palatino Ltstd Black"), local("Palatinoltstd"), local("Palatino Ltstd"), url("../fonts/WHCWDU_PalatinoLTStd-Black.cff");
+  font-display: block}
+
+@font-face {
+  font-family: "WHCWDU+HelveticaLTStd-Roman";
+  src: local("Helveticaltstd Roman"), local("Helvetica Ltstd Roman"), local("Helveticaltstd"), local("Helvetica Ltstd"), local("Helvetica"), url("../fonts/WHCWDU_HelveticaLTStd-Roman.cff");
+  font-display: block}
+
+/* Default font for safety (no !important so per-zone fonts can apply) */
+.text-content text,
+.text-content tspan,
+.text-layer text,
+.text-layer tspan {
+  font-family: "WHCWDU+MyriadPro-Regular"}
+
+
+/* FXL page container — left align only; no justify; no injected word/letter spacing */
+.page-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  text-align: left;
+  text-align-last: left;
+  word-spacing: normal;
+  letter-spacing: normal}
+.page-container img.page-bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 0}
+/* Reset Thorium default overlay so we control highlight */
+:root {
+  -epub-media-overlay-active-color: transparent !important}
+.smil-target.-epub-media-overlay-active,
+.smil-target.smilActive,
+.smil-target.readium-smil-active {
+  fill: #2196F3 !important;
+  color: #2196F3 !important;
+  opacity: 1 !important}
+/* Optional: Background highlight for SVG text using a filter if needed, 
+   but 'fill' change is the most robust across all readers. */
+.text-content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  text-align: left;
+  text-align-last: left;
+  white-space: normal;
+  word-spacing: normal;
+  letter-spacing: normal}
+.smil-target,
+.visible-word {
+  position: absolute;
+  white-space: nowrap;
+  color: #000;
+  text-align: left;
+  text-align-last: left;
+  word-spacing: normal;
+  letter-spacing: normal}
+/* Avoid artificial gaps between word spans (do not use inline-block on FXL text spans) */
+.word-wrapper .glyph,
+.sentence-wrapper .glyph { display: inline}
+.visible-word {
+  pointer-events: none}

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Reading Order API</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    h1 { color: #4ec9b0; }
+    button {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover { background: #1177bb; }
+    pre {
+      background: #252526;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .success { color: #4ec9b0; }
+    .error { color: #f48771; }
+    .warning { color: #dcdcaa; }
+    .info { color: #9cdcfe; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Reading Order API Debugger</h1>
+  <p>This tool helps diagnose reading order persistence issues.</p>
+  
+  <div>
+    <label for="jobId">Job ID:</label>
+    <input type="number" id="jobId" value="184" style="padding: 5px; margin: 0 10px;">
+    <button onclick="testGetAPI()">Test GET API</button>
+    <button onclick="testSaveAPI()">Test SAVE API</button>
+    <button onclick="clearCache()">Clear Browser Cache</button>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    const API_BASE = 'http://localhost:8081/api';
+    
+    function log(message, type = 'info') {
+      const output = document.getElementById('output');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      output.innerHTML += `<pre class="${className}">[${timestamp}] ${message}</pre>`;
+    }
+
+    async function testGetAPI() {
+      const jobId = document.getElementById('jobId').value;
+      log(`🔍 Testing GET /api/audio-sync/sync-studio/${jobId}`, 'info');
+      
+      try {
+        const response = await fetch(`${API_BASE}/audio-sync/sync-studio/${jobId}`);
+        const data = await response.json();
+        
+        log(`✅ Response Status: ${response.status}`, 'success');
+        log(`📦 Full Response:\n${JSON.stringify(data, null, 2)}`, 'info');
+        
+        if (data.data?.readingOrder) {
+          log(`✅ Reading Order Found: ${data.data.readingOrder.length} items`, 'success');
+          log(`📋 Reading Order:\n${JSON.stringify(data.data.readingOrder, null, 2)}`, 'info');
+        } else {
+          log(`⚠️ No reading order in response`, 'warning');
+        }
+        
+        if (data.data?.alignment) {
+          log(`📊 Alignment: ${data.data.alignment.length} items`, 'info');
+        }
+        
+      } catch (err) {
+        log(`❌ Error: ${err.message}`, 'error');
+        log(`Stack: ${err.stack}`, 'error');
+      }
+    }
+
+    async function testSaveAPI() {
+      const jobId = document.getElementById('jobId').value;
+      const testReadingOrder = ['test_id_1', 'test_id_2', 'test_id_3'];
+      
+      log(`💾 Testing PUT /api/audio-sync/sync-studio/${jobId}`, 'info');
+      log(`📤 Sending reading order: ${JSON.stringify(testReadingOrder)}`, 'info');
+      
+      try {
+        const response = await fetch(`${API_BASE}/audio-sync/sync-studio/${jobId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            segments: [],
+            readingOrder: testReadingOrder
+          })
+        });
+        
+        const data = await response.json();
+        
+        log(`✅ Save Response Status: ${response.status}`, 'success');
+        log(`📦 Save Response:\n${JSON.stringify(data, null, 2)}`, 'info');
+        
+        // Now test GET to verify it was saved
+        log(`🔄 Verifying save with GET request...`, 'info');
+        await testGetAPI();
+        
+      } catch (err) {
+        log(`❌ Error: ${err.message}`, 'error');
+        log(`Stack: ${err.stack}`, 'error');
+      }
+    }
+
+    function clearCache() {
+      log(`🧹 Clearing browser cache...`, 'warning');
+      log(`⚠️ Please do a HARD REFRESH after this:`, 'warning');
+      log(`   • Windows/Linux: Ctrl + Shift + R`, 'warning');
+      log(`   • Mac: Cmd + Shift + R`, 'warning');
+      
+      // Clear service workers
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(reg => reg.unregister());
+          log(`✅ Unregistered ${registrations.length} service workers`, 'success');
+        });
+      }
+      
+      // Clear cache storage
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+          log(`✅ Cleared ${names.length} cache storages`, 'success');
+        });
+      }
+      
+      log(`✅ Cache cleared! Now do a HARD REFRESH (Ctrl+Shift+R)`, 'success');
+    }
+
+    // Auto-run on load
+    window.onload = () => {
+      log(`🚀 Reading Order Debugger Ready`, 'success');
+      log(`📝 Instructions:`, 'info');
+      log(`   1. Enter your Job ID (default: 184)`, 'info');
+      log(`   2. Click "Test GET API" to see if reading order is in the response`, 'info');
+      log(`   3. Click "Test SAVE API" to test saving a reading order`, 'info');
+      log(`   4. If frontend still not working, click "Clear Browser Cache" then hard refresh`, 'info');
+    };
+  </script>
+</body>
+</html>

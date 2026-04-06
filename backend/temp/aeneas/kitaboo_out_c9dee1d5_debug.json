@@ -1,0 +1,29 @@
+{
+  "totalFragments": 3,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "1.840",
+      "lines": [
+        "If You Were a Horse"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "1.840",
+      "end": "3.600",
+      "lines": [
+        "Have you ever wished youwere a horse?"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "3.600",
+      "end": "3.640",
+      "lines": [
+        "4"
+      ],
+      "id": "f000003"
+    }
+  ]
+}

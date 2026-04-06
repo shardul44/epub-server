@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1775476646482-page-5"/>
+    <meta name="dtb:totalElapsedTime" content="19.240"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page5.xhtml#p5_z1"/>
+      <audio src="audio/page5.mp3" clipBegin="0.000s" clipEnd="2.920s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z2"/>
+      <audio src="audio/page5.mp3" clipBegin="2.920s" clipEnd="4.880s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z3"/>
+      <audio src="audio/page5.mp3" clipBegin="4.880s" clipEnd="5.080s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z4"/>
+      <audio src="audio/page5.mp3" clipBegin="5.080s" clipEnd="5.280s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z5"/>
+      <audio src="audio/page5.mp3" clipBegin="5.680s" clipEnd="5.880s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z6"/>
+      <audio src="audio/page5.mp3" clipBegin="5.880s" clipEnd="6.080s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z7"/>
+      <audio src="audio/page5.mp3" clipBegin="6.080s" clipEnd="6.280s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z8"/>
+      <audio src="audio/page5.mp3" clipBegin="6.280s" clipEnd="6.480s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z9"/>
+      <audio src="audio/page5.mp3" clipBegin="6.480s" clipEnd="6.680s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z11"/>
+      <audio src="audio/page5.mp3" clipBegin="6.680s" clipEnd="7.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z12"/>
+      <audio src="audio/page5.mp3" clipBegin="7.840s" clipEnd="8.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z13"/>
+      <audio src="audio/page5.mp3" clipBegin="8.040s" clipEnd="8.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z14"/>
+      <audio src="audio/page5.mp3" clipBegin="8.240s" clipEnd="8.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z15"/>
+      <audio src="audio/page5.mp3" clipBegin="8.440s" clipEnd="8.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z16"/>
+      <audio src="audio/page5.mp3" clipBegin="8.640s" clipEnd="8.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z17"/>
+      <audio src="audio/page5.mp3" clipBegin="8.840s" clipEnd="9.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z18"/>
+      <audio src="audio/page5.mp3" clipBegin="9.040s" clipEnd="9.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z19"/>
+      <audio src="audio/page5.mp3" clipBegin="9.240s" clipEnd="9.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z20"/>
+      <audio src="audio/page5.mp3" clipBegin="9.440s" clipEnd="9.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z22"/>
+      <audio src="audio/page5.mp3" clipBegin="9.840s" clipEnd="11.000s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z23"/>
+      <audio src="audio/page5.mp3" clipBegin="11.000s" clipEnd="11.200s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z24"/>
+      <audio src="audio/page5.mp3" clipBegin="11.200s" clipEnd="11.400s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z25"/>
+      <audio src="audio/page5.mp3" clipBegin="11.400s" clipEnd="11.600s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z26"/>
+      <audio src="audio/page5.mp3" clipBegin="11.600s" clipEnd="11.800s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z27"/>
+      <audio src="audio/page5.mp3" clipBegin="11.800s" clipEnd="12.000s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z28"/>
+      <audio src="audio/page5.mp3" clipBegin="12.000s" clipEnd="12.200s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z29"/>
+      <audio src="audio/page5.mp3" clipBegin="12.200s" clipEnd="12.400s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z30"/>
+      <audio src="audio/page5.mp3" clipBegin="12.400s" clipEnd="12.600s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z32"/>
+      <audio src="audio/page5.mp3" clipBegin="12.800s" clipEnd="13.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z33"/>
+      <audio src="audio/page5.mp3" clipBegin="13.640s" clipEnd="13.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z34"/>
+      <audio src="audio/page5.mp3" clipBegin="13.840s" clipEnd="14.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z35"/>
+      <audio src="audio/page5.mp3" clipBegin="14.040s" clipEnd="14.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z36"/>
+      <audio src="audio/page5.mp3" clipBegin="14.240s" clipEnd="14.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z37"/>
+      <audio src="audio/page5.mp3" clipBegin="14.440s" clipEnd="14.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z38"/>
+      <audio src="audio/page5.mp3" clipBegin="14.640s" clipEnd="14.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z39"/>
+      <audio src="audio/page5.mp3" clipBegin="14.840s" clipEnd="15.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z40"/>
+      <audio src="audio/page5.mp3" clipBegin="15.040s" clipEnd="15.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z41"/>
+      <audio src="audio/page5.mp3" clipBegin="15.240s" clipEnd="15.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z42"/>
+      <audio src="audio/page5.mp3" clipBegin="15.440s" clipEnd="15.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z44"/>
+      <audio src="audio/page5.mp3" clipBegin="15.840s" clipEnd="16.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z45"/>
+      <audio src="audio/page5.mp3" clipBegin="16.040s" clipEnd="16.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z46"/>
+      <audio src="audio/page5.mp3" clipBegin="16.240s" clipEnd="16.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z47"/>
+      <audio src="audio/page5.mp3" clipBegin="16.440s" clipEnd="16.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z48"/>
+      <audio src="audio/page5.mp3" clipBegin="16.640s" clipEnd="16.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z49"/>
+      <audio src="audio/page5.mp3" clipBegin="16.840s" clipEnd="17.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z50"/>
+      <audio src="audio/page5.mp3" clipBegin="17.040s" clipEnd="17.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z51"/>
+      <audio src="audio/page5.mp3" clipBegin="17.240s" clipEnd="17.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z52"/>
+      <audio src="audio/page5.mp3" clipBegin="17.440s" clipEnd="17.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z53"/>
+      <audio src="audio/page5.mp3" clipBegin="17.640s" clipEnd="17.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z54"/>
+      <audio src="audio/page5.mp3" clipBegin="17.840s" clipEnd="18.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z55"/>
+      <audio src="audio/page5.mp3" clipBegin="18.040s" clipEnd="18.240s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z56"/>
+      <audio src="audio/page5.mp3" clipBegin="18.240s" clipEnd="18.440s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z57"/>
+      <audio src="audio/page5.mp3" clipBegin="18.440s" clipEnd="18.640s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z58"/>
+      <audio src="audio/page5.mp3" clipBegin="18.640s" clipEnd="18.840s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z59"/>
+      <audio src="audio/page5.mp3" clipBegin="18.840s" clipEnd="19.040s"/>
+    </par>
+    <par>
+      <text src="page5.xhtml#p5_z60"/>
+      <audio src="audio/page5.mp3" clipBegin="19.040s" clipEnd="19.240s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

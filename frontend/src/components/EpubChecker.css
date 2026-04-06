@@ -1,0 +1,230 @@
+.epub-checker-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  padding: 24px 28px;
+  max-width: 640px;
+  margin: 24px auto;
+  border: 1px solid #e5e7eb;
+}
+
+.epub-checker-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #111827;
+}
+
+.epub-checker-subtitle {
+  margin: 0 0 16px 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.epub-checker-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.epub-checker-file-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.epub-checker-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.epub-checker-file-name {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.epub-checker-file-name span {
+  font-weight: 500;
+}
+
+.epub-checker-error {
+  font-size: 0.85rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid #fecaca;
+}
+
+.epub-checker-button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+.epub-checker-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.epub-checker-button:not(:disabled):hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.epub-checker-results {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.epub-checker-results h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.05rem;
+  color: #111827;
+}
+
+.epub-checker-metadata {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 12px;
+}
+
+.epub-checker-meta-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.epub-checker-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.epub-checker-summary-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.epub-checker-summary-card .label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.epub-checker-summary-card .value {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.epub-checker-summary-card.critical {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.epub-checker-summary-card.critical .label {
+  color: #b91c1c;
+}
+
+.epub-checker-summary-card.critical .value {
+  color: #991b1b;
+}
+
+.epub-checker-summary-card.serious {
+  border-color: #fed7aa;
+  background: #fff7ed;
+}
+
+.epub-checker-summary-card.serious .label {
+  color: #c2410c;
+}
+
+.epub-checker-summary-card.serious .value {
+  color: #9a3412;
+}
+
+.epub-checker-summary-card.moderate {
+  border-color: #fef3c7;
+  background: #fffbeb;
+}
+
+.epub-checker-summary-card.moderate .label {
+  color: #92400e;
+}
+
+.epub-checker-summary-card.moderate .value {
+  color: #78350f;
+}
+
+.epub-checker-download-button {
+  background: #111827;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease, box-shadow 0.15s ease;
+}
+
+.epub-checker-download-button:hover {
+  background: #030712;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.3);
+}
+
+.epub-checker-view-button {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.epub-checker-view-button:hover {
+  background: #f9fafb;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.1);
+}
+
+.epub-checker-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .epub-checker-card {
+    padding: 18px 16px;
+    margin: 16px;
+  }
+
+  .epub-checker-summary-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+

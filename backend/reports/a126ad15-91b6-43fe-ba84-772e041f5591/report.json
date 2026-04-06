@@ -1,0 +1,283 @@
+{
+  "@type": "earl:report",
+  "@context": "http://daisy.github.io/ace/ace-report-1.0.jsonld",
+  "dct:title": "Ace Report",
+  "dct:description": "Report on automated accessibility checks for EPUB",
+  "dct:date": "3/26/2026, 2:58:28 PM",
+  "earl:assertedBy": {
+    "@type": "earl:software",
+    "doap:name": "DAISY Ace",
+    "doap:description": "DAISY Accessibility Checker for EPUB",
+    "doap:homepage": "http://daisy.github.io/ace",
+    "doap:created": "2017-07-01",
+    "doap:release": {
+      "doap:revision": "1.3.7"
+    }
+  },
+  "outlines": {
+    "toc": "<ol xmlns=\"http://www.w3.org/1999/xhtml\">\n    <li>Page 1</li>\n    <li>Page 4</li>\n    <li>Page 6</li>\n    <li>Page 10</li>\n  </ol>",
+    "headings": "<ul><li><span class=\"toc-h1\">\n      \n        If\n        You\n        Were\n        a\n        Horse\n      \n    </span><li><span class=\"toc-h1\">\n        \n          All\n          About\n          Horses\n        \n      </span><li><span class=\"toc-h1\">Table of Contents</span></li></ul>",
+    "html": "<ol><li></li></ol>"
+  },
+  "data": {
+    "images": [
+      {
+        "src": "OEBPS/images/page_1_image_1.png",
+        "alt": "Front cover image",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_1_image_1.png\" alt=\"Front cover image\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_1.xhtml#epubcfi(/4/2%5Bchapter1_page1%5D/2%5Bchapter1_page1_cover_img%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_1_image_1.png",
+        "alt": "Front cover image",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_1_image_1.png\" alt=\"Front cover image\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_1.xhtml#epubcfi(/4/4%5Bchapter1_page2%5D/2%5Bchapter1_page2_cover_img%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_3_image_1.png",
+        "alt": "Front cover image",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_3_image_1.png\" alt=\"Front cover image\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_1.xhtml#epubcfi(/4/6%5Bchapter1_page3%5D/2%5Bchapter1_page3_cover_img%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_2_image_1.png",
+        "alt": "Table of Contents page image",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_2_image_1.png\" alt=\"Table of Contents page image\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_4.xhtml#epubcfi(/4/2%5Bchapter2_page4%5D/2%5Bchapter2_page4_toc_img%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_1_image_1.png",
+        "alt": "Table of Contents page image",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_1_image_1.png\" alt=\"Table of Contents page image\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_4.xhtml#epubcfi(/4/4%5Bchapter2_page5%5D/2%5Bchapter2_page5_toc_img%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_7_image_1.png",
+        "alt": "A group of five horses, including a foal, walking towards the camera on a dirt path in a grassy field.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_7_image_1.png\" alt=\"A group of five horses, including a foal, walking towards the camera on a dirt path in a grassy field.\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/2%5Bchapter3_page6_img1%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_7_image_1.png",
+        "alt": "Continuation of the image of horses walking in a field.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_7_image_1.png\" alt=\"Continuation of the image of horses walking in a field.\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/12%5Bchapter3_page7_img1%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_7_image_2.png",
+        "alt": "Brown fur texture banner",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_7_image_2.png\" alt=\"Brown fur texture banner\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/16%5Bchapter3_page8_img1%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_8_image_1.png",
+        "alt": "Two horses, one chestnut and one dark brown, running through a green grassy field.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_8_image_1.png\" alt=\"Two horses, one chestnut and one dark brown, running through a green grassy field.\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/18%5Bchapter3_page8_img2%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_8_image_2.png",
+        "alt": "Brown fur texture banner",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_8_image_2.png\" alt=\"Brown fur texture banner\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/24%5Bchapter3_page9_img1%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_8_image_3.png",
+        "alt": "Partial view of a green field with a tree from the previous page.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_8_image_3.png\" alt=\"Partial view of a green field with a tree from the previous page.\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/26%5Bchapter3_page9_img2%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_8_image_4.png",
+        "alt": "A tilted photograph of a black and white Gypsy Vanner horse rearing up in a field with a blue sky and white clouds.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_8_image_4.png\" alt=\"A tilted photograph of a black and white Gypsy Vanner horse rearing up in a field with a blue sky and white clouds.\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_6.xhtml#epubcfi(/4/2%5Bpage6_div2%5D/28%5Bchapter3_page9_img3%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_10_image_4.png",
+        "alt": "Brown fur texture background banner",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_10_image_4.png\" alt=\"Brown fur texture background banner\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/2%5Bchapter4_page10_img1%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_11_image_1.png",
+        "alt": "Jockey riding a horse in a race",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_11_image_1.png\" alt=\"Jockey riding a horse in a race\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/6%5Bchapter4_page10_img2%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_11_image_3.png",
+        "alt": "A person riding a horse in a paddock, with a decorative fur border",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_11_image_3.png\" alt=\"A person riding a horse in a paddock, with a decorative fur border\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/8%5Bchapter4_page10_img3%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_10_image_4.png",
+        "alt": "Brown fur texture background banner",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_10_image_4.png\" alt=\"Brown fur texture background banner\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/12%5Bchapter4_page11_img1%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_10_image_5.png",
+        "alt": "Several jockeys racing horses on a track",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_10_image_5.png\" alt=\"Several jockeys racing horses on a track\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/14%5Bchapter4_page11_img2%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_11_image_6.png",
+        "alt": "A horse and rider jumping over an obstacle",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_11_image_6.png\" alt=\"A horse and rider jumping over an obstacle\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/16%5Bchapter4_page11_img3%5D/2)"
+      },
+      {
+        "src": "OEBPS/images/page_11_image_7.png",
+        "alt": "Brown fur decorative strip for caption box",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_11_image_7.png\" alt=\"Brown fur decorative strip for caption box\" style=\"width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;\" />",
+        "location": "OEBPS/page_10.xhtml#epubcfi(/4/2%5Bpage10_div2%5D/18%5Bchapter4_page11_captionHeader1%5D/2)"
+      }
+    ]
+  },
+  "properties": {
+    "hasManifestFallbacks": false,
+    "hasBindings": false,
+    "hasSVGContentDocuments": false,
+    "hasFormElements": false,
+    "hasMathML": false,
+    "hasPageBreaks": false
+  },
+  "earl:testSubject": {
+    "url": "..\\..\\uploads\\epub_accessibility\\219966fa-9b98-4589-becf-c5209d3adab0.epub",
+    "metadata": {
+      "dc:identifier": "urn:uuid:195",
+      "dc:title": "horses_1up 1.pdf",
+      "dc:language": "en",
+      "dcterms:modified": "2026-03-26T09:28:22.769Z",
+      "media:duration": "54.576s",
+      "media:active-class": "-epub-media-overlay-active",
+      "media:playback-speed": "1.00",
+      "schema:accessMode": "textual",
+      "schema:accessModeSufficient": "textual",
+      "schema:accessibilityFeature": "alternativeText",
+      "schema:accessibilityHazard": "noFlashingHazard",
+      "schema:accessibilitySummary": "This EPUB publication provides accessibility features including support for alternative text and structured headings."
+    },
+    "links": {},
+    "epubVersion": "3.0"
+  },
+  "a11y-metadata": {
+    "missing": [
+      "a11y:certifiedBy",
+      "a11y:certifierCredential",
+      "a11y:certifierReport",
+      "dcterms:conformsTo"
+    ],
+    "empty": [],
+    "present": [
+      "schema:accessMode",
+      "schema:accessibilityFeature",
+      "schema:accessibilityHazard",
+      "schema:accessibilitySummary",
+      "schema:accessModeSufficient"
+    ]
+  },
+  "assertions": [
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "/OEBPS\\nav.xhtml"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "content.opf",
+        "dct:title": "horses_1up 1.pdf"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "OEBPS/page_1.xhtml",
+        "dct:title": "Page 1"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "OEBPS/page_4.xhtml",
+        "dct:title": "Page 4"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "OEBPS/page_6.xhtml",
+        "dct:title": "Page 6"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "OEBPS/page_10.xhtml",
+        "dct:title": "Page 10"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "OEBPS/nav.xhtml",
+        "dct:title": "Navigation"
+      }
+    }
+  ],
+  "earl:result": {
+    "earl:outcome": "pass"
+  }
+}

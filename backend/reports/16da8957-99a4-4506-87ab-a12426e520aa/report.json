@@ -1,0 +1,553 @@
+{
+  "@type": "earl:report",
+  "@context": "http://daisy.github.io/ace/ace-report-1.0.jsonld",
+  "dct:title": "Ace Report",
+  "dct:description": "Report on automated accessibility checks for EPUB",
+  "dct:date": "3/25/2026, 8:21:08 AM",
+  "earl:assertedBy": {
+    "@type": "earl:software",
+    "doap:name": "DAISY Ace",
+    "doap:description": "DAISY Accessibility Checker for EPUB",
+    "doap:homepage": "http://daisy.github.io/ace",
+    "doap:created": "2017-07-01",
+    "doap:release": {
+      "doap:revision": "1.3.7"
+    }
+  },
+  "outlines": {
+    "toc": "<ol xmlns=\"http://www.w3.org/1999/xhtml\">\r\n        <li>\r\n          Let’s Go!\r\n        </li>\r\n        <li>\r\n          The World\r\n        </li>\r\n        <li>\r\n          North America\r\n\t\t </li>\r\n\t\t <li>\r\n          South America\r\n\t\t </li>\r\n\r\n       <li>\r\n          Asia\r\n\t\t </li>\r\n\t\t <li>\r\n          Europe\r\n\t\t </li>\r\n\r\n       <li>\r\n          Australia\r\n\t\t </li>\r\n\t\t <li>\r\n          Antarctica\r\n\t\t </li>\r\n      <li>\r\n          Words to Know\r\n\t\t </li>\r\n      </ol>",
+    "headings": "<ul><li><span class=\"toc-h1\">Guide</span></li></ul>",
+    "html": "<ol><li></li></ol>"
+  },
+  "data": {
+    "images": [
+      {
+        "src": "OPS/images/cover1.jpg",
+        "alt": "Cover for Time for Kids showing tourists walking along the Great Wall of China as it winds through green mountains.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"Cover for Time for Kids showing tourists walking along the Great Wall of China as it winds through green mountains.\" src=\"images/cover1.jpg\" />",
+        "location": "cover.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf0%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg1.jpg",
+        "alt": "Tourists walk along the Great Wall of China as it winds through lush, green mountains past a stone watchtower.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"Tourists walk along the Great Wall of China as it winds through lush, green mountains past a stone watchtower.\" src=\"images/bg1.jpg\" />",
+        "location": "page-0001.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf1%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg2.jpg",
+        "alt": "decorative",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"decorative\" src=\"images/bg2.jpg\" />",
+        "location": "page-0002.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf2%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg3.jpg",
+        "alt": "decorative",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi x3 y3 w0 h0\" alt=\"decorative\" src=\"images/bg3.jpg\" />",
+        "location": "page-0003.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf3%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg4.jpg",
+        "alt": "A composite image showing the planet Earth from space and an elephant walking near a watering hole.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A composite image showing the planet Earth from space and an elephant walking near a watering hole.\" src=\"images/bg4.jpg\" />",
+        "location": "page-0004.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf4%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg5.jpg",
+        "alt": "A collage of world travel destinations, including an illuminated Japanese temple, a gondola in Venice, and an elephant.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage of world travel destinations, including an illuminated Japanese temple, a gondola in Venice, and an elephant.\" src=\"images/bg5.jpg\" />",
+        "location": "page-0005.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf5%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg6.jpg",
+        "alt": "A stylized world map connecting photos of famous landmarks and animals to their respective continents, such as North and South America.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A stylized world map connecting photos of famous landmarks and animals to their respective continents, such as North and South America.\" src=\"images/bg6.jpg\" />",
+        "location": "page-0006.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf6%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg7.jpg",
+        "alt": "A world map showing landmarks: Leaning Tower of Pisa in Europe, Great Wall and Taj Mahal in Asia, a lion in Africa, and Sydney Opera House in Australia.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A world map showing landmarks: Leaning Tower of Pisa in Europe, Great Wall and Taj Mahal in Asia, a lion in Africa, and Sydney Opera House in Australia.\" src=\"images/bg7.jpg\" />",
+        "location": "page-0007.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf7%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg8.jpg",
+        "alt": "A panoramic view of the sunlit Grand Canyon with an inset map showing the North American continent.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A panoramic view of the sunlit Grand Canyon with an inset map showing the North American continent.\" src=\"images/bg8.jpg\" />",
+        "location": "page-0008.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf8%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg9.jpg",
+        "alt": "A collage of Mayan culture featuring the Chichen Itza pyramid, a seated figurine, and carved stone hieroglyphs.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage of Mayan culture featuring the Chichen Itza pyramid, a seated figurine, and carved stone hieroglyphs.\" src=\"images/bg9.jpg\" />",
+        "location": "page-0009.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf9%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg10.jpg",
+        "alt": "A collage about South America featuring a rainforest, a capybara, a passion flower, and a map of the continent.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage about South America featuring a rainforest, a capybara, a passion flower, and a map of the continent.\" src=\"images/bg10.jpg\" />",
+        "location": "page-0010.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf10%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg11.jpg",
+        "alt": "A collage of African icons including pyramids with camels, a lion, giraffes, and a map of the continent.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage of African icons including pyramids with camels, a lion, giraffes, and a map of the continent.\" src=\"images/bg11.jpg\" />",
+        "location": "page-0011.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf11%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg12.jpg",
+        "alt": "The Taj Mahal and its reflecting pool, with an inset map of Eurasia in the top-right corner.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"The Taj Mahal and its reflecting pool, with an inset map of Eurasia in the top-right corner.\" src=\"images/bg12.jpg\" />",
+        "location": "page-0012.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf12%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg13.jpg",
+        "alt": "A collage of the Great Wall of China winding over lush green mountains, showing a watchtower and a traditional building.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage of the Great Wall of China winding over lush green mountains, showing a watchtower and a traditional building.\" src=\"images/bg13.jpg\" />",
+        "location": "page-0013.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf13%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg14.jpg",
+        "alt": "A collage featuring the Eiffel Tower, an aerial view of Paris, and a map of Europe.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage featuring the Eiffel Tower, an aerial view of Paris, and a map of Europe.\" src=\"images/bg14.jpg\" />",
+        "location": "page-0014.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf14%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg15.jpg",
+        "alt": "The Leaning Tower of Pisa and Pisa Cathedral on a sunny day, with an inset photo of a city park.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"The Leaning Tower of Pisa and Pisa Cathedral on a sunny day, with an inset photo of a city park.\" src=\"images/bg15.jpg\" />",
+        "location": "page-0015.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf15%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg16.jpg",
+        "alt": "The Sydney Opera House and Harbour Bridge are illuminated at night, their lights reflecting on the water.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"The Sydney Opera House and Harbour Bridge are illuminated at night, their lights reflecting on the water.\" src=\"images/bg16.jpg\" />",
+        "location": "page-0016.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf16%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg17.jpg",
+        "alt": "A collage representing Australia, including a koala, a kangaroo with a joey, a map, and a bridge at night.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A collage representing Australia, including a koala, a kangaroo with a joey, a map, and a bridge at night.\" src=\"images/bg17.jpg\" />",
+        "location": "page-0017.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf17%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg18.jpg",
+        "alt": "A large iceberg floats in the sea, with an inset map showing the continent of Antarctica.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"A large iceberg floats in the sea, with an inset map showing the continent of Antarctica.\" src=\"images/bg18.jpg\" />",
+        "location": "page-0018.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf18%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg19.jpg",
+        "alt": "Two penguins stand on a rock against a backdrop of a vast, icy Antarctic bay and snow-capped mountains.",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"Two penguins stand on a rock against a backdrop of a vast, icy Antarctic bay and snow-capped mountains.\" src=\"images/bg19.jpg\" />",
+        "location": "page-0019.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf19%5D/2/2)"
+      },
+      {
+        "src": "OPS/images/bg20.jpg",
+        "alt": "decorative",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"bi w0 h0\" alt=\"decorative\" src=\"images/bg20.jpg\" />",
+        "location": "page-0020.xhtml#epubcfi(/4/2/4%5Bpage-container%5D/2%5Bpf20%5D/2/2)"
+      }
+    ],
+    "scripts": [
+      {
+        "type": "text/javascript",
+        "src": "OPS/js/highlightColor.js",
+        "path": "/tmp/tmp-40217-XAwN16CsegQd/OPS/js/highlightColor.js",
+        "location": "cover.xhtml#epubcfi(/4/4)"
+      },
+      {
+        "type": "text/javascript",
+        "src": "OPS/js/highlight.js",
+        "path": "/tmp/tmp-40217-XAwN16CsegQd/OPS/js/highlight.js",
+        "location": "cover.xhtml#epubcfi(/4/6)"
+      },
+      {
+        "type": "text/javascript",
+        "src": "OPS/js/highlightColor.js",
+        "path": "/tmp/tmp-40217-XAwN16CsegQd/OPS/js/highlightColor.js",
+        "location": "page-0001.xhtml#epubcfi(/4/4)"
+      },
+      {
+        "type": "text/javascript",
+        "src": "OPS/js/highlight.js",
+        "path": "/tmp/tmp-40217-XAwN16CsegQd/OPS/js/highlight.js",
+        "location": "page-0001.xhtml#epubcfi(/4/6)"
+      },
+      {
+        "type": "text/javascript",
+        "src": "OPS/js/highlightColor.js",
+        "path": "/tmp/tmp-40217-XAwN16CsegQd/OPS/js/highlightColor.js",
+        "location": "page-0002.xhtml#epubcfi(/4/4)"
+      },
+      {
+        "type": "text/javascript",
+        "src": "OPS/js/highlight.js",
+        "path": "/tmp/tmp-40217-XAwN16CsegQd/OPS/js/highlight.js",
+        "location": "page-0002.xhtml#epubcfi(/4/6)"
+      }
+    ]
+  },
+  "properties": {
+    "hasManifestFallbacks": false,
+    "hasBindings": false,
+    "hasSVGContentDocuments": false,
+    "hasFormElements": false,
+    "hasMathML": false,
+    "hasPageBreaks": false
+  },
+  "earl:testSubject": {
+    "url": "../../uploads/epub_accessibility/23c2110d-3dfe-4659-8cb2-65a86b7a6087.epub",
+    "metadata": {
+      "dc:identifier": [
+        "9798765980545",
+        "urn:uuid:1234-5678"
+      ],
+      "dc:language": "en",
+      "dc:title": "Places Around the World",
+      "dc:date": "2025-05-15",
+      "dc:creator": "MITR",
+      "dc:publisher": "Teacher Created Materials",
+      "fixed-layout": "true",
+      "rendition:layout": "pre-paginated",
+      "rendition:orientation": "auto",
+      "ibooks:binding": "true",
+      "ibooks:specified-fonts": "true",
+      "rendition:spread": "landscape",
+      "schema:accessMode": [
+        "textual",
+        "visual"
+      ],
+      "schema:accessModeSufficient": "textual,visual",
+      "schema:accessibilityHazard": [
+        "noFlashingHazard",
+        "noMotionSimulationHazard",
+        "noSoundHazard"
+      ],
+      "cover": "cover-image",
+      "original-resolution": "1282x1282",
+      "dcterms:modified": "2025-05-15T15:17:36Z",
+      "media:active-class": "-epub-media-overlay-active",
+      "media:duration": "01:98:68",
+      "schema:accessibilityFeature": "alternativeText",
+      "schema:accessibilitySummary": "This EPUB publication provides accessibility features including support for alternative text and structured headings."
+    },
+    "links": {},
+    "epubVersion": "3.0"
+  },
+  "a11y-metadata": {
+    "missing": [
+      "a11y:certifiedBy",
+      "a11y:certifierCredential",
+      "a11y:certifierReport",
+      "dcterms:conformsTo"
+    ],
+    "empty": [],
+    "present": [
+      "schema:accessMode",
+      "schema:accessibilityFeature",
+      "schema:accessibilityHazard",
+      "schema:accessibilitySummary",
+      "schema:accessModeSufficient"
+    ]
+  },
+  "assertions": [
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "/OPS/nav.xhtml"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "OPS/content.opf",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "cover.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "blank.xhtml",
+        "dct:title": "Susan B. Anthony"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0001.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0002.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0003.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0004.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0005.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0006.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0007.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0008.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0009.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0010.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0011.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0012.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0013.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0014.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0015.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0016.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0017.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0018.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0019.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "page-0020.xhtml",
+        "dct:title": "Places Around the World"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "nav.xhtml",
+        "dct:title": "Places around the world"
+      }
+    }
+  ],
+  "earl:result": {
+    "earl:outcome": "pass"
+  }
+}

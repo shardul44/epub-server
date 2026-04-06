@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    
+    
+    
+  </head>
+  <body>
+    <seq id="seq-page10" epub:textref="page_10.xhtml">
+    <par id="par-chapter4_h1_s1">
+      <text src="page_10.xhtml#chapter4_h1_s1"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="0.000s" clipEnd="2.712s"/>
+    </par>
+    <par id="par-chapter4_page10_p1_s1">
+      <text src="page_10.xhtml#chapter4_page10_p1_s1"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="2.912s" clipEnd="7.818s"/>
+    </par>
+    <par id="par-chapter4_page10_p1_s2">
+      <text src="page_10.xhtml#chapter4_page10_p1_s2"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="8.018s" clipEnd="12.200s"/>
+    </par>
+    <par id="par-chapter4_page11_p1_s1">
+      <text src="page_10.xhtml#chapter4_page11_p1_s1"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="12.400s" clipEnd="19.600s"/>
+    </par>
+    <par id="par-chapter4_page11_p1_s2">
+      <text src="page_10.xhtml#chapter4_page11_p1_s2"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="19.800s" clipEnd="25.087s"/>
+    </par>
+    <par id="par-chapter4_page11_p2_s1">
+      <text src="page_10.xhtml#chapter4_page11_p2_s1"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="25.287s" clipEnd="28.080s"/>
+    </par>
+    <par id="par-chapter4_page11_p2_s2">
+      <text src="page_10.xhtml#chapter4_page11_p2_s2"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="28.280s" clipEnd="29.400s"/>
+    </par>
+    <par id="par-chapter4_page11_p2_s3">
+      <text src="page_10.xhtml#chapter4_page11_p2_s3"/>
+      <audio src="audio/section_audio_195_3.mp3" clipBegin="29.600s" clipEnd="30.150s"/>
+    </par>
+
+    </seq>
+  </body>
+</smil>

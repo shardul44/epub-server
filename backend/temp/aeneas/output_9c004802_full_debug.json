@@ -1,0 +1,50 @@
+{
+  "totalFragments": 3,
+  "totalSegments": 3,
+  "fragments": [
+    {
+      "index": 0,
+      "begin": "0.000",
+      "end": "4.200",
+      "lines": [
+        "If you were a horse, you would run like the wind."
+      ],
+      "id": "f000001"
+    },
+    {
+      "index": 1,
+      "begin": "4.200",
+      "end": "5.360",
+      "lines": [
+        "You would have a long tail and mane."
+      ],
+      "id": "f000002"
+    },
+    {
+      "index": 2,
+      "begin": "5.360",
+      "end": "5.400",
+      "lines": [
+        "6"
+      ],
+      "id": "f000003"
+    }
+  ],
+  "textSegments": [
+    {
+      "index": 0,
+      "id": "p8_z1",
+      "text": "If you were a horse, you would run like the wind."
+    },
+    {
+      "index": 1,
+      "id": "p8_z2",
+      "text": "You would have a long tail and mane."
+    },
+    {
+      "index": 2,
+      "id": "p8_z3",
+      "text": "6"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "totalFragments": 2,
+  "totalSegments": 2,
+  "fragments": [
+    {
+      "index": 0,
+      "begin": "0.000",
+      "end": "3.040",
+      "lines": [
+        "You would be powerful and strong."
+      ],
+      "id": "f000001"
+    },
+    {
+      "index": 1,
+      "begin": "3.040",
+      "end": "4.280",
+      "lines": [
+        "Oh, how wonderful to be a horse!"
+      ],
+      "id": "f000002"
+    }
+  ],
+  "textSegments": [
+    {
+      "index": 0,
+      "id": "p9_z1",
+      "text": "You would be powerful and strong."
+    },
+    {
+      "index": 1,
+      "id": "p9_z2",
+      "text": "Oh, how wonderful to be a horse!"
+    }
+  ]
+}

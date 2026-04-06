@@ -1,0 +1,7 @@
+<IfModule mod_headers.c>
+  SetEnvIf Origin "^https://(epub\.legatolxp\.online|epub\.kodeit\.digital)$" ACAO=$0
+  Header always set Access-Control-Allow-Origin "%{ACAO}e" env=ACAO
+  Header always set Vary "Origin"
+  Header always set Access-Control-Allow-Methods "GET, OPTIONS"
+  Header always set Access-Control-Allow-Headers "Origin, Content-Type, Accept, Authorization"
+</IfModule>

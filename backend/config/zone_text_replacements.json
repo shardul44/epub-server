@@ -1,0 +1,7 @@
+{
+  "replacements": [
+    { "from": "Blazernan", "to": "Blazeman" },
+    { "from": "Photosyntheis", "to": "Photosynthesis" },
+    { "from": "Aristole", "to": "Aristotle" }
+  ]
+}

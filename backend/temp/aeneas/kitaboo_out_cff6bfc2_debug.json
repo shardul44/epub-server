@@ -1,0 +1,37 @@
+{
+  "totalFragments": 4,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "2.400",
+      "lines": [
+        "All About Horses"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "2.400",
+      "end": "7.280",
+      "lines": [
+        "Horses are beautiful animalswith strong muscles."
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "7.280",
+      "end": "7.960",
+      "lines": [
+        "A horsecan easily carry a person onits back."
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "7.960",
+      "end": "8.000",
+      "lines": [
+        "8"
+      ],
+      "id": "f000004"
+    }
+  ]
+}

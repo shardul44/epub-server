@@ -1,0 +1,78 @@
+{
+  "totalFragments": 5,
+  "totalSegments": 5,
+  "fragments": [
+    {
+      "index": 0,
+      "begin": "0.000",
+      "end": "6.640",
+      "lines": [
+        "A horse’s powerful legs help the animal run far and jump high."
+      ],
+      "id": "f000001"
+    },
+    {
+      "index": 1,
+      "begin": "6.640",
+      "end": "10.960",
+      "lines": [
+        "Some horses can run more than 50 miles per hour!"
+      ],
+      "id": "f000002"
+    },
+    {
+      "index": 2,
+      "begin": "10.960",
+      "end": "15.280",
+      "lines": [
+        "They are one of the fastest animals in the world."
+      ],
+      "id": "f000003"
+    },
+    {
+      "index": 3,
+      "begin": "15.280",
+      "end": "17.880",
+      "lines": [
+        "Horses are fast, too."
+      ],
+      "id": "f000004"
+    },
+    {
+      "index": 4,
+      "begin": "17.880",
+      "end": "18.200",
+      "lines": [
+        "People like to watch horse races and guess which horse will run the fastest."
+      ],
+      "id": "f000005"
+    }
+  ],
+  "textSegments": [
+    {
+      "index": 0,
+      "id": "p11_z1",
+      "text": "A horse’s powerful legs help the animal run far and jump hig"
+    },
+    {
+      "index": 1,
+      "id": "p11_z2",
+      "text": "Some horses can run more than 50 miles per hour!"
+    },
+    {
+      "index": 2,
+      "id": "p11_z3",
+      "text": "They are one of the fastest animals in the world."
+    },
+    {
+      "index": 3,
+      "id": "p11_z4",
+      "text": "Horses are fast, too."
+    },
+    {
+      "index": 4,
+      "id": "p11_z5",
+      "text": "People like to watch horse races and guess which horse will "
+    }
+  ]
+}

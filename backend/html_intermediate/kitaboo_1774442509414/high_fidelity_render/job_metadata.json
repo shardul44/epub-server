@@ -1,0 +1,239 @@
+{
+  "jobId": "1774442509414",
+  "pdfId": 114,
+  "extractionLevel": "glyph",
+  "zoneLevel": "sentence",
+  "fontMapping": {
+    "HoboStd": "Hobo",
+    "MyriadPro-Bold": "Myriad Pro",
+    "MyriadPro-Semibold": "Myriad Pro",
+    "MyriadPro-Regular": "Myriad Pro",
+    "MyriadPro-BlackSemiCn": "Myriad Pro",
+    "MyriadPro-It": "Myriad Pro",
+    "AvenirLTStd-Black": "Avenir",
+    "PalatinoLTStd-Bold": "Palatino",
+    "PalatinoLTStd-Medium": "Palatino",
+    "HMAvenir-Regular": "Avenir",
+    "HelveticaLTStd-Roman": "Helvetica"
+  },
+  "extractedFonts": [
+    {
+      "rawName": "WHCWDU+MyriadPro-Bold",
+      "filename": "WHCWDU_MyriadPro-Bold.cff",
+      "name": "WHCWDU+MyriadPro-Bold",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_MyriadPro-Bold.cff"
+    },
+    {
+      "rawName": "WHCWDU+MyriadPro-Semibold",
+      "filename": "WHCWDU_MyriadPro-Semibold.cff",
+      "name": "WHCWDU+MyriadPro-Semibold",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_MyriadPro-Semibold.cff"
+    },
+    {
+      "rawName": "ZFGOTO+HoboStd",
+      "filename": "ZFGOTO_HoboStd.cff",
+      "name": "ZFGOTO+HoboStd",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/ZFGOTO_HoboStd.cff"
+    },
+    {
+      "rawName": "WHCWDU+MyriadPro-Regular",
+      "filename": "WHCWDU_MyriadPro-Regular.cff",
+      "name": "WHCWDU+MyriadPro-Regular",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_MyriadPro-Regular.cff"
+    },
+    {
+      "rawName": "WHCWDU+MyriadPro-BlackSemiCn",
+      "filename": "WHCWDU_MyriadPro-BlackSemiCn.cff",
+      "name": "WHCWDU+MyriadPro-BlackSemiCn",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_MyriadPro-BlackSemiCn.cff"
+    },
+    {
+      "rawName": "WHCWDU+MyriadPro-It",
+      "filename": "WHCWDU_MyriadPro-It.cff",
+      "name": "WHCWDU+MyriadPro-It",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_MyriadPro-It.cff"
+    },
+    {
+      "rawName": "WHCWDU+AvenirLTStd-Black",
+      "filename": "WHCWDU_AvenirLTStd-Black.cff",
+      "name": "WHCWDU+AvenirLTStd-Black",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_AvenirLTStd-Black.cff"
+    },
+    {
+      "rawName": "WHCWDU+PalatinoLTStd-Bold",
+      "filename": "WHCWDU_PalatinoLTStd-Bold.cff",
+      "name": "WHCWDU+PalatinoLTStd-Bold",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_PalatinoLTStd-Bold.cff"
+    },
+    {
+      "rawName": "WHCWDU+PalatinoLTStd-Medium",
+      "filename": "WHCWDU_PalatinoLTStd-Medium.cff",
+      "name": "WHCWDU+PalatinoLTStd-Medium",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_PalatinoLTStd-Medium.cff"
+    },
+    {
+      "rawName": "WHCWDU+HMAvenir-Regular",
+      "filename": "WHCWDU_HMAvenir-Regular.cff",
+      "name": "WHCWDU+HMAvenir-Regular",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_HMAvenir-Regular.cff"
+    },
+    {
+      "rawName": "WHCWDU+PalatinoLTStd-Black",
+      "filename": "WHCWDU_PalatinoLTStd-Black.cff",
+      "name": "WHCWDU+PalatinoLTStd-Black",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_PalatinoLTStd-Black.cff"
+    },
+    {
+      "rawName": "WHCWDU+HelveticaLTStd-Roman",
+      "filename": "WHCWDU_HelveticaLTStd-Roman.cff",
+      "name": "WHCWDU+HelveticaLTStd-Roman",
+      "woff2Filename": null,
+      "path": "/backend/html_intermediate/kitaboo_1774442509414/high_fidelity_render/fonts/WHCWDU_HelveticaLTStd-Roman.cff"
+    }
+  ],
+  "pagesMetadata": [
+    {
+      "pageNumber": 1,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "cover"
+    },
+    {
+      "pageNumber": 2,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 3,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "cover"
+    },
+    {
+      "pageNumber": 4,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 5,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "toc"
+    },
+    {
+      "pageNumber": 6,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 7,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 8,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 9,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 10,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    },
+    {
+      "pageNumber": 11,
+      "dimensions": {
+        "width": 1575,
+        "height": 2325
+      },
+      "pointsDimensions": {
+        "width": 378,
+        "height": 558
+      },
+      "pageType": "regular"
+    }
+  ]
+}

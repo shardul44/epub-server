@@ -1,0 +1,69 @@
+{
+  "totalFragments": 8,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "3.000",
+      "lines": [
+        "All About Horses"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "3.000",
+      "end": "8.280",
+      "lines": [
+        "Horses are beautiful animals with strong muscles."
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "8.280",
+      "end": "12.400",
+      "lines": [
+        "A horse can easily carry a person on its back."
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "12.400",
+      "end": "19.800",
+      "lines": [
+        "A horse’s powerful legs help the animal run far and jump high."
+      ],
+      "id": "f000004"
+    },
+    {
+      "begin": "19.800",
+      "end": "25.560",
+      "lines": [
+        "Some horses can run more than 50 miles per hour!"
+      ],
+      "id": "f000005"
+    },
+    {
+      "begin": "25.560",
+      "end": "29.600",
+      "lines": [
+        "Horses are fast, too."
+      ],
+      "id": "f000006"
+    },
+    {
+      "begin": "29.600",
+      "end": "29.600",
+      "lines": [
+        "They are one of the fastest animals in the world."
+      ],
+      "id": "f000007"
+    },
+    {
+      "begin": "29.600",
+      "end": "29.640",
+      "lines": [
+        "People like to watch horse"
+      ],
+      "id": "f000008"
+    }
+  ]
+}

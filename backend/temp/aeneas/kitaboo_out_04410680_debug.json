@@ -1,0 +1,53 @@
+{
+  "totalFragments": 6,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "3.520",
+      "lines": [
+        "If You Were a Horse"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "3.520",
+      "end": "7.160",
+      "lines": [
+        "Have you ever wished you were a horse?"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "7.160",
+      "end": "12.160",
+      "lines": [
+        "If you were a horse, you would run like the wind."
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "12.160",
+      "end": "16.800",
+      "lines": [
+        "You would have a long tail and mane."
+      ],
+      "id": "f000004"
+    },
+    {
+      "begin": "16.800",
+      "end": "18.600",
+      "lines": [
+        "You would be powerful and strong."
+      ],
+      "id": "f000005"
+    },
+    {
+      "begin": "18.600",
+      "end": "18.640",
+      "lines": [
+        "Oh, how wonderful to be a horse!"
+      ],
+      "id": "f000006"
+    }
+  ]
+}

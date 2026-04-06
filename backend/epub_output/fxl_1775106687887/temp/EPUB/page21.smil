@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1775106687887-page-21"/>
+    <meta name="dtb:totalElapsedTime" content="4.813"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page21.xhtml#p21_z1_s0"/>
+      <audio src="audio/page21.mp3" clipBegin="0.000s" clipEnd="4.813s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

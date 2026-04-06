@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id" xml:lang="en" prefix="schema: http://schema.org/ media: http://www.idpf.org/epub/vocab/overlays/#">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="book-id">urn:uuid:87157e8d-6c05-45ea-be27-ec7b2629b5c9</dc:identifier>
+    <dc:title>horses_1up 1.pdf</dc:title>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2026-03-31T12:57:35Z</meta>
+    
+  <meta property="schema:accessMode">textual</meta><meta property="schema:accessModeSufficient">textual</meta><meta property="schema:accessibilityFeature">alternativeText</meta><meta property="schema:accessibilityHazard">noFlashingHazard</meta><meta property="schema:accessibilitySummary">This EPUB publication provides accessibility features including support for alternative text and structured headings.</meta><meta property="media:duration" refines="#smil-6">00:00:00.000</meta><meta property="media:duration" refines="#smil-10">00:00:00.000</meta><meta property="media:duration">00:00:00.000</meta><meta property="media:active-class">-epub-media-overlay-active</meta><meta property="media:playback-active-class">-epub-media-overlay-playing</meta></metadata>
+  <manifest>
+    <item id="nav" href="OEBPS/nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="page-1" href="OEBPS/page_1.xhtml" media-type="application/xhtml+xml"/>
+    <item id="page-4" href="OEBPS/page_4.xhtml" media-type="application/xhtml+xml"/>
+    <item id="page-6" href="OEBPS/page_6.xhtml" media-type="application/xhtml+xml" media-overlay="smil-6"/>
+    <item id="page-10" href="OEBPS/page_10.xhtml" media-type="application/xhtml+xml" media-overlay="smil-10"/>
+    <item id="audio-0" href="OEBPS/audio/section_audio_195_2.mp3" media-type="audio/mpeg"/>
+    <item id="audio-1" href="OEBPS/audio/section_audio_195_3.mp3" media-type="audio/mpeg"/>
+    <item id="img-page-10-image-1-png" href="OEBPS/images/page_10_image_1.png" media-type="image/png"/>
+    <item id="img-page-10-image-2-png" href="OEBPS/images/page_10_image_2.png" media-type="image/png"/>
+    <item id="img-page-10-image-3-png" href="OEBPS/images/page_10_image_3.png" media-type="image/png"/>
+    <item id="img-page-10-image-4-png" href="OEBPS/images/page_10_image_4.png" media-type="image/png"/>
+    <item id="img-page-10-image-5-png" href="OEBPS/images/page_10_image_5.png" media-type="image/png"/>
+    <item id="img-page-10-image-6-png" href="OEBPS/images/page_10_image_6.png" media-type="image/png"/>
+    <item id="img-page-10-image-7-png" href="OEBPS/images/page_10_image_7.png" media-type="image/png"/>
+    <item id="img-page-11-image-1-png" href="OEBPS/images/page_11_image_1.png" media-type="image/png"/>
+    <item id="img-page-11-image-2-png" href="OEBPS/images/page_11_image_2.png" media-type="image/png"/>
+    <item id="img-page-11-image-3-png" href="OEBPS/images/page_11_image_3.png" media-type="image/png"/>
+    <item id="img-page-11-image-4-png" href="OEBPS/images/page_11_image_4.png" media-type="image/png"/>
+    <item id="img-page-11-image-5-png" href="OEBPS/images/page_11_image_5.png" media-type="image/png"/>
+    <item id="img-page-11-image-6-png" href="OEBPS/images/page_11_image_6.png" media-type="image/png"/>
+    <item id="img-page-11-image-7-png" href="OEBPS/images/page_11_image_7.png" media-type="image/png"/>
+    <item id="img-page-1-image-1-png" href="OEBPS/images/page_1_image_1.png" media-type="image/png"/>
+    <item id="img-page-1-image-2-png" href="OEBPS/images/page_1_image_2.png" media-type="image/png"/>
+    <item id="img-page-1-image-3-png" href="OEBPS/images/page_1_image_3.png" media-type="image/png"/>
+    <item id="img-page-1-image-4-png" href="OEBPS/images/page_1_image_4.png" media-type="image/png"/>
+    <item id="img-page-2-image-1-png" href="OEBPS/images/page_2_image_1.png" media-type="image/png"/>
+    <item id="img-page-2-image-2-png" href="OEBPS/images/page_2_image_2.png" media-type="image/png"/>
+    <item id="img-page-2-image-4-png" href="OEBPS/images/page_2_image_4.png" media-type="image/png"/>
+    <item id="img-page-2-image-5-png" href="OEBPS/images/page_2_image_5.png" media-type="image/png"/>
+    <item id="img-page-2-image-6-png" href="OEBPS/images/page_2_image_6.png" media-type="image/png"/>
+    <item id="img-page-2-image-7-png" href="OEBPS/images/page_2_image_7.png" media-type="image/png"/>
+    <item id="img-page-3-image-1-png" href="OEBPS/images/page_3_image_1.png" media-type="image/png"/>
+    <item id="img-page-3-image-2-png" href="OEBPS/images/page_3_image_2.png" media-type="image/png"/>
+    <item id="img-page-3-image-4-png" href="OEBPS/images/page_3_image_4.png" media-type="image/png"/>
+    <item id="img-page-3-image-5-png" href="OEBPS/images/page_3_image_5.png" media-type="image/png"/>
+    <item id="img-page-3-image-6-png" href="OEBPS/images/page_3_image_6.png" media-type="image/png"/>
+    <item id="img-page-3-image-7-png" href="OEBPS/images/page_3_image_7.png" media-type="image/png"/>
+    <item id="img-page-4-image-1-png" href="OEBPS/images/page_4_image_1.png" media-type="image/png"/>
+    <item id="img-page-4-image-2-png" href="OEBPS/images/page_4_image_2.png" media-type="image/png"/>
+    <item id="img-page-5-image-1-png" href="OEBPS/images/page_5_image_1.png" media-type="image/png"/>
+    <item id="img-page-5-image-2-png" href="OEBPS/images/page_5_image_2.png" media-type="image/png"/>
+    <item id="img-page-6-image-1-png" href="OEBPS/images/page_6_image_1.png" media-type="image/png"/>
+    <item id="img-page-6-image-2-png" href="OEBPS/images/page_6_image_2.png" media-type="image/png"/>
+    <item id="img-page-6-image-3-png" href="OEBPS/images/page_6_image_3.png" media-type="image/png"/>
+    <item id="img-page-7-image-1-png" href="OEBPS/images/page_7_image_1.png" media-type="image/png"/>
+    <item id="img-page-7-image-2-png" href="OEBPS/images/page_7_image_2.png" media-type="image/png"/>
+    <item id="img-page-7-image-3-png" href="OEBPS/images/page_7_image_3.png" media-type="image/png"/>
+    <item id="img-page-8-image-1-png" href="OEBPS/images/page_8_image_1.png" media-type="image/png"/>
+    <item id="img-page-8-image-2-png" href="OEBPS/images/page_8_image_2.png" media-type="image/png"/>
+    <item id="img-page-8-image-3-png" href="OEBPS/images/page_8_image_3.png" media-type="image/png"/>
+    <item id="img-page-8-image-4-png" href="OEBPS/images/page_8_image_4.png" media-type="image/png"/>
+    <item id="img-page-9-image-1-png" href="OEBPS/images/page_9_image_1.png" media-type="image/png"/>
+    <item id="img-page-9-image-2-png" href="OEBPS/images/page_9_image_2.png" media-type="image/png"/>
+    <item id="img-page-9-image-3-png" href="OEBPS/images/page_9_image_3.png" media-type="image/png"/>
+    <item id="img-page-9-image-4-png" href="OEBPS/images/page_9_image_4.png" media-type="image/png"/>
+    <item id="smil-6" href="OEBPS/page_6.smil" media-type="application/smil+xml"/>
+    <item id="smil-10" href="OEBPS/page_10.smil" media-type="application/smil+xml"/>
+  </manifest>
+  <spine>
+    <itemref idref="page-1"/>
+    <itemref idref="page-4"/>
+    <itemref idref="page-6"/>
+    <itemref idref="page-10"/>
+  </spine>
+</package>

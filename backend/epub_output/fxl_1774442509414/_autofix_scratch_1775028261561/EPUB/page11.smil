@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    
+    
+    
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page11.xhtml#p11_z1"/>
+      <audio src="audio/page11.mp3" clipBegin="0.000s" clipEnd="4.684s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z2"/>
+      <audio src="audio/page11.mp3" clipBegin="4.684s" clipEnd="8.153s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z3"/>
+      <audio src="audio/page11.mp3" clipBegin="10.258s" clipEnd="13.235s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z4"/>
+      <audio src="audio/page11.mp3" clipBegin="13.235s" clipEnd="13.435s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z5"/>
+      <audio src="audio/page11.mp3" clipBegin="13.435s" clipEnd="18.160s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

@@ -1,0 +1,54 @@
+{
+ "fragments": [
+  {
+   "begin": "0.000",
+   "children": [],
+   "end": "6.640",
+   "id": "f000001",
+   "language": "eng",
+   "lines": [
+    "A horse\u2019s powerful legs help the animal run far and jump high."
+   ]
+  },
+  {
+   "begin": "6.640",
+   "children": [],
+   "end": "10.960",
+   "id": "f000002",
+   "language": "eng",
+   "lines": [
+    "Some horses can run more than 50 miles per hour!"
+   ]
+  },
+  {
+   "begin": "10.960",
+   "children": [],
+   "end": "15.280",
+   "id": "f000003",
+   "language": "eng",
+   "lines": [
+    "They are one of the fastest animals in the world."
+   ]
+  },
+  {
+   "begin": "15.280",
+   "children": [],
+   "end": "17.880",
+   "id": "f000004",
+   "language": "eng",
+   "lines": [
+    "Horses are fast, too."
+   ]
+  },
+  {
+   "begin": "17.880",
+   "children": [],
+   "end": "18.200",
+   "id": "f000005",
+   "language": "eng",
+   "lines": [
+    "People like to watch horse races and guess which horse will run the fastest."
+   ]
+  }
+ ]
+}

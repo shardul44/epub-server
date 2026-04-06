@@ -1,0 +1,298 @@
+/* DraggableCanvas Styles */
+
+.draggable-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 400px; /* Minimum height to prevent collapse */
+  overflow-y: auto; /* Allow vertical scrolling for long content */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  display: flex;
+  align-items: flex-start; /* Align to start for proper content flow */
+  justify-content: flex-start; /* Align to start instead of center for full width */
+  box-sizing: border-box;
+  padding: 20px; /* Add padding for better visual spacing */
+}
+
+/* Ensure the content div takes full width */
+.draggable-canvas-container > div {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure XHTML content wrapper is visible and can expand for long content */
+.draggable-canvas-container .xhtml-content-wrapper {
+  position: relative;
+  width: 100%;
+  min-width: 100%;
+  height: fit-content;
+  min-height: 100%;
+  max-width: 100%;
+  display: block;
+  overflow: visible; /* Ensure content is not clipped */
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+}
+
+/* Ensure page container is visible and can expand for long content */
+.draggable-canvas-container .xhtml-content-wrapper .page {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 100vh !important;
+  height: auto !important; /* Allow page to grow beyond viewport height */
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  overflow: visible !important; /* Ensure content is not clipped */
+}
+
+.draggable-canvas-container .draggable-text-block {
+  position: absolute;
+  z-index: 10;
+  cursor: move;
+  padding: 0.5em;
+  transition: box-shadow 0.2s ease;
+  user-select: none;
+  touch-action: none; /* Prevent touch scrolling while dragging */
+}
+
+/* Ensure placeholders inside draggable blocks are still accessible */
+.draggable-canvas-container .draggable-text-block .image-drop-zone,
+.draggable-canvas-container .draggable-text-block .image-placeholder {
+  z-index: 101; /* Higher than draggable block */
+  pointer-events: auto; /* Always allow pointer events */
+  position: relative; /* Ensure they're positioned correctly */
+}
+
+.draggable-canvas-container .draggable-text-block.draggable-enabled {
+  cursor: move;
+}
+
+.draggable-canvas-container .draggable-text-block:not(.draggable-enabled) {
+  cursor: default;
+}
+
+.draggable-canvas-container .draggable-text-block:hover {
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+  outline: 2px dashed rgba(33, 150, 243, 0.5);
+}
+
+.draggable-canvas-container .draggable-text-block.dragging {
+  opacity: 0.8;
+  z-index: 1000;
+  cursor: grabbing;
+}
+
+.draggable-canvas-container .canvas-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.draggable-canvas-container .image-drop-zone,
+.draggable-canvas-container .image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #fffaf0 !important; /* soft warm highlight by default */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #ff9800 !important; /* stronger orange border */
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
+  min-height: 60px;
+  min-width: 60px;
+  opacity: 1 !important;
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.18);
+  transition: border-color 0.15s ease, background-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.15s ease;
+  overflow: hidden; /* Prevent content from overflowing */
+}
+
+/* When placeholder contains an image, don't force image to fill */
+.draggable-canvas-container .image-drop-zone:has(img),
+.draggable-canvas-container .image-placeholder:has(img) {
+  /* Keep flexbox centering but don't force image to stretch */
+}
+
+/* Fallback for browsers that don't support :has() */
+.draggable-canvas-container .image-drop-zone img,
+.draggable-canvas-container .image-placeholder img {
+  flex-shrink: 1;
+  align-self: center;
+}
+
+/* When dragging over, highlight placeholders */
+.draggable-canvas-container .image-drop-zone.drag-over,
+.draggable-canvas-container .image-placeholder.drag-over {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: #4caf50;
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.25);
+  transform: scale(1.01);
+}
+
+/* Add a clear label on hover/drag-over */
+.draggable-canvas-container .image-drop-zone.drag-over::after,
+.draggable-canvas-container .image-placeholder.drag-over::after {
+  content: 'Drop image here';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2e7d32;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.draggable-canvas-container .image-drop-zone img,
+.draggable-canvas-container img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  object-fit: cover !important; /* Fill container while maintaining aspect ratio */
+}
+
+/* Images inside placeholders should fill the container */
+.draggable-canvas-container .image-drop-zone img,
+.draggable-canvas-container .image-placeholder img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* All images should maintain aspect ratio - fill container */
+.draggable-canvas-container img[id^="page"] {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  flex-shrink: 0 !important;
+  align-self: stretch !important;
+}
+
+/* Prevent placeholder from forcing image dimensions */
+.draggable-canvas-container .image-drop-zone:has(img),
+.draggable-canvas-container .image-placeholder:has(img) {
+  /* When placeholder contains an image, don't force image to fill */
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Fallback for browsers without :has() support */
+.draggable-canvas-container .image-drop-zone img,
+.draggable-canvas-container .image-placeholder img {
+  margin: auto !important;
+}
+
+/* Ensure images with specific IDs are visible */
+.draggable-canvas-container img[id^="page"] {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Edit Mode Styles */
+.draggable-canvas-container.edit-mode .sync-word {
+  cursor: text;
+  outline: 1px dashed rgba(33, 150, 243, 0.3);
+  padding: 2px;
+  margin: 0 1px;
+}
+
+.draggable-canvas-container.edit-mode .sync-word:focus {
+  outline: 2px solid rgba(33, 150, 243, 0.8);
+  background-color: rgba(33, 150, 243, 0.1);
+}
+
+.draggable-canvas-container.edit-mode .draggable-text-block {
+  cursor: default;
+}
+
+/* Visual feedback for draggable elements */
+.draggable-canvas-container:not(.edit-mode) .draggable-text-block::before {
+  content: '⋮⋮';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 12px;
+  color: rgba(33, 150, 243, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.draggable-canvas-container:not(.edit-mode) .draggable-text-block:hover::before {
+  opacity: 1;
+}
+
+/* Image Options Overlay */
+.image-with-options {
+  position: relative;
+  display: inline-block;
+  z-index: 3000 !important;
+  pointer-events: auto !important;
+}
+
+.image-with-options:hover .image-options-overlay {
+  display: flex !important;
+}
+
+.image-options-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Keep overlay transparent to avoid "black overlay" effect on large images */
+  background: transparent;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000 !important;
+  border-radius: 4px;
+  backdrop-filter: none;
+  pointer-events: auto !important;
+}
+
+.image-options-overlay button {
+  padding: 10px 20px;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.image-options-overlay button:hover {
+  background: #b71c1c;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.image-options-overlay button:active {
+  transform: scale(0.95);
+}
+

@@ -1,0 +1,28 @@
+# Dependencies
+**/node_modules/
+**/venv/
+**/.venv/
+**/env/
+
+# Archives & large artifacts (never commit)
+*.tar
+*.tar.gz
+*.zip
+*.7z
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Build / cache (keep dist if you deploy it from git)
+.cache/
+*.log
+npm-debug.log*
+
+# Env & secrets
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,15 @@
+{
+  "ignore": [
+    "**/html_intermediate/**",
+    "**/epub_output/**",
+    "**/uploads/**",
+    "**/brain/**",
+    "**/reports/**",
+    "**/node_modules/**",
+    "**/*.json",
+    "**/*.webp",
+    "**/*.png",
+    "**/*.mp3"
+  ],
+  "delay": "3000"
+}

@@ -1,0 +1,24 @@
+{
+ "fragments": [
+  {
+   "begin": "0.000",
+   "children": [],
+   "end": "3.040",
+   "id": "f000001",
+   "language": "eng",
+   "lines": [
+    "You would be powerful and strong."
+   ]
+  },
+  {
+   "begin": "3.040",
+   "children": [],
+   "end": "4.280",
+   "id": "f000002",
+   "language": "eng",
+   "lines": [
+    "Oh, how wonderful to be a horse!"
+   ]
+  }
+ ]
+}

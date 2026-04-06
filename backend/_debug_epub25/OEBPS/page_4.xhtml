@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Page 4</title>
+<style type="text/css">
+* { box-sizing: border-box; } body {margin: 0;}body{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;padding-top:1em;padding-right:1em;padding-bottom:1em;padding-left:1em;font-family:serif;max-width:100%;overflow-x:hidden;}.page{position:relative !important;width:100% !important;max-width:100% !important;height:auto !important;min-height:100vh !important;display:block !important;flex-direction:column !important;overflow-x:visible !important;overflow-y:visible !important;}img{width:100% !important;height:100% !important;max-width:100% !important;display:block !important;margin-top:0px !important;margin-right:auto !important;margin-bottom:0px !important;margin-left:auto !important;object-fit:cover !important;}.image-placeholder{min-height:100px;border-top-width:2px;border-right-width:2px;border-bottom-width:2px;border-left-width:2px;border-top-style:dashed;border-right-style:dashed;border-bottom-style:dashed;border-left-style:dashed;border-top-color:rgb(204, 204, 204);border-right-color:rgb(204, 204, 204);border-bottom-color:rgb(204, 204, 204);border-left-color:rgb(204, 204, 204);border-image-source:initial;border-image-slice:initial;border-image-width:initial;border-image-outset:initial;border-image-repeat:initial;background-color:rgb(249, 249, 249);margin-top:1em;margin-right:0px;margin-bottom:1em;margin-left:0px;padding-top:1em;padding-right:1em;padding-bottom:1em;padding-left:1em;text-align:center;color:rgb(153, 153, 153);cursor:pointer;transition-behavior:normal;transition-duration:0.2s;transition-timing-function:ease;transition-delay:0s;transition-property:all;}.image-drop-zone{min-height:100px;border-top-width:2px;border-right-width:2px;border-bottom-width:2px;border-left-width:2px;border-top-style:dashed;border-right-style:dashed;border-bottom-style:dashed;border-left-style:dashed;border-top-color:rgb(204, 204, 204);border-right-color:rgb(204, 204, 204);border-bottom-color:rgb(204, 204, 204);border-left-color:rgb(204, 204, 204);border-image-source:initial;border-image-slice:initial;border-image-width:initial;border-image-outset:initial;border-image-repeat:initial;background-color:rgb(249, 249, 249);margin-top:1em;margin-right:0px;margin-bottom:1em;margin-left:0px;padding-top:1em;padding-right:1em;padding-bottom:1em;padding-left:1em;text-align:center;color:rgb(153, 153, 153);cursor:pointer;transition-behavior:normal;transition-duration:0.2s;transition-timing-function:ease;transition-delay:0s;transition-property:all;}.image-placeholder:hover{border-top-color:rgb(76, 175, 80);border-right-color:rgb(76, 175, 80);border-bottom-color:rgb(76, 175, 80);border-left-color:rgb(76, 175, 80);background-color:rgb(240, 248, 240);}.image-drop-zone:hover{border-top-color:rgb(76, 175, 80);border-right-color:rgb(76, 175, 80);border-bottom-color:rgb(76, 175, 80);border-left-color:rgb(76, 175, 80);background-color:rgb(240, 248, 240);}.image-placeholder.drag-over{border-top-color:rgb(33, 150, 243);border-right-color:rgb(33, 150, 243);border-bottom-color:rgb(33, 150, 243);border-left-color:rgb(33, 150, 243);background-color:rgb(227, 242, 253);}.image-drop-zone.drag-over{border-top-color:rgb(33, 150, 243);border-right-color:rgb(33, 150, 243);border-bottom-color:rgb(33, 150, 243);border-left-color:rgb(33, 150, 243);background-color:rgb(227, 242, 253);}body{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;padding-top:0px;padding-right:0px;padding-bottom:0px;padding-left:0px;font-family:serif;}.page{position:relative;width:100%;min-height:100vh;}
+
+    /* Reflowable EPUB Styles */
+    body {
+      margin: 0;
+      padding: 1em;
+      font-family: serif;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    
+    .page, .container {
+      position: relative !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-height: 100vh !important; /* Ensure minimum height but allow growth */
+      display: block !important;
+      flex-direction: column !important;
+      overflow: visible !important; /* Prevent content from being clipped */
+    }
+    
+    img {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+      margin: 0 auto !important;
+      object-fit: cover !important;
+    }
+    
+    .image-placeholder, .image-drop-zone {
+      min-height: 100px;
+      border: 2px dashed #ccc;
+      background-color: #f9f9f9;
+      margin: 1em 0;
+      padding: 1em;
+      text-align: center;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .image-placeholder:hover, .image-drop-zone:hover {
+      border-color: #4CAF50;
+      background-color: #f0f8f0;
+    }
+    
+    .image-placeholder.drag-over, .image-drop-zone.drag-over {
+      border-color: #2196F3;
+      background-color: #e3f2fd;
+    }
+  
+    body { margin: 0; padding: 0; font-family: serif; }
+    .page { position: relative; width: 100%; min-height: 100vh; }
+    .image-drop-zone { /* Styles are applied inline per instructions */ }
+
+/* EPUB 3 Media Overlay Active/Playing Class - text-only highlight for reflowable EPUB */
+.sync-sentence, .sync-word { display: inline !important; background: transparent !important; background-color: transparent !important; border: 0 !important; outline: 0 !important; box-shadow: none !important; }
+.-epub-media-overlay-active,
+.epub-media-overlay-active,
+.-epub-media-overlay-playing,
+.epub-media-overlay-playing,
+[class*='epub-media-overlay-active'],
+[class*='epub-media-overlay-playing'],
+.smilActive,
+.readium-smil-active,
+.sync-active,
+.mo-active,
+.mo-playing,
+.active,
+.highlight,
+.tts_on {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: transparent !important;
+  caret-color: transparent !important;
+}
+
+/* Apply active color to inline sync targets only */
+.-epub-media-overlay-active.sync-word,
+.-epub-media-overlay-active.sync-sentence,
+.epub-media-overlay-active.sync-word,
+.epub-media-overlay-active.sync-sentence,
+.-epub-media-overlay-playing.sync-word,
+.-epub-media-overlay-playing.sync-sentence,
+.epub-media-overlay-playing.sync-word,
+.epub-media-overlay-playing.sync-sentence,
+[class*='epub-media-overlay-active'] .sync-word,
+[class*='epub-media-overlay-active'] .sync-sentence,
+[class*='epub-media-overlay-playing'] .sync-word,
+[class*='epub-media-overlay-playing'] .sync-sentence,
+.smilActive .sync-word,
+.smilActive .sync-sentence,
+.readium-smil-active .sync-word,
+.readium-smil-active .sync-sentence,
+.sync-active .sync-word,
+.sync-active .sync-sentence {
+  fill: inherit !important;
+  color: #1565c0 !important;
+  -webkit-text-fill-color: #1565c0 !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+/* Final defensive override against reader-injected yellow background */
+html body .-epub-media-overlay-active,
+html body .epub-media-overlay-active,
+html body .-epub-media-overlay-playing,
+html body .epub-media-overlay-playing,
+html body [class*='epub-media-overlay-active'],
+html body [class*='epub-media-overlay-playing'],
+html body .smilActive,
+html body .readium-smil-active,
+html body .sync-active,
+html body .mo-active,
+html body .mo-playing,
+html body .active,
+html body .highlight,
+html body .tts_on,
+html body .-epub-media-overlay-active *,
+html body .epub-media-overlay-active *,
+html body .-epub-media-overlay-playing *,
+html body .epub-media-overlay-playing *,
+html body [class*='epub-media-overlay-active'] *,
+html body [class*='epub-media-overlay-playing'] *,
+html body .smilActive *,
+html body .readium-smil-active *,
+html body .sync-active *,
+html body .mo-active *,
+html body .mo-playing * {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+mark, mark * {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: inherit !important;
+}
+::selection, *::selection {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: inherit !important;
+}
+::-moz-selection, *::-moz-selection {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: inherit !important;
+}
+</style>
+</head>
+<body tabindex="0">
+<div class="page" id="chapter2_page4">
+    <div class="has-image" id="chapter2_page4_toc_img" title="Table of Contents page image" style="width: 100%; min-height: 100vh; background: transparent; border: none; cursor: pointer; pointer-events: auto; user-select: none;"><img src="images/page_2_image_1.png" alt="Table of Contents page image" style="width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;"/></div>
+  </div>
+  <div class="page" id="chapter2_page5">
+    <div class="has-image" id="chapter2_page5_toc_img" title="Table of Contents page image" style="width: 100%; min-height: 100vh; background: transparent; border: none; cursor: pointer; pointer-events: auto; user-select: none;"><img src="images/page_1_image_1.png" alt="Table of Contents page image" style="width: 100%; height: 100%; display: block; object-fit: cover; cursor: pointer; pointer-events: auto; user-select: none;"/></div>
+  </div>
+</body>
+</html>

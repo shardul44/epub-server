@@ -1,0 +1,44 @@
+{
+ "fragments": [
+  {
+   "begin": "0.000",
+   "children": [],
+   "end": "2.400",
+   "id": "f000001",
+   "language": "eng",
+   "lines": [
+    "All About Horses"
+   ]
+  },
+  {
+   "begin": "2.400",
+   "children": [],
+   "end": "6.360",
+   "id": "f000002",
+   "language": "eng",
+   "lines": [
+    "Horses are beautiful animals with strong muscles."
+   ]
+  },
+  {
+   "begin": "6.360",
+   "children": [],
+   "end": "7.960",
+   "id": "f000003",
+   "language": "eng",
+   "lines": [
+    "A horse can easily carry a person on its back."
+   ]
+  },
+  {
+   "begin": "7.960",
+   "children": [],
+   "end": "8.000",
+   "id": "f000004",
+   "language": "eng",
+   "lines": [
+    "8"
+   ]
+  }
+ ]
+}

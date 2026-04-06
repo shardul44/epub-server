@@ -1,0 +1,29 @@
+{
+  "totalFragments": 3,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "2.760",
+      "lines": [
+        "You would be powerful andstrong."
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "2.760",
+      "end": "4.240",
+      "lines": [
+        "Oh, how wonderful to bea horse!"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "4.240",
+      "end": "4.280",
+      "lines": [
+        "7"
+      ],
+      "id": "f000003"
+    }
+  ]
+}

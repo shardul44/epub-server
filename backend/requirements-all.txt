@@ -1,0 +1,10 @@
+# All Python deps: Whisper + Silero VAD + Whisper-X + MFA
+# Run from backend folder with venv active: pip install -r requirements-all.txt
+# Python 3.10-3.12 recommended.
+
+numpy>=1.21,<3
+faster-whisper>=1.0.0
+torch>=1.12
+torchaudio>=0.12
+whisperx
+montreal-forced-aligner

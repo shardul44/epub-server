@@ -1,0 +1,34 @@
+{
+ "fragments": [
+  {
+   "begin": "0.000",
+   "children": [],
+   "end": "4.200",
+   "id": "f000001",
+   "language": "eng",
+   "lines": [
+    "If you were a horse, you would run like the wind."
+   ]
+  },
+  {
+   "begin": "4.200",
+   "children": [],
+   "end": "5.360",
+   "id": "f000002",
+   "language": "eng",
+   "lines": [
+    "You would have a long tail and mane."
+   ]
+  },
+  {
+   "begin": "5.360",
+   "children": [],
+   "end": "5.400",
+   "id": "f000003",
+   "language": "eng",
+   "lines": [
+    "6"
+   ]
+  }
+ ]
+}

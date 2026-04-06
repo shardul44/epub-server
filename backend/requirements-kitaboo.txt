@@ -1,0 +1,19 @@
+# Python deps for full Kitaboo stack (Whisper, Silero VAD, Whisper-X, MFA)
+# Use: pip install -r requirements-kitaboo.txt
+# Python 3.9-3.12 recommended (3.13 may break some packages).
+
+numpy>=1.21,<3
+# Whisper alignment (faster-whisper)
+faster-whisper>=1.0.0
+# Silero VAD (no highlight start in silence)
+torch>=1.12
+torchaudio>=0.12
+# Whisper-X (phonemic alignment for human narration - RECOMMENDED for 100% human sync)
+whisperx
+# Montreal Forced Aligner (optional, USE_MFA=1)
+# montreal-forced-aligner  # uncomment if you use MFA
+
+# PDF Processing & Image Cleanup
+pymupdf>=1.23.0
+opencv-python>=4.8.0
+pillow>=10.0.0

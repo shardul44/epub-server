@@ -1,0 +1,36 @@
+{
+  "totalFragments": 2,
+  "totalSegments": 2,
+  "fragments": [
+    {
+      "index": 0,
+      "begin": "0.000",
+      "end": "1.840",
+      "lines": [
+        "If You Were a Horse"
+      ],
+      "id": "f000001"
+    },
+    {
+      "index": 1,
+      "begin": "1.840",
+      "end": "3.640",
+      "lines": [
+        "Have you ever wished you were a horse?"
+      ],
+      "id": "f000002"
+    }
+  ],
+  "textSegments": [
+    {
+      "index": 0,
+      "id": "p6_z1",
+      "text": "If You Were a Horse"
+    },
+    {
+      "index": 1,
+      "id": "p6_z2",
+      "text": "Have you ever wished you were a horse?"
+    }
+  ]
+}

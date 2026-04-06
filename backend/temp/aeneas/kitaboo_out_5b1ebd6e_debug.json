@@ -1,0 +1,29 @@
+{
+  "totalFragments": 3,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "3.080",
+      "lines": [
+        "If you were a horse, you would run like the wind."
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "3.080",
+      "end": "4.240",
+      "lines": [
+        "You would have a long tail and mane."
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "4.240",
+      "end": "4.280",
+      "lines": [
+        "6"
+      ],
+      "id": "f000003"
+    }
+  ]
+}

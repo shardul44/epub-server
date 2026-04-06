@@ -1,0 +1,29 @@
+{
+  "totalFragments": 3,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "4.200",
+      "lines": [
+        "If you were a horse, youwould run like the wind."
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "4.200",
+      "end": "5.360",
+      "lines": [
+        "You would have a long tailand mane."
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "5.360",
+      "end": "5.400",
+      "lines": [
+        "6"
+      ],
+      "id": "f000003"
+    }
+  ]
+}

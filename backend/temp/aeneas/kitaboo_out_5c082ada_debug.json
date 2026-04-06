@@ -1,0 +1,61 @@
+{
+  "totalFragments": 7,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "3.520",
+      "lines": [
+        "If You Were a Horse"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "3.520",
+      "end": "9.400",
+      "lines": [
+        "Have you ever wished you"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "9.400",
+      "end": "11.360",
+      "lines": [
+        "were a horse?"
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "11.360",
+      "end": "17.160",
+      "lines": [
+        "You woulld be powerful and"
+      ],
+      "id": "f000004"
+    },
+    {
+      "begin": "17.160",
+      "end": "18.040",
+      "lines": [
+        "strong."
+      ],
+      "id": "f000005"
+    },
+    {
+      "begin": "18.040",
+      "end": "18.600",
+      "lines": [
+        "Oh, how wonderful to be"
+      ],
+      "id": "f000006"
+    },
+    {
+      "begin": "18.600",
+      "end": "18.640",
+      "lines": [
+        "a horse!"
+      ],
+      "id": "f000007"
+    }
+  ]
+}

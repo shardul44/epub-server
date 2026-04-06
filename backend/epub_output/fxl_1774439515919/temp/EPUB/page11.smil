@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1774439515919-page-11"/>
+    <meta name="dtb:totalElapsedTime" content="20.960"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page11.xhtml#p11_z1_w0"/>
+      <audio src="audio/page11.mp3" clipBegin="0.000s" clipEnd="0.704s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z2_w1"/>
+      <audio src="audio/page11.mp3" clipBegin="0.704s" clipEnd="1.240s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z3_w2"/>
+      <audio src="audio/page11.mp3" clipBegin="1.240s" clipEnd="1.907s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z4_w3"/>
+      <audio src="audio/page11.mp3" clipBegin="1.907s" clipEnd="2.360s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z5_w4"/>
+      <audio src="audio/page11.mp3" clipBegin="2.360s" clipEnd="2.952s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z6_w5"/>
+      <audio src="audio/page11.mp3" clipBegin="2.952s" clipEnd="3.240s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z7_w6"/>
+      <audio src="audio/page11.mp3" clipBegin="3.240s" clipEnd="3.640s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z8_w7"/>
+      <audio src="audio/page11.mp3" clipBegin="3.640s" clipEnd="4.406s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z9_w8"/>
+      <audio src="audio/page11.mp3" clipBegin="4.406s" clipEnd="5.200s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z10_w9"/>
+      <audio src="audio/page11.mp3" clipBegin="5.200s" clipEnd="5.640s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z11_w10"/>
+      <audio src="audio/page11.mp3" clipBegin="5.640s" clipEnd="5.880s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z12_w11"/>
+      <audio src="audio/page11.mp3" clipBegin="5.880s" clipEnd="6.160s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z13_w12"/>
+      <audio src="audio/page11.mp3" clipBegin="6.160s" clipEnd="6.651s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z14_w13"/>
+      <audio src="audio/page11.mp3" clipBegin="6.651s" clipEnd="7.231s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z15_w14"/>
+      <audio src="audio/page11.mp3" clipBegin="7.231s" clipEnd="7.560s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z16_w15"/>
+      <audio src="audio/page11.mp3" clipBegin="7.560s" clipEnd="8.520s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z17_w16"/>
+      <audio src="audio/page11.mp3" clipBegin="8.520s" clipEnd="9.037s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z18_w17"/>
+      <audio src="audio/page11.mp3" clipBegin="9.037s" clipEnd="9.480s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z19_w18"/>
+      <audio src="audio/page11.mp3" clipBegin="9.480s" clipEnd="10.280s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z20_w19"/>
+      <audio src="audio/page11.mp3" clipBegin="10.280s" clipEnd="10.760s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z21_w20"/>
+      <audio src="audio/page11.mp3" clipBegin="10.760s" clipEnd="11.216s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z22_w21"/>
+      <audio src="audio/page11.mp3" clipBegin="11.216s" clipEnd="11.579s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z23_w22"/>
+      <audio src="audio/page11.mp3" clipBegin="11.579s" clipEnd="11.779s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z24_w23"/>
+      <audio src="audio/page11.mp3" clipBegin="11.779s" clipEnd="12.160s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z25_w24"/>
+      <audio src="audio/page11.mp3" clipBegin="12.160s" clipEnd="12.720s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z26_w25"/>
+      <audio src="audio/page11.mp3" clipBegin="12.720s" clipEnd="13.720s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z27_w26"/>
+      <audio src="audio/page11.mp3" clipBegin="13.720s" clipEnd="14.080s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z28_w27"/>
+      <audio src="audio/page11.mp3" clipBegin="14.080s" clipEnd="14.448s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z29_w28"/>
+      <audio src="audio/page11.mp3" clipBegin="14.448s" clipEnd="14.648s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z30_w29"/>
+      <audio src="audio/page11.mp3" clipBegin="14.648s" clipEnd="15.086s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z31_w30"/>
+      <audio src="audio/page11.mp3" clipBegin="15.086s" clipEnd="15.356s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z32_w31"/>
+      <audio src="audio/page11.mp3" clipBegin="15.356s" clipEnd="16.138s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z33_w32"/>
+      <audio src="audio/page11.mp3" clipBegin="16.138s" clipEnd="16.480s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z34_w33"/>
+      <audio src="audio/page11.mp3" clipBegin="16.480s" clipEnd="17.008s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z35_w34"/>
+      <audio src="audio/page11.mp3" clipBegin="17.008s" clipEnd="17.208s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z36_w35"/>
+      <audio src="audio/page11.mp3" clipBegin="17.208s" clipEnd="17.880s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z37_w36"/>
+      <audio src="audio/page11.mp3" clipBegin="17.880s" clipEnd="18.160s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z38_w37"/>
+      <audio src="audio/page11.mp3" clipBegin="18.160s" clipEnd="18.360s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z39_w38"/>
+      <audio src="audio/page11.mp3" clipBegin="18.360s" clipEnd="18.560s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z40_w39"/>
+      <audio src="audio/page11.mp3" clipBegin="18.560s" clipEnd="18.760s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z41_w40"/>
+      <audio src="audio/page11.mp3" clipBegin="18.760s" clipEnd="18.960s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z42_w41"/>
+      <audio src="audio/page11.mp3" clipBegin="18.960s" clipEnd="19.160s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z43_w42"/>
+      <audio src="audio/page11.mp3" clipBegin="19.160s" clipEnd="19.360s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z44_w43"/>
+      <audio src="audio/page11.mp3" clipBegin="19.360s" clipEnd="19.560s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z45_w44"/>
+      <audio src="audio/page11.mp3" clipBegin="19.560s" clipEnd="19.760s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z46_w45"/>
+      <audio src="audio/page11.mp3" clipBegin="19.760s" clipEnd="19.960s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z47_w46"/>
+      <audio src="audio/page11.mp3" clipBegin="19.960s" clipEnd="20.160s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z48_w47"/>
+      <audio src="audio/page11.mp3" clipBegin="20.160s" clipEnd="20.360s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z49_w48"/>
+      <audio src="audio/page11.mp3" clipBegin="20.360s" clipEnd="20.560s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z50_w49"/>
+      <audio src="audio/page11.mp3" clipBegin="20.560s" clipEnd="20.760s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z51_w50"/>
+      <audio src="audio/page11.mp3" clipBegin="20.760s" clipEnd="20.960s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

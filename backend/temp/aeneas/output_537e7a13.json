@@ -1,0 +1,624 @@
+{
+ "fragments": [
+  {
+   "begin": "0.000",
+   "children": [],
+   "end": "2.920",
+   "id": "f000001",
+   "language": "eng",
+   "lines": [
+    "Table of Contents"
+   ]
+  },
+  {
+   "begin": "2.920",
+   "children": [],
+   "end": "4.880",
+   "id": "f000002",
+   "language": "eng",
+   "lines": [
+    "If You Were a Horse. ."
+   ]
+  },
+  {
+   "begin": "4.880",
+   "children": [],
+   "end": "4.920",
+   "id": "f000003",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.920",
+   "children": [],
+   "end": "4.920",
+   "id": "f000004",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.920",
+   "children": [],
+   "end": "4.920",
+   "id": "f000005",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.920",
+   "children": [],
+   "end": "4.920",
+   "id": "f000006",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.920",
+   "children": [],
+   "end": "4.920",
+   "id": "f000007",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.920",
+   "children": [],
+   "end": "4.920",
+   "id": "f000008",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.920",
+   "children": [],
+   "end": "4.960",
+   "id": "f000009",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "4.960",
+   "children": [],
+   "end": "5.680",
+   "id": "f000010",
+   "language": "eng",
+   "lines": [
+    "4"
+   ]
+  },
+  {
+   "begin": "5.680",
+   "children": [],
+   "end": "7.840",
+   "id": "f000011",
+   "language": "eng",
+   "lines": [
+    "All About Horses. ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000012",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000013",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000014",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000015",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000016",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000017",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000018",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000019",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "7.840",
+   "id": "f000020",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "7.840",
+   "children": [],
+   "end": "8.960",
+   "id": "f000021",
+   "language": "eng",
+   "lines": [
+    "8"
+   ]
+  },
+  {
+   "begin": "8.960",
+   "children": [],
+   "end": "11.000",
+   "id": "f000022",
+   "language": "eng",
+   "lines": [
+    "How Horses Live. ."
+   ]
+  },
+  {
+   "begin": "11.000",
+   "children": [],
+   "end": "11.000",
+   "id": "f000023",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.000",
+   "children": [],
+   "end": "11.000",
+   "id": "f000024",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.000",
+   "children": [],
+   "end": "11.000",
+   "id": "f000025",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.000",
+   "children": [],
+   "end": "11.000",
+   "id": "f000026",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.000",
+   "children": [],
+   "end": "11.000",
+   "id": "f000027",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.000",
+   "children": [],
+   "end": "11.040",
+   "id": "f000028",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.040",
+   "children": [],
+   "end": "11.040",
+   "id": "f000029",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.040",
+   "children": [],
+   "end": "11.040",
+   "id": "f000030",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "11.040",
+   "children": [],
+   "end": "12.600",
+   "id": "f000031",
+   "language": "eng",
+   "lines": [
+    "16"
+   ]
+  },
+  {
+   "begin": "12.600",
+   "children": [],
+   "end": "13.640",
+   "id": "f000032",
+   "language": "eng",
+   "lines": [
+    "Horses at Work. ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000033",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000034",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000035",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000036",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000037",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000038",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000039",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000040",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000041",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.640",
+   "id": "f000042",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.640",
+   "children": [],
+   "end": "13.920",
+   "id": "f000043",
+   "language": "eng",
+   "lines": [
+    "24"
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000044",
+   "language": "eng",
+   "lines": [
+    "Glossary. ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000045",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000046",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000047",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000048",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000049",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000050",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000051",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000052",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000053",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000054",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000055",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000056",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000057",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000058",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000059",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000060",
+   "language": "eng",
+   "lines": [
+    ". ."
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.920",
+   "id": "f000061",
+   "language": "eng",
+   "lines": [
+    "28"
+   ]
+  },
+  {
+   "begin": "13.920",
+   "children": [],
+   "end": "13.960",
+   "id": "f000062",
+   "language": "eng",
+   "lines": [
+    "3"
+   ]
+  }
+ ]
+}

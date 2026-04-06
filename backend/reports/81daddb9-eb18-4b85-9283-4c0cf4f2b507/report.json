@@ -1,0 +1,1990 @@
+{
+  "@type": "earl:report",
+  "@context": "http://daisy.github.io/ace/ace-report-1.0.jsonld",
+  "dct:title": "Ace Report",
+  "dct:description": "Report on automated accessibility checks for EPUB",
+  "dct:date": "4/3/2026, 3:13:22 PM",
+  "earl:assertedBy": {
+    "@type": "earl:software",
+    "doap:name": "DAISY Ace",
+    "doap:description": "DAISY Accessibility Checker for EPUB",
+    "doap:homepage": "http://daisy.github.io/ace",
+    "doap:created": "2017-07-01",
+    "doap:release": {
+      "doap:revision": "1.3.7"
+    }
+  },
+  "outlines": {
+    "toc": "<ol xmlns=\"http://www.w3.org/1999/xhtml\">\n            <li>Page 1</li>\n            <li>Page 2</li>\n            <li>Page 3</li>\n            <li>Page 4</li>\n            <li>Page 5</li>\n            <li>Page 6</li>\n            <li>Page 7</li>\n            <li>Page 8</li>\n            <li>Page 9</li>\n            <li>Page 10</li>\n            <li>Page 11</li>\n            <li>Page 12</li>\n            <li>Page 13</li>\n            <li>Page 14</li>\n            <li>Page 15</li>\n            <li>Page 16</li>\n            <li>Page 17</li>\n            <li>Page 18</li>\n            <li>Page 19</li>\n            <li>Page 20</li>\n            <li>Page 21</li>\n            <li>Page 22</li>\n            <li>Page 23</li>\n            <li>Page 24</li>\n            <li>Page 25</li>\n            <li>Page 26</li>\n            <li>Page 27</li>\n            <li>Page 28</li>\n            <li>Page 29</li>\n            <li>Page 30</li>\n        </ol>",
+    "headings": "<ul><li><span class=\"toc-h1\">Table of Contents</span></li></ul>",
+    "html": "<ol><li></li></ol>"
+  },
+  "data": {
+    "images": [
+      {
+        "src": "EPUB/images/page1_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page1_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:333.333px !important;fill:#a45c44;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p1_z1\" class=\"smil-target\"><tspan x=\"82.60\" y=\"165.86\" textLength=\"1131.01\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;stroke:#ffffff;stroke-width:6px;paint-order:stroke fill;\">Horses</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:109.514px !important;fill:#f8f2e6;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p1_z2\" class=\"smil-target\"><tspan x=\"1186.35\" y=\"432.30\" textLength=\"174.54\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">Up</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:109.514px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p1_z3\" class=\"smil-target\"><tspan x=\"1073.05\" y=\"510.28\" textLength=\"151.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">C</tspan></tspan></tspan><tspan id=\"p1_z4\" class=\"smil-target\"><tspan x=\"1282.34\" y=\"521.60\" textLength=\"146.40\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">e</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:109.515px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p1_z5\" class=\"smil-target\"><tspan x=\"1251.41\" y=\"544.99\" textLength=\"110.24\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">s</tspan></tspan></tspan><tspan id=\"p1_z6\" class=\"smil-target\"><tspan x=\"1168.70\" y=\"549.13\" textLength=\"51.22\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">l</tspan></tspan></tspan><tspan id=\"p1_z7\" class=\"smil-target\"><tspan x=\"1219.93\" y=\"558.16\" textLength=\"60.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">o</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:66.667px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p1_z8\" class=\"smil-target\"><tspan x=\"112.50\" y=\"2109.07\" textLength=\"353.13\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:bold;font-style:normal;\">Christopher</tspan></tspan></tspan><tspan id=\"p1_z9\" class=\"smil-target\"><tspan x=\"479.10\" y=\"2109.07\" textLength=\"291.39\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:bold;font-style:normal;\">Blazeman</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page1.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page2_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page2_clean.png\"/>\n      <g class=\"text-layer\">\n    \n      </g>\n    </svg>",
+        "location": "page2.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page3_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page3_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:270.262px !important;fill:#93553A;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p3_z1\" class=\"smil-target\"><tspan x=\"274.07\" y=\"254.62\" textLength=\"917.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;stroke:#FFFFFF;stroke-width:5px;paint-order:stroke fill;\">Horses</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:88.793px !important;fill:#93553A;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p3_z2\" class=\"smil-target\"><tspan x=\"1170.06\" y=\"498.46\" textLength=\"141.51\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;stroke:#FFFFFF;stroke-width:3px;paint-order:stroke fill;\">Up</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:88.793px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p3_z3\" class=\"smil-target\"><tspan x=\"1078.20\" y=\"561.68\" textLength=\"123.18\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">C</tspan></tspan></tspan><tspan id=\"p3_z4\" class=\"smil-target\"><tspan x=\"1247.89\" y=\"570.87\" textLength=\"118.70\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">e</tspan></tspan></tspan><tspan id=\"p3_z5\" class=\"smil-target\"><tspan x=\"1222.81\" y=\"589.82\" textLength=\"89.38\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">s</tspan></tspan></tspan><tspan id=\"p3_z6\" class=\"smil-target\"><tspan x=\"1155.76\" y=\"593.19\" textLength=\"41.53\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">l</tspan></tspan></tspan><tspan id=\"p3_z7\" class=\"smil-target\"><tspan x=\"1197.29\" y=\"600.50\" textLength=\"49.02\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">o</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:66.667px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p3_z8\" class=\"smil-target\"><tspan x=\"458.50\" y=\"2109.07\" textLength=\"353.13\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Christopher</tspan></tspan></tspan><tspan id=\"p3_z9\" class=\"smil-target\"><tspan x=\"825.10\" y=\"2109.07\" textLength=\"291.39\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Blazeman</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page3.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page4_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page4_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:58.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z1\" class=\"smil-target\"><tspan x=\"239.58\" y=\"272.86\" textLength=\"274.51\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Consultant</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:58.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z2\" class=\"smil-target\" style=\"font-size:37.5px\"><tspan x=\"239.58\" y=\"359.80\" textLength=\"375.18\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Timothy Rasinski, Ph. D.</tspan></tspan></tspan><tspan id=\"p4_z3\" class=\"smil-target\"><tspan x=\"706.25\" y=\"272.86\" textLength=\"458.32\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Publishing Credits</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z4\" class=\"smil-target\"><tspan x=\"706.25\" y=\"360.51\" textLength=\"535.12\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Dona Herweck Rice, Editor-in-Chief</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z5\" class=\"smil-target\"><tspan x=\"239.58\" y=\"406.37\" textLength=\"324.37\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Kent State University</tspan></tspan></tspan><tspan id=\"p4_z6\" class=\"smil-target\"><tspan x=\"706.25\" y=\"414.66\" textLength=\"538.94\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Robin Erickson, Production Director</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z7\" class=\"smil-target\"><tspan x=\"706.25\" y=\"468.81\" textLength=\"439.23\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Lee Aucoin, Creative Director</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z8\" class=\"smil-target\"><tspan x=\"706.25\" y=\"523.00\" textLength=\"302.58\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Conni Medina, M. A.</tspan></tspan></tspan><tspan id=\"p4_z9\" class=\"smil-target\"><tspan x=\"1008.83\" y=\"523.00\" textLength=\"314.73\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Ed., Editorial Director</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z10\" class=\"smil-target\"><tspan x=\"706.25\" y=\"577.11\" textLength=\"317.14\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Jamey Acosta, Editor</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z11\" class=\"smil-target\"><tspan x=\"706.25\" y=\"631.26\" textLength=\"435.48\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Stephanie Reid, Photo Editor</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z12\" class=\"smil-target\"><tspan x=\"706.25\" y=\"685.45\" textLength=\"383.28\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Rachelle Cracchiolo, M. S.</tspan></tspan></tspan><tspan id=\"p4_z13\" class=\"smil-target\"><tspan x=\"1089.53\" y=\"685.45\" textLength=\"200.59\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Ed., Publisher</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:33.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z14\" class=\"smil-target\"><tspan x=\"686.82\" y=\"925.78\" textLength=\"205.76\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Image Credits</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z15\" class=\"smil-target\"><tspan x=\"152.89\" y=\"968.48\" textLength=\"159.86\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Cover &amp; p. 1 E.</tspan></tspan></tspan><tspan id=\"p4_z16\" class=\"smil-target\"><tspan x=\"318.35\" y=\"968.48\" textLength=\"195.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Spek/Dreamstime</tspan></tspan></tspan><tspan id=\"p4_z17\" class=\"smil-target\"><tspan x=\"513.35\" y=\"968.48\" textLength=\"455.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 3 Alexia Khruscheva/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z18\" class=\"smil-target\"><tspan x=\"968.35\" y=\"968.48\" textLength=\"26.34\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z19\" class=\"smil-target\"><tspan x=\"994.70\" y=\"968.48\" textLength=\"431.84\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">4–5 Alexia Khruscheva/Shutterstock;</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z20\" class=\"smil-target\"><tspan x=\"200.93\" y=\"1005.99\" textLength=\"364.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 6 Mary Morgan/iStockphoto</tspan></tspan></tspan><tspan id=\"p4_z21\" class=\"smil-target\"><tspan x=\"564.93\" y=\"1005.99\" textLength=\"25.69\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z22\" class=\"smil-target\"><tspan x=\"590.62\" y=\"1005.99\" textLength=\"360.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">7 Julia Remezova/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z23\" class=\"smil-target\"><tspan x=\"950.62\" y=\"1005.99\" textLength=\"335.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 8 Tim Platt/Getty Images</tspan></tspan></tspan><tspan id=\"p4_z24\" class=\"smil-target\"><tspan x=\"1285.62\" y=\"1005.99\" textLength=\"25.03\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z25\" class=\"smil-target\"><tspan x=\"1310.65\" y=\"1005.99\" textLength=\"67.81\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">9 top:</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z26\" class=\"smil-target\"><tspan x=\"165.14\" y=\"1043.50\" textLength=\"334.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Margo Harrison/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z27\" class=\"smil-target\"><tspan x=\"499.14\" y=\"1043.50\" textLength=\"395.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 9 bottom: Pirita/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z28\" class=\"smil-target\"><tspan x=\"894.14\" y=\"1043.50\" textLength=\"24.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z29\" class=\"smil-target\"><tspan x=\"918.74\" y=\"1043.50\" textLength=\"338.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">10 top: Mariait/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z30\" class=\"smil-target\"><tspan x=\"1256.74\" y=\"1043.50\" textLength=\"159.54\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 10 bottom:</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z31\" class=\"smil-target\"><tspan x=\"165.05\" y=\"1081.01\" textLength=\"302.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">RonTech2000/iStockphoto</tspan></tspan></tspan><tspan id=\"p4_z32\" class=\"smil-target\"><tspan x=\"467.05\" y=\"1081.01\" textLength=\"447.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 10 Schweinpriester/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z33\" class=\"smil-target\"><tspan x=\"914.05\" y=\"1081.01\" textLength=\"394.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p10 Agata Dorobek/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z34\" class=\"smil-target\"><tspan x=\"1308.05\" y=\"1081.01\" textLength=\"26.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z35\" class=\"smil-target\"><tspan x=\"1334.25\" y=\"1081.01\" textLength=\"80.09\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">11 left:</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z36\" class=\"smil-target\"><tspan x=\"179.05\" y=\"1118.52\" textLength=\"343.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Patryk Kosmider/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z37\" class=\"smil-target\"><tspan x=\"522.05\" y=\"1118.52\" textLength=\"417.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 11 right: Erik Lam/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z38\" class=\"smil-target\"><tspan x=\"939.05\" y=\"1118.52\" textLength=\"23.79\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z39\" class=\"smil-target\"><tspan x=\"962.84\" y=\"1118.52\" textLength=\"437.47\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">12 top: Cindy Singleton/iStockphoto;</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z40\" class=\"smil-target\"><tspan x=\"187.22\" y=\"1156.02\" textLength=\"456.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 12 bottom: JUAN SILVA/iStockphoto</tspan></tspan></tspan><tspan id=\"p4_z41\" class=\"smil-target\"><tspan x=\"643.22\" y=\"1156.02\" textLength=\"25.01\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z42\" class=\"smil-target\"><tspan x=\"668.23\" y=\"1156.02\" textLength=\"362.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">13 AFP/Getty Images/Newscom</tspan></tspan></tspan><tspan id=\"p4_z43\" class=\"smil-target\"><tspan x=\"1030.23\" y=\"1156.02\" textLength=\"363.91\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 14 Cynoclub/Shutterstock</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z44\" class=\"smil-target\"><tspan x=\"184.74\" y=\"1193.53\" textLength=\"369.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">15 Andreas Meyer/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z45\" class=\"smil-target\"><tspan x=\"553.74\" y=\"1193.53\" textLength=\"446.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 16 Schweinepriester/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z46\" class=\"smil-target\"><tspan x=\"999.74\" y=\"1193.53\" textLength=\"24.99\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z47\" class=\"smil-target\"><tspan x=\"1024.73\" y=\"1193.53\" textLength=\"269.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">16 Zuzule/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z48\" class=\"smil-target\"><tspan x=\"1293.73\" y=\"1193.53\" textLength=\"124.21\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 17 top:</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z49\" class=\"smil-target\"><tspan x=\"172.67\" y=\"1231.04\" textLength=\"309.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Paul Maguire/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z50\" class=\"smil-target\"><tspan x=\"481.67\" y=\"1231.04\" textLength=\"482.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 17 bottom: Karel Gallas/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z51\" class=\"smil-target\"><tspan x=\"963.67\" y=\"1231.04\" textLength=\"24.05\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z52\" class=\"smil-target\"><tspan x=\"987.72\" y=\"1231.04\" textLength=\"418.95\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">18 top: Lucian Coman/Dreamstime;</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z53\" class=\"smil-target\"><tspan x=\"167.62\" y=\"1268.55\" textLength=\"466.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 18 bottom: 1000 Words/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z54\" class=\"smil-target\"><tspan x=\"633.62\" y=\"1268.55\" textLength=\"24.78\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z55\" class=\"smil-target\"><tspan x=\"658.40\" y=\"1268.55\" textLength=\"299.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">19 Auremar/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z56\" class=\"smil-target\"><tspan x=\"957.40\" y=\"1268.55\" textLength=\"456.31\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 20 Abramova Kseniya/Shutterstock</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z57\" class=\"smil-target\"><tspan x=\"189.35\" y=\"1306.06\" textLength=\"420.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">21 Rita Januskeviciute/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z58\" class=\"smil-target\"><tspan x=\"609.35\" y=\"1306.06\" textLength=\"372.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 22 left: Jaquez/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z59\" class=\"smil-target\"><tspan x=\"981.35\" y=\"1306.06\" textLength=\"23.03\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z60\" class=\"smil-target\"><tspan x=\"1004.38\" y=\"1306.06\" textLength=\"406.99\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">22 right: Dee Hunter/Shutterstock;</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z61\" class=\"smil-target\"><tspan x=\"214.43\" y=\"1343.57\" textLength=\"388.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 23 top: Eric Hood/iStockphoto</tspan></tspan></tspan><tspan id=\"p4_z62\" class=\"smil-target\"><tspan x=\"602.43\" y=\"1343.57\" textLength=\"24.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z63\" class=\"smil-target\"><tspan x=\"626.44\" y=\"1343.57\" textLength=\"424.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">23 bottom: Marekuliasz/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z64\" class=\"smil-target\"><tspan x=\"1050.44\" y=\"1343.57\" textLength=\"316.46\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 24 left: David Burrows/</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z65\" class=\"smil-target\"><tspan x=\"157.15\" y=\"1381.08\" textLength=\"159.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z66\" class=\"smil-target\"><tspan x=\"316.15\" y=\"1381.08\" textLength=\"371.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 24 Tomas Hajek/Dreamstime</tspan></tspan></tspan><tspan id=\"p4_z67\" class=\"smil-target\"><tspan x=\"687.15\" y=\"1381.08\" textLength=\"25.73\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z68\" class=\"smil-target\"><tspan x=\"712.88\" y=\"1381.08\" textLength=\"436.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">25 top: Margo Harrison/Shutterstock</tspan></tspan></tspan><tspan id=\"p4_z69\" class=\"smil-target\"><tspan x=\"1148.88\" y=\"1381.08\" textLength=\"275.30\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 25 bottom: Burbank,</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z70\" class=\"smil-target\"><tspan x=\"186.23\" y=\"1418.58\" textLength=\"43.28\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">E. A.</tspan></tspan></tspan><tspan id=\"p4_z71\" class=\"smil-target\"><tspan x=\"235.11\" y=\"1418.58\" textLength=\"190.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">(Elbridge Ayer)</tspan></tspan></tspan><tspan id=\"p4_z72\" class=\"smil-target\"><tspan x=\"425.11\" y=\"1418.58\" textLength=\"519.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 26 top: Alexandru Magurean/iStockphoto</tspan></tspan></tspan><tspan id=\"p4_z73\" class=\"smil-target\"><tspan x=\"944.11\" y=\"1418.58\" textLength=\"24.65\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p.</tspan></tspan></tspan><tspan id=\"p4_z74\" class=\"smil-target\"><tspan x=\"968.76\" y=\"1418.58\" textLength=\"424.31\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">26 bottom: Jim Parkin/Shutterstock;</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:29.167px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z75\" class=\"smil-target\"><tspan x=\"625.42\" y=\"1456.09\" textLength=\"328.41\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">p. 27 Groomee/Shutterstock</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z76\" class=\"smil-target\"><tspan x=\"511.12\" y=\"1542.60\" textLength=\"557.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Based on writing from TIME For Kids.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z77\" class=\"smil-target\"><tspan x=\"190.87\" y=\"1607.17\" textLength=\"1197.70\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">TIME For Kids and the TIME For Kids logo are registered trademarks of TIME Inc.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z78\" class=\"smil-target\"><tspan x=\"638.13\" y=\"1652.21\" textLength=\"303.15\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Used under license.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:62.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z79\" class=\"smil-target\"><tspan x=\"438.79\" y=\"1819.21\" textLength=\"697.43\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">Teacher Created Materials</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z80\" class=\"smil-target\"><tspan x=\"631.90\" y=\"1890.10\" textLength=\"311.21\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">5301 Oceanus Drive</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z81\" class=\"smil-target\"><tspan x=\"514.33\" y=\"1935.92\" textLength=\"546.34\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Huntington Beach, CA 92649-1030</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z82\" class=\"smil-target\"><tspan x=\"592.90\" y=\"1981.75\" textLength=\"389.21\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">http://www. tcmpub.com</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z83\" class=\"smil-target\"><tspan x=\"516.90\" y=\"2030.51\" textLength=\"541.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">ISBN 978-1-4333-3617-1</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z84\" class=\"smil-target\"><tspan x=\"493.34\" y=\"2090.10\" textLength=\"588.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">© 2012 Teacher Created Materials, Inc.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:37.5px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z85\" class=\"smil-target\"><tspan x=\"667.82\" y=\"2135.92\" textLength=\"239.32\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Reprinted 2013</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p4_z86\" class=\"smil-target\"><tspan x=\"59.16\" y=\"2165.15\" textLength=\"29.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">2</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page4.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page5_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page5_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:100px !important;fill:#389935;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z1\" class=\"smil-target\"><tspan x=\"374.03\" y=\"209.37\" textLength=\"821.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#389935;font-weight:bold;font-style:normal;\">Table of Contents</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z2\" class=\"smil-target\"><tspan x=\"205.66\" y=\"407.93\" textLength=\"775.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">If You Were a Horse.</tspan></tspan><tspan x=\"980.65\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z3\" class=\"smil-target\"><tspan x=\"1001.49\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1022.32\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z4\" class=\"smil-target\"><tspan x=\"1043.15\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1063.99\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z5\" class=\"smil-target\"><tspan x=\"1084.82\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1105.65\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z6\" class=\"smil-target\"><tspan x=\"1126.49\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1147.32\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z7\" class=\"smil-target\"><tspan x=\"1168.15\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1188.99\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z8\" class=\"smil-target\"><tspan x=\"1209.82\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1230.65\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z9\" class=\"smil-target\"><tspan x=\"1251.49\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1272.32\" y=\"407.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z10\" class=\"smil-target\"><tspan x=\"1305.65\" y=\"407.93\" textLength=\"41.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">4</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z11\" class=\"smil-target\"><tspan x=\"205.65\" y=\"591.27\" textLength=\"691.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">All About Horses.</tspan></tspan><tspan x=\"897.32\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z12\" class=\"smil-target\"><tspan x=\"918.15\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"938.99\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z13\" class=\"smil-target\"><tspan x=\"959.82\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"980.65\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z14\" class=\"smil-target\"><tspan x=\"1001.49\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1022.32\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z15\" class=\"smil-target\"><tspan x=\"1043.15\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1063.99\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z16\" class=\"smil-target\"><tspan x=\"1084.82\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1105.65\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z17\" class=\"smil-target\"><tspan x=\"1126.49\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1147.32\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z18\" class=\"smil-target\"><tspan x=\"1168.15\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1188.99\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z19\" class=\"smil-target\"><tspan x=\"1209.82\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1230.65\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z20\" class=\"smil-target\"><tspan x=\"1251.49\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1272.32\" y=\"591.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z21\" class=\"smil-target\"><tspan x=\"1305.65\" y=\"591.27\" textLength=\"41.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">8</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z22\" class=\"smil-target\"><tspan x=\"205.65\" y=\"774.60\" textLength=\"691.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">How Horses Live.</tspan></tspan><tspan x=\"897.32\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z23\" class=\"smil-target\"><tspan x=\"918.15\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"938.99\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z24\" class=\"smil-target\"><tspan x=\"959.82\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"980.65\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z25\" class=\"smil-target\"><tspan x=\"1001.49\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1022.32\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z26\" class=\"smil-target\"><tspan x=\"1043.15\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1063.99\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z27\" class=\"smil-target\"><tspan x=\"1084.82\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1105.65\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z28\" class=\"smil-target\"><tspan x=\"1126.49\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1147.32\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z29\" class=\"smil-target\"><tspan x=\"1168.15\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1188.99\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z30\" class=\"smil-target\"><tspan x=\"1209.82\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1230.65\" y=\"774.60\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z31\" class=\"smil-target\"><tspan x=\"1263.99\" y=\"774.60\" textLength=\"83.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">16</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z32\" class=\"smil-target\"><tspan x=\"205.65\" y=\"957.93\" textLength=\"608.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Horses at Work.</tspan></tspan><tspan x=\"813.99\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z33\" class=\"smil-target\"><tspan x=\"834.82\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"855.65\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z34\" class=\"smil-target\"><tspan x=\"876.49\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"897.32\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z35\" class=\"smil-target\"><tspan x=\"918.15\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"938.99\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z36\" class=\"smil-target\"><tspan x=\"959.82\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"980.65\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z37\" class=\"smil-target\"><tspan x=\"1001.49\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1022.32\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z38\" class=\"smil-target\"><tspan x=\"1043.15\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1063.99\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z39\" class=\"smil-target\"><tspan x=\"1084.82\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1105.65\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z40\" class=\"smil-target\"><tspan x=\"1126.49\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1147.32\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z41\" class=\"smil-target\"><tspan x=\"1168.15\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1188.99\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z42\" class=\"smil-target\"><tspan x=\"1209.82\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1230.65\" y=\"957.93\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z43\" class=\"smil-target\"><tspan x=\"1263.99\" y=\"957.93\" textLength=\"83.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">24</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z44\" class=\"smil-target\"><tspan x=\"205.65\" y=\"1141.27\" textLength=\"358.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Glossary.</tspan></tspan><tspan x=\"563.99\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z45\" class=\"smil-target\"><tspan x=\"584.82\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"605.65\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z46\" class=\"smil-target\"><tspan x=\"626.49\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"647.32\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z47\" class=\"smil-target\"><tspan x=\"668.15\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"688.99\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z48\" class=\"smil-target\"><tspan x=\"709.82\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"730.65\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z49\" class=\"smil-target\"><tspan x=\"751.49\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"772.32\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z50\" class=\"smil-target\"><tspan x=\"793.15\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"813.99\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z51\" class=\"smil-target\"><tspan x=\"834.82\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"855.65\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z52\" class=\"smil-target\"><tspan x=\"876.49\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"897.32\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z53\" class=\"smil-target\"><tspan x=\"918.15\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"938.99\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z54\" class=\"smil-target\"><tspan x=\"959.82\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"980.65\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z55\" class=\"smil-target\"><tspan x=\"1001.49\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1022.32\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z56\" class=\"smil-target\"><tspan x=\"1043.15\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1063.99\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z57\" class=\"smil-target\"><tspan x=\"1084.82\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1105.65\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z58\" class=\"smil-target\"><tspan x=\"1126.49\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1147.32\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z59\" class=\"smil-target\"><tspan x=\"1168.15\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1188.99\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z60\" class=\"smil-target\"><tspan x=\"1209.82\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan><tspan x=\"1230.65\" y=\"1141.27\" textLength=\"20.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">.</tspan></tspan></tspan><tspan id=\"p5_z61\" class=\"smil-target\"><tspan x=\"1263.99\" y=\"1141.27\" textLength=\"83.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">28</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p5_z62\" class=\"smil-target\"><tspan x=\"1484.16\" y=\"2165.15\" textLength=\"29.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">3</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page5.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page6_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page6_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:100px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p6_z1\" class=\"smil-target\"><tspan x=\"158.97\" y=\"180.67\" textLength=\"928.30\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:bold;font-style:normal;\">If You Were a Horse</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p6_z2\" class=\"smil-target\"><tspan x=\"300.00\" y=\"384.24\" textLength=\"1014.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Have you ever wished you</tspan></tspan><tspan x=\"150.00\" y=\"492.57\" textLength=\"524.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">were a horse?</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p6_z3\" class=\"smil-target\"><tspan x=\"59.16\" y=\"2166.35\" textLength=\"25.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">4</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page6.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page7_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page7_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p7_z1\" class=\"smil-target\"><tspan x=\"1483.21\" y=\"2166.35\" textLength=\"27.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">5</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page7.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page8_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page8_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p8_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1695.44\" textLength=\"917.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">If you were a horse, you</tspan></tspan><tspan x=\"150.00\" y=\"1803.77\" textLength=\"940.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">woold run like the wind.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p8_z2\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1949.61\" textLength=\"1020.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">You would have a long tail</tspan></tspan><tspan x=\"150.00\" y=\"2056.52\" textLength=\"407.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">and </tspan><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">mane.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p8_z3\" class=\"smil-target\"><tspan x=\"53.00\" y=\"2159.00\" textLength=\"48.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">6</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page8.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page9_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page9_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p9_z1\" class=\"smil-target\"><tspan x=\"303.29\" y=\"1695.44\" textLength=\"1065.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">You would be powerful and</tspan></tspan><tspan x=\"153.29\" y=\"1803.77\" textLength=\"263.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">strong.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p9_z2\" class=\"smil-target\"><tspan x=\"303.29\" y=\"1949.61\" textLength=\"957.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Oh, how wonderful to be</tspan></tspan><tspan x=\"153.29\" y=\"2057.94\" textLength=\"302.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">a horse!</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p9_z3\" class=\"smil-target\"><tspan x=\"1484.16\" y=\"2165.15\" textLength=\"25.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">7</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page9.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page10_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page10_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:100px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p10_z1\" class=\"smil-target\"><tspan x=\"163.14\" y=\"176.34\" textLength=\"800.90\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">All About Horses</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p10_z2\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1746.29\" textLength=\"1097.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Horses are beautiful animals</tspan></tspan><tspan x=\"150.00\" y=\"1854.63\" textLength=\"785.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">with strong muscles.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p10_z3\" class=\"smil-target\"><tspan x=\"981.17\" y=\"1854.63\" textLength=\"297.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A horse</tspan></tspan><tspan x=\"150.00\" y=\"1962.96\" textLength=\"1061.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">can easily carry a person on</tspan></tspan><tspan x=\"150.00\" y=\"2071.29\" textLength=\"310.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">its back.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p10_z4\" class=\"smil-target\"><tspan x=\"59.16\" y=\"2165.15\" textLength=\"25.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">8</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page10.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page11_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page11_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p11_z1\" class=\"smil-target\"><tspan x=\"739.42\" y=\"1277.63\" textLength=\"630.85\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A horse’s powerful legs help</tspan></tspan><tspan x=\"739.42\" y=\"1344.28\" textLength=\"615.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">the animal run far and jump</tspan></tspan><tspan x=\"739.42\" y=\"1410.93\" textLength=\"108.40\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">high.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p11_z2\" class=\"smil-target\"><tspan x=\"878.42\" y=\"1410.93\" textLength=\"479.40\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some horses can run</tspan></tspan><tspan x=\"739.42\" y=\"1477.58\" textLength=\"646.15\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">more than 50 miles per hour!</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p11_z3\" class=\"smil-target\"><tspan x=\"296.00\" y=\"1629.00\" textLength=\"772.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Horses are fast, too.</tspan></tspan></tspan><tspan id=\"p11_z4\" class=\"smil-target\"><tspan x=\"1101.90\" y=\"1634.52\" textLength=\"191.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They</tspan></tspan><tspan x=\"152.07\" y=\"1742.86\" textLength=\"1212.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">are one of the fastest animals in</tspan></tspan><tspan x=\"152.07\" y=\"1851.19\" textLength=\"387.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">the world.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p11_z5\" class=\"smil-target\"><tspan x=\"585.65\" y=\"1851.19\" textLength=\"767.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">People like to watch</tspan></tspan><tspan x=\"152.07\" y=\"1959.52\" textLength=\"1089.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horse races and guess which</tspan></tspan><tspan x=\"152.07\" y=\"2067.86\" textLength=\"965.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horse will run the fastest.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p11_z6\" class=\"smil-target\"><tspan x=\"1478.00\" y=\"2159.00\" textLength=\"48.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">9</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page11.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page12_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page12_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p12_z1\" class=\"smil-target\"><tspan x=\"297.92\" y=\"1607.15\" textLength=\"1096.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Horses come in many colors.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p12_z2\" class=\"smil-target\"><tspan x=\"147.92\" y=\"1715.48\" textLength=\"1255.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They can be black, white, brown,</tspan></tspan><tspan x=\"147.92\" y=\"1823.81\" textLength=\"1065.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">gray, red, yellow, and more.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p12_z3\" class=\"smil-target\"><tspan x=\"147.92\" y=\"1932.15\" textLength=\"1244.08\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Sometimes they are two or three</tspan></tspan><tspan x=\"147.92\" y=\"2040.48\" textLength=\"543.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">colors at once.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p12_z4\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">10</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page12.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page13_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page13_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p13_z1\" class=\"smil-target\"><tspan x=\"214.58\" y=\"144.16\" textLength=\"647.60\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A white spot at a horse’s eye</tspan></tspan><tspan x=\"214.58\" y=\"210.81\" textLength=\"554.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">level or above is called a</tspan></tspan><tspan x=\"214.58\" y=\"277.46\" textLength=\"97.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">star.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p13_z2\" class=\"smil-target\"><tspan x=\"342.43\" y=\"277.46\" textLength=\"490.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Any white mark below</tspan></tspan><tspan x=\"214.58\" y=\"344.11\" textLength=\"646.15\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">its eyes but above its nostrils</tspan></tspan><tspan x=\"214.58\" y=\"410.76\" textLength=\"376.55\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">is called a stripe.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p13_z3\" class=\"smil-target\"><tspan x=\"644.23\" y=\"1604.32\" textLength=\"636.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Did you know that a zebra is</tspan></tspan><tspan x=\"644.23\" y=\"1670.97\" textLength=\"362.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">a type of horse?</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p13_z4\" class=\"smil-target\"><tspan x=\"304.03\" y=\"1820.24\" textLength=\"929.58\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some horses have spots.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p13_z5\" class=\"smil-target\"><tspan x=\"1188.95\" y=\"1928.57\" textLength=\"214.58\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some</tspan></tspan><tspan x=\"154.03\" y=\"2036.90\" textLength=\"1233.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">have both, and some have none.</tspan></tspan></tspan><tspan id=\"p13_z6\" class=\"smil-target\"><tspan x=\"154.03\" y=\"1928.57\" textLength=\"985.08\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some horses have stripes.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p13_z7\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">11</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page13.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page14_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page14_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p14_z1\" class=\"smil-target\"><tspan x=\"304.76\" y=\"1733.79\" textLength=\"1020.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Horses can be tall or short.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p14_z2\" class=\"smil-target\"><tspan x=\"154.76\" y=\"1842.13\" textLength=\"1051.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Many horses are taller than</tspan></tspan><tspan x=\"154.76\" y=\"1950.46\" textLength=\"1260.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">people, but some horses are very</tspan></tspan><tspan x=\"154.76\" y=\"2058.79\" textLength=\"226.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">small.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p14_z3\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">12</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page14.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page15_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page15_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p15_z1\" class=\"smil-target\"><tspan x=\"96.28\" y=\"1606.76\" textLength=\"750.15\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some miniature (MIN-ee-uh-chur)</tspan></tspan><tspan x=\"96.28\" y=\"1673.41\" textLength=\"872.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horses are trained to help blind people.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p15_z2\" class=\"smil-target\"><tspan x=\"96.28\" y=\"1740.06\" textLength=\"682.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They are like seeing-eye dogs.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p15_z3\" class=\"smil-target\"><tspan x=\"309.53\" y=\"1946.06\" textLength=\"997.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A miniature horse may be</tspan></tspan><tspan x=\"159.53\" y=\"2054.39\" textLength=\"662.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">only two feet tall!</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p15_z4\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">13</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page15.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page16_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page16_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"237.50\" textLength=\"897.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">No matter their size, all</tspan></tspan><tspan x=\"150.00\" y=\"345.83\" textLength=\"1271.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horses have the same body parts.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z2\" class=\"smil-target\"><tspan x=\"1060.00\" y=\"454.17\" textLength=\"333.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Here are</tspan></tspan><tspan x=\"150.00\" y=\"562.50\" textLength=\"941.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">some of a horse’s points.</tspan></tspan></tspan><tspan id=\"p16_z3\" class=\"smil-target\"><tspan x=\"150.00\" y=\"454.17\" textLength=\"860.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They are called points.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z4\" class=\"smil-target\"><tspan x=\"1118.56\" y=\"968.02\" textLength=\"273.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">muzzle</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z5\" class=\"smil-target\"><tspan x=\"132.62\" y=\"1021.25\" textLength=\"560.10\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A horse has only one toe</tspan></tspan><tspan x=\"132.62\" y=\"1087.90\" textLength=\"291.90\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">on each foot.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z6\" class=\"smil-target\"><tspan x=\"455.12\" y=\"1087.90\" textLength=\"250.15\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Each toe is</tspan></tspan><tspan x=\"132.62\" y=\"1153.00\" textLength=\"569.90\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">covered by a horny hoof.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z7\" class=\"smil-target\"><tspan x=\"132.62\" y=\"1221.20\" textLength=\"514.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A horseshoe is used to</tspan></tspan><tspan x=\"132.62\" y=\"1287.85\" textLength=\"364.15\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">protect the hoof.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p16_z8\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">14</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page16.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page17_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page17_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z1\" class=\"smil-target\"><tspan x=\"564.00\" y=\"211.00\" textLength=\"218.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">mane</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z2\" class=\"smil-target\"><tspan x=\"101.00\" y=\"246.00\" textLength=\"126.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">ear</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z3\" class=\"smil-target\"><tspan x=\"860.44\" y=\"367.72\" textLength=\"576.10\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A </tspan><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">muzzle </tspan><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">is a horse’s jaw</tspan></tspan><tspan x=\"860.44\" y=\"435.92\" textLength=\"221.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">and nose.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z4\" class=\"smil-target\"><tspan x=\"1112.04\" y=\"434.37\" textLength=\"276.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">The </tspan><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">withers</tspan></tspan><tspan x=\"860.44\" y=\"502.57\" textLength=\"487.80\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">are the ridge between</tspan></tspan><tspan x=\"860.44\" y=\"569.22\" textLength=\"504.40\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">a horse’s two shoulder</tspan></tspan><tspan x=\"860.44\" y=\"635.87\" textLength=\"150.10\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">bones.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z5\" class=\"smil-target\"><tspan x=\"712.00\" y=\"819.00\" textLength=\"297.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">withers</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z6\" class=\"smil-target\"><tspan x=\"1262.00\" y=\"938.00\" textLength=\"135.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">tail</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p17_z7\" class=\"smil-target\"><tspan x=\"1463.00\" y=\"2159.00\" textLength=\"70.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">15</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page17.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page18_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page18_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:100px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p18_z1\" class=\"smil-target\"><tspan x=\"163.14\" y=\"176.34\" textLength=\"789.80\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:bold;font-style:normal;\">How Horses Live</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p18_z2\" class=\"smil-target\"><tspan x=\"404.17\" y=\"1828.67\" textLength=\"878.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Horses live all over the</tspan></tspan><tspan x=\"254.17\" y=\"1937.01\" textLength=\"243.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">world.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p18_z3\" class=\"smil-target\"><tspan x=\"543.00\" y=\"1937.01\" textLength=\"785.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">In the wild, they live</tspan></tspan><tspan x=\"254.17\" y=\"2045.34\" textLength=\"372.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">on plains.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p18_z4\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">16</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page18.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page19_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page19_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p19_z1\" class=\"smil-target\"><tspan x=\"302.08\" y=\"1937.50\" textLength=\"1029.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">With people, they may live</tspan></tspan><tspan x=\"152.08\" y=\"2045.83\" textLength=\"1107.08\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">in fields, stables, and corrals.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p19_z2\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">17</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page19.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page20_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page20_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p20_z1\" class=\"smil-target\"><tspan x=\"303.33\" y=\"1812.80\" textLength=\"911.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Since they are so active,</tspan></tspan><tspan x=\"153.33\" y=\"1921.13\" textLength=\"807.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horses are big eaters.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p20_z2\" class=\"smil-target\"><tspan x=\"1006.33\" y=\"1921.13\" textLength=\"328.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They eat</tspan></tspan><tspan x=\"153.33\" y=\"2029.46\" textLength=\"255.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">plants.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p20_z3\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">18</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page20.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page21_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page21_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p21_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1812.50\" textLength=\"1051.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They especially like grasses</tspan></tspan><tspan x=\"150.00\" y=\"1920.83\" textLength=\"1210.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">and grains and sweet treats like</tspan></tspan><tspan x=\"150.00\" y=\"2029.17\" textLength=\"915.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">apples and sugar cubes.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p21_z2\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">19</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page21.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page22_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page22_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p22_z1\" class=\"smil-target\"><tspan x=\"914.05\" y=\"1340.75\" textLength=\"366.85\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">There are seven</tspan></tspan><tspan x=\"914.05\" y=\"1407.40\" textLength=\"446.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">million horses in the</tspan></tspan><tspan x=\"914.05\" y=\"1474.05\" textLength=\"315.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">United States.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p22_z2\" class=\"smil-target\"><tspan x=\"296.00\" y=\"1574.00\" textLength=\"1016.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;stroke:#000000;stroke-width:1px;paint-order:stroke fill;\">A </tspan><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">stallion </tspan><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;stroke:#000000;stroke-width:1px;paint-order:stroke fill;\">is a male horse.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p22_z3\" class=\"smil-target\"><tspan x=\"937.92\" y=\"1689.69\" textLength=\"377.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;stroke:#000000;stroke-width:1px;paint-order:stroke fill;\">Boy horse</tspan></tspan><tspan x=\"150.00\" y=\"1798.03\" textLength=\"856.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;stroke:#000000;stroke-width:1px;paint-order:stroke fill;\">babies are called colts.</tspan></tspan></tspan><tspan id=\"p22_z4\" class=\"smil-target\"><tspan x=\"144.00\" y=\"1682.00\" textLength=\"752.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;stroke:#000000;stroke-width:1px;paint-order:stroke fill;\">A female is a </tspan><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">mare.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p22_z5\" class=\"smil-target\"><tspan x=\"1052.50\" y=\"1798.03\" textLength=\"151.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Girl</tspan></tspan><tspan x=\"150.00\" y=\"1906.36\" textLength=\"1123.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horse babies are called fillies.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p22_z6\" class=\"smil-target\"><tspan x=\"144.00\" y=\"2007.00\" textLength=\"1257.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;stroke:#000000;stroke-width:1px;paint-order:stroke fill;\">All horse babies are called </tspan><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">foals.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p22_z7\" class=\"smil-target\"><tspan x=\"38.00\" y=\"2159.00\" textLength=\"70.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">20</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page22.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page23_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page23_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p23_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1326.60\" textLength=\"970.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A mare nurses her foal to</tspan></tspan><tspan x=\"150.00\" y=\"1434.94\" textLength=\"261.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">feed it.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p23_z2\" class=\"smil-target\"><tspan x=\"457.17\" y=\"1434.94\" textLength=\"897.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">She keeps her foal near</tspan></tspan><tspan x=\"150.00\" y=\"1543.27\" textLength=\"879.08\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">her while it is growing.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p23_z3\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1689.10\" textLength=\"1117.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A mare also protects her foal.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p23_z4\" class=\"smil-target\"><tspan x=\"150.00\" y=\"1797.44\" textLength=\"1171.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">If there is danger, she will kick</tspan></tspan><tspan x=\"150.00\" y=\"1905.77\" textLength=\"1195.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">or bite anything that may harm</tspan></tspan><tspan x=\"150.00\" y=\"2014.10\" textLength=\"358.58\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">her baby.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p23_z5\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">21</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page23.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page24_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page24_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p24_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1303.80\" textLength=\"957.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">A horse’s eyes are on the</tspan></tspan><tspan x=\"150.00\" y=\"1412.14\" textLength=\"597.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">side of its head.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p24_z2\" class=\"smil-target\"><tspan x=\"793.00\" y=\"1412.14\" textLength=\"405.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Because of</tspan></tspan><tspan x=\"150.00\" y=\"1512.30\" textLength=\"1045.65\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">this, a horse can see almost</tspan></tspan><tspan x=\"149.98\" y=\"1628.80\" textLength=\"954.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">everywhere around itself</tspan></tspan><tspan x=\"149.98\" y=\"1737.14\" textLength=\"946.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">without turning its head.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p24_z3\" class=\"smil-target\"><tspan x=\"1142.73\" y=\"1737.14\" textLength=\"212.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">It can</tspan></tspan><tspan x=\"149.98\" y=\"1845.47\" textLength=\"1074.33\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">also see two different things</tspan></tspan><tspan x=\"149.98\" y=\"1953.80\" textLength=\"1137.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">at once because each eye sees</tspan></tspan><tspan x=\"149.98\" y=\"2062.14\" textLength=\"776.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">something different.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p24_z4\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">22</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page24.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page25_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page25_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p25_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1737.50\" textLength=\"1114.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">One thing a horse cannot see</tspan></tspan><tspan x=\"150.00\" y=\"1845.83\" textLength=\"1246.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">is whatever is right in front of its</tspan></tspan><tspan x=\"150.00\" y=\"1954.17\" textLength=\"212.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">head!</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p25_z2\" class=\"smil-target\"><tspan x=\"408.75\" y=\"1954.17\" textLength=\"914.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">So, a horse can’t see the</tspan></tspan><tspan x=\"150.00\" y=\"2062.50\" textLength=\"441.67\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">food it eats.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p25_z3\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">23</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page25.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page26_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page26_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:100px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p26_z1\" class=\"smil-target\"><tspan x=\"163.14\" y=\"176.34\" textLength=\"706.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:bold;font-style:normal;\">Horses at Work</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p26_z2\" class=\"smil-target\"><tspan x=\"300.72\" y=\"1706.85\" textLength=\"996.08\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">Horses have been helping</tspan></tspan><tspan x=\"150.72\" y=\"1815.18\" textLength=\"1150.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:normal;font-style:normal;\">people for thousands of years.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p26_z3\" class=\"smil-target\"><tspan x=\"150.72\" y=\"1923.51\" textLength=\"1210.58\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">They make people’s lives easier</tspan></tspan><tspan x=\"150.72\" y=\"2031.85\" textLength=\"882.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">by doing the hard jobs.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p26_z4\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">24</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page26.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page27_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page27_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z1\" class=\"smil-target\"><tspan x=\"465.58\" y=\"1252.24\" textLength=\"512.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">The Nez Perce Indians</tspan></tspan><tspan x=\"465.58\" y=\"1323.10\" textLength=\"567.00\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">were once the best horse</tspan></tspan><tspan x=\"465.58\" y=\"1393.94\" textLength=\"575.30\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">riders and breeders in the</tspan></tspan><tspan x=\"465.58\" y=\"1464.80\" textLength=\"315.45\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">United States.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:41.667px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z2\" class=\"smil-target\"><tspan x=\"1132.43\" y=\"1524.77\" textLength=\"292.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Nez Perce chief</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z3\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1595.42\" textLength=\"972.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some horses pull wagons</tspan></tspan><tspan x=\"150.00\" y=\"1703.75\" textLength=\"797.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">and farm machinery.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z4\" class=\"smil-target\"><tspan x=\"993.67\" y=\"1703.75\" textLength=\"430.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some work</tspan></tspan><tspan x=\"150.00\" y=\"1812.08\" textLength=\"524.92\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">for the police.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z5\" class=\"smil-target\"><tspan x=\"720.75\" y=\"1812.08\" textLength=\"673.58\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some work in the</tspan></tspan><tspan x=\"150.00\" y=\"1920.42\" textLength=\"244.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">circus.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z6\" class=\"smil-target\"><tspan x=\"440.25\" y=\"1920.42\" textLength=\"934.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Some help cowboys ride</tspan></tspan><tspan x=\"150.00\" y=\"2028.75\" textLength=\"383.17\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">the range.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p27_z7\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">25</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page27.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page28_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page28_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p28_z1\" class=\"smil-target\"><tspan x=\"305.36\" y=\"1850.27\" textLength=\"958.39\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Throughout time, people</tspan></tspan><tspan x=\"155.33\" y=\"1966.77\" textLength=\"1048.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">have needed horses to help</tspan></tspan><tspan x=\"155.33\" y=\"2075.11\" textLength=\"218.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">them.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p28_z2\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">26</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page28.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page29_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page29_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p29_z1\" class=\"smil-target\"><tspan x=\"300.00\" y=\"1752.80\" textLength=\"1026.75\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">Many people say that dogs</tspan></tspan><tspan x=\"150.00\" y=\"1861.13\" textLength=\"955.25\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">are people’s best friends.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:83.333px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p29_z2\" class=\"smil-target\"><tspan x=\"1151.08\" y=\"1861.13\" textLength=\"131.08\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">But</tspan></tspan><tspan x=\"150.00\" y=\"1969.46\" textLength=\"977.42\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">horses may be even more</tspan></tspan><tspan x=\"150.00\" y=\"2077.80\" textLength=\"401.83\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:normal;font-style:normal;\">important.</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p29_z3\" class=\"smil-target\"><tspan x=\"1469.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">27</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page29.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "EPUB/images/page30_clean.png",
+        "role": null,
+        "html": "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" viewBox=\"0 0 1575 2325\" class=\"main-svg\" preserveAspectRatio=\"xMidYMid meet\">\n      <image width=\"1575\" height=\"2325\" href=\"images/page30_clean.png\"/>\n      <g class=\"text-layer\">\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:100px !important;fill:#ffffff;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p30_z1\" class=\"smil-target\"><tspan x=\"588.92\" y=\"25.39\" textLength=\"401.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#ffffff;font-weight:bold;font-style:normal;\">Glossary</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:75px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p30_z2\" class=\"smil-target\"><tspan x=\"707.63\" y=\"764.79\" textLength=\"154.40\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">hoof</tspan></tspan></tspan><tspan id=\"p30_z3\" class=\"smil-target\"><tspan x=\"1175.19\" y=\"761.84\" textLength=\"183.50\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">mane</tspan></tspan></tspan><tspan id=\"p30_z4\" class=\"smil-target\"><tspan x=\"237.90\" y=\"777.70\" textLength=\"129.35\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">foal</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:75px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p30_z5\" class=\"smil-target\"><tspan x=\"656.51\" y=\"1433.95\" textLength=\"245.98\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">muzzle</tspan></tspan></tspan><tspan id=\"p30_z6\" class=\"smil-target\"><tspan x=\"219.49\" y=\"1445.98\" textLength=\"166.85\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">mare</tspan></tspan></tspan><tspan id=\"p30_z7\" class=\"smil-target\"><tspan x=\"1128.96\" y=\"1445.68\" textLength=\"254.23\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">stallion</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:75px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p30_z8\" class=\"smil-target\"><tspan x=\"652.38\" y=\"2101.97\" textLength=\"254.23\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">withers</tspan></tspan></tspan></text>\n    <text style=\"font-family:&quot;WHCWDU+MyriadPro-Regular&quot; !important;font-size:50px !important;fill:#000000;opacity:1;dominant-baseline:text-before-edge;font-weight:normal;font-style:normal;\"><tspan id=\"p30_z9\" class=\"smil-target\"><tspan x=\"44.36\" y=\"2165.15\" textLength=\"55.20\" lengthAdjust=\"spacingAndGlyphs\"><tspan style=\"fill:#000000;font-weight:bold;font-style:normal;\">28</tspan></tspan></tspan></text>\n      </g>\n    </svg>",
+        "location": "page30.xhtml#epubcfi(/4/2/2)"
+      }
+    ]
+  },
+  "properties": {
+    "hasManifestFallbacks": false,
+    "hasBindings": false,
+    "hasSVGContentDocuments": false,
+    "hasFormElements": false,
+    "hasMathML": false,
+    "hasPageBreaks": false
+  },
+  "earl:testSubject": {
+    "url": "..\\..\\uploads\\epub_accessibility\\8afb2260-a85f-486a-b385-ae94ed232fac.epub",
+    "metadata": {
+      "dc:identifier": "urn:uuid:bcb39630-2e6f-498a-b1a0-9e839eb5fb62",
+      "dc:title": "Professional FXL Export",
+      "dc:creator": "FXL Engine",
+      "dc:date": "2026-03-13",
+      "dc:language": "en",
+      "dcterms:modified": "2026-03-13T09:33:28Z",
+      "rendition:layout": "pre-paginated",
+      "rendition:orientation": "auto",
+      "rendition:spread": "auto",
+      "media:duration": "496.296s",
+      "media:active-class": "-epub-media-overlay-active",
+      "media:playback-active-class": "-epub-media-overlay-playing",
+      "cover": "img1"
+    },
+    "links": {},
+    "epubVersion": "3.0"
+  },
+  "a11y-metadata": {
+    "missing": [
+      "schema:accessMode",
+      "schema:accessibilityFeature",
+      "schema:accessibilityHazard",
+      "schema:accessibilitySummary",
+      "schema:accessModeSufficient",
+      "a11y:certifiedBy",
+      "a11y:certifierCredential",
+      "a11y:certifierReport",
+      "dcterms:conformsTo"
+    ],
+    "empty": [],
+    "present": []
+  },
+  "assertions": [
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "/EPUB\\nav.xhtml"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The language must be specified (xml:lang in OPF package)"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "epub-lang",
+            "dct:description": "Ensures the OPF XML language is provided",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/epub/language.html",
+              "dct:title": "Language",
+              "dct:description": "Add the missing OPF xml:lang attribute"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessMode' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "metadata-accessmode",
+            "dct:description": "Ensures a 'schema:accessMode' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessMode' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessModeSufficient' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "moderate",
+            "dct:title": "metadata-accessmodesufficient",
+            "dct:description": "Ensures a 'schema:accessModeSufficient' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessModeSufficient' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessibilityFeature' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "metadata-accessibilityfeature",
+            "dct:description": "Ensures a 'schema:accessibilityFeature' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessibilityFeature' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessibilityHazard' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "metadata-accessibilityhazard",
+            "dct:description": "Ensures a 'schema:accessibilityHazard' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessibilityHazard' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessibilitySummary' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "moderate",
+            "dct:title": "metadata-accessibilitysummary",
+            "dct:description": "Ensures a 'schema:accessibilitySummary' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessibilitySummary' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "EPUB\\content.opf",
+        "dct:title": "Professional FXL Export"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page1.xhtml",
+        "dct:title": "Page 1"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page2.xhtml",
+        "dct:title": "Page 2"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page3.xhtml",
+        "dct:title": "Page 3"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page4.xhtml",
+        "dct:title": "Page 4"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page5.xhtml",
+        "dct:title": "Page 5"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page6.xhtml",
+        "dct:title": "Page 6"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page7.xhtml",
+        "dct:title": "Page 7"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page8.xhtml",
+        "dct:title": "Page 8"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page9.xhtml",
+        "dct:title": "Page 9"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page10.xhtml",
+        "dct:title": "Page 10"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page11.xhtml",
+        "dct:title": "Page 11"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page12.xhtml",
+        "dct:title": "Page 12"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page13.xhtml",
+        "dct:title": "Page 13"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page14.xhtml",
+        "dct:title": "Page 14"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page15.xhtml",
+        "dct:title": "Page 15"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page16.xhtml",
+        "dct:title": "Page 16"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page17.xhtml",
+        "dct:title": "Page 17"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page18.xhtml",
+        "dct:title": "Page 18"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page19.xhtml",
+        "dct:title": "Page 19"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page20.xhtml",
+        "dct:title": "Page 20"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page21.xhtml",
+        "dct:title": "Page 21"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page22.xhtml",
+        "dct:title": "Page 22"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page23.xhtml",
+        "dct:title": "Page 23"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page24.xhtml",
+        "dct:title": "Page 24"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page25.xhtml",
+        "dct:title": "Page 25"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page26.xhtml",
+        "dct:title": "Page 26"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page27.xhtml",
+        "dct:title": "Page 27"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page28.xhtml",
+        "dct:title": "Page 28"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page29.xhtml",
+        "dct:title": "Page 29"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page30.xhtml",
+        "dct:title": "Page 30"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Element has no ARIA role matching its epub:type",
+            "earl:pointer": {
+              "cfi": [
+                "/4/2"
+              ],
+              "css": [
+                "nav"
+              ]
+            },
+            "html": "<nav xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\" epub:type=\"toc\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "moderate",
+            "dct:title": "epub-type-has-matching-role",
+            "dct:description": "Ensure the element has an ARIA role matching its epub:type",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/roles.html",
+              "dct:title": "ARIA role",
+              "dct:description": "ARIA role should be used in addition to epub:type"
+            },
+            "rulesetTags": [
+              "cat.aria",
+              "best-practice"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "nav.xhtml",
+        "dct:title": "Table of Contents"
+      }
+    }
+  ],
+  "earl:result": {
+    "earl:outcome": "fail"
+  }
+}

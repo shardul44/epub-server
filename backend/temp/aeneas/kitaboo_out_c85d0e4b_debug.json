@@ -1,0 +1,85 @@
+{
+  "totalFragments": 11,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "3.520",
+      "lines": [
+        "If You Were a Horse"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "3.520",
+      "end": "5.800",
+      "lines": [
+        "Have you ever wished you"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "5.800",
+      "end": "6.920",
+      "lines": [
+        "were a horse?"
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "6.920",
+      "end": "9.480",
+      "lines": [
+        "If you were a horse, you"
+      ],
+      "id": "f000004"
+    },
+    {
+      "begin": "9.480",
+      "end": "12.280",
+      "lines": [
+        "would run like the wind."
+      ],
+      "id": "f000005"
+    },
+    {
+      "begin": "12.280",
+      "end": "15.120",
+      "lines": [
+        "You would have a long tail"
+      ],
+      "id": "f000006"
+    },
+    {
+      "begin": "15.120",
+      "end": "17.120",
+      "lines": [
+        "and mane."
+      ],
+      "id": "f000007"
+    },
+    {
+      "begin": "17.120",
+      "end": "18.600",
+      "lines": [
+        "You would be powerful and"
+      ],
+      "id": "f000008"
+    },
+    {
+      "begin": "18.600",
+      "end": "18.600",
+      "lines": [
+        "strong."
+      ],
+      "id": "f000009"
+    },
+    {
+      "begin": "18.600",
+      "end": "18.600",
+      "lines": [
+        "Oh, how wonderful to be"
+      ],
+      "id": "f000010"
+    }
+  ]
+}
