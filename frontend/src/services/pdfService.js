@@ -1,7 +1,8 @@
 import api from './api';
 
 export const pdfService = {
-  getAllPdfs: () => api.get('/pdfs').then(res => {
+  /** @param {{ scope?: 'own' }} [params] - scope=own: only PDFs uploaded by the current user (dashboard) */
+  getAllPdfs: (params = {}) => api.get('/pdfs', { params }).then(res => {
     console.log('PDF API response:', res.data);
     return res.data.data || [];
   }).catch(error => {

@@ -9,7 +9,9 @@ import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import { HiOutlineSave, HiOutlinePlay, HiOutlineCalculator, HiOutlineChevronLeft, HiOutlineDocument, HiOutlineCheck, HiOutlineTrash, HiOutlineCursorClick, HiOutlineZoomIn, HiOutlineZoomOut, HiOutlineStop, HiOutlineBookOpen } from 'react-icons/hi';
 import api, { API_BASE_URL } from '../services/api';
+import { withAuthImageQuery } from '../utils/authImageUrl';
 import { buildEpubReaderPath } from '../utils/epubReaderUrl';
+import { getPageNumFromZoneId, buildZoneIdToPageMap } from '../utils/kitabooZonePageId';
 import './FxlSyncStudio.css';
 
 const backendOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
@@ -71,7 +73,9 @@ export default function FxlSyncStudio() {
   const currentPage = pages[currentPageIndex] || null;
   const currentPageZones = currentPage?.zones || [];
   const perPageUrlForCurrentPage = currentPage && perPageAudioUrls[currentPage.pageNumber];
-  const effectiveAudioUrl = perPageUrlForCurrentPage ? resolveBackendUrl(perPageUrlForCurrentPage) : audioUrl;
+  const resolvedMediaBase = perPageUrlForCurrentPage ? resolveBackendUrl(perPageUrlForCurrentPage) : audioUrl;
+  // WaveSurfer / fetch cannot send Authorization; backend accepts ?token= on GET (see authenticate middleware).
+  const effectiveAudioUrl = resolvedMediaBase ? withAuthImageQuery(resolvedMediaBase) : null;
   const usePerPageAudioForWaveform = Boolean(perPageUrlForCurrentPage);
   const alignmentMap = useMemo(() => {
     const m = {};
@@ -79,12 +83,10 @@ export default function FxlSyncStudio() {
     return m;
   }, [segments]);
 
+  const zoneIdToPageMap = useMemo(() => buildZoneIdToPageMap(pages), [pages]);
+
   const displaySegments = currentPage
-    ? segments.filter(s => {
-      const p = String(s.id).match(/^p(\d+)_/);
-      const pageNum = p ? parseInt(p[1], 10) : 1;
-      return pageNum === currentPage.pageNumber;
-    })
+    ? segments.filter(s => getPageNumFromZoneId(s.id, zoneIdToPageMap) === currentPage.pageNumber)
     : segments;
 
   const currentPageTimeOffset = useMemo(() => {
@@ -96,13 +98,10 @@ export default function FxlSyncStudio() {
   useEffect(() => {
     const pageNum = currentPage?.pageNumber;
     if (pageNum == null || !usePerPageAudioForWaveform) return;
-    const pageSegs = segmentsRef.current.filter(s => {
-      const m = String(s.id || '').match(/^p(\d+)_/);
-      return m && parseInt(m[1], 10) === pageNum;
-    });
+    const pageSegs = segmentsRef.current.filter(s => getPageNumFromZoneId(s.id, zoneIdToPageMap) === pageNum);
     const offset = pageSegs.length ? Math.min(...pageSegs.map(s => Number(s.startTime) || 0)) : 0;
     displayOffsetByPageRef.current[pageNum] = offset;
-  }, [currentPage?.pageNumber, usePerPageAudioForWaveform]);
+  }, [currentPage?.pageNumber, usePerPageAudioForWaveform, zoneIdToPageMap]);
 
   // Saving is done only via the "Save alignment" button (no auto-save / no "Saved" message).
 
@@ -260,10 +259,7 @@ export default function FxlSyncStudio() {
       const latest = segmentsRef.current || [];
       if (!latest.length) return;
       const pageSegments = isPerPageWaveform
-        ? latest.filter(s => {
-            const m = String(s.id || '').match(/^p(\d+)_/);
-            return m && parseInt(m[1], 10) === currentPageNum;
-          })
+        ? latest.filter(s => getPageNumFromZoneId(s.id, zoneIdToPageMap) === currentPageNum)
         : latest;
       // Per-page: backend stores 0→duration for this page; draw as-is. Single audio: subtract page start so first segment at 0.
       const pageOffset = !isPerPageWaveform && pageSegments.length
@@ -296,7 +292,7 @@ export default function FxlSyncStudio() {
     };
   // Intentionally omit segments: redraw only when waveform/page/audio mode changes, not on every segment change (e.g. region edit).
   // This prevents the effect from clearing and redrawing over the user's drag/resize. We always read latest from segmentsRef in the timeout.
-  }, [isReady, currentPage?.pageNumber, usePerPageAudioForWaveform]);
+  }, [isReady, currentPage?.pageNumber, usePerPageAudioForWaveform, zoneIdToPageMap]);
 
   const handleRunAlignment = async (useManual = false, config = null) => {
     setAligning(true);
@@ -355,10 +351,7 @@ export default function FxlSyncStudio() {
     const pageBoundaries = {};
     pages.forEach((p, i) => {
       const pageNum = p.pageNumber;
-      const pageSegs = segments.filter(s => {
-        const m = String(s.id || '').match(/^p(\d+)_/);
-        return m && parseInt(m[1], 10) === pageNum;
-      });
+      const pageSegs = segments.filter(s => getPageNumFromZoneId(s.id, zoneIdToPageMap) === pageNum);
       let start = pageSegs.length ? Math.min(...pageSegs.map(s => Number(s.startTime) || 0)) : null;
       let end = pageSegs.length ? Math.max(...pageSegs.map(s => Number(s.endTime) || 0)) : null;
       if (start == null) start = i === 0 ? 0 : '';

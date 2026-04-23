@@ -13,6 +13,27 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 
 /**
+ * Google deprecated `gemini-2.0-flash` for new API keys (404). Prefer 2.5 flash as default.
+ * @see https://ai.google.dev/gemini-api/docs/deprecations
+ */
+export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+
+const DEPRECATED_GEMINI_MODEL_ALIASES = {
+  'gemini-2.0-flash': DEFAULT_GEMINI_MODEL,
+  'gemini-2.0-flash-001': DEFAULT_GEMINI_MODEL,
+  'gemini-2.0-flash-lite': 'gemini-2.5-flash-lite',
+  'gemini-2.0-pro': 'gemini-2.5-pro'
+};
+
+/** Map legacy model ids from DB / .env to current API ids. */
+export function normalizeGeminiModelName(name) {
+  const s = String(name ?? '').trim();
+  if (!s) return DEFAULT_GEMINI_MODEL;
+  const bare = s.replace(/^models\//i, '');
+  return DEPRECATED_GEMINI_MODEL_ALIASES[bare] ?? s;
+}
+
+/**
  * Service for interacting with Google Gemini AI
  */
 export class GeminiService {
@@ -455,7 +476,7 @@ export class GeminiService {
       }
       // SDK version 0.24.1 defaults to v1beta API
       // API URL: https://generativelanguage.googleapis.com/v1beta/models
-      // Works with models like gemini-1.5-flash-latest, gemini-2.0-flash, etc.
+      // Works with models like gemini-1.5-flash-latest, gemini-2.5-flash, etc.
       this._client = new GoogleGenerativeAI(apiKey);
     }
     return this._client;
@@ -475,7 +496,11 @@ export class GeminiService {
         return '';
       }
 
-      const modelName = options.modelName || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+      const rawModel =
+        options.modelName != null && String(options.modelName).trim() !== ''
+          ? options.modelName
+          : process.env.GEMINI_MODEL;
+      const modelName = normalizeGeminiModelName(rawModel);
       const genCfg = {};
       if (options.maxOutputTokens != null && Number.isFinite(Number(options.maxOutputTokens))) {
         genCfg.maxOutputTokens = Number(options.maxOutputTokens);
@@ -543,7 +568,11 @@ export class GeminiService {
         return null;
       }
 
-      const modelName = options.modelName || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+      const rawModel =
+        options.modelName != null && String(options.modelName).trim() !== ''
+          ? options.modelName
+          : process.env.GEMINI_MODEL;
+      const modelName = normalizeGeminiModelName(rawModel);
       const responseSchema = options.responseSchema || this.EPUB_REPAIR_RESPONSE_SCHEMA;
       const maxOut =
         options.maxOutputTokens != null && Number.isFinite(Number(options.maxOutputTokens))
@@ -595,7 +624,11 @@ export class GeminiService {
         return { text: '', finishReason: undefined };
       }
 
-      const modelName = options.modelName || process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+      const rawModel =
+        options.modelName != null && String(options.modelName).trim() !== ''
+          ? options.modelName
+          : process.env.GEMINI_MODEL;
+      const modelName = normalizeGeminiModelName(rawModel);
       const genCfg = {};
       if (options.maxOutputTokens != null && Number.isFinite(Number(options.maxOutputTokens))) {
         genCfg.maxOutputTokens = Number(options.maxOutputTokens);
@@ -1088,7 +1121,7 @@ export class GeminiService {
           });
         }
 
-        const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+        const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
         const generationConfig = {
           maxOutputTokens: 65536, // Very high limit for multi-page chapter processing (max for gemini-2.5-flash)
           temperature: 0.1,
@@ -1730,7 +1763,7 @@ Example structure for CHAPTER ${chapterNumber} (showing HIERARCHICAL NESTED stru
           }
         }
 
-        const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+        const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
         // Configure generation settings with higher output token limit for long pages
         // gemini-2.5-flash supports up to 8192 output tokens, but we can try 16384 for newer models
         // If the model doesn't support it, it will fall back to its maximum
@@ -2377,7 +2410,7 @@ Example structure for CHAPTER ${chapterNumber} (showing HIERARCHICAL NESTED stru
     try {
       const pdfBuffer = await fs.readFile(pdfFilePath);
       // Default to gemini-2.5-flash (v1beta API)
-      const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
       const model = client.getGenerativeModel({ model: modelName });
 
       // Ask Gemini to emit clear page separators we can split on.
@@ -2493,7 +2526,7 @@ IMPORTANT: Do NOT include page numbers (like "Page 1", "Page 2") as part of the 
       console.log(`[Page ${pageNumber}] Analyzing page for Table of Contents...`);
 
       const imageBuffer = await fs.readFile(imagePath);
-      const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
       const model = client.getGenerativeModel({ model: modelName });
 
       const prompt = `Analyze this image to determine if it contains a Table of Contents (TOC).
@@ -2616,9 +2649,9 @@ If this page does not contain a clear Table of Contents, return: null`;
     try {
       // Use separate model for structuring (more reliable, less likely to be overloaded)
       // Default to gemini-2.5-flash (v1beta API)
-      const modelName = process.env.GEMINI_STRUCTURING_MODEL
-        || process.env.GEMINI_API_MODEL
-        || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(
+        process.env.GEMINI_STRUCTURING_MODEL || process.env.GEMINI_API_MODEL || ''
+      );
       const model = client.getGenerativeModel({
         model: modelName
       });
@@ -2706,9 +2739,9 @@ ${fullText.substring(0, 50000)}`; // Limit to avoid token limits
     try {
       // Use separate model for text cleaning (can be different from extraction/structuring)
       // Default to gemini-2.5-flash (v1beta API)
-      const modelName = process.env.GEMINI_STRUCTURING_MODEL
-        || process.env.GEMINI_API_MODEL
-        || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(
+        process.env.GEMINI_STRUCTURING_MODEL || process.env.GEMINI_API_MODEL || ''
+      );
       const model = client.getGenerativeModel({
         model: modelName
       });
@@ -2802,7 +2835,7 @@ ${text.substring(0, 10000)}`;
         console.log(`[Page ${pageNumber}] Reading image file...`);
         const imageBuffer = await fs.readFile(imagePath);
 
-        const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+        const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
         const model = client.getGenerativeModel({ model: modelName });
 
         const prompt = `Extract all readable text from this PDF page image. 
@@ -2923,7 +2956,7 @@ Do not add any explanations or formatting markers.`;
 
     try {
       const imageBuffer = await fs.readFile(imagePath);
-      const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
       const model = client.getGenerativeModel({ model: modelName });
 
       const prompt = `You are OCR. Return text blocks with bounding boxes as pure JSON array.
@@ -3097,9 +3130,9 @@ No markdown, no code fences, ONLY JSON array. Example:
       }
 
       try {
-        const modelName = process.env.GEMINI_STRUCTURING_MODEL
-          || process.env.GEMINI_API_MODEL
-          || 'gemini-2.5-flash';
+        const modelName = normalizeGeminiModelName(
+          process.env.GEMINI_STRUCTURING_MODEL || process.env.GEMINI_API_MODEL || ''
+        );
         const model = client.getGenerativeModel({ model: modelName });
 
         const prompt = `Correct and clean the following text extracted from a PDF page. 
@@ -3211,7 +3244,7 @@ ${text.substring(0, 10000)}`; // Limit to avoid token limits
       }
 
       try {
-        const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+        const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
         const model = client.getGenerativeModel({ model: modelName });
 
         const prompt = `Analyze the following text from a PDF page and create structured text blocks with positions.
@@ -3459,7 +3492,7 @@ Return ONLY valid JSON array, no markdown, no explanations:
     try {
       const client = this.getClient();
       // Use the same model as the rest of the codebase
-      const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
       const model = client.getGenerativeModel({ model: modelName });
 
       // Format transcript segments for Gemini (with Aeneas timestamps as reference)
@@ -3634,7 +3667,7 @@ OUTPUT ONLY VALID JSON ARRAY (no markdown, no explanation):
         throw new Error(`Audio file not found or invalid: ${audioFilePath} - ${err.message}`);
       }
 
-      const modelName = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(process.env.GEMINI_API_MODEL || '');
       const model = client.getGenerativeModel({ model: modelName });
 
       console.log(`[GeminiService] Starting XHTML-based alignment with FULL audio file...`);

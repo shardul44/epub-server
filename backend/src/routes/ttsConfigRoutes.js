@@ -1,8 +1,10 @@
 import express from 'express';
 import { TtsConfigService } from '../services/ttsConfigService.js';
 import { successResponse, errorResponse, badRequestResponse } from '../utils/responseHandler.js';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('tts_management'));
 
 // GET /api/tts/config/current - Get current TTS configuration
 router.get('/config/current', async (req, res) => {

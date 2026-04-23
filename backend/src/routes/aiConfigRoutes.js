@@ -1,11 +1,13 @@
 import express from 'express';
 import { AiConfigService } from '../services/aiConfigService.js';
-import { GeminiService } from '../services/geminiService.js';
+import { GeminiService, normalizeGeminiModelName } from '../services/geminiService.js';
 import { successResponse, errorResponse, badRequestResponse } from '../utils/responseHandler.js';
 import multer from 'multer';
 import fs from 'fs/promises';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('ai_config'));
 const upload = multer({ storage: multer.memoryStorage() });
 
 // GET /api/ai/config/current - Get current AI configuration
@@ -72,7 +74,7 @@ router.post('/test', async (req, res) => {
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(apiKey.trim());
-      const testModelName = modelName || 'gemini-pro';
+      const testModelName = normalizeGeminiModelName(modelName || '');
       const model = genAI.getGenerativeModel({ model: testModelName });
 
       // Make a simple test call and measure response time
@@ -109,7 +111,7 @@ router.post('/test', async (req, res) => {
       if (errorMessage.includes('API_KEY_INVALID') || errorMessage.includes('401')) {
         userFriendlyMessage += 'Invalid API key. Please check your API key.';
       } else if (errorMessage.includes('MODEL_NOT_FOUND') || errorMessage.includes('404')) {
-        userFriendlyMessage += `Model "${modelName || 'gemini-pro'}" not found. Please check the model name.`;
+        userFriendlyMessage += `Model "${modelName || 'gemini-2.5-flash'}" not found. Please check the model name.`;
       } else if (errorMessage.includes('QUOTA') || errorMessage.includes('429')) {
         userFriendlyMessage += 'API quota exceeded. Please check your API usage limits.';
       } else {
@@ -134,15 +136,15 @@ router.post('/describe-image', upload.single('image'), async (req, res) => {
     const imageMimeType = req.file.mimetype || 'image/png';
 
     // Check if AI is configured
-    const config = await AiConfigService.getCurrentConfiguration();
-    if (!config || !config.api_key) {
+    const config = await AiConfigService.getActiveConfiguration();
+    if (!config || !config.apiKey) {
       return errorResponse(res, 'AI service is not configured. Please configure AI settings first.', 400);
     }
 
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(config.api_key);
-      const modelName = config.model_name || 'gemini-2.0-flash';
+      const genAI = new GoogleGenerativeAI(config.apiKey);
+      const modelName = normalizeGeminiModelName(config.modelName || '');
       const model = genAI.getGenerativeModel({ model: modelName });
 
       const prompt = `Describe this image in detail. Include:

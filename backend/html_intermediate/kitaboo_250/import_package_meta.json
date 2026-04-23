@@ -1,0 +1,68 @@
+{
+  "preserveForPublish": true,
+  "opfPath": "EPUB/package.opf",
+  "defaultViewportWidth": 1200,
+  "defaultViewportHeight": 1600,
+  "spine": [
+    {
+      "pageNumber": 1,
+      "manifestId": "html0",
+      "href": "xhtml/raw/ch1.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/raw/ch1.xhtml"
+    },
+    {
+      "pageNumber": 2,
+      "manifestId": "html1",
+      "href": "xhtml/pdfu99nb/pages/page1.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page1.xhtml"
+    },
+    {
+      "pageNumber": 3,
+      "manifestId": "html2",
+      "href": "xhtml/pdfu99nb/pages/page2.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page2.xhtml"
+    },
+    {
+      "pageNumber": 4,
+      "manifestId": "html3",
+      "href": "xhtml/pdfu99nb/pages/page3.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page3.xhtml"
+    },
+    {
+      "pageNumber": 5,
+      "manifestId": "html4",
+      "href": "xhtml/pdfu99nb/pages/page4.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page4.xhtml"
+    },
+    {
+      "pageNumber": 6,
+      "manifestId": "html5",
+      "href": "xhtml/pdfu99nb/pages/page5.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page5.xhtml"
+    },
+    {
+      "pageNumber": 7,
+      "manifestId": "html6",
+      "href": "xhtml/pdfu99nb/pages/page8.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page8.xhtml"
+    },
+    {
+      "pageNumber": 8,
+      "manifestId": "html7",
+      "href": "xhtml/pdfu99nb/pages/page9.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page9.xhtml"
+    },
+    {
+      "pageNumber": 9,
+      "manifestId": "html8",
+      "href": "xhtml/pdfu99nb/pages/page10.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page10.xhtml"
+    },
+    {
+      "pageNumber": 10,
+      "manifestId": "html9",
+      "href": "xhtml/pdfu99nb/pages/page11.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/xhtml/pdfu99nb/pages/page11.xhtml"
+    }
+  ]
+}

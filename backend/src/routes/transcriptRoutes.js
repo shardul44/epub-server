@@ -16,8 +16,10 @@ import { AudioSyncService } from '../services/audioSyncService.js';
 import { successResponse, errorResponse, badRequestResponse } from '../utils/responseHandler.js';
 import { getEpubOutputDir } from '../config/fileStorage.js';
 import path from 'path';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('sync_studio'));
 
 /**
  * GET /api/transcripts/job/:jobId

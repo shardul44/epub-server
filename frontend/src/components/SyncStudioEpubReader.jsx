@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ePub from 'epubjs';
 import api from '../services/api';
+import { withAuthImageQuery } from '../utils/authImageUrl';
+import { getPageNumFromZoneId as resolveFxlZoneToPage, buildZoneIdToPageMap } from '../utils/kitabooZonePageId';
 import './SyncStudioEpubReader.css';
 
 function tocLabel(item) {
@@ -250,7 +252,7 @@ function parseFxPageNumFromEpubHref(href) {
  * If we only matched ^p(N)_, reflowable IDs all fell into page 1 and word-level
  * filtering dropped sentence segments for the whole book.
  */
-function getPageNumFromZoneId(zoneId) {
+function getPageNumFromZoneIdReflow(zoneId) {
   if (!zoneId || typeof zoneId !== 'string') return 1;
   const m = zoneId.match(/^p(\d+)_/);
   if (m) return parseInt(m[1], 10);
@@ -519,6 +521,8 @@ export default function SyncStudioEpubReader({
 
   const [syncStudio, setSyncStudio] = useState(null);
   const syncStudioRef = useRef(null);
+  /** FXL Kitaboo: zone id → page from sync-studio `pages`; empty for reflow. */
+  const fxlZoneIdToPageRef = useRef(new Map());
   /** Full normalized list from alignment.json (all pages). */
   const syncBlocksAllRef = useRef([]);
   /** Subset used for findActiveBlockId: full book, or current page when using /audio/page/N. */
@@ -534,6 +538,14 @@ export default function SyncStudioEpubReader({
     const m = Math.floor(t / 60);
     const s = Math.floor(t % 60);
     return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  function resolveBlockPageNum(blockId) {
+    const m = fxlZoneIdToPageRef.current;
+    if (m instanceof Map && m.size > 0) {
+      return resolveFxlZoneToPage(blockId, m);
+    }
+    return getPageNumFromZoneIdReflow(blockId);
   }
 
   const backendOrigin = api.defaults.baseURL?.replace(/\/api\/?$/, '') || '';
@@ -586,6 +598,12 @@ export default function SyncStudioEpubReader({
     return `${backendOrigin}/${url}`;
   }
 
+  /** <audio src> cannot send Authorization; backend accepts ?token= on GET (see authenticate middleware). */
+  function resolveAuthenticatedMediaUrl(url) {
+    const u = resolveBackendUrl(url);
+    return u ? withAuthImageQuery(u) : u;
+  }
+
   function normalizeAlignmentToBlocks(alignment) {
     const raw = coerceAlignmentSegments(alignment);
     const blocksAll = raw
@@ -608,7 +626,7 @@ export default function SyncStudioEpubReader({
     // so nothing matched for highlight on those pages.
     const byPage = new Map();
     for (const b of blocksAll) {
-      const p = getPageNumFromZoneId(b.id);
+      const p = resolveBlockPageNum(b.id);
       if (!byPage.has(p)) byPage.set(p, []);
       byPage.get(p).push(b);
     }
@@ -657,7 +675,7 @@ export default function SyncStudioEpubReader({
       return;
     }
 
-    const filterByPage = (p) => all.filter((b) => getPageNumFromZoneId(b.id) === p);
+    const filterByPage = (p) => all.filter((b) => resolveBlockPageNum(b.id) === p);
     let pageFilter = null;
 
     let pageFromSpine = null;
@@ -837,7 +855,7 @@ export default function SyncStudioEpubReader({
             if (spineIdx == null) return;
             const secPath = resolvePerSectionAudioUrl(s.perSectionAudioUrls, spineIdx);
             if (!secPath) return;
-            const url = resolveBackendUrl(secPath);
+            const url = resolveAuthenticatedMediaUrl(secPath);
             const audio = audioRef.current;
             if (!audio || !url) return;
             if (String(audio.src).includes(`/audio/section/${spineIdx}`)) {
@@ -863,7 +881,7 @@ export default function SyncStudioEpubReader({
           const pageNum = parseFxPageNumFromEpubHref(href);
           const pageAudioPath = resolvePerPageAudioUrl(s.perPageAudioUrls, pageNum);
           if (!pageNum || !pageAudioPath) return;
-          const url = resolveBackendUrl(pageAudioPath);
+          const url = resolveAuthenticatedMediaUrl(pageAudioPath);
           const audio = audioRef.current;
           if (!audio || !url) return;
           const wasPlaying = !audio.paused;
@@ -1080,6 +1098,7 @@ export default function SyncStudioEpubReader({
     syncBlocksAllRef.current = [];
     syncBlocksRef.current = [];
     blockByIdRef.current = new Map();
+    fxlZoneIdToPageRef.current = new Map();
     setSyncLoadError('');
 
     setAudioUi({ playing: false, currentTime: 0, duration: 0 });
@@ -1107,13 +1126,15 @@ export default function SyncStudioEpubReader({
 
         setSyncStudio(data);
         syncStudioRef.current = data;
+        fxlZoneIdToPageRef.current =
+          epubSource === 'kitaboo' ? buildZoneIdToPageMap(data.pages || []) : new Map();
 
         const { blocks, byId } = normalizeAlignmentToBlocks(data?.alignment ?? data?.segments);
         syncBlocksAllRef.current = blocks;
         blockByIdRef.current = byId;
 
         // Configure audio
-        const audioUrl = resolveBackendUrl(data?.audioUrl);
+        const audioUrl = resolveAuthenticatedMediaUrl(data?.audioUrl);
         if (audioUrl) {
           audio.src = audioUrl;
           audio.load();
@@ -1137,7 +1158,7 @@ export default function SyncStudioEpubReader({
               const pageNum = parseFxPageNumFromEpubHref(href);
               const pageAudioPath = resolvePerPageAudioUrl(s.perPageAudioUrls, pageNum);
               if (!pageNum || !pageAudioPath) return;
-              const nextUrl = resolveBackendUrl(pageAudioPath);
+              const nextUrl = resolveAuthenticatedMediaUrl(pageAudioPath);
               const a = audioRef.current;
               if (!nextUrl || !a) return;
               if (a.src.includes(`/audio/page/${pageNum}`)) {
@@ -1169,7 +1190,7 @@ export default function SyncStudioEpubReader({
                   : Math.min(...Object.keys(s.perSectionAudioUrls).map(Number));
               const secPath = resolvePerSectionAudioUrl(s.perSectionAudioUrls, idx);
               if (secPath == null) return;
-              const nextUrl = resolveBackendUrl(secPath);
+              const nextUrl = resolveAuthenticatedMediaUrl(secPath);
               const a = audioRef.current;
               if (!nextUrl || !a) return;
               if (a.src.includes(`/audio/section/${idx}`)) {
@@ -1213,7 +1234,7 @@ export default function SyncStudioEpubReader({
         rebuildActiveSyncBlocksForPlayback();
         return;
       }
-      const nextUrl = resolveBackendUrl(path);
+      const nextUrl = resolveAuthenticatedMediaUrl(path);
       const a = audioRef.current;
       if (!a || !nextUrl) {
         rebuildActiveSyncBlocksForPlayback();

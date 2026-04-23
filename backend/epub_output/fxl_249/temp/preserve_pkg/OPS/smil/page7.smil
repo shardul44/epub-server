@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="../page-0005.xhtml">
+    <par>
+      <text src="../page-0005.xhtml#SML0"/>
+      <audio src="../audio/page_22.mp3" clipBegin="0.000s" clipEnd="0.100s"/>
+    </par>
+    <par>
+      <text src="../page-0005.xhtml#SML1"/>
+      <audio src="../audio/page_22.mp3" clipBegin="0.000s" clipEnd="0.100s"/>
+    </par>
+    <par>
+      <text src="../page-0005.xhtml#SML2"/>
+      <audio src="../audio/page_22.mp3" clipBegin="0.000s" clipEnd="1.360s"/>
+    </par>
+    <par>
+      <text src="../page-0005.xhtml#SML3"/>
+      <audio src="../audio/page_22.mp3" clipBegin="1.360s" clipEnd="2.172s"/>
+    </par>
+    <par>
+      <text src="../page-0005.xhtml#SML4"/>
+      <audio src="../audio/page_22.mp3" clipBegin="2.080s" clipEnd="2.480s"/>
+    </par>
+    <par>
+      <text src="../page-0005.xhtml#SML5"/>
+      <audio src="../audio/page_22.mp3" clipBegin="2.239s" clipEnd="3.160s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

@@ -7,7 +7,7 @@ import { conversionService } from '../services/conversionService';
  */
 const EpubSyncImport = () => {
   const [file, setFile] = useState(null);
-  const [mode, setMode] = useState('auto');
+  const [mode, setMode] = useState('reflowable');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -59,8 +59,7 @@ const EpubSyncImport = () => {
       <p style={{ color: '#555', maxWidth: '42rem', lineHeight: 1.5 }}>
         Skip PDF conversion and zoning when you already have an EPUB. Reflowable books open in{' '}
         <strong>Sync Studio</strong>; fixed-layout (FXL) books open in <strong>FXL Sync Studio</strong> when the EPUB
-        uses the usual page structure (background image plus sync zones). For FXL from other tools, try{' '}
-        <strong>Reflowable</strong> if auto-detect fails.
+        uses the usual page structure (background image plus sync zones). Pick the layout that matches your EPUB.
       </p>
 
       {error && <div className="error">{error}</div>}
@@ -75,12 +74,12 @@ const EpubSyncImport = () => {
           <div className="form-group">
             <label>Layout</label>
             <select className="form-control" value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value="auto">Auto (from EPUB metadata)</option>
               <option value="reflowable">Reflowable — Sync Studio</option>
               <option value="fxl">Fixed layout — FXL Sync Studio</option>
             </select>
             <p style={{ fontSize: '12px', color: '#666', marginTop: '6px' }}>
-              Auto uses <code>rendition:layout</code> in the package. Choose manually if the wrong studio opens.
+              Choose <strong>Reflowable</strong> for standard reflowable EPUBs, or <strong>Fixed layout</strong> for FXL
+              page-based books.
             </p>
           </div>
 

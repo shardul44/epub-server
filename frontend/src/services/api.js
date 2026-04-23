@@ -56,6 +56,10 @@ api.interceptors.response.use(
       if (path !== '/login' && path !== '/register') {
         window.location.href = '/login';
       }
+    } else if (error.response?.status === 403) {
+      const msg = error.response?.data?.error || 'You do not have access to this action or feature.';
+      console.warn('Forbidden (403):', msg);
+      window.dispatchEvent(new CustomEvent('app-forbidden', { detail: { message: msg } }));
     } else if (error.response?.status === 404) {
       console.error('API endpoint not found:', error.config?.url);
     } else if (error.response?.status >= 500) {

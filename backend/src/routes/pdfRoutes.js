@@ -3,11 +3,23 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { PdfService } from '../services/pdfService.js';
-import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from '../utils/responseHandler.js';
+import { ActivityService } from '../services/activityService.js';
+import {
+  successResponse,
+  errorResponse,
+  notFoundResponse,
+  badRequestResponse,
+  forbiddenResponse
+} from '../utils/responseHandler.js';
 import { getUploadDir, ensureDirectories } from '../config/fileStorage.js';
 import fs from 'fs/promises';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('conversion.basic'));
+
+router.param('id', paramPdfTenantAccess);
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -47,10 +59,20 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     } else {
       // Handle single PDF - convert to EPUB3
       const layoutType = req.body.layoutType || 'REFLOWABLE';
-      const response = await PdfService.uploadAndAnalyzePdf(file, { layoutType });
+      const owner = { userId: req.user?.id ?? null, organizationId: req.user?.organizationId ?? null };
+      const response = await PdfService.uploadAndAnalyzePdf(file, { layoutType }, owner);
+      await ActivityService.logFromRequest(req, {
+        action: 'pdf.upload',
+        entityType: 'pdf_document',
+        entityId: response.id,
+        summary: `Uploaded ${response.originalFileName || 'PDF'}`
+      }).catch(() => {});
       return successResponse(res, response, 201);
     }
   } catch (error) {
+    if (error.code === 'USAGE_LIMIT') {
+      return forbiddenResponse(res, error.message);
+    }
     return errorResponse(res, error.message, 500);
   }
 });
@@ -64,6 +86,7 @@ router.post('/upload/bulk', upload.array('files', 10), async (req, res) => {
 
     const successfulUploads = [];
     const errors = [];
+    const owner = { userId: req.user?.id ?? null, organizationId: req.user?.organizationId ?? null };
 
     for (const file of req.files) {
       try {
@@ -75,10 +98,24 @@ router.post('/upload/bulk', upload.array('files', 10), async (req, res) => {
           const zipResults = await PdfService.extractAndUploadPdfsFromZip(file);
           successfulUploads.push(...zipResults);
         } else {
-          const response = await PdfService.uploadAndAnalyzePdf(file);
+          const response = await PdfService.uploadAndAnalyzePdf(file, {}, owner);
+          await ActivityService.logFromRequest(req, {
+            action: 'pdf.upload',
+            entityType: 'pdf_document',
+            entityId: response.id,
+            summary: `Uploaded ${response.originalFileName || 'PDF'}`
+          }).catch(() => {});
           successfulUploads.push(response);
         }
       } catch (error) {
+        if (error.code === 'USAGE_LIMIT') {
+          errors.push({
+            fileName: file.originalname,
+            error: error.message,
+            code: 'USAGE_LIMIT'
+          });
+          break;
+        }
         errors.push({
           fileName: file.originalname,
           error: error.message
@@ -97,10 +134,11 @@ router.post('/upload/bulk', upload.array('files', 10), async (req, res) => {
   }
 });
 
-// GET /api/pdfs - Get all PDFs
+// GET /api/pdfs - Get all PDFs (?scope=own = only PDFs this user uploaded; org admins default: full org)
 router.get('/', async (req, res) => {
   try {
-    const pdfs = await PdfService.getAllPdfs();
+    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const pdfs = await PdfService.getAllPdfs(req.user, scope);
     return successResponse(res, pdfs);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -110,7 +148,8 @@ router.get('/', async (req, res) => {
 // GET /api/pdfs/grouped - Get PDFs grouped by ZIP
 router.get('/grouped', async (req, res) => {
   try {
-    const grouped = await PdfService.getPdfsGroupedByZip();
+    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const grouped = await PdfService.getPdfsGroupedByZip(req.user, scope);
     return successResponse(res, grouped);
   } catch (error) {
     return errorResponse(res, error.message, 500);

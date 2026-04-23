@@ -2,7 +2,7 @@ import { JSDOM } from 'jsdom';
 import fs from 'fs/promises';
 import path from 'path';
 import { AiConfigService } from './aiConfigService.js';
-import { GeminiService } from './geminiService.js';
+import { GeminiService, normalizeGeminiModelName } from './geminiService.js';
 import { ChapterDetectionService } from './chapterDetectionService.js';
 import { ChapterConfigService } from './chapterConfigService.js';
 
@@ -253,7 +253,7 @@ export class SemanticXhtmlGenerator {
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(aiConfig.apiKey);
-      const modelName = aiConfig.modelName || 'gemini-2.5-flash';
+      const modelName = normalizeGeminiModelName(aiConfig.modelName || '');
       const model = genAI.getGenerativeModel({ model: modelName });
       
       // Prepare structure data for Gemini
@@ -721,7 +721,9 @@ Return ONLY the complete, valid XHTML code that matches the PDF structure exactl
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(aiConfig.apiKey);
-      const model = genAI.getGenerativeModel({ model: aiConfig.modelName });
+      const model = genAI.getGenerativeModel({
+        model: normalizeGeminiModelName(aiConfig.modelName || '')
+      });
       
       const prompt = `Analyze this document structure and ensure the EPUB output maintains the EXACT visual appearance of the PDF:
 

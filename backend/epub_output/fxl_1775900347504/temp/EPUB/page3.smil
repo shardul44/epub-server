@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="page3.xhtml">
+    <par>
+      <text src="page3.xhtml#p3_z0"/>
+      <audio src="audio/page3.mp3" clipBegin="0.000s" clipEnd="0.471s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z1"/>
+      <audio src="audio/page3.mp3" clipBegin="0.471s" clipEnd="0.941s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z2"/>
+      <audio src="audio/page3.mp3" clipBegin="0.941s" clipEnd="1.882s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z3"/>
+      <audio src="audio/page3.mp3" clipBegin="1.882s" clipEnd="2.823s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z4"/>
+      <audio src="audio/page3.mp3" clipBegin="2.823s" clipEnd="3.295s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z5"/>
+      <audio src="audio/page3.mp3" clipBegin="3.295s" clipEnd="3.765s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z6"/>
+      <audio src="audio/page3.mp3" clipBegin="3.765s" clipEnd="4.236s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z7"/>
+      <audio src="audio/page3.mp3" clipBegin="4.236s" clipEnd="4.706s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z8"/>
+      <audio src="audio/page3.mp3" clipBegin="4.706s" clipEnd="5.177s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z9"/>
+      <audio src="audio/page3.mp3" clipBegin="5.177s" clipEnd="6.118s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z10"/>
+      <audio src="audio/page3.mp3" clipBegin="6.118s" clipEnd="8.471s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z11"/>
+      <audio src="audio/page3.mp3" clipBegin="8.471s" clipEnd="10.824s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z12"/>
+      <audio src="audio/page3.mp3" clipBegin="10.824s" clipEnd="13.177s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z13"/>
+      <audio src="audio/page3.mp3" clipBegin="13.177s" clipEnd="15.531s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z14"/>
+      <audio src="audio/page3.mp3" clipBegin="15.531s" clipEnd="17.884s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z15"/>
+      <audio src="audio/page3.mp3" clipBegin="17.884s" clipEnd="19.766s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z16"/>
+      <audio src="audio/page3.mp3" clipBegin="19.766s" clipEnd="20.707s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z17"/>
+      <audio src="audio/page3.mp3" clipBegin="20.707s" clipEnd="22.120s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z18"/>
+      <audio src="audio/page3.mp3" clipBegin="22.120s" clipEnd="23.531s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z19"/>
+      <audio src="audio/page3.mp3" clipBegin="23.531s" clipEnd="24.943s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z20"/>
+      <audio src="audio/page3.mp3" clipBegin="24.943s" clipEnd="26.825s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z21"/>
+      <audio src="audio/page3.mp3" clipBegin="26.825s" clipEnd="28.708s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z22"/>
+      <audio src="audio/page3.mp3" clipBegin="28.708s" clipEnd="30.120s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z23"/>
+      <audio src="audio/page3.mp3" clipBegin="30.120s" clipEnd="32.002s"/>
+    </par>
+    <par>
+      <text src="page3.xhtml#p3_z24"/>
+      <audio src="audio/page3.mp3" clipBegin="32.002s" clipEnd="32.943s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

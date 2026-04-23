@@ -4,12 +4,19 @@ import fs from 'fs/promises';
 import os from 'os';
 import multer from 'multer';
 import { ConversionService } from '../services/conversionService.js';
+import { ActivityService } from '../services/activityService.js';
 import { EpubService } from '../services/epubService.js';
 import { EpubDirectImportService } from '../services/epubDirectImportService.js';
 import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from '../utils/responseHandler.js';
 import { getHtmlIntermediateDir } from '../config/fileStorage.js';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { paramJobTenantAccess, paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('conversion.basic'));
+
+router.param('jobId', paramJobTenantAccess);
+router.param('pdfDocumentId', paramPdfTenantAccess);
 
 const epubImportUpload = multer({
   storage: multer.diskStorage({
@@ -27,10 +34,11 @@ const epubImportUpload = multer({
   }
 });
 
-// GET /api/conversions - Get all conversions
+// GET /api/conversions - Get all conversions (?scope=own = only jobs for PDFs this user created)
 router.get('/', async (req, res) => {
   try {
-    const jobs = await ConversionService.getAllConversions();
+    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const jobs = await ConversionService.getAllConversions(req.user, scope);
     
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -46,10 +54,10 @@ router.get('/', async (req, res) => {
 router.post('/start/:pdfDocumentId', async (req, res) => {
   try {
     const chapterPlan = Array.isArray(req.body.chapterPlan) ? req.body.chapterPlan : null;
-    const job = await ConversionService.startConversion(
-      parseInt(req.params.pdfDocumentId),
-      { chapterPlan }
-    );
+    const job = await ConversionService.startConversion(parseInt(req.params.pdfDocumentId), {
+      chapterPlan,
+      user: req.user
+    });
     return successResponse(res, job, 201);
   } catch (error) {
     if (error.message.includes('not found')) {
@@ -85,7 +93,7 @@ router.post('/start/bulk', async (req, res) => {
 
     for (const pdfId of pdfIds) {
       try {
-        const job = await ConversionService.startConversion(pdfId);
+        const job = await ConversionService.startConversion(pdfId, { user: req.user });
         jobs.push(job);
       } catch (error) {
         errors.push({
@@ -109,7 +117,7 @@ router.post('/start/bulk', async (req, res) => {
 // GET /api/conversions/pdf/:pdfDocumentId - Get conversions by PDF
 router.get('/pdf/:pdfDocumentId', async (req, res) => {
   try {
-    const jobs = await ConversionService.getConversionsByPdf(parseInt(req.params.pdfDocumentId));
+    const jobs = await ConversionService.getConversionsByPdf(parseInt(req.params.pdfDocumentId), req.user);
     return successResponse(res, jobs);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -126,7 +134,8 @@ router.get('/status/:status', async (req, res) => {
       return badRequestResponse(res, 'Invalid status');
     }
 
-    const jobs = await ConversionService.getConversionsByStatus(status);
+    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const jobs = await ConversionService.getConversionsByStatus(status, req.user, scope);
     
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -141,7 +150,8 @@ router.get('/status/:status', async (req, res) => {
 // GET /api/conversions/review-required - Get jobs requiring review
 router.get('/review-required', async (req, res) => {
   try {
-    const jobs = await ConversionService.getReviewRequired();
+    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const jobs = await ConversionService.getReviewRequired(req.user, scope);
     return successResponse(res, jobs);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -969,7 +979,19 @@ router.post('/import-epub-for-sync', epubImportUpload.single('epub'), async (req
     const buf = await fs.readFile(req.file.path);
     await fs.unlink(req.file.path).catch(() => {});
     tmpPath = null;
-    const result = await EpubDirectImportService.importForAudioSync(buf, req.file.originalname, mode);
+    const owner = {
+      userId: req.user?.id ?? null,
+      organizationId: req.user?.organizationId ?? null
+    };
+    const result = await EpubDirectImportService.importForAudioSync(buf, req.file.originalname, mode, owner);
+    const jid = result?.job?.id;
+    await ActivityService.logFromRequest(req, {
+      action: 'epub.import_sync',
+      entityType: 'conversion_job',
+      entityId: jid ?? null,
+      summary: 'Imported EPUB for Sync Studio',
+      metadata: { kind: result?.kind }
+    }).catch(() => {});
     return successResponse(res, result, 201);
   } catch (error) {
     if (tmpPath) await fs.unlink(tmpPath).catch(() => {});

@@ -1,19 +1,17 @@
 import { PdfDocumentModel } from '../models/PdfDocument.js';
 import fs from 'fs/promises';
 import path from 'path';
+import pdfParse from 'pdf-parse';
 import { getUploadDir, ensureDirectories } from '../config/fileStorage.js';
 import { v4 as uuidv4 } from 'uuid';
-
-// Note: This is a simplified version. Full PDF processing would require:
-// - pdf-parse or pdf-lib for PDF reading
-// - pdf2pic or similar for image extraction
-// - Tesseract.js for OCR (if needed)
-// - Image processing libraries
+import { LicenseService } from './licenseService.js';
 
 export class PdfService {
-  static async getAllPdfs() {
-    const pdfs = await PdfDocumentModel.findAll();
-    return pdfs.map(pdf => this.convertToDTO(pdf));
+  static async getAllPdfs(user, options = {}) {
+    const pdfs = user
+      ? await PdfDocumentModel.findAllForUser(user, options)
+      : await PdfDocumentModel.findAll();
+    return pdfs.map((pdf) => this.convertToDTO(pdf));
   }
 
   static async getPdfDocument(id) {
@@ -24,61 +22,83 @@ export class PdfService {
     return this.convertToDTO(pdf);
   }
 
-  static async uploadAndAnalyzePdf(file, options = {}) {
+  static async countPdfPagesFromBuffer(buffer) {
+    try {
+      const data = await pdfParse(buffer);
+      const n = Number(data?.numpages);
+      if (Number.isFinite(n) && n >= 1) return Math.min(Math.floor(n), 500000);
+    } catch {
+      /* fall through */
+    }
+    return 1;
+  }
+
+  static async uploadAndAnalyzePdf(file, options = {}, owner = null) {
     await ensureDirectories();
-    
+
     const { audioFile = null, layoutType = 'REFLOWABLE' } = options;
-    
+
     const uploadDir = getUploadDir();
     const fileName = uuidv4() + path.extname(file.originalname);
     const filePath = path.join(uploadDir, fileName);
 
-    // Save file
-    await fs.writeFile(filePath, file.buffer);
+    const totalPages = await this.countPdfPagesFromBuffer(file.buffer);
 
-    // Get file stats
-    const stats = await fs.stat(filePath);
-    
-    // TODO: Implement actual PDF analysis using pdf-parse or similar
-    // For now, using placeholder values
-    const totalPages = 1; // Would extract from PDF
-    const documentType = 'OTHER';
-    const pageQuality = 'DIGITAL_NATIVE';
-    const languages = ['en'];
-
-    let audioFilePath = null;
-    let audioFileName = null;
-
-    if (audioFile) {
-      const audioFileName = uuidv4() + path.extname(audioFile.originalname);
-      const audioPath = path.join(uploadDir, audioFileName);
-      await fs.writeFile(audioPath, audioFile.buffer);
-      audioFilePath = audioPath;
-      audioFileName = audioFile.originalname;
+    const orgId = owner?.organizationId ?? null;
+    let consumed = 0;
+    if (orgId) {
+      await LicenseService.assertAndConsumePdfPages(orgId, totalPages);
+      consumed = totalPages;
     }
 
-    const pdfData = {
-      fileName,
-      originalFileName: file.originalname,
-      filePath,
-      fileSize: stats.size,
-      totalPages,
-      documentType,
-      pageQuality,
-      languages,
-      hasTables: false,
-      hasFormulas: false,
-      hasMultiColumn: false,
-      scannedPagesCount: 0,
-      digitalPagesCount: totalPages,
-      layoutType,
-      audioFilePath,
-      audioFileName,
-      audioSynced: false
-    };
+    try {
+      await fs.writeFile(filePath, file.buffer);
+      const stats = await fs.stat(filePath);
+      const documentType = 'OTHER';
+      const pageQuality = 'DIGITAL_NATIVE';
+      const languages = ['en'];
 
-    const pdf = await PdfDocumentModel.create(pdfData);
-    return this.convertToDTO(pdf);
+      let audioFilePath = null;
+      let audioFileName = null;
+
+      if (audioFile) {
+        const audioFileName = uuidv4() + path.extname(audioFile.originalname);
+        const audioPath = path.join(uploadDir, audioFileName);
+        await fs.writeFile(audioPath, audioFile.buffer);
+        audioFilePath = audioPath;
+        audioFileName = audioFile.originalname;
+      }
+
+      const pdfData = {
+        fileName,
+        originalFileName: file.originalname,
+        filePath,
+        fileSize: stats.size,
+        totalPages,
+        documentType,
+        pageQuality,
+        languages,
+        hasTables: false,
+        hasFormulas: false,
+        hasMultiColumn: false,
+        scannedPagesCount: 0,
+        digitalPagesCount: totalPages,
+        layoutType,
+        audioFilePath,
+        audioFileName,
+        audioSynced: false,
+        userId: owner?.userId ?? null,
+        organizationId: owner?.organizationId ?? null
+      };
+
+      const pdf = await PdfDocumentModel.create(pdfData);
+      return this.convertToDTO(pdf);
+    } catch (e) {
+      if (consumed && orgId) {
+        await LicenseService.refundPdfPages(orgId, consumed).catch(() => {});
+      }
+      throw e;
+    }
   }
 
   static async extractAndUploadPdfsFromZip(zipFile) {
@@ -169,9 +189,11 @@ export class PdfService {
     }
   }
 
-  static async getPdfsGroupedByZip() {
+  static async getPdfsGroupedByZip(user, options = {}) {
     const grouped = {};
-    const pdfs = await PdfDocumentModel.findAll();
+    const pdfs = user
+      ? await PdfDocumentModel.findAllForUser(user, options)
+      : await PdfDocumentModel.findAll();
     
     pdfs.forEach(pdf => {
       const groupId = pdf.zip_file_group_id || 'ungrouped';

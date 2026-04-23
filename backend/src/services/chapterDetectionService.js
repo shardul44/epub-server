@@ -57,7 +57,9 @@ Rules:
 - Provide reasoning for each chapter boundary
 - If no clear chapters found, create logical sections based on content flow`;
 
-      const response = await GeminiService.generateContent(prompt);
+      const response = await GeminiService.generateContent(prompt, {
+        modelName: aiConfig.modelName || undefined
+      });
       const result = this.parseAIResponse(response);
       
       if (result && result.chapters && result.chapters.length > 0) {

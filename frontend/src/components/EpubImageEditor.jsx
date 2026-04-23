@@ -5,6 +5,7 @@ import api from '../services/api';
 import { conversionService } from '../services/conversionService';
 import { injectImageIntoXhtml, applyReflowableCss } from '../utils/xhtmlUtils';
 import { saveLocalImages, getLocalImages, deleteLocalImages } from '../utils/localImageStorage';
+import { withAuthImageQuery } from '../utils/authImageUrl';
 import DraggableCanvas from './DraggableCanvas';
 import GrapesJSCanvas from './GrapesJSCanvas';
 import GrapesJSFooter from './GrapesJSFooter';
@@ -1261,13 +1262,17 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       const relativeImagePattern2 = /src=["']\.\.\/images\/([^"']+)["']/gi;
       
       xhtmlContent = xhtmlContent.replace(relativeImagePattern1, (match, fileName) => {
-        const absoluteUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        const absoluteUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
         console.log('Converting relative image path (images/):', match, '->', absoluteUrl);
         return `src="${absoluteUrl}"`;
       });
       
       xhtmlContent = xhtmlContent.replace(relativeImagePattern2, (match, fileName) => {
-        const absoluteUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        const absoluteUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
         console.log('Converting relative image path (../images/):', match, '->', absoluteUrl);
         return `src="${absoluteUrl}"`;
       });
@@ -1385,7 +1390,7 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
         
         return {
           ...img,
-          url: imageUrl,
+          url: withAuthImageQuery(imageUrl),
           // Store original for debugging
           originalUrl: originalUrl
         };
@@ -2839,21 +2844,31 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       // Handle different URL formats
       if (imgSrc.startsWith('images/')) {
         const fileName = imgSrc.replace('images/', '');
-        imageUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        imageUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
       } else if (imgSrc.startsWith('../images/')) {
         const fileName = imgSrc.replace('../images/', '');
-        imageUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        imageUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
       } else if (imgSrc.startsWith('/api/')) {
         // Already has /api/ prefix, just prepend base URL if needed
         if (!imgSrc.startsWith(api.defaults.baseURL)) {
-          imageUrl = `${api.defaults.baseURL}${imgSrc.replace('/api', '')}`;
+          imageUrl = withAuthImageQuery(
+            `${api.defaults.baseURL}${imgSrc.replace('/api', '')}`
+          );
         } else {
-          imageUrl = imgSrc;
+          imageUrl = withAuthImageQuery(imgSrc);
         }
       } else {
         // Assume it's just a filename
-        imageUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${imgSrc}`;
+        imageUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${imgSrc}`
+        );
       }
+    } else {
+      imageUrl = withAuthImageQuery(imageUrl);
     }
     
     console.log('[EpubImageEditor] Constructed image URL:', imageUrl);
@@ -3044,7 +3059,9 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
           });
           
           // Convert to preview URL for display
-          const previewUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${uploadedFileName}`;
+          const previewUrl = withAuthImageQuery(
+            `${api.defaults.baseURL}/conversions/${jobId}/images/${uploadedFileName}`
+          );
           updated = updated.replace(
             new RegExp(`src=["']${relativePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["']`, 'g'),
             `src="${previewUrl}"`
@@ -3096,13 +3113,17 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       
       // Convert images/ paths to absolute URLs
       previewXhtml = previewXhtml.replace(/src=["']images\/([^"']+)["']/gi, (match, fileName) => {
-        const absoluteUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        const absoluteUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
         return `src="${absoluteUrl}"`;
       });
       
       // Also handle ../images/ format
       previewXhtml = previewXhtml.replace(/src=["']\.\.\/images\/([^"']+)["']/gi, (match, fileName) => {
-        const absoluteUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        const absoluteUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
         return `src="${absoluteUrl}"`;
       });
       
@@ -3154,11 +3175,15 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       // Convert any images/ paths to absolute URLs for preview (safety)
       let previewXhtml = regeneratedXhtml;
       previewXhtml = previewXhtml.replace(/src=["']images\/([^"']+)["']/gi, (match, fileName) => {
-        const absoluteUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        const absoluteUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
         return `src="${absoluteUrl}"`;
       });
       previewXhtml = previewXhtml.replace(/src=["']\.\.\/images\/([^"']+)["']/gi, (match, fileName) => {
-        const absoluteUrl = `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`;
+        const absoluteUrl = withAuthImageQuery(
+          `${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`
+        );
         return `src="${absoluteUrl}"`;
       });
 
@@ -3230,8 +3255,9 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       // So path should be "images/file.jpg" (not "../images/")
       
       // Pattern to match img src with absolute URLs pointing to our API
+      // (optional ?token=… for <img src> auth — strip when saving EPUB-relative paths)
       const absoluteUrlPattern = new RegExp(
-        `src=["']${api.defaults.baseURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/conversions/${jobId}/images/([^"']+)["']`,
+        `src=["']${api.defaults.baseURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/conversions/${jobId}/images/([^"'?]+)(?:\\?[^"']*)?["']`,
         'gi'
       );
       
@@ -3257,7 +3283,7 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       // Update the xhtml state with the saved content (convert relative paths to absolute for preview)
       // This ensures the preview shows the saved changes immediately
       const previewXhtml = xhtmlToSave.replace(/src=["']images\/([^"']+)["']/gi, (match, fileName) => {
-        return `src="${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}"`;
+        return `src="${withAuthImageQuery(`${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`)}"`;
       });
       setXhtml(previewXhtml);
       
@@ -3288,11 +3314,11 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       const relativeImagePattern2 = /src=["']\.\.\/images\/([^"']+)["']/gi;
       
       resetXhtml = resetXhtml.replace(relativeImagePattern1, (match, fileName) => {
-        return `src="${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}"`;
+        return `src="${withAuthImageQuery(`${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`)}"`;
       });
       
       resetXhtml = resetXhtml.replace(relativeImagePattern2, (match, fileName) => {
-        return `src="${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}"`;
+        return `src="${withAuthImageQuery(`${api.defaults.baseURL}/conversions/${jobId}/images/${fileName}`)}"`;
       });
       
       setXhtml(resetXhtml);

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Login = () => {
@@ -11,6 +12,7 @@ const Login = () => {
   const [toast, setToast] = useState({ open: false, message: '' });
   const toastTimerRef = useRef(null);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   // Prevent timer leakage across remounts (doesn't affect navigation, just UI robustness).
   React.useEffect(() => {
@@ -44,6 +46,11 @@ const Login = () => {
       if (!token) throw new Error('Login failed: missing token from server response.');
 
       localStorage.setItem('token', token);
+      if (payload?.user) setUser(payload.user);
+      else {
+        const me = await api.get('/auth/me');
+        setUser(me.data?.data ?? me.data);
+      }
       navigate('/');
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Login failed';

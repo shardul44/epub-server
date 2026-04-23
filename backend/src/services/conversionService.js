@@ -6,12 +6,14 @@ import crypto from 'crypto';
 import JSZip from 'jszip';
 import { JSDOM } from 'jsdom';
 import * as cheerio from 'cheerio';
+import { splitParagraphBlocksAtBrBetweenSyncSentences } from '../utils/xhtmlReflowParagraphSplit.js';
 import { getEpubOutputDir, getHtmlIntermediateDir } from '../config/fileStorage.js';
 import { PdfExtractionService } from './pdfExtractionService.js';
 import { GeminiService } from './geminiService.js';
 import { JobConcurrencyService } from './jobConcurrencyService.js';
 import { TextBasedConversionPipeline } from './textBasedConversionPipeline.js';
 import { ChapterConfigService } from './chapterConfigService.js';
+import { canAccessPdfRow } from '../utils/tenantScope.js';
 // TtsService and mapTimingsToBlocks removed - using player's built-in TTS instead of generating audio files
 
 export class ConversionService {
@@ -1702,6 +1704,10 @@ ${xhtmlPages.map((p, i) => `    <li><a href="${p.xhtmlFileName}">Page ${p.pageNu
     if (!pdf) {
       throw new Error('PDF document not found with id: ' + pdfDocumentId);
     }
+    const user = options.user;
+    if (user && !canAccessPdfRow(user, pdf)) {
+      throw new Error('PDF document not found with id: ' + pdfDocumentId);
+    }
 
     const intermediateData = options.chapterPlan
       ? JSON.stringify({ chapterPlan: options.chapterPlan })
@@ -2571,6 +2577,23 @@ ${xhtmlPages.map((p, i) => `    <li><a href="${p.xhtmlFileName}">Page ${p.pageNu
       // Read and fix XHTML file (fix image paths from ../images/ to images/)
       let xhtmlContent = await fs.readFile(page.xhtmlPath, 'utf8');
 
+      // Image Editor stacked pages: top: N% is authored as N×1vh (page 2 @ 100%, page 3 @ 200%…),
+      // NOT as N% of .page height. With height:400vh, top:275% becomes 1100vh and clips all text.
+      xhtmlContent = ConversionService._fixImageEditorTopPercentToVh(xhtmlContent);
+      // Same convention for height: N% on abs-positioned blocks (55% must be 55vh, not 55% of .page).
+      xhtmlContent = ConversionService._fixImageEditorHeightPercentToVh(xhtmlContent);
+      // Inline height:100vh on <img> ignores .has-image height (15vh/55vh) and paints 100vh tall —
+      // overflows and covers the text block below (second sentence "missing").
+      xhtmlContent = ConversionService._fixImageEditorImgInlineHeightVh(xhtmlContent);
+      // Author CSS often sets .page { height:400vh; overflow-y:hidden } — clips everything below
+      // that box in Thorium even when later rules set min-height:500vh+.
+      xhtmlContent = ConversionService._neutralizeImageEditorPageHeight400vh(xhtmlContent);
+      // Invalid </br> breaks paragraph structure in some readers (second sentence "lost").
+      xhtmlContent = ConversionService._fixMalformedBrTags(xhtmlContent);
+      // Split <p> that contains <br /> between two .sync-sentence spans so paginated readers
+      // (Thorium spread/columns) do not break mid-paragraph and overlap stacked vh content.
+      xhtmlContent = splitParagraphBlocksAtBrBetweenSyncSentences(xhtmlContent);
+
       // CRITICAL FIX: Ensure XHTML has proper document structure
       // A file starting with <?xml ...?> is also a properly declared document — don't treat it as missing DOCTYPE
       const trimmedContent = xhtmlContent.trim();
@@ -2644,7 +2667,8 @@ ${bodyContent}
       // Some XHTML already contains a weaker .-epub-media-overlay-active rule (fill/color only),
       // which allows reader-level yellow highlight to appear.
       const mediaOverlayCss = `\n/* EPUB 3 Media Overlay Active/Playing Class - text-only highlight for reflowable EPUB */\n.sync-sentence, .sync-word { display: inline !important; background: transparent !important; background-color: transparent !important; border: 0 !important; outline: 0 !important; box-shadow: none !important; }\n.-epub-media-overlay-active,\n.epub-media-overlay-active,\n.-epub-media-overlay-playing,\n.epub-media-overlay-playing,\n[class*='epub-media-overlay-active'],\n[class*='epub-media-overlay-playing'],\n.smilActive,\n.readium-smil-active,\n.sync-active,\n.mo-active,\n.mo-playing,\n.active,\n.highlight,\n.tts_on {\n  background: transparent !important;\n  background-color: transparent !important;\n  box-shadow: none !important;\n  outline: none !important;\n  border-color: transparent !important;\n  caret-color: transparent !important;\n}\n\n/* Apply active color to inline sync targets only */\n.-epub-media-overlay-active.sync-word,\n.-epub-media-overlay-active.sync-sentence,\n.epub-media-overlay-active.sync-word,\n.epub-media-overlay-active.sync-sentence,\n.-epub-media-overlay-playing.sync-word,\n.-epub-media-overlay-playing.sync-sentence,\n.epub-media-overlay-playing.sync-word,\n.epub-media-overlay-playing.sync-sentence,\n[class*='epub-media-overlay-active'] .sync-word,\n[class*='epub-media-overlay-active'] .sync-sentence,\n[class*='epub-media-overlay-playing'] .sync-word,\n[class*='epub-media-overlay-playing'] .sync-sentence,\n.smilActive .sync-word,\n.smilActive .sync-sentence,\n.readium-smil-active .sync-word,\n.readium-smil-active .sync-sentence,\n.sync-active .sync-word,\n.sync-active .sync-sentence {\n  fill: inherit !important;\n  color: #4aa3d8 !important;\n  -webkit-text-fill-color: #4aa3d8 !important;\n  text-decoration: none !important;\n  background: transparent !important;\n  background-color: transparent !important;\n  box-shadow: none !important;\n  outline: none !important;\n}\n/* Final defensive override against reader-injected yellow background */\nhtml body .-epub-media-overlay-active,\nhtml body .epub-media-overlay-active,\nhtml body .-epub-media-overlay-playing,\nhtml body .epub-media-overlay-playing,\nhtml body [class*='epub-media-overlay-active'],\nhtml body [class*='epub-media-overlay-playing'],\nhtml body .smilActive,\nhtml body .readium-smil-active,\nhtml body .sync-active,\nhtml body .mo-active,\nhtml body .mo-playing,\nhtml body .active,\nhtml body .highlight,\nhtml body .tts_on,\nhtml body .-epub-media-overlay-active *,\nhtml body .epub-media-overlay-active *,\nhtml body .-epub-media-overlay-playing *,\nhtml body .epub-media-overlay-playing *,\nhtml body [class*='epub-media-overlay-active'] *,\nhtml body [class*='epub-media-overlay-playing'] *,\nhtml body .smilActive *,\nhtml body .readium-smil-active *,\nhtml body .sync-active *,\nhtml body .mo-active *,\nhtml body .mo-playing * {\n  background: transparent !important;\n  background-color: transparent !important;\n  box-shadow: none !important;\n  border-color: transparent !important;\n}\nmark, mark * {\n  background: transparent !important;\n  background-color: transparent !important;\n  color: inherit !important;\n}\n::selection, *::selection {\n  background: transparent !important;\n  background-color: transparent !important;\n  color: inherit !important;\n}\n::-moz-selection, *::-moz-selection {\n  background: transparent !important;\n  background-color: transparent !important;\n  color: inherit !important;\n}`;
-      xhtmlContent = ConversionService._injectMediaOverlayCssIntoFirstStyle(xhtmlContent, mediaOverlayCss);
+      const reflowClipFixCss = ConversionService._buildEpubReflowClippingFixCss(xhtmlContent);
+      xhtmlContent = ConversionService._injectMediaOverlayCssIntoFirstStyle(xhtmlContent, mediaOverlayCss + reflowClipFixCss);
 
       // Fix CSS attribute selectors with double quotes (XHTML requirement)
       // In XHTML, CSS attribute selectors like [class*="value"] must use single quotes
@@ -2755,6 +2779,8 @@ ${bodyContent}
 
       // Re-serialize as XML so unescaped "<" in body text and void elements become well‑formed XHTML.
       xhtmlContent = ConversionService._serializeReflowableXhtmlStrict(xhtmlContent);
+      // Cheerio can rewrite tags; re-apply BR fix so </br> never leaves invalid paragraph nesting.
+      xhtmlContent = ConversionService._fixMalformedBrTags(xhtmlContent);
 
       // Write fixed XHTML to EPUB
       const destPath = path.join(oebpsDir, page.xhtmlFileName);
@@ -5639,24 +5665,34 @@ body > p {
     return this.convertToDTO(job);
   }
 
-  static async getAllConversions() {
-    const jobs = await ConversionJobModel.findAll();
-    return jobs.map(job => this.convertToDTO(job));
+  static async getAllConversions(user, options = {}) {
+    const jobs = user
+      ? await ConversionJobModel.findAllForUser(user, options)
+      : await ConversionJobModel.findAll();
+    return jobs.map((job) => this.convertToDTO(job));
   }
 
-  static async getConversionsByPdf(pdfDocumentId) {
+  static async getConversionsByPdf(pdfDocumentId, user) {
+    const pdf = await PdfDocumentModel.findById(pdfDocumentId);
+    if (!pdf || !canAccessPdfRow(user, pdf)) {
+      throw new Error('PDF document not found with id: ' + pdfDocumentId);
+    }
     const jobs = await ConversionJobModel.findByPdfDocumentId(pdfDocumentId);
-    return jobs.map(job => this.convertToDTO(job));
+    return jobs.map((job) => this.convertToDTO(job));
   }
 
-  static async getConversionsByStatus(status) {
-    const jobs = await ConversionJobModel.findByStatus(status);
-    return jobs.map(job => this.convertToDTO(job));
+  static async getConversionsByStatus(status, user, options = {}) {
+    const jobs = user
+      ? await ConversionJobModel.findByStatusForUser(user, status, options)
+      : await ConversionJobModel.findByStatus(status);
+    return jobs.map((job) => this.convertToDTO(job));
   }
 
-  static async getReviewRequired() {
-    const jobs = await ConversionJobModel.findByRequiresReview();
-    return jobs.map(job => this.convertToDTO(job));
+  static async getReviewRequired(user, options = {}) {
+    const jobs = user
+      ? await ConversionJobModel.findByRequiresReviewForUser(user, options)
+      : await ConversionJobModel.findByRequiresReview();
+    return jobs.map((job) => this.convertToDTO(job));
   }
 
   static async updateJobStatus(jobId, updates) {
@@ -5836,6 +5872,152 @@ body > p {
     }
     out += html.slice(last);
     return out;
+  }
+
+  /**
+   * Convert top: N% to top: Nvh for Image Editor XHTML. See _buildEpubReflowClippingFixCss.
+   */
+  static _fixImageEditorTopPercentToVh(xhtml) {
+    if (!xhtml || typeof xhtml !== 'string') return xhtml;
+    // Avoid matching border-top: / margin-top: — only the standalone top: property
+    return xhtml.replace(/(?<![-\w])top:\s*(\d+(?:\.\d+)?)%/gi, (match, num) => `top:${num}vh`);
+  }
+
+  /**
+   * height: N% on stacked Image Editor markup is authored per 100vh slice (like top), not % of .page.
+   * Otherwise height:55% with min-height ~475vh becomes ~261vh and overlaps/clips text below.
+   */
+  static _fixImageEditorHeightPercentToVh(xhtml) {
+    if (!xhtml || typeof xhtml !== 'string') return xhtml;
+    return xhtml.replace(/(?<![-\w])height:\s*(\d+(?:\.\d+)?)%/gi, (match, num) => `height:${num}vh`);
+  }
+
+  /** Replace invalid </br> (breaks strict XML / Thorium). Strip closers, then XHTML-normalize <br>. */
+  static _fixMalformedBrTags(xhtml) {
+    if (!xhtml || typeof xhtml !== 'string') return xhtml;
+    let s = xhtml.replace(/<\/\s*br\s*>/gi, '');
+    s = s.replace(/<br\s*([^>]*?)>/gi, (match, attrs) => {
+      if (match.includes('/>') || String(attrs).trim().endsWith('/')) {
+        return match;
+      }
+      const a = String(attrs).trim();
+      if (!a) return '<br />';
+      return `<br ${a}/>`;
+    });
+    return s;
+  }
+
+  /**
+   * Gemini/author styles repeat .page { height:400vh; overflow-y:hidden }. That caps the paint
+   * box and clips stacked content (second sentence, footers) even when export CSS sets min-height:500vh+.
+   */
+  static _neutralizeImageEditorPageHeight400vh(xhtml) {
+    if (!xhtml || typeof xhtml !== 'string') return xhtml;
+    return xhtml.replace(/height:\s*400vh/gi, 'height:auto');
+  }
+
+  /**
+   * <img style="height:100vh"> inside a short .has-image (e.g. 15vh banner) overflows the container
+   * and stacks over text — replace with height:100% so the image fits the positioned parent box.
+   */
+  static _fixImageEditorImgInlineHeightVh(xhtml) {
+    if (!xhtml || typeof xhtml !== 'string') return xhtml;
+    return xhtml.replace(/<img\b([^>]*?)>/gi, (full, attrs) => {
+      const fixed = attrs.replace(/(?<![-\w])height:\s*100vh\b/gi, 'height:100%');
+      return `<img${fixed}>`;
+    });
+  }
+
+  /**
+   * EPUB export layout: constrain width, reset bad transforms, contain images.
+   * Do NOT use transform:scale() or width > 100 percent — that shrinks content to the top-left and
+   * triggers overflow scrollbars in Thorium and other readers.
+   * After top:% → top:vh fix, .page needs enough min-height and visible overflow for stacked blocks.
+   */
+  static _buildEpubReflowClippingFixCss(xhtml) {
+    let maxTopVh = 0;
+    if (xhtml && typeof xhtml === 'string') {
+      const re = /(?<![-\w])top:\s*(\d+(?:\.\d+)?)vh/gi;
+      let m;
+      while ((m = re.exec(xhtml)) !== null) {
+        const v = parseFloat(m[1]);
+        if (!Number.isNaN(v)) maxTopVh = Math.max(maxTopVh, v);
+      }
+    }
+    // Extra margin below max(top) for multi-line paragraphs + footers after last top
+    const minHvh = Math.max(100, Math.ceil(maxTopVh) + 200);
+
+    return `\n/* epub-export: full-width layout; no page-scale hacks */
+html {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+.page {
+  width: 100% !important;
+  max-width: 100vw !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  height: auto !important;
+  min-height: ${minHvh}vh !important;
+  overflow: visible !important;
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+.draggable-text-block, .paragraph-block {
+  overflow: visible !important;
+  max-height: none !important;
+}
+.draggable-text-block p {
+  overflow: visible !important;
+  max-height: none !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+}
+.page footer {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+}
+.image-drop-zone, .image-placeholder {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Fill positioned .has-image / drop-zone boxes — do not force 100vh on every img */
+.page .has-image img,
+.page .image-drop-zone img,
+.page .image-placeholder img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  display: block !important;
+}
+img.page-bg {
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+}
+`;
   }
 
   /**

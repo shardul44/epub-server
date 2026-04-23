@@ -1,0 +1,182 @@
+html {
+	color: #000;
+	background: #FFF;
+}
+
+body,
+div,
+ol,
+li,
+h1 {
+	margin: 0;
+	padding: 0;
+}
+
+img {
+	border: 0;
+}
+
+#page-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin: 0;
+	padding: 0;
+	border: 0
+}
+
+@media screen {
+	#page-container {
+		bottom: 0;
+		right: 0
+	}
+}
+
+.pf {
+	position: relative;
+	background-color: white;
+	overflow: hidden;
+	margin: 0;
+	border: 0
+}
+
+.pc {
+	position: absolute;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	display: block;
+	transform-origin: 0 0;
+	-ms-transform-origin: 0 0;
+	-webkit-transform-origin: 0 0
+}
+
+.bf {
+	position: absolute;
+	border: 0;
+	margin: 0;
+	top: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	-ms-user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	user-select: none
+}
+
+.bi {
+	position: absolute;
+	border: none !important;
+	outline: none !important;
+	margin: 0;
+	-ms-user-select: none;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	user-select: none
+}
+
+.c {
+	position: absolute;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	display: block
+}
+
+.t {
+	position: absolute;
+	white-space: pre;
+	font-size: 1px;
+	transform-origin: 0 100%;
+	-ms-transform-origin: 0 100%;
+	-webkit-transform-origin: 0 100%;
+	/*unicode-bidi:bidi-override;*/
+	-moz-font-feature-settings: "liga" 0
+}
+
+.t:after {
+	content: ''
+}
+
+.t:before {
+	content: '';
+	display: inline-block
+}
+
+.t span {
+	position: relative;
+	/*unicode-bidi:bidi-override*/
+}
+
+._ {
+	display: inline-block;
+	color: transparent;
+	z-index: -1
+}
+
+::selection {
+	background: rgba(127, 255, 255, 0.4)
+}
+
+::-moz-selection {
+	background: rgba(127, 255, 255, 0.4)
+}
+
+.pi {
+	display: none
+}
+
+.d {
+	position: absolute;
+	transform-origin: 0 100%;
+	-ms-transform-origin: 0 100%;
+	-webkit-transform-origin: 0 100%
+}
+
+.it {
+	border: 0;
+	background-color: rgba(255, 255, 255, 0.0)
+}
+
+.ir:hover {
+	cursor: pointer
+}
+
+.-epub-media-overlay-active {
+	color: #4169E1 !important;
+}
+
+.Color1.-epub-media-overlay-active,
+.Color1.-epub-media-overlay-active * {
+	color: #4169E1 !important;
+}
+
+.Color2.-epub-media-overlay-active,
+.Color2.-epub-media-overlay-active * {
+	color: #f9f34f !important;
+}
+
+.Color3.-epub-media-overlay-active,
+.Color3.-epub-media-overlay-active * {
+	color: #7D0057 !important;
+}
+
+.specialWords {
+	position: relative !important;
+	left: 0px !important;
+	top: 0px !important;
+}
+
+
+a:-webkit-any-link {
+	color: -webkit-link;
+	cursor: pointer;
+	text-decoration: underline;
+}

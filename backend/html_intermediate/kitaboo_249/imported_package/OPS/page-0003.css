@@ -1,0 +1,76 @@
+
+.t {
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 2;
+	position: absolute;
+	white-space: pre;
+	overflow: visible;
+}
+
+
+#t1_4{left:124px;top:46px;letter-spacing:-7.9px;word-spacing:3.6px;}
+#t2_4{left:110px;top:163px;letter-spacing:-1.9px;word-spacing:-5.7px;}
+#t3_4{left:492px;top:163px;}
+#t4_4{left:110px;top:219px;letter-spacing:-2.7px;word-spacing:-5.9px;}
+#t5_4{left:496px;top:219px;}
+#t6_4{left:110px;top:276px;letter-spacing:-3.5px;word-spacing:-3.5px;}
+#t7_4{left:496px;top:276px;}
+#t8_4{left:110px;top:332px;letter-spacing:-2.6px;word-spacing:-4.4px;}
+#t9_4{left:110px;top:389px;letter-spacing:-1.5px;word-spacing:-6.4px;}
+#ta_4{left:110px;top:445px;letter-spacing:-1.7px;word-spacing:-3.9px;}
+#tb_4{left:110px;top:502px;letter-spacing:-2px;word-spacing:-5.3px;}
+#tc_4{left:110px;top:558px;letter-spacing:-2.7px;word-spacing:-2px;}
+#td_4{left:110px;top:615px;letter-spacing:-4.7px;word-spacing:-16.2px;}
+#te_4{left:307px;top:615px;word-spacing:-9.4px;}
+#tf_4{left:110px;top:671px;letter-spacing:-2px;word-spacing:-2.9px;}
+#tg_4{left:481px;top:671px;letter-spacing:-4.7px;}
+#th_4{left:526px;top:793px;}
+
+.s1_4{
+	FONT-SIZE: 146.7px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+.s2_4{
+	FONT-SIZE: 134.4px;
+	FONT-FAMILY: HMAvenir-Regular_pk;
+	color: rgb(0,0,0);
+}
+
+.s3_4{
+	FONT-SIZE: 73.3px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+#form1_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 64px;	top: 559px;	width: 471px;	height: 49px;	text-align: left;	background: transparent;	font: normal 38px Arial, Helvetica, sans-serif;}
+#form2_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 77px;	top: 214px;	width: 457px;	height: 52px;	text-align: left;	background: transparent;	font: normal 41px Arial, Helvetica, sans-serif;}
+#form3_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 69px;	top: 501px;	width: 466px;	height: 52px;	text-align: left;	background: transparent;	font: normal 41px Arial, Helvetica, sans-serif;}
+#form4_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 72px;	top: 384px;	width: 463px;	height: 55px;	text-align: left;	background: transparent;	font: normal 42px Arial, Helvetica, sans-serif;}
+#form5_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 55px;	top: 611px;	width: 481px;	height: 54px;	text-align: left;	background: transparent;	font: normal 42px Arial, Helvetica, sans-serif;}
+#form6_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 72px;	top: 440px;	width: 463px;	height: 57px;	text-align: left;	background: transparent;	font: normal 44px Arial, Helvetica, sans-serif;}
+#form7_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 72px;	top: 326px;	width: 465px;	height: 58px;	text-align: left;	background: transparent;	font: normal 45px Arial, Helvetica, sans-serif;}
+#form8_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 72px;	top: 268px;	width: 466px;	height: 58px;	text-align: left;	background: transparent;	font: normal 45px Arial, Helvetica, sans-serif;}
+#form9_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 80px;	top: 151px;	width: 455px;	height: 60px;	text-align: left;	background: transparent;	font: normal 47px Arial, Helvetica, sans-serif;}
+#form10_4{	z-index: 2;	cursor: pointer;	border-style: none;	padding: 0px;	position: absolute;	left: 58px;	top: 668px;	width: 478px;	height: 60px;	text-align: left;	background: transparent;	font: normal 47px Arial, Helvetica, sans-serif;}
+
+
+
+@font-face {
+	font-family: HMAvenir-Bold_pp;
+	src: url("fonts/HMAvenir-Bold_pp.woff") format("woff");
+}
+
+@font-face {
+	font-family: HMAvenir-Regular_pk;
+	src: url("fonts/HMAvenir-Regular_pk.woff") format("woff");
+}
+

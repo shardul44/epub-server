@@ -72,7 +72,7 @@ export class AiConfigService {
 
         config = await AiConfigurationModel.create({
           apiKey: configDTO.apiKey.trim(),
-          modelName: configDTO.modelName || 'gemini-pro',
+          modelName: configDTO.modelName || 'gemini-2.5-flash',
           isActive: configDTO.isActive !== undefined ? configDTO.isActive : true,
           description: configDTO.description || ''
         });
@@ -88,7 +88,7 @@ export class AiConfigService {
 
       config = await AiConfigurationModel.create({
         apiKey: configDTO.apiKey.trim(),
-        modelName: configDTO.modelName || 'gemini-pro',
+        modelName: configDTO.modelName || 'gemini-2.5-flash',
         isActive: configDTO.isActive !== undefined ? configDTO.isActive : true,
         description: configDTO.description || ''
       });
@@ -116,6 +116,9 @@ export class AiConfigService {
 
   static getAvailableModels() {
     return [
+      'gemini-2.5-flash',
+      'gemini-2.5-flash-lite',
+      'gemini-2.5-pro',
       'gemini-2.0-flash',
       'gemini-2.0-pro',
       'gemini-1.5-flash-latest',

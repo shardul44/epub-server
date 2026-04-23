@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import { getEpubOutputDir, getHtmlIntermediateDir } from '../config/fileStorage.js';
 import { TtsService } from '../services/TtsService.js';
 import { mapTimingsToBlocks } from '../helpers/mapTimingsToBlocks.js';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
 
 /**
  * Generate stable block ID based on content and position
@@ -21,6 +23,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const router = express.Router();
+router.use(authenticate, requireFeature('sync_studio'));
+
+router.param('jobId', paramJobTenantAccess);
 
 // Configure multer for audio file uploads
 const audioUpload = multer({

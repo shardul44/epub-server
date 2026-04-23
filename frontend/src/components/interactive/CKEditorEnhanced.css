@@ -1,0 +1,188 @@
+/* CKEditor Enhanced Styles */
+
+/* CKEditor container */
+.ck-editor__editable {
+  min-height: 250px !important;
+  padding: 16px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  color: #333 !important;
+}
+
+.ck-editor__editable:focus {
+  outline: none !important;
+  border-color: #2196f3 !important;
+}
+
+/* CKEditor toolbar */
+.ck-toolbar {
+  border: none !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  background: #fafafa !important;
+  padding: 8px !important;
+}
+
+/* CKEditor content styles */
+.ck-content p {
+  margin: 0 0 1em 0;
+}
+
+.ck-content h1 {
+  font-size: 2em;
+  font-weight: 700;
+  margin: 0.67em 0;
+  line-height: 1.2;
+}
+
+.ck-content h2 {
+  font-size: 1.5em;
+  font-weight: 700;
+  margin: 0.75em 0;
+  line-height: 1.3;
+}
+
+.ck-content h3 {
+  font-size: 1.25em;
+  font-weight: 700;
+  margin: 0.83em 0;
+  line-height: 1.4;
+}
+
+.ck-content ul,
+.ck-content ol {
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.ck-content li {
+  margin: 0.25em 0;
+}
+
+.ck-content a {
+  color: #2196f3;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ck-content a:hover {
+  color: #1976d2;
+}
+
+.ck-content strong {
+  font-weight: 700;
+}
+
+.ck-content em {
+  font-style: italic;
+}
+
+.ck-content code {
+  background-color: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.ck-content blockquote {
+  border-left: 4px solid #e0e0e0;
+  padding-left: 1em;
+  margin: 1em 0;
+  color: #666;
+  font-style: italic;
+}
+
+/* Placeholder */
+.ck-placeholder::before {
+  color: #adb5bd !important;
+}
+
+/* Toolbar button active states */
+.btn-primary {
+  background-color: #2196f3;
+  color: white;
+  border: 1px solid #2196f3;
+}
+
+.btn-primary:hover {
+  background-color: #1976d2;
+  border-color: #1976d2;
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+  border-color: #bdbdbd;
+}
+
+.btn-success {
+  background-color: #4caf50;
+  color: white;
+  border: 1px solid #4caf50;
+}
+
+.btn-success:hover {
+  background-color: #388e3c;
+  border-color: #388e3c;
+}
+
+.btn-danger {
+  background-color: #f44336;
+  color: white;
+  border: 1px solid #f44336;
+}
+
+.btn-danger:hover {
+  background-color: #d32f2f;
+  border-color: #d32f2f;
+}
+
+/* Form controls */
+.form-control {
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.form-control::placeholder {
+  color: #adb5bd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .ck-editor__editable {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+}
+
+/* Animation for modals */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-content {
+  animation: fadeIn 0.2s ease-out;
+}

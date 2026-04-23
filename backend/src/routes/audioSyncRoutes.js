@@ -12,6 +12,13 @@ import { aeneasService } from '../services/aeneasService.js';
 import { EpubService } from '../services/epubService.js';
 import { GeminiService } from '../services/geminiService.js';
 import { sanitizeZoneText } from '../utils/zoneTextSanitizer.js';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
+
+const router = express.Router();
+router.use(authenticate, requireFeature('sync_studio'));
+
+router.param('jobId', paramJobTenantAccess);
 
 /** Extract a segment of audio (for per-section Aeneas alignment, FXL-style accuracy). */
 async function extractAudioSegment(sourcePath, startSec, durationSec, outPath) {
@@ -42,11 +49,9 @@ const audioUpload = multer({
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB limit
 });
 
-const router = express.Router();
-
 /**
  * Resolve absolute path to the job's audio file (for reflowable Sync Studio).
-epub_db (10).sql * Uploaded audio takes precedence over TTS so user uploads are not overridden.
+ * Uploaded audio takes precedence over TTS so user uploads are not overridden.
  * Order: sync record (if file exists) → uploaded_audio_<jobId> → TTS combined_audio_<jobId>.
  */
 async function resolveJobAudioPath(jobId) {

@@ -1,0 +1,140 @@
+{
+  "preserveForPublish": true,
+  "opfPath": "OPS/content.opf",
+  "defaultViewportWidth": 577,
+  "defaultViewportHeight": 852,
+  "spine": [
+    {
+      "pageNumber": 1,
+      "manifestId": "cover",
+      "href": "cover.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/cover.xhtml"
+    },
+    {
+      "pageNumber": 2,
+      "manifestId": "blank",
+      "href": "blank.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/blank.xhtml"
+    },
+    {
+      "pageNumber": 3,
+      "manifestId": "page-0001",
+      "href": "page-0001.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0001.xhtml"
+    },
+    {
+      "pageNumber": 4,
+      "manifestId": "page-0002",
+      "href": "page-0002.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0002.xhtml"
+    },
+    {
+      "pageNumber": 5,
+      "manifestId": "page-0003",
+      "href": "page-0003.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0003.xhtml"
+    },
+    {
+      "pageNumber": 6,
+      "manifestId": "page-0004",
+      "href": "page-0004.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0004.xhtml"
+    },
+    {
+      "pageNumber": 7,
+      "manifestId": "page-0005",
+      "href": "page-0005.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0005.xhtml"
+    },
+    {
+      "pageNumber": 8,
+      "manifestId": "page-0006",
+      "href": "page-0006.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0006.xhtml"
+    },
+    {
+      "pageNumber": 9,
+      "manifestId": "page-0007",
+      "href": "page-0007.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0007.xhtml"
+    },
+    {
+      "pageNumber": 10,
+      "manifestId": "page-0008",
+      "href": "page-0008.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0008.xhtml"
+    },
+    {
+      "pageNumber": 11,
+      "manifestId": "page-0009",
+      "href": "page-0009.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0009.xhtml"
+    },
+    {
+      "pageNumber": 12,
+      "manifestId": "page-0010",
+      "href": "page-0010.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0010.xhtml"
+    },
+    {
+      "pageNumber": 13,
+      "manifestId": "page-0011",
+      "href": "page-0011.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0011.xhtml"
+    },
+    {
+      "pageNumber": 14,
+      "manifestId": "page-0012",
+      "href": "page-0012.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0012.xhtml"
+    },
+    {
+      "pageNumber": 15,
+      "manifestId": "page-0013",
+      "href": "page-0013.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0013.xhtml"
+    },
+    {
+      "pageNumber": 16,
+      "manifestId": "page-0014",
+      "href": "page-0014.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0014.xhtml"
+    },
+    {
+      "pageNumber": 17,
+      "manifestId": "page-0015",
+      "href": "page-0015.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0015.xhtml"
+    },
+    {
+      "pageNumber": 18,
+      "manifestId": "page-0016",
+      "href": "page-0016.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0016.xhtml"
+    },
+    {
+      "pageNumber": 19,
+      "manifestId": "page-0017",
+      "href": "page-0017.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0017.xhtml"
+    },
+    {
+      "pageNumber": 20,
+      "manifestId": "page-0018",
+      "href": "page-0018.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0018.xhtml"
+    },
+    {
+      "pageNumber": 21,
+      "manifestId": "page-0019",
+      "href": "page-0019.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0019.xhtml"
+    },
+    {
+      "pageNumber": 22,
+      "manifestId": "page-0020",
+      "href": "page-0020.xhtml",
+      "xhtmlPathFromEpubRoot": "OPS/page-0020.xhtml"
+    }
+  ]
+}

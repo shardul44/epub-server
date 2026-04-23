@@ -1,4 +1,5 @@
 import { TtsConfigurationModel } from '../models/TtsConfiguration.js';
+import { normalizeGeminiModelName } from './geminiService.js';
 import fs from 'fs';
 
 export class TtsConfigService {
@@ -439,7 +440,9 @@ Return ONLY the JSON object, no other text.`;
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(aiConfig.apiKey);
-      const model = genAI.getGenerativeModel({ model: aiConfig.modelName || 'gemini-pro' });
+      const model = genAI.getGenerativeModel({
+        model: normalizeGeminiModelName(aiConfig.modelName || '')
+      });
       
       const result = await model.generateContent(prompt);
       const response = await result.response;

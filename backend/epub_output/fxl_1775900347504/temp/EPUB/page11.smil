@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="page11.xhtml">
+    <par>
+      <text src="page11.xhtml#p11_z0"/>
+      <audio src="audio/page11.mp3" clipBegin="0.000s" clipEnd="1.104s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z1"/>
+      <audio src="audio/page11.mp3" clipBegin="1.104s" clipEnd="5.522s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z2"/>
+      <audio src="audio/page11.mp3" clipBegin="5.522s" clipEnd="9.203s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z3"/>
+      <audio src="audio/page11.mp3" clipBegin="9.203s" clipEnd="12.884s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z4"/>
+      <audio src="audio/page11.mp3" clipBegin="12.884s" clipEnd="14.356s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z5"/>
+      <audio src="audio/page11.mp3" clipBegin="14.356s" clipEnd="16.933s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z6"/>
+      <audio src="audio/page11.mp3" clipBegin="16.933s" clipEnd="20.614s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z7"/>
+      <audio src="audio/page11.mp3" clipBegin="20.614s" clipEnd="25.767s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z8"/>
+      <audio src="audio/page11.mp3" clipBegin="25.767s" clipEnd="25.967s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z9"/>
+      <audio src="audio/page11.mp3" clipBegin="25.967s" clipEnd="26.167s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

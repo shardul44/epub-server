@@ -9,6 +9,7 @@ import { PdfDocumentModel } from '../models/PdfDocument.js';
 import { KitabooZoneModel } from '../models/KitabooZone.js';
 import { kitabooFxlJobStore } from './kitabooFxlJobStore.js';
 import { ConversionService } from './conversionService.js';
+import { zonesFromHeuristicWildHtml } from '../utils/wildFxlHtmlHeuristic.js';
 
 /** @param {import('jszip')} zip */
 function listOpfPaths(zip) {
@@ -259,7 +260,7 @@ export class EpubDirectImportService {
    * @param {string} originalName
    * @param {'auto' | 'reflowable' | 'fxl'} mode
    */
-  static async importForAudioSync(epubBuffer, originalName, mode = 'auto') {
+  static async importForAudioSync(epubBuffer, originalName, mode = 'auto', owner = null) {
     const zip = await JSZip.loadAsync(epubBuffer);
     const opfPaths = listOpfPaths(zip);
     if (opfPaths.length === 0) throw new Error('No OPF package document found in EPUB');
@@ -272,12 +273,15 @@ export class EpubDirectImportService {
     if (mode === 'fxl') layout = 'fxl';
 
     if (layout === 'fxl') {
-      return { kind: 'fxl', ...(await this._importFxl(zip, opfPath, opfXml, originalName, epubBuffer)) };
+      return {
+        kind: 'fxl',
+        ...(await this._importFxl(zip, opfPath, opfXml, originalName, epubBuffer, owner))
+      };
     }
-    return { kind: 'reflowable', ...(await this._importReflowable(originalName, epubBuffer)) };
+    return { kind: 'reflowable', ...(await this._importReflowable(originalName, epubBuffer, owner)) };
   }
 
-  static async _importReflowable(originalName, epubBuffer) {
+  static async _importReflowable(originalName, epubBuffer, owner = null) {
     const safeBase = path.basename(originalName || 'book.epub', path.extname(originalName || '')) || 'book';
     const uploadsDir = path.join(getUploadDir(), 'epub_imports');
     await fs.mkdir(uploadsDir, { recursive: true });
@@ -293,7 +297,9 @@ export class EpubDirectImportService {
       layoutType: 'REFLOWABLE',
       hasTables: false,
       hasFormulas: false,
-      hasMultiColumn: false
+      hasMultiColumn: false,
+      userId: owner?.userId ?? null,
+      organizationId: owner?.organizationId ?? null
     });
 
     await fs.writeFile(pdfRecord.file_path, epubBuffer);
@@ -333,7 +339,7 @@ export class EpubDirectImportService {
     };
   }
 
-  static async _importFxl(zip, opfPath, opfXml, originalName, epubBuffer) {
+  static async _importFxl(zip, opfPath, opfXml, originalName, epubBuffer, owner = null) {
     const opfDom = new JSDOM(opfXml, { contentType: 'application/xml' });
     const opfDoc = opfDom.window.document;
     const manifest = opfDoc.querySelector('manifest');
@@ -370,15 +376,15 @@ export class EpubDirectImportService {
 
     if (spineHrefs.length === 0) throw new Error('No fixed-layout pages found in spine (or only nav documents).');
 
-    const jobId = String(Date.now());
     const uploadsDir = path.join(getUploadDir(), 'epub_imports');
     await fs.mkdir(uploadsDir, { recursive: true });
     const safeBase = path.basename(originalName || 'book.epub', path.extname(originalName || '')) || 'book';
+    const pendingEpubPath = path.join(uploadsDir, `fxl_pending_${Date.now()}.epub`);
 
     const pdfRecord = await PdfDocumentModel.create({
       fileName: `${safeBase}.epub`,
       originalFileName: originalName || 'import.epub',
-      filePath: path.join(uploadsDir, `fxl_stub_${jobId}.epub`),
+      filePath: pendingEpubPath,
       fileSize: epubBuffer.length,
       totalPages: spineHrefs.length,
       documentType: 'OTHER',
@@ -386,10 +392,36 @@ export class EpubDirectImportService {
       layoutType: 'FIXED_LAYOUT',
       hasTables: false,
       hasFormulas: false,
-      hasMultiColumn: false
+      hasMultiColumn: false,
+      userId: owner?.userId ?? null,
+      organizationId: owner?.organizationId ?? null
     });
 
-    await fs.writeFile(pdfRecord.file_path, epubBuffer);
+    await fs.writeFile(pendingEpubPath, epubBuffer);
+
+    let job = await ConversionJobModel.create({
+      pdfDocumentId: pdfRecord.id,
+      status: 'COMPLETED',
+      currentStep: null,
+      progressPercentage: 100,
+      intermediateData: JSON.stringify({
+        source: 'epub_direct_import',
+        originalFileName: originalName,
+        layout: 'fxl'
+      }),
+      completedAt: new Date()
+    });
+
+    const jobId = String(job.id);
+    const finalEpubPath = path.join(uploadsDir, `fxl_stub_${jobId}.epub`);
+    try {
+      await fs.rename(pendingEpubPath, finalEpubPath);
+    } catch {
+      await fs.copyFile(pendingEpubPath, finalEpubPath);
+      await fs.unlink(pendingEpubPath).catch(() => {});
+    }
+    await PdfDocumentModel.update(pdfRecord.id, { filePath: finalEpubPath });
+    job = await ConversionJobModel.update(job.id, { epubFilePath: finalEpubPath });
 
     const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
     const webpDir = path.join(intermediateDir, 'webp');
@@ -452,6 +484,9 @@ export class EpubDirectImportService {
       }
 
       let zones = zonesFromHtmlSmilTargets(doc, pageNum);
+      if (zones.length === 0) {
+        zones = zonesFromHeuristicWildHtml(doc, pageNum, { width: vw, height: vh });
+      }
       if (zones.length === 0) zones = zonesFromSvg(doc, pageNum);
 
       let imgHref = null;
@@ -573,6 +608,7 @@ export class EpubDirectImportService {
     kitabooFxlJobStore.complete(jobId, pages, [], 'sentence');
 
     return {
+      job: ConversionService.convertToDTO(job),
       jobId,
       pdfId: pdfRecord.id,
       pageCount: pages.length,

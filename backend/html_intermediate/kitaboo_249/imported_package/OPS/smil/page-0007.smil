@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0">
+	<body>
+		<par id="par1"><text src="../page-0007.xhtml#SML0"/><audio src="../audio/page-0007.mp3" clipBegin="0.000000s" clipEnd="0.511000s" /></par>
+		<par id="par2"><text src="../page-0007.xhtml#SML1"/><audio src="../audio/page-0007.mp3" clipBegin="0.511000s" clipEnd="0.733000s" /></par>
+		<par id="par3"><text src="../page-0007.xhtml#SML2"/><audio src="../audio/page-0007.mp3" clipBegin="0.733000s" clipEnd="1.034000s" /></par>
+		<par id="par4"><text src="../page-0007.xhtml#SML3"/><audio src="../audio/page-0007.mp3" clipBegin="1.034000s" clipEnd="1.336000s" /></par>
+		<par id="par5"><text src="../page-0007.xhtml#SML4"/><audio src="../audio/page-0007.mp3" clipBegin="1.336000s" clipEnd="1.537000s" /></par>
+		<par id="par6"><text src="../page-0007.xhtml#SML5"/><audio src="../audio/page-0007.mp3" clipBegin="1.537000s" clipEnd="2.741902s" /></par>
+		<par id="par7"><text src="../page-0007.xhtml#SML6"/><audio src="../audio/page-0007.mp3" clipBegin="2.741902s" clipEnd="3.082276s" /></par>
+		<par id="par8"><text src="../page-0007.xhtml#SML7"/><audio src="../audio/page-0007.mp3" clipBegin="3.082276s" clipEnd="3.346000s" /></par>
+		<par id="par9"><text src="../page-0007.xhtml#SML8"/><audio src="../audio/page-0007.mp3" clipBegin="3.346000s" clipEnd="3.728000s" /></par>
+		<par id="par10"><text src="../page-0007.xhtml#SML9"/><audio src="../audio/page-0007.mp3" clipBegin="3.728000s" clipEnd="4.191000s" /></par>
+		<par id="par11"><text src="../page-0007.xhtml#SML10"/><audio src="../audio/page-0007.mp3" clipBegin="4.191000s" clipEnd="4.412000s" /></par>
+		<par id="par12"><text src="../page-0007.xhtml#SML11"/><audio src="../audio/page-0007.mp3" clipBegin="4.412000s" clipEnd="5.042579s" /></par>
+	</body>
+</smil>

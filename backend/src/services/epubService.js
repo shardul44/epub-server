@@ -3,6 +3,7 @@ import path from 'path';
 import JSZip from 'jszip';
 import { getEpubOutputDir, getHtmlIntermediateDir } from '../config/fileStorage.js';
 import { JSDOM } from 'jsdom';
+import { splitParagraphBlocksAtBrBetweenSyncSentences } from '../utils/xhtmlReflowParagraphSplit.js';
 
 /**
  * EPUB Service
@@ -85,6 +86,10 @@ export class EpubService {
       return `<img${attrs}/>`;
     });
     
+    // Invalid closing tag </br> breaks strict XML (Thorium: "Opening and ending tag mismatch: br … and p").
+    // Strip first, then normalize opening <br> below — avoids </br> → <br /> duplicating a break.
+    sanitized = sanitized.replace(/<\/\s*br\s*>/gi, '');
+
     // Fix br tags to be self-closing (XHTML requirement)
     // Convert <br> or <br ...> to <br /> or <br .../> for all br tags that aren't already self-closing
     sanitized = sanitized.replace(/<br\s*([^>]*?)>/gi, (match, attrs) => {
@@ -181,7 +186,10 @@ export class EpubService {
     // Clean up multiple spaces in tags
     sanitized = sanitized.replace(/\s+>/g, '>');
     sanitized = sanitized.replace(/<(\w+)\s+/g, '<$1 ');
-    
+
+    // Same as EPUB regenerate: avoid column/page splits inside one <p> across two sync sentences
+    sanitized = splitParagraphBlocksAtBrBetweenSyncSentences(sanitized);
+
     return sanitized;
   }
 

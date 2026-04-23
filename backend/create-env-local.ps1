@@ -28,6 +28,9 @@ JWT_SECRET=local-development-jwt-secret-key
 # API Keys
 GOOGLE_API_KEY=your-google-api-key-here
 GEMINI_API_KEY=your-gemini-api-key-here
+# gemini-2.0-flash is deprecated for new API keys; 2.5 flash is the supported default
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_API_MODEL=gemini-2.5-flash
 
 # CORS Settings
 CORS_ORIGIN=http://localhost:3000

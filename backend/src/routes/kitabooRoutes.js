@@ -10,8 +10,13 @@ import path from 'path';
 import fs from 'fs/promises';
 import { execSync } from 'child_process';
 import sharp from 'sharp';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('kitaboo.import'));
+
+router.param('jobId', paramJobTenantAccess);
 
 const kitabooHumanAudioUpload = multer({
   storage: multer.diskStorage({
@@ -461,6 +466,10 @@ router.post('/process-high-fidelity', async (req, res) => {
     if (!pdfId) return errorResponse(res, 'pdfId is required', 400);
     const pdfDoc = await PdfDocumentModel.findById(pdfId);
     if (!pdfDoc) return errorResponse(res, 'PDF document not found', 404);
+
+    console.log(
+      `[KitabooFXL] High-Fidelity request: pdfId=${pdfId} file="${pdfDoc.original_file_name || pdfDoc.file_name}" disk=${path.basename(pdfDoc.file_path || '')}`
+    );
 
     const jobId = Date.now().toString();
     kitabooFxlJobStore.start(pdfId, jobId);

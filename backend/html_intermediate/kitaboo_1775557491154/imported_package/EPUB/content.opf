@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="pub-id">
+    <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/">
+        <dc:identifier id="pub-id">urn:uuid:bcb39630-2e6f-498a-b1a0-9e839eb5fb62</dc:identifier>
+        <dc:title>Professional FXL Export</dc:title>
+        <dc:creator>FXL Engine</dc:creator>
+        <dc:date>2026-03-13</dc:date>
+        <dc:language>en</dc:language>
+        <meta property="dcterms:modified">2026-03-13T09:33:28Z</meta>
+        <meta property="rendition:layout">pre-paginated</meta>
+        <meta property="rendition:orientation">auto</meta>
+        <meta property="rendition:spread">auto</meta>
+        <meta property="media:duration">496.296s</meta>
+        <meta property="media:duration" refines="#smil1">3.768s</meta>
+        <meta property="media:duration" refines="#smil3">3.768s</meta>
+        <meta property="media:duration" refines="#smil4">229.728s</meta>
+        <meta property="media:duration" refines="#smil5">12.240s</meta>
+        <meta property="media:duration" refines="#smil6">4.152s</meta>
+        <meta property="media:duration" refines="#smil8">7.488s</meta>
+        <meta property="media:duration" refines="#smil9">5.472s</meta>
+        <meta property="media:duration" refines="#smil10">8.064s</meta>
+        <meta property="media:duration" refines="#smil11">20.856s</meta>
+        <meta property="media:duration" refines="#smil12">12.600s</meta>
+        <meta property="media:duration" refines="#smil13">20.520s</meta>
+        <meta property="media:duration" refines="#smil14">7.704s</meta>
+        <meta property="media:duration" refines="#smil15">11.616s</meta>
+        <meta property="media:duration" refines="#smil16">18.504s</meta>
+        <meta property="media:duration" refines="#smil17">9.432s</meta>
+        <meta property="media:duration" refines="#smil18">6.384s</meta>
+        <meta property="media:duration" refines="#smil19">5.496s</meta>
+        <meta property="media:duration" refines="#smil20">5.280s</meta>
+        <meta property="media:duration" refines="#smil21">6.264s</meta>
+        <meta property="media:duration" refines="#smil22">17.328s</meta>
+        <meta property="media:duration" refines="#smil23">13.968s</meta>
+        <meta property="media:duration" refines="#smil24">15.600s</meta>
+        <meta property="media:duration" refines="#smil25">8.544s</meta>
+        <meta property="media:duration" refines="#smil26">9.144s</meta>
+        <meta property="media:duration" refines="#smil27">17.520s</meta>
+        <meta property="media:duration" refines="#smil28">4.056s</meta>
+        <meta property="media:duration" refines="#smil29">6.720s</meta>
+        <meta property="media:duration" refines="#smil30">4.080s</meta>
+        <meta property="media:active-class">-epub-media-overlay-active</meta>
+        <meta property="media:playback-active-class">-epub-media-overlay-playing</meta>
+        <meta name="cover" content="img1"/>
+    </metadata>
+    <manifest>
+        <item id="css" href="css/style.css" media-type="text/css"/>
+        <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+        <item id="font_WHCWDU+MyriadPro-Bold" href="fonts/WHCWDU_MyriadPro-Bold.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+MyriadPro-Semibold" href="fonts/WHCWDU_MyriadPro-Semibold.cff" media-type="application/x-font-ttf"/>
+        <item id="font_ZFGOTO+HoboStd" href="fonts/ZFGOTO_HoboStd.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+MyriadPro-Regular" href="fonts/WHCWDU_MyriadPro-Regular.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+MyriadPro-BlackSemiCn" href="fonts/WHCWDU_MyriadPro-BlackSemiCn.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+MyriadPro-It" href="fonts/WHCWDU_MyriadPro-It.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+AvenirLTStd-Black" href="fonts/WHCWDU_AvenirLTStd-Black.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+PalatinoLTStd-Bold" href="fonts/WHCWDU_PalatinoLTStd-Bold.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+PalatinoLTStd-Medium" href="fonts/WHCWDU_PalatinoLTStd-Medium.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+HMAvenir-Regular" href="fonts/WHCWDU_HMAvenir-Regular.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+PalatinoLTStd-Black" href="fonts/WHCWDU_PalatinoLTStd-Black.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+HelveticaLTStd-Roman" href="fonts/WHCWDU_HelveticaLTStd-Roman.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+HelveticaLTStd-Blk" href="fonts/WHCWDU_HelveticaLTStd-Blk.cff" media-type="application/x-font-ttf"/>
+        <item id="font_WHCWDU+HelveticaLTStd-Bold" href="fonts/WHCWDU_HelveticaLTStd-Bold.cff" media-type="application/x-font-ttf"/>
+        <item id="smil1" href="page1.smil" media-type="application/smil+xml"/>
+        <item id="audio1" href="audio/page1.mp3" media-type="audio/mpeg"/>
+        <item id="page1" href="page1.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil1"/>
+        <item id="img1" href="images/page1_clean.png" media-type="image/png" properties="cover-image"/>
+        <item id="page2" href="page2.xhtml" media-type="application/xhtml+xml"/>
+        <item id="img2" href="images/page2_clean.png" media-type="image/png"/>
+        <item id="smil3" href="page3.smil" media-type="application/smil+xml"/>
+        <item id="audio3" href="audio/page3.mp3" media-type="audio/mpeg"/>
+        <item id="page3" href="page3.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil3"/>
+        <item id="img3" href="images/page3_clean.png" media-type="image/png"/>
+        <item id="smil4" href="page4.smil" media-type="application/smil+xml"/>
+        <item id="audio4" href="audio/page4.mp3" media-type="audio/mpeg"/>
+        <item id="page4" href="page4.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil4"/>
+        <item id="img4" href="images/page4_clean.png" media-type="image/png"/>
+        <item id="smil5" href="page5.smil" media-type="application/smil+xml"/>
+        <item id="audio5" href="audio/page5.mp3" media-type="audio/mpeg"/>
+        <item id="page5" href="page5.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil5"/>
+        <item id="img5" href="images/page5_clean.png" media-type="image/png"/>
+        <item id="smil6" href="page6.smil" media-type="application/smil+xml"/>
+        <item id="audio6" href="audio/page6.mp3" media-type="audio/mpeg"/>
+        <item id="page6" href="page6.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil6"/>
+        <item id="img6" href="images/page6_clean.png" media-type="image/png"/>
+        <item id="page7" href="page7.xhtml" media-type="application/xhtml+xml"/>
+        <item id="img7" href="images/page7_clean.png" media-type="image/png"/>
+        <item id="smil8" href="page8.smil" media-type="application/smil+xml"/>
+        <item id="audio8" href="audio/page8.mp3" media-type="audio/mpeg"/>
+        <item id="page8" href="page8.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil8"/>
+        <item id="img8" href="images/page8_clean.png" media-type="image/png"/>
+        <item id="smil9" href="page9.smil" media-type="application/smil+xml"/>
+        <item id="audio9" href="audio/page9.mp3" media-type="audio/mpeg"/>
+        <item id="page9" href="page9.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil9"/>
+        <item id="img9" href="images/page9_clean.png" media-type="image/png"/>
+        <item id="smil10" href="page10.smil" media-type="application/smil+xml"/>
+        <item id="audio10" href="audio/page10.mp3" media-type="audio/mpeg"/>
+        <item id="page10" href="page10.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil10"/>
+        <item id="img10" href="images/page10_clean.png" media-type="image/png"/>
+        <item id="smil11" href="page11.smil" media-type="application/smil+xml"/>
+        <item id="audio11" href="audio/page11.mp3" media-type="audio/mpeg"/>
+        <item id="page11" href="page11.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil11"/>
+        <item id="img11" href="images/page11_clean.png" media-type="image/png"/>
+        <item id="smil12" href="page12.smil" media-type="application/smil+xml"/>
+        <item id="audio12" href="audio/page12.mp3" media-type="audio/mpeg"/>
+        <item id="page12" href="page12.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil12"/>
+        <item id="img12" href="images/page12_clean.png" media-type="image/png"/>
+        <item id="smil13" href="page13.smil" media-type="application/smil+xml"/>
+        <item id="audio13" href="audio/page13.mp3" media-type="audio/mpeg"/>
+        <item id="page13" href="page13.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil13"/>
+        <item id="img13" href="images/page13_clean.png" media-type="image/png"/>
+        <item id="smil14" href="page14.smil" media-type="application/smil+xml"/>
+        <item id="audio14" href="audio/page14.mp3" media-type="audio/mpeg"/>
+        <item id="page14" href="page14.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil14"/>
+        <item id="img14" href="images/page14_clean.png" media-type="image/png"/>
+        <item id="smil15" href="page15.smil" media-type="application/smil+xml"/>
+        <item id="audio15" href="audio/page15.mp3" media-type="audio/mpeg"/>
+        <item id="page15" href="page15.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil15"/>
+        <item id="img15" href="images/page15_clean.png" media-type="image/png"/>
+        <item id="smil16" href="page16.smil" media-type="application/smil+xml"/>
+        <item id="audio16" href="audio/page16.mp3" media-type="audio/mpeg"/>
+        <item id="page16" href="page16.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil16"/>
+        <item id="img16" href="images/page16_clean.png" media-type="image/png"/>
+        <item id="smil17" href="page17.smil" media-type="application/smil+xml"/>
+        <item id="audio17" href="audio/page17.mp3" media-type="audio/mpeg"/>
+        <item id="page17" href="page17.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil17"/>
+        <item id="img17" href="images/page17_clean.png" media-type="image/png"/>
+        <item id="smil18" href="page18.smil" media-type="application/smil+xml"/>
+        <item id="audio18" href="audio/page18.mp3" media-type="audio/mpeg"/>
+        <item id="page18" href="page18.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil18"/>
+        <item id="img18" href="images/page18_clean.png" media-type="image/png"/>
+        <item id="smil19" href="page19.smil" media-type="application/smil+xml"/>
+        <item id="audio19" href="audio/page19.mp3" media-type="audio/mpeg"/>
+        <item id="page19" href="page19.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil19"/>
+        <item id="img19" href="images/page19_clean.png" media-type="image/png"/>
+        <item id="smil20" href="page20.smil" media-type="application/smil+xml"/>
+        <item id="audio20" href="audio/page20.mp3" media-type="audio/mpeg"/>
+        <item id="page20" href="page20.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil20"/>
+        <item id="img20" href="images/page20_clean.png" media-type="image/png"/>
+        <item id="smil21" href="page21.smil" media-type="application/smil+xml"/>
+        <item id="audio21" href="audio/page21.mp3" media-type="audio/mpeg"/>
+        <item id="page21" href="page21.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil21"/>
+        <item id="img21" href="images/page21_clean.png" media-type="image/png"/>
+        <item id="smil22" href="page22.smil" media-type="application/smil+xml"/>
+        <item id="audio22" href="audio/page22.mp3" media-type="audio/mpeg"/>
+        <item id="page22" href="page22.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil22"/>
+        <item id="img22" href="images/page22_clean.png" media-type="image/png"/>
+        <item id="smil23" href="page23.smil" media-type="application/smil+xml"/>
+        <item id="audio23" href="audio/page23.mp3" media-type="audio/mpeg"/>
+        <item id="page23" href="page23.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil23"/>
+        <item id="img23" href="images/page23_clean.png" media-type="image/png"/>
+        <item id="smil24" href="page24.smil" media-type="application/smil+xml"/>
+        <item id="audio24" href="audio/page24.mp3" media-type="audio/mpeg"/>
+        <item id="page24" href="page24.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil24"/>
+        <item id="img24" href="images/page24_clean.png" media-type="image/png"/>
+        <item id="smil25" href="page25.smil" media-type="application/smil+xml"/>
+        <item id="audio25" href="audio/page25.mp3" media-type="audio/mpeg"/>
+        <item id="page25" href="page25.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil25"/>
+        <item id="img25" href="images/page25_clean.png" media-type="image/png"/>
+        <item id="smil26" href="page26.smil" media-type="application/smil+xml"/>
+        <item id="audio26" href="audio/page26.mp3" media-type="audio/mpeg"/>
+        <item id="page26" href="page26.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil26"/>
+        <item id="img26" href="images/page26_clean.png" media-type="image/png"/>
+        <item id="smil27" href="page27.smil" media-type="application/smil+xml"/>
+        <item id="audio27" href="audio/page27.mp3" media-type="audio/mpeg"/>
+        <item id="page27" href="page27.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil27"/>
+        <item id="img27" href="images/page27_clean.png" media-type="image/png"/>
+        <item id="smil28" href="page28.smil" media-type="application/smil+xml"/>
+        <item id="audio28" href="audio/page28.mp3" media-type="audio/mpeg"/>
+        <item id="page28" href="page28.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil28"/>
+        <item id="img28" href="images/page28_clean.png" media-type="image/png"/>
+        <item id="smil29" href="page29.smil" media-type="application/smil+xml"/>
+        <item id="audio29" href="audio/page29.mp3" media-type="audio/mpeg"/>
+        <item id="page29" href="page29.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil29"/>
+        <item id="img29" href="images/page29_clean.png" media-type="image/png"/>
+        <item id="smil30" href="page30.smil" media-type="application/smil+xml"/>
+        <item id="audio30" href="audio/page30.mp3" media-type="audio/mpeg"/>
+        <item id="page30" href="page30.xhtml" media-type="application/xhtml+xml" properties="media-overlay" media-overlay="smil30"/>
+        <item id="img30" href="images/page30_clean.png" media-type="image/png"/>
+    </manifest>
+    <spine>
+        <itemref idref="page1" media-overlay="smil1"/>
+        <itemref idref="page2"/>
+        <itemref idref="page3" media-overlay="smil3"/>
+        <itemref idref="page4" media-overlay="smil4"/>
+        <itemref idref="page5" media-overlay="smil5"/>
+        <itemref idref="page6" media-overlay="smil6"/>
+        <itemref idref="page7"/>
+        <itemref idref="page8" media-overlay="smil8"/>
+        <itemref idref="page9" media-overlay="smil9"/>
+        <itemref idref="page10" media-overlay="smil10"/>
+        <itemref idref="page11" media-overlay="smil11"/>
+        <itemref idref="page12" media-overlay="smil12"/>
+        <itemref idref="page13" media-overlay="smil13"/>
+        <itemref idref="page14" media-overlay="smil14"/>
+        <itemref idref="page15" media-overlay="smil15"/>
+        <itemref idref="page16" media-overlay="smil16"/>
+        <itemref idref="page17" media-overlay="smil17"/>
+        <itemref idref="page18" media-overlay="smil18"/>
+        <itemref idref="page19" media-overlay="smil19"/>
+        <itemref idref="page20" media-overlay="smil20"/>
+        <itemref idref="page21" media-overlay="smil21"/>
+        <itemref idref="page22" media-overlay="smil22"/>
+        <itemref idref="page23" media-overlay="smil23"/>
+        <itemref idref="page24" media-overlay="smil24"/>
+        <itemref idref="page25" media-overlay="smil25"/>
+        <itemref idref="page26" media-overlay="smil26"/>
+        <itemref idref="page27" media-overlay="smil27"/>
+        <itemref idref="page28" media-overlay="smil28"/>
+        <itemref idref="page29" media-overlay="smil29"/>
+        <itemref idref="page30" media-overlay="smil30"/>
+    </spine>
+</package>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { pdfService } from '../services/pdfService';
 import { conversionService } from '../services/conversionService';
+import { useAuth } from '../context/AuthContext';
 import { 
   HiOutlineDocument, 
   HiOutlineRefresh,
@@ -14,6 +15,7 @@ import {
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     totalPdfs: 0,
     totalConversions: 0,
@@ -24,21 +26,26 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.role === 'platform_admin') {
+      setLoading(false);
+      return;
+    }
     loadDashboardData();
-  }, []);
+  }, [user?.role, user?.id]);
 
   const loadDashboardData = async () => {
     console.log('Starting dashboard data load...');
     try {
       console.log('Fetching PDFs and conversions...');
+      const dashParams = { scope: 'own' };
       const [pdfs, allConversions] = await Promise.all([
-        pdfService.getAllPdfs(),
-        conversionService.getConversionsByStatus('COMPLETED')
+        pdfService.getAllPdfs(dashParams),
+        conversionService.getConversionsByStatus('COMPLETED', dashParams)
       ]);
 
       console.log('Fetching in-progress and failed conversions...');
-      const inProgressJobs = await conversionService.getConversionsByStatus('IN_PROGRESS');
-      const failedJobs = await conversionService.getConversionsByStatus('FAILED');
+      const inProgressJobs = await conversionService.getConversionsByStatus('IN_PROGRESS', dashParams);
+      const failedJobs = await conversionService.getConversionsByStatus('FAILED', dashParams);
 
       console.log('API responses:', { pdfs, allConversions, inProgressJobs, failedJobs });
 
@@ -89,6 +96,34 @@ const Dashboard = () => {
 
   if (loading) {
     return <div className="loading">Loading dashboard...</div>;
+  }
+
+  if (user?.role === 'platform_admin') {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1>Platform admin</h1>
+          <p className="dashboard-subtitle">
+            Manage organizations, plans, and subscriptions. Product conversion tools are available to client
+            organizations through their plans.
+          </p>
+        </div>
+        <div className="quick-actions-section">
+          <h2>Admin</h2>
+          <div className="action-buttons">
+            <Link to="/admin/organizations" className="btn btn-primary">
+              Organizations &amp; clients
+            </Link>
+            <Link to="/admin/plans" className="btn btn-success">
+              Plans &amp; features
+            </Link>
+            <Link to="/activity" className="btn btn-primary">
+              View activity
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

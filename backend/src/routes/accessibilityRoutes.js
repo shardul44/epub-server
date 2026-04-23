@@ -11,8 +11,10 @@ import { successResponse, errorResponse, badRequestResponse } from '../utils/res
 import { RemedyEngine } from '../utils/RemedyEngine.js';
 import { AiRemediationService } from '../services/AiRemediationService.js';
 import { fileURLToPath } from 'url';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('accessibility_tools'));
 
 // Build absolute paths from this file location so PM2 `cwd` doesn't break them.
 const __filename = fileURLToPath(import.meta.url);

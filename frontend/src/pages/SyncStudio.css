@@ -326,6 +326,17 @@
   overflow-wrap: break-word;
 }
 
+/* EPUB Image Editor exports: .page + absolute blocks — match Image Editor / reader, not forced reflow */
+.xhtml-viewer:has(.page),
+.xhtml-viewer:has(.page) * {
+  max-width: none;
+  word-wrap: normal;
+  overflow-wrap: anywhere;
+}
+.xhtml-viewer:has(.page) img {
+  max-width: none;
+}
+
 .xhtml-viewer h1,
 .xhtml-viewer h2,
 .xhtml-viewer h3,

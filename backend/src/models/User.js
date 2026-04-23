@@ -1,25 +1,40 @@
 import pool from '../config/database.js';
 import bcrypt from 'bcryptjs';
+import { ROLES } from '../constants/roles.js';
+
+const userCols =
+  'id, name, email, phone_number, role, organization_id, created_at, updated_at';
 
 export class UserModel {
   static async findAll() {
-    const [rows] = await pool.execute('SELECT id, name, email, phone_number, created_at, updated_at FROM users');
+    const [rows] = await pool.execute(`SELECT ${userCols} FROM users ORDER BY id ASC`);
     return rows;
   }
 
-  static async findById(id) {
+  static async findByOrganizationId(organizationId) {
     const [rows] = await pool.execute(
-      'SELECT id, name, email, phone_number, created_at, updated_at FROM users WHERE id = ?',
-      [id]
+      `SELECT ${userCols} FROM users WHERE organization_id = ? ORDER BY name ASC`,
+      [organizationId]
     );
+    return rows;
+  }
+
+  /** Member and org_admin users in the org (each consumes one seat). */
+  static async countMembersByOrganizationId(organizationId) {
+    const [rows] = await pool.execute(
+      `SELECT COUNT(*) AS cnt FROM users WHERE organization_id = ? AND role IN (?, ?)`,
+      [organizationId, ROLES.MEMBER, ROLES.ORG_ADMIN]
+    );
+    return rows[0]?.cnt ?? 0;
+  }
+
+  static async findById(id) {
+    const [rows] = await pool.execute(`SELECT ${userCols} FROM users WHERE id = ?`, [id]);
     return rows[0] || null;
   }
 
   static async findByEmail(email) {
-    const [rows] = await pool.execute(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
+    const [rows] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
     return rows[0] || null;
   }
 
@@ -33,9 +48,11 @@ export class UserModel {
 
   static async create(userData) {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const role = userData.role || ROLES.MEMBER;
+    const orgId = userData.organizationId !== undefined ? userData.organizationId : null;
     const [result] = await pool.execute(
-      'INSERT INTO users (name, email, password, phone_number) VALUES (?, ?, ?, ?)',
-      [userData.name, userData.email, hashedPassword, userData.phoneNumber || null]
+      'INSERT INTO users (name, email, password, phone_number, role, organization_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [userData.name, userData.email, hashedPassword, userData.phoneNumber || null, role, orgId]
     );
     return await this.findById(result.insertId);
   }
@@ -61,6 +78,14 @@ export class UserModel {
       updates.push('password = ?');
       values.push(hashedPassword);
     }
+    if (userData.role !== undefined) {
+      updates.push('role = ?');
+      values.push(userData.role);
+    }
+    if (userData.organizationId !== undefined) {
+      updates.push('organization_id = ?');
+      values.push(userData.organizationId);
+    }
 
     if (updates.length === 0) {
       return await this.findById(id);
@@ -82,14 +107,3 @@ export class UserModel {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
 }
-
-
-
-
-
-
-
-
-
-
-

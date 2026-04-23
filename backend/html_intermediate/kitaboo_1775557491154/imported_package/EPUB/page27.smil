@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1773393735465-page-27"/>
+    <meta name="dtb:totalElapsedTime" content="16.318"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page27.xhtml#p27_z1"/>
+      <audio src="audio/page27.mp3" clipBegin="0.000s" clipEnd="6.140s"/>
+    </par>
+    <par>
+      <text src="page27.xhtml#p27_z2"/>
+      <audio src="audio/page27.mp3" clipBegin="6.140s" clipEnd="7.292s"/>
+    </par>
+    <par>
+      <text src="page27.xhtml#p27_z3"/>
+      <audio src="audio/page27.mp3" clipBegin="7.292s" clipEnd="9.978s"/>
+    </par>
+    <par>
+      <text src="page27.xhtml#p27_z4"/>
+      <audio src="audio/page27.mp3" clipBegin="9.978s" clipEnd="11.897s"/>
+    </par>
+    <par>
+      <text src="page27.xhtml#p27_z5"/>
+      <audio src="audio/page27.mp3" clipBegin="11.897s" clipEnd="13.816s"/>
+    </par>
+    <par>
+      <text src="page27.xhtml#p27_z6"/>
+      <audio src="audio/page27.mp3" clipBegin="13.816s" clipEnd="16.118s"/>
+    </par>
+    <par>
+      <text src="page27.xhtml#p27_z7"/>
+      <audio src="audio/page27.mp3" clipBegin="16.118s" clipEnd="16.318s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

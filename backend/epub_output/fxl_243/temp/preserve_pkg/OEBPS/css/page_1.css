@@ -1,0 +1,151 @@
+#frameimg
+{
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:1276px;
+	height:808px;
+	background:url(../image/page_1/frame.png) no-repeat;
+	pointer-events:none;
+}
+.author
+{
+	position:absolute;
+	bottom:0px;
+	left:0px;
+	width:222px;
+	height:299px;
+	padding: 0px;
+	margin: 0;
+	background:url(../image/page_1/author.png) no-repeat;
+}
+#authortext
+{
+	position: absolute;
+	left: 73px;
+	top: 140px;
+	width: 104px;
+	font-size: 11px;
+	text-align: center;
+}
+#authorbody
+{
+	position: absolute;
+	left: 73px;
+	top: 162px;
+	width: 104px;
+	font-size: 11px;
+}
+#flower
+{
+	position:absolute;
+	left:577px;
+	top:60px;
+	width:85px;
+	height:85px;
+	background:url(../image/page_1/bigflower.png) no-repeat;
+}
+#flower2
+{
+	position:absolute;
+	left:572px;
+	top:205px;
+	width:56px;
+	height:56px;
+	background:url(../image/page_1/flower2.png) no-repeat;
+}
+#smflower
+{
+	position:absolute;
+	left:100px;
+	top:35px;
+	width:46px;
+	height:46px;
+	background:url(../image/page_1/smflower.png) no-repeat;
+}
+#cmouth
+{
+	position:absolute;
+	left:124px;
+	top:280px;
+	width: 55px;
+	height: 26px;
+	background:url(../image/page_1/cmouth.png) no-repeat;
+	cursor:pointer;
+}
+#chand
+{
+	position:absolute;
+	left: 13px;
+	top: 330px;
+	width: 216px;
+	height: 195px;
+	background:url(../image/page_1/chand.png) no-repeat;
+	cursor:pointer;
+}
+#shell
+{
+	position:absolute;
+	left: 483px;
+	top: 446px;
+	width: 80px;
+	height: 67px;
+	background:url(../image/page_1/shell.png) no-repeat;
+	cursor:pointer;
+}
+#girlhead
+{
+	position:absolute;
+	left:407px;
+	top:118px;
+	width:178px;
+	height:196px;
+	background:url(../image/page_1/head.png) no-repeat;
+	cursor:pointer;
+}
+#girleye
+{
+	position:absolute;
+	left:51px;
+	top:113px;
+	width: 54px;
+	height: 33px;
+	background:url(../image/page_1/girleye.png) no-repeat;
+}
+#maneye
+{
+	position:absolute;
+	left:113px;
+	top:255px;
+	width: 76px;
+	height: 13px;
+	background:url(../image/page_1/maneye.png) no-repeat;
+}
+#boyeye
+{
+	position:absolute;
+	left:414px;
+	top:423px;
+	width: 62px;
+	height: 44px;
+	background:url(../image/page_1/boyeye.png) no-repeat;
+}
+/*******************************************************************/
+/*******************************************************************/
+#hotspot1
+{
+	left: 124px;
+	top: 411px;
+}
+#hotspot2
+{
+	left: 464px;
+	top: 263px;
+}
+#hotspot3
+{
+	left: 487px;
+	top: 451px;
+}
+/*******************************************************************/
+/*******************************************************************/

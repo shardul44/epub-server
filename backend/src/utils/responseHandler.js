@@ -30,6 +30,14 @@ export const badRequestResponse = (res, message = 'Bad request') => {
   });
 };
 
+export const forbiddenResponse = (res, message = 'Forbidden') => {
+  return res.status(403).json({
+    success: false,
+    error: message,
+    timestamp: new Date().toISOString()
+  });
+};
+
 
 
 

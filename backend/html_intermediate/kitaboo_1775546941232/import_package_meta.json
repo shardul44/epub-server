@@ -1,0 +1,74 @@
+{
+  "preserveForPublish": true,
+  "opfPath": "EPUB/content.opf",
+  "defaultViewportWidth": 1575,
+  "defaultViewportHeight": 2325,
+  "spine": [
+    {
+      "pageNumber": 1,
+      "manifestId": "page1",
+      "href": "page1.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page1.xhtml"
+    },
+    {
+      "pageNumber": 2,
+      "manifestId": "page2",
+      "href": "page2.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page2.xhtml"
+    },
+    {
+      "pageNumber": 3,
+      "manifestId": "page3",
+      "href": "page3.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page3.xhtml"
+    },
+    {
+      "pageNumber": 4,
+      "manifestId": "page4",
+      "href": "page4.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page4.xhtml"
+    },
+    {
+      "pageNumber": 5,
+      "manifestId": "page5",
+      "href": "page5.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page5.xhtml"
+    },
+    {
+      "pageNumber": 6,
+      "manifestId": "page6",
+      "href": "page6.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page6.xhtml"
+    },
+    {
+      "pageNumber": 7,
+      "manifestId": "page7",
+      "href": "page7.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page7.xhtml"
+    },
+    {
+      "pageNumber": 8,
+      "manifestId": "page8",
+      "href": "page8.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page8.xhtml"
+    },
+    {
+      "pageNumber": 9,
+      "manifestId": "page9",
+      "href": "page9.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page9.xhtml"
+    },
+    {
+      "pageNumber": 10,
+      "manifestId": "page10",
+      "href": "page10.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page10.xhtml"
+    },
+    {
+      "pageNumber": 11,
+      "manifestId": "page11",
+      "href": "page11.xhtml",
+      "xhtmlPathFromEpubRoot": "EPUB/page11.xhtml"
+    }
+  ]
+}

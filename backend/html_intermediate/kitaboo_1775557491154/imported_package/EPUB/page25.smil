@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1773393735465-page-25"/>
+    <meta name="dtb:totalElapsedTime" content="8.060"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page25.xhtml#p25_z1"/>
+      <audio src="audio/page25.mp3" clipBegin="0.000s" clipEnd="4.913s"/>
+    </par>
+    <par>
+      <text src="page25.xhtml#p25_z2"/>
+      <audio src="audio/page25.mp3" clipBegin="4.913s" clipEnd="7.860s"/>
+    </par>
+    <par>
+      <text src="page25.xhtml#p25_z3"/>
+      <audio src="audio/page25.mp3" clipBegin="7.860s" clipEnd="8.060s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

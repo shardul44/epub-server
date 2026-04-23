@@ -1,0 +1,55 @@
+
+.t {
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 2;
+	position: absolute;
+	white-space: pre;
+	overflow: visible;
+}
+
+
+#t1_5{left:92px;top:597px;letter-spacing:-5.2px;word-spacing:4.8px;}
+#t2_5{left:54px;top:640px;letter-spacing:-5.5px;word-spacing:5.2px;}
+#t3_5{left:369px;top:640px;letter-spacing:-3.6px;word-spacing:2.1px;}
+#t4_5{left:54px;top:683px;letter-spacing:-4.7px;word-spacing:2.6px;}
+#t5_5{left:54px;top:726px;letter-spacing:-4px;word-spacing:3.1px;}
+#t6_5{left:55px;top:48px;letter-spacing:-5px;word-spacing:4px;}
+#t7_5{left:40px;top:793px;}
+
+.s1_5{
+	FONT-SIZE: 134.4px;
+	FONT-FAMILY: HMAvenir-Regular_pk;
+	color: rgb(0,0,0);
+}
+
+.s2_5{
+	FONT-SIZE: 146.7px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+.s3_5{
+	FONT-SIZE: 73.3px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+
+
+@font-face {
+	font-family: HMAvenir-Bold_pp;
+	src: url("fonts/HMAvenir-Bold_pp.woff") format("woff");
+}
+
+@font-face {
+	font-family: HMAvenir-Regular_pk;
+	src: url("fonts/HMAvenir-Regular_pk.woff") format("woff");
+}
+

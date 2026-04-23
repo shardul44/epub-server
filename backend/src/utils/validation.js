@@ -54,6 +54,38 @@ export const validateUserDTO = (userDTO) => {
   };
 };
 
+/** Partial update — password optional */
+export const validateUserUpdateDTO = (userDTO) => {
+  const errors = [];
+
+  if (userDTO.name !== undefined) {
+    const n = String(userDTO.name).trim();
+    if (n.length < 2 || n.length > 100) {
+      errors.push('Name must be between 2 and 100 characters');
+    }
+  }
+
+  if (userDTO.email !== undefined && !validateEmail(userDTO.email)) {
+    errors.push('Valid email is required');
+  }
+
+  if (userDTO.password !== undefined && userDTO.password !== '') {
+    if (!validatePassword(userDTO.password)) {
+      errors.push('Password must be at least 6 characters and include letters and numbers');
+    }
+  }
+
+  const phone = userDTO.phoneNumber ?? userDTO.phone_number;
+  if (phone !== undefined && phone !== null && String(phone).trim() !== '' && !validatePhoneNumber(phone)) {
+    errors.push('Phone number must be 10-15 digits');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 
 
 

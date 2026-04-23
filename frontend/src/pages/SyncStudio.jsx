@@ -38,6 +38,8 @@ import { HiOutlineSparkles } from 'react-icons/hi2';
 import { audioSyncService } from '../services/audioSyncService';
 import { conversionService } from '../services/conversionService';
 import api from '../services/api';
+import { withAuthImageQuery } from '../utils/authImageUrl';
+import { xhtmlFragmentForDivViewer } from '../utils/xhtmlViewerFragment';
 import './SyncStudio.css';
 import {
   DndContext,
@@ -59,7 +61,243 @@ import { SortableItem } from '../components/SortableItem';
 import { HiOutlineSelector } from 'react-icons/hi';
 import { buildEpubReaderPath } from '../utils/epubReaderUrl';
 
+/** Parser-generated ids (not in client XHTML). Namespaced to avoid shadowing a publisher `ss_imp_*` id. */
+const INJECTED_SYNC_ID_PREFIX = 'byline_ss_imp_';
 
+/** Stable id → type when classnames omit sync-sentence / sync-word (typical client EPUBs). */
+function inferSyncElementTypeFromId(id, explicitType) {
+  if (explicitType === 'word' || explicitType === 'sentence' || explicitType === 'paragraph') return explicitType;
+  const s = String(id || '');
+  if (/_w\d+$/i.test(s)) return 'word';
+  // pdf2htmlEX / InDesign FXL-style word spans (e.g. SML1, SML12)
+  if (/^sml/i.test(s)) return 'word';
+  if (/_s\d+$/i.test(s)) return 'sentence';
+  // Line boxes: t1_15, t2_15 (one line per div)
+  if (/^t\d+_/i.test(s)) return 'sentence';
+  return 'paragraph';
+}
+
+/**
+ * Paragraph wrapper + inner sentence spans (our XHTML pipeline): sentence export should use spans only,
+ * not the parent paragraph id, to avoid duplicate TTS/sync rows.
+ */
+function paragraphSupersededByGranularSentenceId(paragraphId, allIds) {
+  const pid = String(paragraphId || '');
+  if (!pid) return false;
+  const needle = `${pid}_s`;
+  for (const oid of allIds) {
+    if (oid !== pid && String(oid).startsWith(needle)) return true;
+  }
+  return false;
+}
+
+/** Whether a parsed block participates in UI + TTS for the selected export level. */
+function parsedElementMatchesGranularityExport(granularity, el, allParsedElementIds) {
+  if (!el || !el.id) return false;
+  const id = String(el.id);
+  if (el.text !== undefined && !String(el.text || '').trim().length) return false;
+  const t = inferSyncElementTypeFromId(id, el.type);
+  const idSet =
+    allParsedElementIds instanceof Set ? allParsedElementIds : new Set(allParsedElementIds || []);
+  if (granularity === 'word') return t === 'word' || /_w\d+$/i.test(id);
+  if (granularity === 'sentence') {
+    if (t === 'sentence' || /_s\d+$/i.test(id)) return true;
+    if (t === 'paragraph' && !/_w\d+$/i.test(id) && !paragraphSupersededByGranularSentenceId(id, idSet)) {
+      return true;
+    }
+    return false;
+  }
+  if (granularity === 'paragraph') return t === 'paragraph' || (!/_w\d+$/i.test(id) && !/_s\d+$/i.test(id));
+  return true;
+}
+
+/** FXL / pdf2htmlEX: line divs often wrap only spans — do not treat span children as "nested blocks". */
+const HEURISTIC_INLINE_CHILD_TAGS = new Set([
+  'span',
+  'a',
+  'b',
+  'i',
+  'em',
+  'strong',
+  'u',
+  'sub',
+  'sup',
+  'small',
+  'mark',
+  'br',
+  'wbr',
+  'abbr',
+  'cite',
+  'code',
+  'dfn',
+  'kbd',
+  'q',
+  's',
+  'samp',
+  'time',
+  'var',
+  'tt',
+  'bdi',
+  'bdo',
+  'ruby',
+  'rt',
+  'rp',
+  'img',
+  'svg'
+]);
+
+function heuristicHasDirectBlockLevelChild(el) {
+  const idStr = (el.getAttribute('id') || '').trim();
+  const isPdf2LineBox =
+    (el.classList && el.classList.contains('t')) || /^t\d+_/i.test(idStr);
+
+  for (let i = 0; i < el.children.length; i++) {
+    const tn = el.children[i].tagName.toLowerCase();
+    if (HEURISTIC_INLINE_CHILD_TAGS.has(tn)) continue;
+    // pdf2htmlEX often wraps spans in an extra positioned div; still one "line" box.
+    if (isPdf2LineBox && tn === 'div') continue;
+    return true;
+  }
+  return false;
+}
+
+/** pdf2htmlEX footer / page-number styling (e.g. class s3_15). */
+function heuristicIsPdf2htmlFooterishClass(el) {
+  const cl = el.classList;
+  if (!cl || !cl.length) return false;
+  for (let i = 0; i < cl.length; i++) {
+    if (/^s\d+_\d+$/i.test(cl[i])) return true;
+  }
+  return false;
+}
+
+function heuristicIsStandaloneShortNumeric(text) {
+  const t = String(text || '').trim();
+  if (t.length === 0 || t.length > 2) return false;
+  return /^\d+$/.test(t);
+}
+
+function heuristicElementLikelyHidden(el) {
+  try {
+    if (el.getAttribute('hidden') != null) return true;
+    const st = el.getAttribute('style') || '';
+    if (/display\s*:\s*none/i.test(st) || /visibility\s*:\s*hidden/i.test(st)) return true;
+    const win = el.ownerDocument?.defaultView;
+    if (win && typeof win.getComputedStyle === 'function') {
+      const c = win.getComputedStyle(el);
+      if (c.display === 'none' || c.visibility === 'hidden') return true;
+    }
+  } catch (_) {
+    /* DOMParser docs have no view — style attr still checked above */
+  }
+  return false;
+}
+
+/**
+ * Heuristic discovery for "wild" EPUBs: no data-read-aloud, arbitrary ids.
+ * Prefers structure (semantic tags, text, leaf-ish blocks) over proprietary markers.
+ * Ids missing in XHTML get parser-only `${INJECTED_SYNC_ID_PREFIX}*` ids (sidebar/TTS work; in-DOM highlight skips until XHTML carries the id).
+ */
+function collectHeuristicWildEpubBlocks(doc, sectionId, effectivePageNumber, existingIds) {
+  const out = [];
+  if (!doc?.body || !(existingIds instanceof Set)) return out;
+
+  const HEURISTIC_SELECTOR = [
+    'p',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'li',
+    'blockquote',
+    'figcaption',
+    'span.text',
+    'span[id]',
+    'div[role="doc-text"]',
+    // Fixed-layout / pdf2htmlEX: one div per line (.t), word spans (SML*), id t1_15 style
+    '.t',
+    'span[id^="SML"]',
+    'span[id^="sml"]',
+    'div[id^="t"]'
+  ].join(', ');
+
+  let injectCounter = 0;
+  doc.body.querySelectorAll(HEURISTIC_SELECTOR).forEach((el) => {
+    if (el.getAttribute('data-read-aloud') === 'true') return;
+    if (el.closest('svg, code, pre, script, style, head, nav, [role="doc-toc"]')) return;
+    const r = (el.getAttribute('role') || '').toLowerCase();
+    const ariaHidden = (el.getAttribute('aria-hidden') || '').toLowerCase();
+    if (r === 'presentation' || r === 'none' || ariaHidden === 'true') return;
+    if (heuristicElementLikelyHidden(el)) return;
+    if (heuristicIsPdf2htmlFooterishClass(el)) return;
+
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (text.length < 2) return;
+    if (heuristicIsStandaloneShortNumeric(text)) return;
+    if (heuristicHasDirectBlockLevelChild(el)) return;
+
+    let id = (el.getAttribute('id') || '').trim();
+    let injectedId = false;
+    if (!id) {
+      id = `${INJECTED_SYNC_ID_PREFIX}${sectionId}_${injectCounter++}`;
+      injectedId = true;
+    }
+    if (id.includes('div')) return;
+    if (existingIds.has(id)) return;
+
+    existingIds.add(id);
+    const tagName = el.tagName.toLowerCase();
+    const classList = el.className || '';
+    const idForType = id;
+
+    let type = 'sentence';
+    const isClientWord =
+      classList.includes('sync-word') ||
+      (tagName === 'span' && /_w\d+$/i.test(idForType)) ||
+      /^sml/i.test(idForType);
+    const isClientLine =
+      (el.classList && el.classList.contains('t')) ||
+      /^t\d+_/i.test(idForType);
+
+    if (isClientWord) {
+      type = 'word';
+    } else if (classList.includes('sync-sentence') || /_s\d+$/i.test(idForType) || isClientLine) {
+      type = 'sentence';
+    } else if (tagName === 'p' || tagName === 'div') {
+      type = 'paragraph';
+    }
+
+    let parentId;
+    if (type === 'word' && /^sml/i.test(idForType) && typeof el.closest === 'function') {
+      const line = el.closest('.t[id], div[id^="t"]');
+      const lid = (line?.getAttribute?.('id') || '').trim();
+      if (lid) parentId = lid;
+    } else if (type === 'word' && /_w\d+$/i.test(idForType)) {
+      const parentMatch = idForType.match(/^((?:page\d+_)?p\d+_s\d+)_w\d+$/);
+      parentId = parentMatch ? parentMatch[1] : idForType.replace(/_w\d+$/, '');
+    }
+
+    let elementPageNumber = effectivePageNumber;
+    const pageMatch = id.match(/page(\d+)_/i);
+    if (pageMatch) elementPageNumber = parseInt(pageMatch[1], 10);
+
+    const row = {
+      id,
+      text,
+      type,
+      tagName,
+      sectionId,
+      sectionIndex: sectionId,
+      pageNumber: elementPageNumber,
+      ...(parentId ? { parentId } : {})
+    };
+    if (injectedId) row.injectedId = true;
+    out.push(row);
+  });
+  return out;
+}
 
 const SyncStudio = () => {
   const { jobId } = useParams();
@@ -102,6 +340,15 @@ const SyncStudio = () => {
   const [zoom, setZoom] = useState(50);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0); // Audio playback speed (1x, 1.25x, 1.5x)
 
+  // WaveSurfer uses fetch/audio element without axios interceptors; ensure media URLs carry auth.
+  useEffect(() => {
+    if (!audioUrl) return;
+    const nextUrl = withAuthImageQuery(audioUrl);
+    if (nextUrl !== audioUrl) {
+      setAudioUrl(nextUrl);
+    }
+  }, [audioUrl]);
+
   // State for sync data
   const [syncData, setSyncData] = useState({
     sentences: {}, // { id: { start, end, text, pageNumber } }
@@ -129,7 +376,7 @@ const SyncStudio = () => {
   // Per-section audio: each section can have its own audio file (uploaded or TTS-generated)
   // { [sectionIndex]: { url, fileName, source: 'uploaded'|'tts' } }
   const [perSectionAudioFiles, setPerSectionAudioFiles] = useState({});
-  const [perSectionMode, setPerSectionMode] = useState(true); // Per-section audio only: each section has its own audio (upload or TTS)
+  const [perSectionMode, setPerSectionMode] = useState(true); // Per-section audio is the default mode
 
   // State for diagnostic modal
   const [showDiagnostics, setShowDiagnostics] = useState(false);
@@ -148,6 +395,7 @@ const SyncStudio = () => {
   const pendingRegionUpdatesRef = useRef(new Map()); // Track regions that need to be recreated after audio reload
   const segmentEndIntervalRef = useRef(null); // Interval for checking segment end
   const isScrubbingRef = useRef(false); // Flag to prevent infinite loops during scrubbing
+  const waveSurferDestroyingRef = useRef(false); // Suppress expected AbortError during destroy/re-init
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -197,6 +445,17 @@ const SyncStudio = () => {
   const [autoSyncProgress, setAutoSyncProgress] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
+
+  const appendQueryParams = useCallback((url, params = {}) => {
+    if (!url) return url;
+    const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '');
+    if (entries.length === 0) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    const q = entries
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+      .join('&');
+    return `${url}${sep}${q}`;
+  }, []);
 
   // State for text block editing
   const [editingBlockId, setEditingBlockId] = useState(null);
@@ -248,23 +507,15 @@ const SyncStudio = () => {
         ...Object.entries(syncData.words).filter(([id]) => id.includes('_w')).map(([id, data]) => ({ id, data }))
       ];
 
+      const allParsedIds = parsedElements.map((el) => el.id);
       const filteredItems = allItems.filter(({ id, data }) => {
           const parsedElement = parsedElements.find(el => el.id === id);
           const isCorrectSection = parsedElement && parsedElement.sectionIndex === currentSectionIndex;
           const isCorrectPage = data.pageNumber === currentPageNumber;
           const show = parsedElement ? isCorrectSection : isCorrectPage;
           if (!show) return false;
-
-          let elementType = 'paragraph';
-          if (id.includes('_w')) elementType = 'word';
-          else if (id.includes('_s')) elementType = 'sentence';
-          else if (parsedElement) elementType = parsedElement.type || 'paragraph';
-
-          if (granularity === 'word' && elementType !== 'word') return false;
-          if (granularity === 'sentence' && elementType !== 'sentence') return false;
-          if (granularity === 'paragraph' && elementType !== 'paragraph') return false;
-
-          return true;
+          const el = parsedElement || { id, type: inferSyncElementTypeFromId(id) };
+          return parsedElementMatchesGranularityExport(granularity, el, allParsedIds);
         });
       
       // Preferred scope: section/chapter order (single XHTML can include multiple logical pages)
@@ -673,6 +924,10 @@ const SyncStudio = () => {
         });
       });
 
+      // Wild / client EPUB heuristic layer (runs after proprietary read-aloud + image passes).
+      const existingIds = new Set(elements.map((e) => e.id));
+      elements.push(...collectHeuristicWildEpubBlocks(doc, sectionId, effectivePageNumber, existingIds));
+
       return elements;
     } catch (err) {
       console.error('Error parsing XHTML:', err);
@@ -822,6 +1077,9 @@ const SyncStudio = () => {
 
     // Add new highlight
     if (elementId) {
+      if (String(elementId).startsWith(INJECTED_SYNC_ID_PREFIX)) {
+        return;
+      }
       // Try multiple selector strategies
       let el = viewerRef.current.querySelector(`#${CSS.escape(elementId)}`);
 
@@ -1239,6 +1497,15 @@ const SyncStudio = () => {
 
     // Handle errors
     wavesurferRef.current.on('error', (error) => {
+      const msg = String(error?.message || error || '');
+      const isAbort =
+        error?.name === 'AbortError' || /signal is aborted/i.test(msg) || /aborted/i.test(msg);
+
+      // Expected when cleanup destroys the current instance while an async load is in-flight.
+      if (waveSurferDestroyingRef.current && isAbort) {
+        return;
+      }
+
       console.error('[WaveSurfer] Error:', error);
       setIsReady(false);
     });
@@ -1520,11 +1787,13 @@ const SyncStudio = () => {
       if (wavesurferRef.current) {
         try {
           setIsReady(false);
+          waveSurferDestroyingRef.current = true;
           wavesurferRef.current.destroy();
         } catch (err) {
           console.warn('[SyncStudio] Error during WaveSurfer cleanup:', err?.message);
         }
         wavesurferRef.current = null;
+        waveSurferDestroyingRef.current = false;
       }
     };
   }, [audioUrl, handleRegionUpdate, handleRegionDrag, highlightElement]);
@@ -1565,32 +1834,41 @@ const SyncStudio = () => {
   }, [playbackSpeed, isReady]);
 
   /**
-   * Ensure XHTML content is properly reflowable
+   * Light reflow hints for classic reflowable EPUB HTML only.
+   * Do NOT mutate EPUB Image Editor pages: they use `.page` + position:absolute; forcing
+   * maxWidth/height on every node breaks the same layout you see in the Image Editor.
    */
   useEffect(() => {
-    if (viewerRef.current && xhtmlContent) {
-      // Apply reflowable styles to all elements in the viewer
-      const allElements = viewerRef.current.querySelectorAll('*');
-      allElements.forEach(el => {
-        // Ensure text wraps properly
-        el.style.wordWrap = 'break-word';
-        el.style.overflowWrap = 'break-word';
-        el.style.maxWidth = '100%';
-        el.style.boxSizing = 'border-box';
-
-        // Prevent horizontal overflow
-        if (el.tagName === 'TABLE') {
-          el.style.tableLayout = 'auto';
-          el.style.width = '100%';
-        }
-
-        // Ensure images scale properly
-        if (el.tagName === 'IMG') {
-          el.style.maxWidth = '100%';
-          el.style.height = 'auto';
-        }
-      });
+    if (!viewerRef.current || !xhtmlContent) return;
+    const root = viewerRef.current;
+    if (root.querySelector('.page')) {
+      return;
     }
+    const allElements = root.querySelectorAll('*');
+    allElements.forEach((el) => {
+      let pos = '';
+      try {
+        pos = window.getComputedStyle(el).position;
+      } catch (_) {
+        return;
+      }
+      if (pos === 'absolute' || pos === 'fixed') return;
+
+      el.style.wordWrap = 'break-word';
+      el.style.overflowWrap = 'break-word';
+      el.style.maxWidth = '100%';
+      el.style.boxSizing = 'border-box';
+
+      if (el.tagName === 'TABLE') {
+        el.style.tableLayout = 'auto';
+        el.style.width = '100%';
+      }
+
+      if (el.tagName === 'IMG') {
+        el.style.maxWidth = '100%';
+        el.style.height = 'auto';
+      }
+    });
   }, [xhtmlContent, leftPanelWidth]);
 
   /**
@@ -1657,20 +1935,9 @@ const SyncStudio = () => {
       }
 
       // CRITICAL: Validate that the selected block matches the current granularity
-      const elementType = element.type || (element.id.includes('_w') ? 'word' : element.id.includes('_s') ? 'sentence' : 'paragraph');
-      if (granularity === 'word' && elementType !== 'word') {
-        console.warn(`[TapSync] Block ${element.id} is ${elementType} level, but granularity is ${granularity}. Cannot sync.`);
-        tapSyncStartTimeRef.current = null;
-        setSelectedBlockForSync(null);
-        return;
-      }
-      if (granularity === 'sentence' && elementType !== 'sentence') {
-        console.warn(`[TapSync] Block ${element.id} is ${elementType} level, but granularity is ${granularity}. Cannot sync.`);
-        tapSyncStartTimeRef.current = null;
-        setSelectedBlockForSync(null);
-        return;
-      }
-      if (granularity === 'paragraph' && elementType !== 'paragraph') {
+      const allParsedIds = parsedElements.map((el) => el.id);
+      if (!parsedElementMatchesGranularityExport(granularity, element, allParsedIds)) {
+        const elementType = inferSyncElementTypeFromId(element.id, element.type);
         console.warn(`[TapSync] Block ${element.id} is ${elementType} level, but granularity is ${granularity}. Cannot sync.`);
         tapSyncStartTimeRef.current = null;
         setSelectedBlockForSync(null);
@@ -1679,8 +1946,11 @@ const SyncStudio = () => {
 
       // Check if element is on current page
       const pageMatch = element.id.match(/page(\d+)/);
-      const elementPageNum = pageMatch ? parseInt(pageMatch[1]) : null;
-      const isOnCurrentPage = elementPageNum === currentPageNumber || element.sectionIndex === currentSectionIndex;
+      const elementPageNum = pageMatch ? parseInt(pageMatch[1], 10) : null;
+      const isOnCurrentPage =
+        elementPageNum === currentPageNumber ||
+        element.sectionIndex === currentSectionIndex ||
+        (element.pageNumber != null && element.pageNumber === currentPageNumber);
 
       if (!isOnCurrentPage) {
         console.warn(`[TapSync] Selected block is not on current page. Selected: ${selectedBlockForSync}, Current page: ${currentPageNumber}`);
@@ -1811,13 +2081,17 @@ const SyncStudio = () => {
             const relativeImagePattern2 = /src=["']\.\.\/images\/([^"']+)["']/gi;
 
             processedXhtml = processedXhtml.replace(relativeImagePattern1, (match, fileName) => {
-              const absoluteUrl = `${baseURL}/conversions/${jobId}/images/${fileName}`;
+              const absoluteUrl = withAuthImageQuery(
+                `${baseURL}/conversions/${jobId}/images/${fileName}`
+              );
               console.log('[SyncStudio] Converting image path (images/):', match, '->', absoluteUrl);
               return `src="${absoluteUrl}"`;
             });
 
             processedXhtml = processedXhtml.replace(relativeImagePattern2, (match, fileName) => {
-              const absoluteUrl = `${baseURL}/conversions/${jobId}/images/${fileName}`;
+              const absoluteUrl = withAuthImageQuery(
+                `${baseURL}/conversions/${jobId}/images/${fileName}`
+              );
               console.log('[SyncStudio] Converting image path (../images/):', match, '->', absoluteUrl);
               return `src="${absoluteUrl}"`;
             });
@@ -1838,7 +2112,7 @@ const SyncStudio = () => {
           });
 
           setSections(processedSections);
-          setXhtmlContent(processedSections[0]?.xhtml || '');
+          setXhtmlContent(xhtmlFragmentForDivViewer(processedSections[0]?.xhtml || ''));
 
           // Parse elements from all sections (use processed sections with absolute URLs)
           const allElements = [];
@@ -1862,11 +2136,47 @@ const SyncStudio = () => {
             setAudioSource(syncStudioPayload.audioSource ?? null);
           }
 
-          // Load per-section audio metadata from backend (check which sections have dedicated audio)
-          if (syncStudioPayload?.perSectionAudio && typeof syncStudioPayload.perSectionAudio === 'object') {
-            setPerSectionAudioFiles(syncStudioPayload.perSectionAudio);
+          // Load per-section audio metadata from backend.
+          // Backend field is `perSectionAudioUrls` (index -> /api/audio-sync/job/:jobId/audio/section/:idx).
+          const payloadSectionAudioUrls =
+            syncStudioPayload?.perSectionAudioUrls || syncStudioPayload?.perSectionAudio;
+          if (
+            payloadSectionAudioUrls &&
+            typeof payloadSectionAudioUrls === 'object' &&
+            Object.keys(payloadSectionAudioUrls).length > 0
+          ) {
+            const base = api.defaults.baseURL || '';
+            const baseHasApiPrefix = /\/api\/?$/.test(base);
+            const backendOrigin = base.replace(/\/api\/?$/, '');
+            const normalized = {};
+            Object.entries(payloadSectionAudioUrls).forEach(([idxRaw, relOrAbsUrl]) => {
+              const idx = Number(idxRaw);
+              if (!Number.isFinite(idx)) return;
+              const rawUrl = String(relOrAbsUrl || '').trim();
+              if (!rawUrl) return;
+              let resolvedUrl = rawUrl;
+              if (!/^https?:\/\//i.test(resolvedUrl)) {
+                if (resolvedUrl.startsWith('/api/')) {
+                  // Backend may be mounted at root (localhost dev) or behind /api (prod proxy).
+                  // Keep /api only when base URL itself includes /api.
+                  resolvedUrl = baseHasApiPrefix
+                    ? `${backendOrigin}${resolvedUrl}`
+                    : `${backendOrigin}${resolvedUrl.slice(4)}`;
+                } else if (resolvedUrl.startsWith('/')) {
+                  resolvedUrl = `${backendOrigin}${resolvedUrl}`;
+                } else {
+                  resolvedUrl = `${backendOrigin}/${resolvedUrl}`;
+                }
+              }
+              normalized[idx] = {
+                url: withAuthImageQuery(resolvedUrl),
+                fileName: `section_audio_${idx}.mp3`,
+                source: 'uploaded'
+              };
+            });
+            setPerSectionAudioFiles(normalized);
             setPerSectionMode(true);
-            console.log('[SyncStudio] Loaded per-section audio:', syncStudioPayload.perSectionAudio);
+            console.log('[SyncStudio] Loaded per-section audio URLs:', normalized);
           } else {
             // Check individually which sections have audio (graceful background check)
             const detected = {};
@@ -2485,15 +2795,10 @@ const SyncStudio = () => {
       setError('');
       const level = granularity || 'sentence';
       const sectionElements = parsedElements.filter(el => el.sectionIndex === sectionIndex);
-      const matchesGranularity = (el) => {
-        const id = el.id || '';
-        const t = el.type || (id.includes('_w') ? 'word' : id.includes('_s') ? 'sentence' : 'paragraph');
-        if (level === 'word') return t === 'word' || id.includes('_w');
-        if (level === 'sentence') return t === 'sentence' || (id.includes('_s') && !id.includes('_w'));
-        if (level === 'paragraph') return t === 'paragraph' || (!id.includes('_w') && !id.includes('_s'));
-        return true;
-      };
-      const matchedElements = sectionElements.filter(matchesGranularity);
+      const allParsedIds = parsedElements.map((e) => e.id);
+      const matchedElements = sectionElements.filter((el) =>
+        parsedElementMatchesGranularityExport(level, el, allParsedIds)
+      );
 
       // Respect the reading order for this section: check section-scoped order first,
       // then fall back to live sortedIds if this is the currently active section.
@@ -2532,7 +2837,9 @@ const SyncStudio = () => {
         pdfId, parseInt(jobId), sectionIndex, selectedVoice, textBlocks, level, ttsSpeakingRate
       );
       await new Promise(resolve => setTimeout(resolve, 500));
-      const serverUrl = audioSyncService.getSectionAudioUrl(jobId, sectionIndex) + '?t=' + Date.now();
+      const serverUrl = appendQueryParams(audioSyncService.getSectionAudioUrl(jobId, sectionIndex), {
+        t: Date.now()
+      });
       setPerSectionAudioFiles(prev => ({
         ...prev,
         [sectionIndex]: { url: serverUrl, fileName: `tts_section_${sectionIndex}.mp3`, source: 'tts' }
@@ -2597,18 +2904,10 @@ const SyncStudio = () => {
         /page-number/i, /page-num/i, /^skip/i, /^metadata/i
       ];
 
-      // Filter by granularity (Export Level), same as Kitaboo sync level
-      const matchesGranularity = (el) => {
-        const id = el.id || '';
-        const t = el.type || (id.includes('_w') ? 'word' : id.includes('_s') ? 'sentence' : 'paragraph');
-        if (level === 'word') return t === 'word' || id.includes('_w');
-        if (level === 'sentence') return t === 'sentence' || (id.includes('_s') && !id.includes('_w'));
-        if (level === 'paragraph') return t === 'paragraph' || (!id.includes('_w') && !id.includes('_s'));
-        return t === 'sentence' || t === 'paragraph';
-      };
+      const allParsedIds = parsedElements.map((e) => e.id);
 
       const filtered = parsedElements.filter(el => {
-        if (!matchesGranularity(el)) return false;
+        if (!parsedElementMatchesGranularityExport(level, el, allParsedIds)) return false;
         const id = el.id || '';
         const text = el.text || '';
         if (unspokenPatterns.some(p => p.test(id) || p.test(text))) {
@@ -2704,7 +3003,10 @@ const SyncStudio = () => {
       
       // Force waveform to reload with new audio
       // Use aggressive cache-busting to ensure browser loads new audio file
-      const newAudioUrl = audioSyncService.getJobAudioUrl(jobId) + '?t=' + Date.now() + '&regenerated=true';
+      const newAudioUrl = appendQueryParams(audioSyncService.getJobAudioUrl(jobId), {
+        t: Date.now(),
+        regenerated: true
+      });
       console.log(`[handleGenerateAudio] 🔄 Setting new audio URL with cache-buster: ${newAudioUrl}`);
       
       setAudioUrl(newAudioUrl);
@@ -4641,7 +4943,10 @@ const SyncStudio = () => {
             if (freshAudioData && freshAudioData.length > 0 && freshAudioData[0]?.audioFilePath) {
               const updatedUrl = audioSyncService.getAudioUrl(freshAudioData[0].id);
               // Add timestamp to force reload and bypass cache
-              const urlWithCacheBuster = `${updatedUrl}?t=${Date.now()}&regenerated=${blockId}`;
+              const urlWithCacheBuster = appendQueryParams(updatedUrl, {
+                t: Date.now(),
+                regenerated: blockId
+              });
 
               console.log(`[Regenerate] Reloading audio from URL: ${urlWithCacheBuster}`);
 
@@ -4875,13 +5180,9 @@ const SyncStudio = () => {
         return unspokenPatterns.some(pattern => pattern.test(id) || pattern.test(text));
       };
 
-      const matchesGranularityForSave = (id, type) => {
-        const t = type || (id.includes('_w') ? 'word' : id.includes('_s') ? 'sentence' : 'paragraph');
-        if (currentGranularity === 'word') return t === 'word';
-        if (currentGranularity === 'sentence') return t === 'sentence';
-        if (currentGranularity === 'paragraph') return t === 'paragraph';
-        return t === 'sentence' || t === 'paragraph';
-      };
+      const allParsedIdsForSave = parsedElements.map((e) => e.id);
+      const matchesGranularityForSave = (id, type) =>
+        parsedElementMatchesGranularityExport(currentGranularity, { id, type }, allParsedIdsForSave);
 
       // Add sentences only when Export Level is sentence or paragraph
       if (currentGranularity === 'sentence' || currentGranularity === 'paragraph') {
@@ -4891,7 +5192,7 @@ const SyncStudio = () => {
           const resolvedId = resolveLegacyImgAltIdToXhtmlId(id);
           if (isUnspoken(resolvedId, data.text || '')) return;
           const el = parsedElements.find(e => e.id === resolvedId);
-          const type = el?.type || (resolvedId.includes('_s') ? 'sentence' : 'paragraph');
+          const type = el?.type || inferSyncElementTypeFromId(resolvedId);
           if (!matchesGranularityForSave(resolvedId, type)) return;
 
           const pageMatch = resolvedId.match(/page(\\d+)_/i);
@@ -5147,7 +5448,7 @@ const SyncStudio = () => {
     setCurrentSectionIndex(index);
     setCurrentSentenceIndex(0);
     if (sections[index]) {
-      setXhtmlContent(sections[index].xhtml || '');
+      setXhtmlContent(xhtmlFragmentForDivViewer(sections[index].xhtml || ''));
     }
     // Per-section audio: switch waveform to section audio when available, or clear if none
     if (perSectionMode) {
@@ -5932,28 +6233,13 @@ const SyncStudio = () => {
                 // Words: only word ids from words
                 ...Object.entries(syncData.words).filter(([id]) => id.includes('_w')).map(([id, data]) => ({ id, data }))
               ].filter(({ id, data }) => {
-                const parsedElement = parsedElements.find(el => el.id === id);
-                const isCorrectSection = parsedElement && parsedElement.sectionIndex === currentSectionIndex;
+                const pe = parsedElements.find(el => el.id === id);
+                const isCorrectSection = pe && pe.sectionIndex === currentSectionIndex;
                 const isCorrectPage = data.pageNumber === currentPageNumber;
-                const show = parsedElement ? isCorrectSection : isCorrectPage;
+                const show = pe ? isCorrectSection : isCorrectPage;
                 if (!show) return false;
-
-                // Filter by granularity
-                let elementType = 'paragraph';
-                if (id.includes('_w')) {
-                  elementType = 'word';
-                } else if (id.includes('_s')) {
-                  elementType = 'sentence';
-                } else {
-                  const parsedElement = parsedElements.find(el => el.id === id);
-                  if (parsedElement) {
-                    elementType = parsedElement.type || 'paragraph';
-                  }
-                }
-                if (granularity === 'word' && elementType !== 'word') return false;
-                if (granularity === 'sentence' && elementType !== 'sentence') return false;
-                if (granularity === 'paragraph' && elementType !== 'paragraph') return false;
-                return true;
+                const el = pe || { id, type: inferSyncElementTypeFromId(id) };
+                return parsedElementMatchesGranularityExport(granularity, el, parsedElements.map((e) => e.id));
               }).length} {granularity === 'word' ? 'words' : granularity === 'sentence' ? 'sentences' : 'paragraphs'}
             </span>
             <span className="stat">
@@ -5998,16 +6284,14 @@ const SyncStudio = () => {
                           onClick={() => {
                             if (isSkipped) return;
 
-                            let elementType = 'paragraph';
-                            if (id.includes('_w')) elementType = 'word';
-                            else if (id.includes('_s')) elementType = 'sentence';
-                            else if (parsedElements.find(el => el.id === id)) elementType = parsedElements.find(el => el.id === id).type || 'paragraph';
+                            const pe = parsedElements.find(el => el.id === id);
+                            const el = pe || { id, type: inferSyncElementTypeFromId(id) };
 
                             // Tap Sync Logic
                             if (isRecording) {
-                              if (granularity === 'word' && elementType !== 'word') return;
-                              if (granularity === 'sentence' && elementType !== 'sentence') return;
-                              if (granularity === 'paragraph' && elementType !== 'paragraph') return;
+                              if (!parsedElementMatchesGranularityExport(granularity, el, parsedElements.map((e) => e.id))) {
+                                return;
+                              }
 
                               setSelectedBlockForSync(id);
                               setActiveRegionId(id);

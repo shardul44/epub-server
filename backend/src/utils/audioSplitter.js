@@ -7,26 +7,29 @@ import fs from 'fs/promises';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
+import { getPageNumFromZoneId as resolveZoneIdToPage } from './kitabooZonePageId.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function getPageNumFromZoneId(id) {
-  const m = String(id || '').match(/^p(\d+)_/);
-  return m ? parseInt(m[1], 10) : null;
-}
 
 /**
  * Compute page boundaries from alignment segments.
  * When many pages are collapsed (same end time), falls back to proportional distribution.
  * @param {Array<{id: string, startTime: number, endTime: number}>} segments
  * @param {number} [audioDuration] - Total audio length (from ffprobe or last segment)
+ * @param {Map<string, number>|undefined} [zoneIdToPageMap] - when set, resolves arbitrary zone ids to pages
  * @returns {Array<{page: number, start: number, end: number}>}
  */
-export function getPageBoundaries(segments, audioDuration) {
+export function getPageBoundaries(segments, audioDuration, zoneIdToPageMap) {
   const byPage = {};
   let maxEnd = 0;
   for (const s of segments) {
-    const page = getPageNumFromZoneId(s.id);
+    let page;
+    if (zoneIdToPageMap instanceof Map && zoneIdToPageMap.size > 0) {
+      page = resolveZoneIdToPage(s.id, zoneIdToPageMap);
+    } else {
+      const m = String(s.id || '').match(/^p(\d+)_/);
+      page = m ? parseInt(m[1], 10) : null;
+    }
     if (page == null) continue;
     const start = Number(s.startTime) || 0;
     const end = Number(s.endTime) || start + 0.2;

@@ -1,0 +1,46 @@
+
+.t {
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 2;
+	position: absolute;
+	white-space: pre;
+	overflow: visible;
+}
+
+
+#t1_20{left:90px;top:638px;letter-spacing:-6px;word-spacing:4.2px;}
+#t2_20{left:52px;top:681px;letter-spacing:-5.5px;word-spacing:3.7px;}
+#t3_20{left:52px;top:724px;letter-spacing:-6px;}
+#t4_20{left:526px;top:793px;}
+
+.s1_20{
+	FONT-SIZE: 134.4px;
+	FONT-FAMILY: HMAvenir-Regular_pk;
+	color: rgb(0,0,0);
+}
+
+.s2_20{
+	FONT-SIZE: 73.3px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+
+
+@font-face {
+	font-family: HMAvenir-Bold_pp;
+	src: url("fonts/HMAvenir-Bold_pp.woff") format("woff");
+}
+
+@font-face {
+	font-family: HMAvenir-Regular_pk;
+	src: url("fonts/HMAvenir-Regular_pk.woff") format("woff");
+}
+

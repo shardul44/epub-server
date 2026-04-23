@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" style="width:504px;height:744px;overflow:auto"><head><meta charset="UTF-8" /><meta name="viewport" content="width=504,height=744" /><link rel="stylesheet" type="text/css" href="base.min.css" /><link rel="stylesheet" type="text/css" href="pdf.css" />
+<style type="text/css"><![CDATA[
+  /*
+   * pdf.css: .fc0 { color: rgb(255,255,255) }; base.min.css: .t { position:absolute }.
+   * All-absolutely-positioned children → parent height 0 → body overflow clips → white page. Fix box + z-index.
+   */
+  #fxlChapter {
+    position: relative !important;
+    width: 504px !important;
+    height: 744px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  #layerBtns {
+    position: relative !important;
+    width: 504px !important;
+    height: 744px !important;
+    min-height: 744px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+  #layerBtns #page-container,
+  #layerBtns .pf {
+    position: relative !important;
+    width: 504px !important;
+    height: 744px !important;
+    min-height: 744px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+  #layerBtns .pc {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 744px !important;
+  }
+  #layerBtns .bi {
+    z-index: 0 !important;
+  }
+  #layerBtns .pf .t,
+  #layerBtns .t {
+    z-index: 1 !important;
+  }
+
+  #layerBtns .t span._,
+  #layerBtns .t span[class*=" _"] {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  #layerBtns .pf .t,
+  #layerBtns .t,
+  .pf .t,
+  .t {
+    color: #000000 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    -webkit-text-fill-color: #000000 !important;
+    text-shadow: none !important;
+  }
+
+  #layerBtns .t.fc0,
+  #layerBtns .t .fc0,
+  #layerBtns .t .fc1 {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+  }
+
+  #layerBtns.kb.transparent * {
+    color: #000000 !important;
+    background: transparent !important;
+    -webkit-text-stroke: 0 !important;
+    text-stroke: 0 !important;
+  }
+
+  #layerBtns.kb.transparent {
+    mix-blend-mode: normal !important;
+  }
+]]></style></head><body style="width:504px;height:744px;min-height:744px;overflow:auto;box-sizing:border-box"><div id="fxlChapter" style="position:relative;width:504px;height:744px;margin:0 auto;overflow:hidden;box-sizing:border-box">
+<div class="kb" id="layerBg">&#160;</div>
+<div class="kb kbUnlocked" id="layerBtns" style="position:relative;width:504px;height:744px;min-height:744px;overflow:visible;box-sizing:border-box"><div id="pfa" class="pf w0 h0" data-page-no="a"><div class="pc pca w0 h0"><img class="bi x0 y0 w0 h0" alt="" src="bga.png" /><div class="t m7 x16 h2e y8a ff4b fs20 fc1 sc0 ls0 ws4">Horses are beautiful animals </div><div class="t m7 x22 h2e y8b ff4b fs20 fc1 sc0 ls0 ws4">with strong muscles.  A horse </div><div class="t m7 x22 h2e y8c ff4b fs20 fc1 sc0 ls0 ws4">can easily carry a person on <span class="ws0"> </span></div><div class="t m7 x22 h2e y8d ff4b fs20 fc1 sc0 ls0 ws4">its back.</div><div class="t m7 x2e h2d y8e ff4c fs1f fc0 sc0 ls0 ws2">All About Horses</div><div class="t m7 x33 h2c y53 ff4d fs1b fc1 sc0 ls0 ws0">8</div><div class="c x20 y0 w9 h0"><div class="t m7 x16 h2e y8f ff4e fs20 fc1 sc0 ls0 ws4">Horses are fast, too.  They </div><div class="t m7 x22 h2e y90 ff4e fs20 fc1 sc0 ls0 ws4">are one of the fastest animals in </div><div class="t m7 x22 h2e y91 ff4e fs20 fc1 sc0 ls0 ws4">the world.  People like to watch </div><div class="t m7 x22 h2e y92 ff4e fs20 fc1 sc0 ls0 ws4">horse races and guess which </div><div class="t m7 x22 h2e y93 ff4e fs20 fc1 sc0 ls0 ws4">horse will run the fastest.</div><div class="t m7 x4a h32 y94 ff4f fs1b fc1 sc0 ls0 ws5">A horse’s powerful legs help </div><div class="t m7 x4a h32 y95 ff4f fs1b fc1 sc0 ls0 ws5">the animal run far and jump </div><div class="t m7 x4a h32 y96 ff4f fs1b fc1 sc0 ls0 ws5">high.  Some horses can run </div><div class="t m7 x4a h32 y97 ff4f fs1b fc1 sc0 ls0 ws5">more than 50 miles per hour!</div><div class="t m7 x34 h2c y53 ff50 fs1b fc1 sc0 ls0 ws0">9</div></div></div><div class="pi" data-data="{&quot;ctm&quot;:[1.000000,0.000000,0.000000,1.000000,0.000000,0.000000]}"></div></div></div>
+<div class="kb" id="layerInteractive">&#160;</div>
+</div></body></html>

@@ -1,6 +1,29 @@
 import pool from '../config/database.js';
+import { pdfDocumentWhereClause } from '../utils/tenantScope.js';
 
 export class PdfDocumentModel {
+  /** Scoped list for tenant users; platform_admin gets none. @param {{ onlyOwn?: boolean }} [options] */
+  static async findAllForUser(user, options = {}) {
+    const w = pdfDocumentWhereClause(user, options);
+    const [rows] = await pool.execute(
+      `
+      SELECT p.*,
+             GROUP_CONCAT(DISTINCT pl.language) as languages
+      FROM pdf_documents p
+      LEFT JOIN pdf_languages pl ON p.id = pl.pdf_document_id
+      WHERE ${w.sql}
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `,
+      w.params
+    );
+
+    return rows.map((row) => ({
+      ...row,
+      languages: row.languages ? row.languages.split(',') : []
+    }));
+  }
+
   static async findAll() {
     const [rows] = await pool.execute(`
       SELECT p.*, 
@@ -42,8 +65,9 @@ export class PdfDocumentModel {
         file_name, original_file_name, file_path, file_size, total_pages,
         document_type, page_quality, has_tables, has_formulas, has_multi_column,
         scanned_pages_count, digital_pages_count, analysis_metadata, layout_type,
-        zip_file_name, zip_file_group_id, audio_file_path, audio_file_name, audio_synced
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        zip_file_name, zip_file_group_id, audio_file_path, audio_file_name, audio_synced,
+        user_id, organization_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         pdfData.fileName, pdfData.originalFileName, pdfData.filePath, pdfData.fileSize,
         pdfData.totalPages, pdfData.documentType || null, pdfData.pageQuality || null,
@@ -51,7 +75,9 @@ export class PdfDocumentModel {
         pdfData.scannedPagesCount || 0, pdfData.digitalPagesCount || 0,
         pdfData.analysisMetadata || null, pdfData.layoutType || 'REFLOWABLE',
         pdfData.zipFileName || null, pdfData.zipFileGroupId || null, pdfData.audioFilePath || null,
-        pdfData.audioFileName || null, pdfData.audioSynced || false
+        pdfData.audioFileName || null, pdfData.audioSynced || false,
+        pdfData.userId ?? null,
+        pdfData.organizationId ?? null
       ]
     );
 

@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="ean" prefix="rendition: http://www.idpf.org/vocab/rendition/# ibooks: http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/">
+	<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+		<dc:identifier id="ean">9798765980545</dc:identifier>
+		<dc:identifier id="BookId">urn:uuid:1234-5678</dc:identifier>
+		<dc:language>en</dc:language>
+		<dc:title>Places Around the World</dc:title>
+		<dc:subject/>
+		<dc:date>2025-05-15</dc:date>
+		<meta name="fixed-layout" content="true"/>
+		<meta property="rendition:layout">pre-paginated</meta>
+		<meta property="rendition:orientation">auto</meta>
+		<meta property="ibooks:binding">true</meta>
+		<meta property="ibooks:specified-fonts">true</meta>
+		<meta property="rendition:spread">landscape</meta>
+		<meta property="schema:accessMode">textual</meta>
+		<meta property="schema:accessMode">visual</meta>
+		<meta property="schema:accessModeSufficient">textual,visual</meta>
+		<meta property="schema:accessibilityHazard">noFlashingHazard</meta>
+		<meta property="schema:accessibilityHazard">noMotionSimulationHazard</meta>
+		<meta property="schema:accessibilityHazard">noSoundHazard</meta>
+		<meta name="cover" content="cover-image"/>
+		<dc:creator id="aut01">MITR</dc:creator>
+		<meta refines="#aut01" property="role" scheme="marc:relators">aut</meta>
+		<meta name="original-resolution" content="1282x1282"/>
+		<meta property="dcterms:modified">2025-05-15T15:17:36Z</meta>
+		<dc:publisher>Teacher Created Materials</dc:publisher>
+		<meta property="media:active-class">-epub-media-overlay-active</meta>
+	
+		
+	<meta property="media:duration" refines="#cover_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0001_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0003_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0004_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0005_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0007_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0008_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0009_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0010_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0011_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0012_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0013_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0014_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0015_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0016_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0017_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0018_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0019_smil">00:17:68</meta>
+	<meta property="media:duration" refines="#page-0020_smil">00:17:68</meta>
+
+
+		<meta property="media:duration">01:98:68</meta>
+	<meta xmlns="" property="media:duration" refines="#smil_overlay_1">3.992s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_3">1.360s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_4">18.700s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_5">17.054s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_6">11.511s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_7">3.160s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_9">7.200s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_10">7.920s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_11">7.920s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_12">18.700s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_13">18.700s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_14">12.000s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_15">14.440s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_16">12.554s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_17">12.000s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_18">12.560s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_19">5.440s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_20">8.880s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_21">6.520s</meta><meta xmlns="" property="media:duration" refines="#smil_overlay_22">18.700s</meta></metadata>
+	<manifest>
+		<!-- JavaScript files -->
+		<item id="js1" href="generateOpf.js" media-type="text/javascript"/>
+		<item id="js2" href="js/highlight.js" media-type="text/javascript"/>
+		<item id="js3" href="js/highlightColor.js" media-type="text/javascript"/>
+
+		<!-- Audio files -->
+		<item id="cover.mp3_audio" href="audio/cover.mp3" media-type="audio/mpeg"/>
+		<item id="page-0001.mp3_audio" href="audio/page-0001.mp3" media-type="audio/mpeg"/>
+		<item id="page-0003.mp3_audio" href="audio/page-0003.mp3" media-type="audio/mpeg"/>
+		<item id="page-0004.mp3_audio" href="audio/page-0004.mp3" media-type="audio/mpeg"/>
+		<item id="page-0005.mp3_audio" href="audio/page-0005.mp3" media-type="audio/mpeg"/>
+		<item id="page-0007.mp3_audio" href="audio/page-0007.mp3" media-type="audio/mpeg"/>
+		<item id="page-0008.mp3_audio" href="audio/page-0008.mp3" media-type="audio/mpeg"/>
+		<item id="page-0009.mp3_audio" href="audio/page-0009.mp3" media-type="audio/mpeg"/>
+		<item id="page-0010.mp3_audio" href="audio/page-0010.mp3" media-type="audio/mpeg"/>
+		<item id="page-0011.mp3_audio" href="audio/page-0011.mp3" media-type="audio/mpeg"/>
+		<item id="page-0012.mp3_audio" href="audio/page-0012.mp3" media-type="audio/mpeg"/>
+		<item id="page-0013.mp3_audio" href="audio/page-0013.mp3" media-type="audio/mpeg"/>
+		<item id="page-0014.mp3_audio" href="audio/page-0014.mp3" media-type="audio/mpeg"/>
+		<item id="page-0015.mp3_audio" href="audio/page-0015.mp3" media-type="audio/mpeg"/>
+		<item id="page-0016.mp3_audio" href="audio/page-0016.mp3" media-type="audio/mpeg"/>
+		<item id="page-0017.mp3_audio" href="audio/page-0017.mp3" media-type="audio/mpeg"/>
+		<item id="page-0018.mp3_audio" href="audio/page-0018.mp3" media-type="audio/mpeg"/>
+		<item id="page-0019.mp3_audio" href="audio/page-0019.mp3" media-type="audio/mpeg"/>
+		<item id="page-0020.mp3_audio" href="audio/page-0020.mp3" media-type="audio/mpeg"/>
+
+
+		<!-- Image files -->
+		<item id="bg11" href="images/bg1.jpg" media-type="image/jpeg"/>
+		<item id="bg102" href="images/bg10.jpg" media-type="image/jpeg"/>
+		<item id="bg113" href="images/bg11.jpg" media-type="image/jpeg"/>
+		<item id="bg124" href="images/bg12.jpg" media-type="image/jpeg"/>
+		<item id="bg135" href="images/bg13.jpg" media-type="image/jpeg"/>
+		<item id="bg146" href="images/bg14.jpg" media-type="image/jpeg"/>
+		<item id="bg157" href="images/bg15.jpg" media-type="image/jpeg"/>
+		<item id="bg168" href="images/bg16.jpg" media-type="image/jpeg"/>
+		<item id="bg179" href="images/bg17.jpg" media-type="image/jpeg"/>
+		<item id="bg1810" href="images/bg18.jpg" media-type="image/jpeg"/>
+		<item id="bg1911" href="images/bg19.jpg" media-type="image/jpeg"/>
+		<item id="bg212" href="images/bg2.jpg" media-type="image/jpeg"/>
+		<item id="bg2013" href="images/bg20.jpg" media-type="image/jpeg"/>
+		<item id="bg2114" href="images/bg21.jpg" media-type="image/jpeg"/>
+		<item id="bg315" href="images/bg3.jpg" media-type="image/jpeg"/>
+		<item id="bg416" href="images/bg4.jpg" media-type="image/jpeg"/>
+		<item id="bg517" href="images/bg5.jpg" media-type="image/jpeg"/>
+		<item id="bg618" href="images/bg6.jpg" media-type="image/jpeg"/>
+		<item id="bg719" href="images/bg7.jpg" media-type="image/jpeg"/>
+		<item id="bg820" href="images/bg8.jpg" media-type="image/jpeg"/>
+		<item id="bg921" href="images/bg9.jpg" media-type="image/jpeg"/>
+		<item id="cover1" href="images/cover1.jpg" media-type="image/jpeg"/>
+		<item id="cover-image1" href="images/cover.jpg" media-type="image/jpeg" properties="image/jpeg"/>
+
+
+		<!-- Font files -->
+		<item id="AdLibBT-Regular_1es" href="fonts/AdLibBT-Regular_1es.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AdLibBT-Regular_1fi" href="fonts/AdLibBT-Regular_1fi.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AdLibBT-Regular_1oq" href="fonts/AdLibBT-Regular_1oq.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AGaramondPro-Bold_om" href="fonts/AGaramondPro-Bold_om.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AGaramondPro-Bold_oz" href="fonts/AGaramondPro-Bold_oz.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AGaramondPro-Regular_ok" href="fonts/AGaramondPro-Regular_ok.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AGaramondPro-Regular_ox" href="fonts/AGaramondPro-Regular_ox.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="AvenirLTStd-Black_1fd" href="fonts/AvenirLTStd-Black_1fd.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="ComicSansMS-Bold_1k-" href="fonts/ComicSansMS-Bold_1k-.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="DomCasualStd-Bold_p6" href="fonts/DomCasualStd-Bold_p6.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="DomCasualStd-Bold_pi" href="fonts/DomCasualStd-Bold_pi.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="DomCasualStd-Bold_v0" href="fonts/DomCasualStd-Bold_v0.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="DomCasualStd-Bold_v9" href="fonts/DomCasualStd-Bold_v9.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaLTStd-Cond-SC750_os" href="fonts/HelveticaLTStd-Cond-SC750_os.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaLTStd-Cond-SC750_p3" href="fonts/HelveticaLTStd-Cond-SC750_p3.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaLTStd-Cond_oo" href="fonts/HelveticaLTStd-Cond_oo.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaLTStd-Cond_o_" href="fonts/HelveticaLTStd-Cond_o_.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaNeueLTStd-Blk_1hj" href="fonts/HelveticaNeueLTStd-Blk_1hj.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaNeueLTStd-MdIt_1gp" href="fonts/HelveticaNeueLTStd-MdIt_1gp.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HelveticaNeueLTStd-Md_1fk" href="fonts/HelveticaNeueLTStd-Md_1fk.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HMAvenir-Bold_pe" href="fonts/HMAvenir-Bold_pe.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HMAvenir-Bold_pp" href="fonts/HMAvenir-Bold_pp.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HMAvenir-Regular_p5" href="fonts/HMAvenir-Regular_p5.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="HMAvenir-Regular_pk" href="fonts/HMAvenir-Regular_pk.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="ITCFranklinGothicStd-Demi_o-" href="fonts/ITCFranklinGothicStd-Demi_o-.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="ITCFranklinGothicStd-Demi_p0" href="fonts/ITCFranklinGothicStd-Demi_p0.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="ITCFranklinGothicStd-Demi_pb" href="fonts/ITCFranklinGothicStd-Demi_pb.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="ITCFranklinGothicStd-Demi_pd" href="fonts/ITCFranklinGothicStd-Demi_pd.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-BlackSemiCn_1fc" href="fonts/MyriadPro-BlackSemiCn_1fc.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-BlackSemiCn_pb" href="fonts/MyriadPro-BlackSemiCn_pb.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-BlackSemiCn_pn" href="fonts/MyriadPro-BlackSemiCn_pn.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Bold_1eq" href="fonts/MyriadPro-Bold_1eq.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Bold_1os" href="fonts/MyriadPro-Bold_1os.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Bold_p9" href="fonts/MyriadPro-Bold_p9.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Bold_v2" href="fonts/MyriadPro-Bold_v2.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Bold_v7" href="fonts/MyriadPro-Bold_v7.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-It_1fa" href="fonts/MyriadPro-It_1fa.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-It_p8" href="fonts/MyriadPro-It_p8.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-It_pl" href="fonts/MyriadPro-It_pl.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Regular_1ds" href="fonts/MyriadPro-Regular_1ds.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Regular_1fe" href="fonts/MyriadPro-Regular_1fe.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Regular_pa" href="fonts/MyriadPro-Regular_pa.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Regular_pm" href="fonts/MyriadPro-Regular_pm.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-SemiboldIt_1dr" href="fonts/MyriadPro-SemiboldIt_1dr.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Semibold_1eo" href="fonts/MyriadPro-Semibold_1eo.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Semibold_1f3" href="fonts/MyriadPro-Semibold_1f3.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Semibold_1ov" href="fonts/MyriadPro-Semibold_1ov.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Semibold_pc" href="fonts/MyriadPro-Semibold_pc.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="MyriadPro-Semibold_po" href="fonts/MyriadPro-Semibold_po.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="TimesTenLTStd-Bold_1g8" href="fonts/TimesTenLTStd-Bold_1g8.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="TimesTenLTStd-Roman_1fg" href="fonts/TimesTenLTStd-Roman_1fg.woff" media-type="application/vnd.ms-opentype"/>
+		<item id="ZapfDingbatsITC_1ft" href="fonts/ZapfDingbatsITC_1ft.woff" media-type="application/vnd.ms-opentype"/>
+
+
+		<!-- SMIL files -->
+		<item id="cover_smil" href="smil/cover.smil" media-type="application/smil+xml"/>
+		<item id="page-0001_smil" href="smil/page-0001.smil" media-type="application/smil+xml"/>
+		<item id="page-0003_smil" href="smil/page-0003.smil" media-type="application/smil+xml"/>
+		<item id="page-0004_smil" href="smil/page-0004.smil" media-type="application/smil+xml"/>
+		<item id="page-0005_smil" href="smil/page-0005.smil" media-type="application/smil+xml"/>
+		<item id="page-0007_smil" href="smil/page-0007.smil" media-type="application/smil+xml"/>
+		<item id="page-0008_smil" href="smil/page-0008.smil" media-type="application/smil+xml"/>
+		<item id="page-0009_smil" href="smil/page-0009.smil" media-type="application/smil+xml"/>
+		<item id="page-0010_smil" href="smil/page-0010.smil" media-type="application/smil+xml"/>
+		<item id="page-0011_smil" href="smil/page-0011.smil" media-type="application/smil+xml"/>
+		<item id="page-0012_smil" href="smil/page-0012.smil" media-type="application/smil+xml"/>
+		<item id="page-0013_smil" href="smil/page-0013.smil" media-type="application/smil+xml"/>
+		<item id="page-0014_smil" href="smil/page-0014.smil" media-type="application/smil+xml"/>
+		<item id="page-0015_smil" href="smil/page-0015.smil" media-type="application/smil+xml"/>
+		<item id="page-0016_smil" href="smil/page-0016.smil" media-type="application/smil+xml"/>
+		<item id="page-0017_smil" href="smil/page-0017.smil" media-type="application/smil+xml"/>
+		<item id="page-0018_smil" href="smil/page-0018.smil" media-type="application/smil+xml"/>
+		<item id="page-0019_smil" href="smil/page-0019.smil" media-type="application/smil+xml"/>
+		<item id="page-0020_smil" href="smil/page-0020.smil" media-type="application/smil+xml"/>
+
+
+		<!-- XHTML files -->
+		<item id="blank" href="blank.xhtml" media-type="application/xhtml+xml"/>
+		<item id="cover" href="cover.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_1" properties="media-overlay"/>
+		<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+		<item id="page-0001" href="page-0001.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_3" properties="media-overlay"/>
+		<item id="page-0002" href="page-0002.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_4" properties="media-overlay"/>
+		<item id="page-0003" href="page-0003.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_5" properties="media-overlay"/>
+		<item id="page-0004" href="page-0004.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_6" properties="media-overlay"/>
+		<item id="page-0005" href="page-0005.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_7" properties="media-overlay"/>
+		<item id="page-0006" href="page-0006.xhtml" media-type="application/xhtml+xml"/>
+		<item id="page-0007" href="page-0007.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_9" properties="media-overlay"/>
+		<item id="page-0008" href="page-0008.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_10" properties="media-overlay"/>
+		<item id="page-0009" href="page-0009.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_11" properties="media-overlay"/>
+		<item id="page-0010" href="page-0010.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_12" properties="media-overlay"/>
+		<item id="page-0011" href="page-0011.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_13" properties="media-overlay"/>
+		<item id="page-0012" href="page-0012.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_14" properties="media-overlay"/>
+		<item id="page-0013" href="page-0013.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_15" properties="media-overlay"/>
+		<item id="page-0014" href="page-0014.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_16" properties="media-overlay"/>
+		<item id="page-0015" href="page-0015.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_17" properties="media-overlay"/>
+		<item id="page-0016" href="page-0016.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_18" properties="media-overlay"/>
+		<item id="page-0017" href="page-0017.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_19" properties="media-overlay"/>
+		<item id="page-0018" href="page-0018.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_20" properties="media-overlay"/>
+		<item id="page-0019" href="page-0019.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_21" properties="media-overlay"/>
+		<item id="page-0020" href="page-0020.xhtml" media-type="application/xhtml+xml" media-overlay="smil_overlay_22" properties="media-overlay"/>
+		
+
+		<!-- CSS files -->
+		<item id="cover_ccs" href="cover.css" media-type="text/css"/>
+		<item id="default_ccs" href="default.css" media-type="text/css"/>
+		<item id="page-0001_ccs" href="page-0001.css" media-type="text/css"/>
+		<item id="page-0002_ccs" href="page-0002.css" media-type="text/css"/>
+		<item id="page-0003_ccs" href="page-0003.css" media-type="text/css"/>
+		<item id="page-0004_ccs" href="page-0004.css" media-type="text/css"/>
+		<item id="page-0005_ccs" href="page-0005.css" media-type="text/css"/>
+		<item id="page-0006_ccs" href="page-0006.css" media-type="text/css"/>
+		<item id="page-0007_ccs" href="page-0007.css" media-type="text/css"/>
+		<item id="page-0008_ccs" href="page-0008.css" media-type="text/css"/>
+		<item id="page-0009_ccs" href="page-0009.css" media-type="text/css"/>
+		<item id="page-0010_ccs" href="page-0010.css" media-type="text/css"/>
+		<item id="page-0011_ccs" href="page-0011.css" media-type="text/css"/>
+		<item id="page-0012_ccs" href="page-0012.css" media-type="text/css"/>
+		<item id="page-0013_ccs" href="page-0013.css" media-type="text/css"/>
+		<item id="page-0014_ccs" href="page-0014.css" media-type="text/css"/>
+		<item id="page-0015_ccs" href="page-0015.css" media-type="text/css"/>
+		<item id="page-0016_ccs" href="page-0016.css" media-type="text/css"/>
+		<item id="page-0017_ccs" href="page-0017.css" media-type="text/css"/>
+		<item id="page-0018_ccs" href="page-0018.css" media-type="text/css"/>
+		<item id="page-0019_ccs" href="page-0019.css" media-type="text/css"/>
+		<item id="page-0020_ccs" href="page-0020.css" media-type="text/css"/>
+		
+		<item id="style_ccs" href="style.css" media-type="text/css"/>
+
+		<!-- Other files -->
+		<item id="content" href="content.opf" media-type="application/octet-stream"/>
+		<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+
+	<item xmlns="" id="smil_overlay_1" href="smil/page1.smil" media-type="application/smil+xml"/><item xmlns="" id="audio_overlay_book" href="audio/page_22.mp3" media-type="audio/mpeg"/><item xmlns="" id="smil_overlay_3" href="smil/page3.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_4" href="smil/page4.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_5" href="smil/page5.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_6" href="smil/page6.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_7" href="smil/page7.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_9" href="smil/page9.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_10" href="smil/page10.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_11" href="smil/page11.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_12" href="smil/page12.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_13" href="smil/page13.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_14" href="smil/page14.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_15" href="smil/page15.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_16" href="smil/page16.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_17" href="smil/page17.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_18" href="smil/page18.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_19" href="smil/page19.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_20" href="smil/page20.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_21" href="smil/page21.smil" media-type="application/smil+xml"/><item xmlns="" id="smil_overlay_22" href="smil/page22.smil" media-type="application/smil+xml"/></manifest>
+	<spine toc="ncx">
+		 <itemref idref="cover" media-overlay="smil_overlay_1"/>
+		<itemref idref="blank" properties="page-spread-left"/>
+		<itemref idref="page-0001" properties="page-spread-right" media-overlay="smil_overlay_3"/>
+		<itemref idref="page-0002" properties="page-spread-left" media-overlay="smil_overlay_4"/>
+		<itemref idref="page-0003" properties="page-spread-right" media-overlay="smil_overlay_5"/>
+		<itemref idref="page-0004" properties="page-spread-left" media-overlay="smil_overlay_6"/>
+		<itemref idref="page-0005" properties="page-spread-right" media-overlay="smil_overlay_7"/>
+		<itemref idref="page-0006" properties="page-spread-left"/>
+		<itemref idref="page-0007" properties="page-spread-right" media-overlay="smil_overlay_9"/>
+		<itemref idref="page-0008" properties="page-spread-left" media-overlay="smil_overlay_10"/>
+		<itemref idref="page-0009" properties="page-spread-right" media-overlay="smil_overlay_11"/>
+		<itemref idref="page-0010" properties="page-spread-left" media-overlay="smil_overlay_12"/>
+		<itemref idref="page-0011" properties="page-spread-right" media-overlay="smil_overlay_13"/>
+		<itemref idref="page-0012" properties="page-spread-left" media-overlay="smil_overlay_14"/>
+		<itemref idref="page-0013" properties="page-spread-right" media-overlay="smil_overlay_15"/>
+		<itemref idref="page-0014" properties="page-spread-left" media-overlay="smil_overlay_16"/>
+		<itemref idref="page-0015" properties="page-spread-right" media-overlay="smil_overlay_17"/>
+		<itemref idref="page-0016" properties="page-spread-left" media-overlay="smil_overlay_18"/>
+		<itemref idref="page-0017" properties="page-spread-right" media-overlay="smil_overlay_19"/>
+		<itemref idref="page-0018" properties="page-spread-left" media-overlay="smil_overlay_20"/>
+		<itemref idref="page-0019" properties="page-spread-right" media-overlay="smil_overlay_21"/>
+		<itemref idref="page-0020" properties="page-spread-left" media-overlay="smil_overlay_22"/>
+		
+	</spine>
+	<guide>
+		<reference href="cover.xhtml" type="cover" title="Cover"/>
+		<reference href="page-0001.xhtml" type="text" title="Content"/>
+	</guide>
+</package>

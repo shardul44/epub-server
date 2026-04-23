@@ -14,8 +14,10 @@ import {
   applyApprovedEpubRepairs
 } from '../services/epubAiRepairService.js';
 import { runEpubAutoFixOnBuffer } from '../services/epubAutoFixEngine.js';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('epub_tools'));
 const jsonBody = express.json({ limit: '20mb' });
 const repairJsonBody = express.json({ limit: '100mb' });
 

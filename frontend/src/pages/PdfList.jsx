@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { pdfService } from '../services/pdfService';
 import api from '../services/api';
 import { HiOutlineDocument, HiOutlineCloudUpload, HiOutlineTrash, HiOutlinePlay, HiOutlineSparkles } from 'react-icons/hi';
@@ -8,6 +8,7 @@ import './PdfList.css';
 
 const PdfList = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [pdfs, setPdfs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,10 +16,34 @@ const PdfList = () => {
   const [hifiModalPdf, setHifiModalPdf] = useState(null);
   const [hifiZoneLevel, setHifiZoneLevel] = useState('word');
   const [hifiTocEndPage, setHifiTocEndPage] = useState('');
+  const highlightIdRaw = searchParams.get('highlight');
+  const highlightId = highlightIdRaw != null && highlightIdRaw !== '' ? parseInt(highlightIdRaw, 10) : null;
+  const highlightName = searchParams.get('name') || '';
+  const rowRefs = useRef({});
 
   useEffect(() => {
     loadPdfs();
   }, []);
+
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') hiddenAt = Date.now();
+      if (document.visibilityState === 'visible' && hiddenAt && Date.now() - hiddenAt > 2000) {
+        loadPdfs();
+      }
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
+  useEffect(() => {
+    if (loading || highlightId == null || Number.isNaN(highlightId)) return;
+    const el = rowRefs.current[highlightId];
+    if (el && typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [loading, highlightId, pdfs]);
 
   const loadPdfs = async () => {
     try {
@@ -101,6 +126,35 @@ const PdfList = () => {
 
       {error && <div className="error">{error}</div>}
 
+      {highlightId != null && !Number.isNaN(highlightId) && (
+        <div
+          className="card"
+          style={{
+            marginBottom: '16px',
+            padding: '12px 16px',
+            background: '#e8f5e9',
+            border: '1px solid #81c784',
+            borderRadius: '8px',
+            fontSize: '14px',
+            color: '#1b5e20'
+          }}
+        >
+          <strong>Just uploaded</strong>
+          {highlightName ? ` — ${highlightName}` : ''} (PDF ID <strong>{highlightId}</strong>). Use <strong>Hi-Fi FXL</strong> on{' '}
+          <strong>this row</strong> in the table — not an older document above/below.{' '}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ marginLeft: '8px', padding: '4px 10px', fontSize: '13px' }}
+            onClick={() => {
+              setSearchParams({});
+            }}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {pdfs.length === 0 ? (
         <div className="card" style={{ textAlign: 'center', padding: '60px 40px' }}>
           <HiOutlineDocument size={64} style={{ color: '#bdbdbd', marginBottom: '16px' }} />
@@ -148,15 +202,26 @@ const PdfList = () => {
                 if (!pdf || !pdf.id) return null;
 
                 const typeBadge = getDocumentTypeBadge(pdf.documentType);
+                const isHighlight = highlightId != null && !Number.isNaN(highlightId) && pdf.id === highlightId;
                 return (
                   <tr
                     key={pdf.id}
+                    ref={(el) => {
+                      if (el) rowRefs.current[pdf.id] = el;
+                    }}
                     style={{
                       borderBottom: index < pdfs.length - 1 ? '1px solid #e0e0e0' : 'none',
-                      transition: 'background-color 0.2s ease'
+                      transition: 'background-color 0.2s ease',
+                      ...(isHighlight
+                        ? { outline: '3px solid #2e7d32', outlineOffset: '-3px', backgroundColor: '#f1f8e9' }
+                        : {})
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fafafa'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
+                    onMouseEnter={(e) => {
+                      if (!isHighlight) e.currentTarget.style.backgroundColor = '#fafafa';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = isHighlight ? '#f1f8e9' : '#ffffff';
+                    }}
                   >
                     <td style={{ padding: '16px 24px' }}>
                       <div style={{
@@ -338,6 +403,22 @@ const PdfList = () => {
         <div className="hifi-convert-modal-overlay" onClick={() => setHifiModalPdf(null)}>
           <div className="hifi-convert-modal" onClick={e => e.stopPropagation()}>
             <h4>Hi-Fi FXL: Zone level</h4>
+            <p
+              style={{
+                marginBottom: '12px',
+                padding: '10px 12px',
+                background: '#fff8e1',
+                borderRadius: '6px',
+                fontSize: '14px',
+                color: '#5d4037',
+                border: '1px solid #ffcc80'
+              }}
+            >
+              <strong>Confirm PDF:</strong> {hifiModalPdf.originalFileName || hifiModalPdf.fileName || 'unknown'}{' '}
+              <span style={{ color: '#6d4c41' }}>(ID {hifiModalPdf.id})</span>
+              <br />
+              <span style={{ fontSize: '13px' }}>The job uses this document only. If this is not the file you just uploaded, close and click Hi-Fi on the correct row.</span>
+            </p>
             <p style={{ marginBottom: '12px', color: '#666', fontSize: '14px' }}>
               Extraction runs at glyph level by default. Choose how zones appear in Zoning Studio:
             </p>

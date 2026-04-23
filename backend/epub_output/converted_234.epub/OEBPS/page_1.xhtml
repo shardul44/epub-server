@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" style="width:504px;height:744px;overflow:auto"><head><meta charset="UTF-8" /><meta name="viewport" content="width=504,height=744" /><link rel="stylesheet" type="text/css" href="base.min.css" /><link rel="stylesheet" type="text/css" href="pdf.css" />
+<style type="text/css"><![CDATA[
+  /*
+   * pdf.css: .fc0 { color: rgb(255,255,255) }; base.min.css: .t { position:absolute }.
+   * All-absolutely-positioned children → parent height 0 → body overflow clips → white page. Fix box + z-index.
+   */
+  #fxlChapter {
+    position: relative !important;
+    width: 504px !important;
+    height: 744px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  #layerBtns {
+    position: relative !important;
+    width: 504px !important;
+    height: 744px !important;
+    min-height: 744px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+  #layerBtns #page-container,
+  #layerBtns .pf {
+    position: relative !important;
+    width: 504px !important;
+    height: 744px !important;
+    min-height: 744px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box !important;
+  }
+  #layerBtns .pc {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 744px !important;
+  }
+  #layerBtns .bi {
+    z-index: 0 !important;
+  }
+  #layerBtns .pf .t,
+  #layerBtns .t {
+    z-index: 1 !important;
+  }
+
+  #layerBtns .t span._,
+  #layerBtns .t span[class*=" _"] {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
+  #layerBtns .pf .t,
+  #layerBtns .t,
+  .pf .t,
+  .t {
+    color: #000000 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    -webkit-text-fill-color: #000000 !important;
+    text-shadow: none !important;
+  }
+
+  #layerBtns .t.fc0,
+  #layerBtns .t .fc0,
+  #layerBtns .t .fc1 {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+  }
+
+  #layerBtns.kb.transparent * {
+    color: #000000 !important;
+    background: transparent !important;
+    -webkit-text-stroke: 0 !important;
+    text-stroke: 0 !important;
+  }
+
+  #layerBtns.kb.transparent {
+    mix-blend-mode: normal !important;
+  }
+]]></style></head><body style="width:504px;height:744px;min-height:744px;overflow:auto;box-sizing:border-box"><div id="fxlChapter" style="position:relative;width:504px;height:744px;margin:0 auto;overflow:hidden;box-sizing:border-box">
+<div class="kb" id="layerBg">&#160;</div>
+<div class="kb kbUnlocked" id="layerBtns" style="position:relative;width:504px;height:744px;min-height:744px;overflow:visible;box-sizing:border-box"><div id="pf1" class="pf w0 h0" data-page-no="1"><div class="pc pc1 w0 h0"><img class="bi x0 y0 w0 h0" alt="" src="bg1.png" /><div class="c x0 y1 w0 h1"><div class="t m0 x1 h2 y2 ff1 fs0 fc0 sc0 ls0 ws0">H<span class="_ _0"></span>o<span class="_ _0"></span>r<span class="_ _0"></span>s<span class="_ _0"></span>e<span class="_ _0"></span>s<span class="_ _1"></span><span class="ff2 fc1">H<span class="_ _0"></span>o<span class="_ _0"></span>r<span class="_ _0"></span>s<span class="_ _0"></span>e<span class="_ _0"></span>s</span></div></div><div class="c x2 y3 w1 h3"><div class="t m1 x3 h4 y4 ff3 fs1 fc0 sc0 ls0 ws0">Up <span class="_ _2"></span><span class="ff4">Up </span></div></div><div class="c x4 y5 w2 h5"><div class="t m2 x5 h6 y6 ff5 fs2 fc0 sc0 ls0 ws0">C</div><div class="t m3 x6 h7 y7 ff5 fs3 fc0 sc0 ls0 ws0">l</div><div class="t m4 x7 h8 y8 ff5 fs4 fc0 sc0 ls0 ws0">o</div><div class="t m5 x8 h9 y9 ff5 fs5 fc0 sc0 ls0 ws0">s</div><div class="t m6 x9 ha ya ff5 fs6 fc0 sc0 ls0 ws0">e</div><div class="t m2 x5 h6 y6 ff6 fs2 fc0 sc0 ls0 ws0">C</div><div class="t m3 x6 h7 y7 ff6 fs3 fc0 sc0 ls0 ws0">l</div><div class="t m4 x7 h8 y8 ff6 fs4 fc0 sc0 ls0 ws0">o</div><div class="t m5 x8 h9 y9 ff6 fs5 fc0 sc0 ls0 ws0">s</div><div class="t m6 x9 ha ya ff6 fs6 fc0 sc0 ls0 ws0">e</div></div><div class="t m7 xa hb yb ff7 fs7 fc0 sc0 ls0 ws0">Christopher Blazeman</div><div class="t m8 xb hc yc ff8 fs8 fc0 sc0 ls0 ws0">Horses Up Close <span class="_ _3"> </span>Blazeman</div></div><div class="pi" data-data="{&quot;ctm&quot;:[1.000000,0.000000,0.000000,1.000000,0.000000,0.000000]}"></div></div></div>
+<div class="kb" id="layerInteractive">&#160;</div>
+</div></body></html>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0">
+	<body>
+		<par id="par1"><text src="../page-0001.xhtml#SML0"/><audio src="../audio/page-0001.mp3" clipBegin="0.000000s" clipEnd="1.300673s" /></par>
+		<par id="par2"><text src="../page-0001.xhtml#SML1"/><audio src="../audio/page-0001.mp3" clipBegin="1.300673s" clipEnd="1.960066s" /></par>
+		<par id="par3"><text src="../page-0001.xhtml#SML2"/><audio src="../audio/page-0001.mp3" clipBegin="1.960066s" clipEnd="2.210056s" /></par>
+		<par id="par4"><text src="../page-0001.xhtml#SML3"/><audio src="../audio/page-0001.mp3" clipBegin="2.210056s" clipEnd="2.876696s" /></par>
+	</body>
+</smil>

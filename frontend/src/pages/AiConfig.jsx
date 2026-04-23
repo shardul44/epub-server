@@ -5,7 +5,7 @@ const AiConfig = () => {
   const [config, setConfig] = useState({
     id: null,
     apiKey: '',
-    modelName: 'gemini-pro',
+    modelName: 'gemini-2.5-flash',
     isActive: false,
     description: '',
     updatedAt: null
@@ -42,7 +42,7 @@ const AiConfig = () => {
         setConfig({
           id: currentConfig.id || null,
           apiKey: apiKeyIsMasked ? '' : currentConfig.apiKey, // Clear masked keys
-          modelName: currentConfig.modelName || 'gemini-pro',
+          modelName: currentConfig.modelName || 'gemini-2.5-flash',
           isActive: currentConfig.isActive !== undefined ? currentConfig.isActive : true,
           description: currentConfig.description || '',
           updatedAt: currentConfig.updatedAt || null

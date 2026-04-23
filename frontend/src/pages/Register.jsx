@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 const Register = () => {
@@ -11,6 +12,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   const passwordStrength = useMemo(() => {
     const pwd = String(password || '');
@@ -70,6 +72,11 @@ const Register = () => {
       if (!token) throw new Error('Registration failed: missing token from server response.');
 
       localStorage.setItem('token', token);
+      if (data?.user) setUser(data.user);
+      else {
+        const me = await api.get('/auth/me');
+        setUser(me.data?.data ?? me.data);
+      }
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Registration failed');

@@ -12,6 +12,29 @@ import { EpubGenerator } from '../utils/epubGenerator.js';
 import { KitabooFxlService } from './KitabooFxlService.js';
 import { KitabooZoneModel } from '../models/KitabooZone.js';
 
+async function humanAudioFileExists(absPath) {
+  try {
+    await fs.access(absPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** @param {string} humanAudioDir @param {number} pageNum */
+async function resolvePerPageHumanAudioPath(humanAudioDir, pageNum) {
+  for (const ext of ['mp3', 'wav', 'm4a']) {
+    const candidates = [
+      path.join(humanAudioDir, `page_${pageNum}.${ext}`),
+      path.join(humanAudioDir, `page${pageNum}.${ext}`)
+    ];
+    for (const p of candidates) {
+      if (await humanAudioFileExists(p)) return p;
+    }
+  }
+  return null;
+}
+
 /**
  * Build `import_package_meta` from `imported_package/` when the JSON file was never written
  * (legacy imports). Enables preserve export so SMIL/media-overlay are written into the EPUB.
@@ -172,20 +195,19 @@ export async function assembleFxlEpubPreserveImport(
   const humanAudioDir = path.join(intermediateDir, 'human_audio');
   const singleBookNames = ['narration.mp3', 'full.mp3', 'audio.mp3', 'book.mp3'];
   let sharedGlobalAudio = null;
-  let hasPerPageAudio = false;
   try {
     const files = await fs.readdir(humanAudioDir);
-    hasPerPageAudio = files.some((f) => /^page_\d+\.(mp3|wav|m4a)$/i.test(f));
-    if (!hasPerPageAudio) {
-      for (const name of singleBookNames) {
-        if (files.includes(name)) {
-          sharedGlobalAudio = path.join(humanAudioDir, name);
-          break;
-        }
+    for (const name of singleBookNames) {
+      if (files.includes(name)) {
+        sharedGlobalAudio = path.join(humanAudioDir, name);
+        break;
       }
-      if (!sharedGlobalAudio) {
-        const audioFiles = files.filter((f) => /\.(mp3|wav|m4a)$/i.test(f));
-        if (audioFiles.length === 1) sharedGlobalAudio = path.join(humanAudioDir, audioFiles[0]);
+    }
+    if (!sharedGlobalAudio) {
+      const audioFiles = files.filter((f) => /\.(mp3|wav|m4a)$/i.test(f));
+      const nonPageOnly = audioFiles.filter((f) => !/^page_?\d+\./i.test(f));
+      if (nonPageOnly.length === 1) {
+        sharedGlobalAudio = path.join(humanAudioDir, nonPageOnly[0]);
       }
     }
   } catch {
@@ -212,16 +234,18 @@ export async function assembleFxlEpubPreserveImport(
   const spine = preserveMeta.spine || [];
   let totalDuration = 0;
 
-  if (hasPerPageAudio) {
-    /* one file per page */
-  } else if (sharedGlobalAudio) {
-    const base = path.basename(sharedGlobalAudio);
-    await fs.copyFile(sharedGlobalAudio, path.join(audioDirAbs, base));
-  } else {
-    throw new Error(
-      'Preserve-import export needs human_audio/page_N.mp3 files or a single-book audio file (e.g. narration.mp3).'
-    );
+  if (!sharedGlobalAudio) {
+    for (const spineRow of spine) {
+      const pp = await resolvePerPageHumanAudioPath(humanAudioDir, spineRow.pageNumber);
+      if (!pp) {
+        throw new Error(
+          `Preserve-import export needs human_audio/page_${spineRow.pageNumber}.mp3 (or .wav/.m4a) for each page, or a single-book file in human_audio (narration.mp3, full.mp3, audio.mp3, or book.mp3).`
+        );
+      }
+    }
   }
+
+  const copiedAudioBasenames = new Set();
 
   for (const spineRow of spine) {
     const pageNum = spineRow.pageNumber;
@@ -269,18 +293,28 @@ export async function assembleFxlEpubPreserveImport(
       .split(path.sep)
       .join('/');
 
+    const perPagePath = await resolvePerPageHumanAudioPath(humanAudioDir, pageNum);
+    let srcAudioAbs;
     let audioFileBase;
-    if (hasPerPageAudio) {
-      audioFileBase = `page_${pageNum}.mp3`;
-      const humanPath = path.join(humanAudioDir, audioFileBase);
-      await fs.copyFile(humanPath, path.join(audioDirAbs, audioFileBase));
-      // Imported tree often has audio/pageN.mp3 (no underscore); SMIL references page_N.mp3 — drop duplicate bytes.
-      await fs.unlink(path.join(audioDirAbs, `page${pageNum}.mp3`)).catch(() => {});
+    let usedPerPageFile = false;
+    if (perPagePath) {
+      srcAudioAbs = perPagePath;
+      audioFileBase = path.basename(perPagePath);
+      usedPerPageFile = true;
     } else {
+      srcAudioAbs = sharedGlobalAudio;
       audioFileBase = path.basename(sharedGlobalAudio);
     }
 
     const destAudioAbs = path.join(audioDirAbs, audioFileBase);
+    if (!copiedAudioBasenames.has(audioFileBase)) {
+      await fs.copyFile(srcAudioAbs, destAudioAbs);
+      copiedAudioBasenames.add(audioFileBase);
+    }
+    if (usedPerPageFile && /^page_\d+\.mp3$/i.test(audioFileBase)) {
+      await fs.unlink(path.join(audioDirAbs, `page${pageNum}.mp3`)).catch(() => {});
+    }
+
     const audioSrcForSmil = path
       .relative(path.dirname(smilAbs), destAudioAbs)
       .split(path.sep)
@@ -301,7 +335,7 @@ export async function assembleFxlEpubPreserveImport(
     await fs.writeFile(smilAbs, smilContent, 'utf8');
 
     const smilItemId = `smil_overlay_${pageNum}`;
-    const audioItemId = hasPerPageAudio ? `audio_overlay_${pageNum}` : 'audio_overlay_book';
+    const audioItemId = usedPerPageFile ? `audio_overlay_${pageNum}` : 'audio_overlay_book';
     overlayPages.push({
       pageNum,
       manifestId: spineRow.manifestId,

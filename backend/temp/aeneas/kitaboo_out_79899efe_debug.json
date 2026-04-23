@@ -1,0 +1,85 @@
+{
+  "totalFragments": 41,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "0.000",
+      "lines": [
+        "Words"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "0.000",
+      "end": "0.000",
+      "lines": [
+        "to"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "0.000",
+      "end": "1.360",
+      "lines": [
+        "Know"
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "1.360",
+      "end": "2.080",
+      "lines": [
+        "Africa"
+      ],
+      "id": "f000004"
+    },
+    {
+      "begin": "2.080",
+      "end": "2.480",
+      "lines": [
+        "Amazon"
+      ],
+      "id": "f000005"
+    },
+    {
+      "begin": "2.480",
+      "end": "3.160",
+      "lines": [
+        "River"
+      ],
+      "id": "f000006"
+    },
+    {
+      "begin": "3.160",
+      "end": "3.920",
+      "lines": [
+        "Antarctica"
+      ],
+      "id": "f000007"
+    },
+    {
+      "begin": "3.920",
+      "end": "4.640",
+      "lines": [
+        "Arizona"
+      ],
+      "id": "f000008"
+    },
+    {
+      "begin": "4.640",
+      "end": "5.440",
+      "lines": [
+        "Asia"
+      ],
+      "id": "f000009"
+    },
+    {
+      "begin": "5.440",
+      "end": "6.000",
+      "lines": [
+        "Australia"
+      ],
+      "id": "f000010"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+
+.t {
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 2;
+	position: absolute;
+	white-space: pre;
+	overflow: visible;
+}
+
+
+#t1_21{left:124px;top:104px;letter-spacing:-2.7px;}
+#t2_21{left:70px;top:142px;letter-spacing:-2.7px;word-spacing:3.1px;}
+#t3_21{left:95px;top:180px;letter-spacing:-2.8px;}
+#t4_21{left:112px;top:218px;letter-spacing:-2.7px;}
+#t5_21{left:136px;top:256px;letter-spacing:-2.8px;}
+#t6_21{left:104px;top:295px;letter-spacing:-2.7px;}
+#t7_21{left:127px;top:333px;letter-spacing:-2.8px;}
+#t8_21{left:127px;top:371px;letter-spacing:-2.7px;}
+#t9_21{left:115px;top:409px;letter-spacing:-2.8px;}
+#ta_21{left:127px;top:447px;letter-spacing:-2.7px;}
+#tb_21{left:82px;top:486px;letter-spacing:-2.7px;word-spacing:3.1px;}
+#tc_21{left:117px;top:524px;letter-spacing:-2.8px;}
+#td_21{left:119px;top:562px;letter-spacing:-2.8px;}
+#te_21{left:67px;top:600px;letter-spacing:-2.7px;word-spacing:3.1px;}
+#tf_21{left:131px;top:638px;letter-spacing:-2.7px;}
+#tg_21{left:136px;top:677px;letter-spacing:-2.8px;}
+#th_21{left:383px;top:104px;letter-spacing:-2.7px;}
+#ti_21{left:360px;top:142px;letter-spacing:-2.8px;}
+#tj_21{left:345px;top:180px;letter-spacing:-2.7px;}
+#tk_21{left:307px;top:218px;letter-spacing:-2.7px;word-spacing:3.1px;}
+#tl_21{left:347px;top:256px;letter-spacing:-2.8px;}
+#tm_21{left:381px;top:295px;letter-spacing:-2.7px;}
+#tn_21{left:345px;top:333px;letter-spacing:-2.7px;}
+#to_21{left:336px;top:371px;letter-spacing:-2.7px;word-spacing:3px;}
+#tp_21{left:368px;top:409px;letter-spacing:-2.8px;}
+#tq_21{left:309px;top:447px;letter-spacing:-2.7px;word-spacing:3.1px;}
+#tr_21{left:361px;top:486px;letter-spacing:-2.7px;}
+#ts_21{left:340px;top:524px;letter-spacing:-2.7px;word-spacing:2.8px;}
+#tt_21{left:358px;top:562px;letter-spacing:-2.7px;}
+#tu_21{left:339px;top:600px;letter-spacing:-2.8px;}
+#tv_21{left:370px;top:638px;letter-spacing:-2.8px;}
+#tw_21{left:176px;top:49px;letter-spacing:-2.7px;word-spacing:3.2px;}
+#tx_21{left:40px;top:793px;}
+
+.s1_21{
+	FONT-SIZE: 110px;
+	FONT-FAMILY: HMAvenir-Regular_pk;
+	color: rgb(0,0,0);
+}
+
+.s2_21{
+	FONT-SIZE: 110px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+.s3_21{
+	FONT-SIZE: 73.3px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+
+
+@font-face {
+	font-family: HMAvenir-Bold_pp;
+	src: url("fonts/HMAvenir-Bold_pp.woff") format("woff");
+}
+
+@font-face {
+	font-family: HMAvenir-Regular_pk;
+	src: url("fonts/HMAvenir-Regular_pk.woff") format("woff");
+}
+

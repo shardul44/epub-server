@@ -20,6 +20,7 @@ import { sanitizeZoneText } from '../utils/zoneTextSanitizer.js';
 // Scale to match current render (PdfExtractionService.renderPagesAsImages uses 200 DPI)
 const LAYOUT_PIXELS_PER_POINT = 200 / 72;
 import { getPageBoundaries, getProportionalBoundaries, extractAudioSlice, splitAudioByPageBoundaries } from '../utils/audioSplitter.js';
+import { getPageNumFromZoneId as resolveZoneIdToPage, buildZoneIdToPageMap } from '../utils/kitabooZonePageId.js';
 import { TtsService } from './TtsService.js';
 import { aeneasService } from './aeneasService.js';
 import { whisperAlignmentService } from './whisperAlignmentService.js';
@@ -493,7 +494,7 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
             const response = await GeminiService.generateContent([
               { text: prompt },
               { inlineData: { mimeType: 'image/png', data: imageBase64 } }
-            ], { modelName: 'gemini-2.0-flash', priority: 'low' });
+            ], { modelName: 'gemini-2.5-flash', priority: 'low' });
 
             const parsed = KitabooFxlService.safeParseJsonObject(response);
             const pt = (parsed && typeof parsed.pageType === 'string') ? parsed.pageType.trim() : '';
@@ -986,7 +987,7 @@ ${allFonts.map(f => `- ${f}`).join('\n')}
 
 For each font, identify the closest matching Google Font. 
 Return only a JSON mapping object: { "PDF Font Name": "Google Font Name" }.`;
-        const mappingJson = await GeminiService.generateContent(prompt, { modelName: 'gemini-2.0-flash' });
+        const mappingJson = await GeminiService.generateContent(prompt, { modelName: 'gemini-2.5-flash' });
         const mapping = KitabooFxlService.safeParseJsonObject(mappingJson);
         if (mapping && typeof mapping === 'object') {
           KitabooFxlService._fontMappingCache = KitabooFxlService._fontMappingCache || {};
@@ -1027,7 +1028,7 @@ Only return JSON.`;
           const response = await GeminiService.generateContent([
             { text: prompt },
             { inlineData: { mimeType: 'image/png', data: imageBase64 } }
-          ], { modelName: 'gemini-2.0-flash' });
+          ], { modelName: 'gemini-2.5-flash' });
 
           const styleMap = KitabooFxlService.safeParseJsonObject(response);
           if (styleMap && typeof styleMap === 'object') {
@@ -1152,6 +1153,13 @@ Only return JSON.`;
   static normalizeZoneIdsForPage(pageNumber, zones) {
     if (!zones?.length) return zones;
     const sorted = [...zones].sort((a, b) => (a.readingOrder ?? 0) - (b.readingOrder ?? 0));
+    const rawIds = sorted.map((z) => String(z.id || '').trim());
+    const allHaveId = rawIds.every((id) => id.length > 0);
+    const unique = new Set(rawIds).size === rawIds.length;
+    const xmlIdSafe = rawIds.every((id) => /^[A-Za-z][A-Za-z0-9_.-]*$/.test(id));
+    if (allHaveId && unique && xmlIdSafe) {
+      return sorted.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+    }
     // Glyph word-level Sync Studio / alignment.json: sequential p{n}_z{i+1}_w{i} in reading order.
     // Must include BOTH short extraction ids (p11_w0) and full ids (p11_z19_w18) — mixed pages used to fall
     // through to legacy base+suffix and corrupt z slots (e.g. duplicate p11_z19, or p11_z19_w18 → p11_z1_w18).
@@ -1236,11 +1244,12 @@ Only return JSON.`;
    * Remap alignment segment ids to canonical zone ids (must match GET /sync-studio and EPUB publish).
    */
   static remapAlignmentSegmentsWithMaps(segments, pages, zoneIdMapByPage) {
+    const zoneIdToPageMap = buildZoneIdToPageMap(pages || []);
     return (segments || []).map((s) => {
       const id = s?.id;
       if (id == null || id === '') return s;
       const idStr = String(id);
-      const p = KitabooFxlService.getPageNumFromZoneId(idStr);
+      const p = resolveZoneIdToPage(idStr, zoneIdToPageMap);
       const pageZones = pages.find((pg) => pg.pageNumber === p)?.zones || [];
       const idSet = zoneIdMapByPage[`${p}__idSet`];
       const map = zoneIdMapByPage[p];
@@ -3152,13 +3161,10 @@ Return ONLY the JSON array.
   }
 
   /**
-   * Parse page number from zone id (e.g. p1_z1_s0 → 1, p2_z3 → 2).
-   * Used for Global Offset Mapping to assign aligned segments back to pages.
+   * Parse page number from zone id (legacy p1_z1…, or arbitrary ids via optional zoneId→page map).
    */
-  static getPageNumFromZoneId(zoneId) {
-    if (!zoneId || typeof zoneId !== 'string') return 1;
-    const m = zoneId.match(/^p(\d+)_/);
-    return m ? parseInt(m[1], 10) : 1;
+  static getPageNumFromZoneId(zoneId, zoneIdToPageMap) {
+    return resolveZoneIdToPage(zoneId, zoneIdToPageMap);
   }
 
   /**
@@ -3265,6 +3271,8 @@ Return ONLY the JSON array.
       console.log(`[KitabooFXL] Skipping alignment for pages: ${skipPages.join(', ')}`);
       pagesWithZones = pagesWithZones.filter(p => !skipPages.includes(p.pageNum));
     }
+
+    const zoneIdToPageMap = buildZoneIdToPageMap(pagesWithZones);
 
     const combinedSegments = [];
     for (const pwz of pagesWithZones) {
@@ -3373,7 +3381,7 @@ Return ONLY the JSON array.
       const useProportionalBoundaries = process.env.USE_PROPORTIONAL_BOUNDARIES === '1' || useTwoPass;
       boundaries = useProportionalBoundaries
         ? getProportionalBoundaries(pagesWithZones, actualAudioDuration)
-        : getPageBoundaries(segments, actualAudioDuration);
+        : getPageBoundaries(segments, actualAudioDuration, zoneIdToPageMap);
     }
 
     // Whisper sliding-window refinement: snap each boundary start to exact phrase (skip when manual)
@@ -4008,6 +4016,7 @@ Return ONLY the JSON array.
     /** Set when alignment.json already exists or global align wrote it; prevents end-of-export SMIL merge from overwriting Sync Studio data. */
     let globalAlignmentJsonWritten = false;
     const humanAudioDir = path.join(intermediateDir, 'human_audio');
+    const zoneIdToPageForExport = buildZoneIdToPageMap(pagesWithZones);
     // Per-page: Sync Studio alignment (0→duration per page); used when no single-book audio
     let perPageAlignmentFromSyncStudio = {};
     try {
@@ -4017,7 +4026,7 @@ Return ONLY the JSON array.
       const segments = data?.segments || data || [];
       if (Array.isArray(segments) && segments.length > 0) {
         for (const r of segments) {
-          const p = KitabooFxlService.getPageNumFromZoneId(r.id);
+          const p = resolveZoneIdToPage(r.id, zoneIdToPageForExport);
           if (!perPageAlignmentFromSyncStudio[p]) perPageAlignmentFromSyncStudio[p] = [];
           perPageAlignmentFromSyncStudio[p].push({ id: r.id, startTime: r.startTime, endTime: r.endTime });
         }
@@ -4071,7 +4080,7 @@ Return ONLY the JSON array.
         const segments = parsed?.segments || parsed;
         if (Array.isArray(segments) && segments.length > 0) {
           for (const r of segments) {
-            const p = KitabooFxlService.getPageNumFromZoneId(r.id);
+            const p = resolveZoneIdToPage(r.id, zoneIdToPageForExport);
             if (!globalAlignmentByPage[p]) globalAlignmentByPage[p] = [];
             globalAlignmentByPage[p].push({ id: r.id, startTime: r.startTime, endTime: r.endTime });
           }
@@ -4146,7 +4155,7 @@ Return ONLY the JSON array.
             const dedupedAlignment = KitabooFxlService.keepFirstOccurrencePerZone(globalAlignment, combinedSegments);
             // Phase 4: Page-level distribution — filter by p1_, p2_, etc.
             for (const r of dedupedAlignment) {
-              const p = KitabooFxlService.getPageNumFromZoneId(r.id);
+              const p = resolveZoneIdToPage(r.id, zoneIdToPageForExport);
               if (!globalAlignmentByPage[p]) globalAlignmentByPage[p] = [];
               globalAlignmentByPage[p].push(r);
             }
@@ -4199,7 +4208,7 @@ Return ONLY the JSON array.
                 applySilenceSnapping: true
               });
               for (const r of globalAlignment) {
-                const p = KitabooFxlService.getPageNumFromZoneId(r.id);
+                const p = resolveZoneIdToPage(r.id, zoneIdToPageForExport);
                 if (!globalAlignmentByPage[p]) globalAlignmentByPage[p] = [];
                 globalAlignmentByPage[p].push(r);
               }

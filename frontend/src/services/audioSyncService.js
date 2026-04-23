@@ -1,4 +1,5 @@
 import api from './api';
+import { withAuthImageQuery } from '../utils/authImageUrl';
 
 export const audioSyncService = {
   getAudioSyncsByPdf: (pdfId) =>
@@ -33,7 +34,7 @@ export const audioSyncService = {
     api.get('/audio-sync/voices').then(res => res.data.data),
 
   getAudioUrl: (syncId) =>
-    `${api.defaults.baseURL}/audio-sync/${syncId}/audio`,
+    withAuthImageQuery(`${api.defaults.baseURL}/audio-sync/${syncId}/audio`),
 
   saveSyncBlocks: (jobId, syncBlocks, audioFileName, granularity = 'sentence', playbackSpeed = 1.0) =>
     api.post('/audio-sync/save-sync-blocks', { jobId, syncBlocks, audioFileName, granularity, playbackSpeed }).then(res => res.data.data),
@@ -94,7 +95,7 @@ export const audioSyncService = {
     api.get(`/audio-sync/sync-studio/${jobId}`).then(res => res.data.data ?? res.data),
 
   getJobAudioUrl: (jobId) =>
-    `${api.defaults.baseURL.replace(/\/?$/, '')}/audio-sync/job/${jobId}/audio`,
+    withAuthImageQuery(`${api.defaults.baseURL.replace(/\/?$/, '')}/audio-sync/job/${jobId}/audio`),
 
   alignSyncStudio: (jobId, options = {}) => {
     const body = {
@@ -141,7 +142,9 @@ export const audioSyncService = {
 
   // Get URL to stream per-section audio
   getSectionAudioUrl: (jobId, sectionIndex) =>
-    `${api.defaults.baseURL.replace(/\/?$/, '')}/audio-sync/job/${jobId}/audio/section/${sectionIndex}`,
+    withAuthImageQuery(
+      `${api.defaults.baseURL.replace(/\/?$/, '')}/audio-sync/job/${jobId}/audio/section/${sectionIndex}`
+    ),
 
   // Generate TTS audio for a specific section only
   generateSectionAudio: (pdfId, jobId, sectionIndex, voice, textBlocks, granularity = 'sentence', speakingRate) =>

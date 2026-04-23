@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/2001/SMIL20/" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <head>
+    <meta name="dtb:uid" content="urn:uuid:1773393735465-page-11"/>
+    <meta name="dtb:totalElapsedTime" content="19.188"/>
+    <meta name="dtb:audioClock" content="UTC"/>
+  </head>
+  <body>
+    <seq>
+    <par>
+      <text src="page11.xhtml#p11_z1"/>
+      <audio src="audio/page11.mp3" clipBegin="0.000s" clipEnd="4.514s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z2"/>
+      <audio src="audio/page11.mp3" clipBegin="4.514s" clipEnd="8.277s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z3"/>
+      <audio src="audio/page11.mp3" clipBegin="8.277s" clipEnd="9.781s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z4"/>
+      <audio src="audio/page11.mp3" clipBegin="9.781s" clipEnd="13.544s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z5"/>
+      <audio src="audio/page11.mp3" clipBegin="13.544s" clipEnd="18.811s"/>
+    </par>
+    <par>
+      <text src="page11.xhtml#p11_z6"/>
+      <audio src="audio/page11.mp3" clipBegin="18.811s" clipEnd="19.188s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

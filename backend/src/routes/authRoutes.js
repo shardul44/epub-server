@@ -1,60 +1,90 @@
 import express from 'express';
-import jwt from 'jsonwebtoken';
 import { UserService } from '../services/userService.js';
 import { UserModel } from '../models/User.js';
 import { validateUserDTO } from '../utils/validation.js';
 import { authenticate } from '../middlewares/auth.js';
 import { successResponse, errorResponse, badRequestResponse } from '../utils/responseHandler.js';
+import { signToken } from '../utils/authToken.js';
+import { EntitlementService } from '../services/entitlementService.js';
+import { LicenseService } from '../services/licenseService.js';
+import { OrganizationModel } from '../models/Organization.js';
+import { ROLES } from '../constants/roles.js';
+import { LICENSING_MODE } from '../constants/licensingMode.js';
 
 const router = express.Router();
 
-const signToken = (user) => {
-  const payload = {
-    id: user.id,
-    email: user.email,
-    name: user.name
-  };
+function withLicensing(dto, features) {
+  return { ...dto, features, licensingMode: LICENSING_MODE };
+}
 
-  const secret = process.env.JWT_SECRET || 'your-secret-key';
-  return jwt.sign(payload, secret, { expiresIn: '7d' });
-};
+async function licensePayloadForUser(userRow) {
+  if (!userRow || userRow.role === ROLES.PLATFORM_ADMIN || !userRow.organization_id) {
+    return null;
+  }
+  return LicenseService.getOrgLicenseStatus(userRow.organization_id);
+}
 
-// POST /api/auth/register
-// Creates a user and returns a JWT for immediate login.
+const registrationAllowed = () => process.env.ALLOW_PUBLIC_REGISTRATION === 'true';
+
+async function resolveDefaultRegistrationOrgId() {
+  if (process.env.DEFAULT_REGISTRATION_ORG_ID) {
+    const id = parseInt(process.env.DEFAULT_REGISTRATION_ORG_ID, 10);
+    if (!Number.isNaN(id)) return id;
+  }
+  const org = await OrganizationModel.findBySlug('default-org');
+  return org ? org.id : null;
+}
+
+// POST /auth/register
 router.post('/register', async (req, res) => {
   try {
+    if (!registrationAllowed()) {
+      return errorResponse(res, 'Public registration is disabled', 403);
+    }
+
     const validation = validateUserDTO(req.body || {});
     if (!validation.isValid) {
       return badRequestResponse(res, validation.errors.join(', '));
     }
 
-    const { name, email, password, phoneNumber } = req.body;
+    const { name, password, phoneNumber } = req.body;
+    const email = String(req.body?.email || '').trim().toLowerCase();
 
     if (await UserModel.existsByEmail(email)) {
       return badRequestResponse(res, 'Email already exists');
     }
 
-    const created = await UserModel.create({ name, email, password, phoneNumber });
-    const dto = UserService.convertToDTO ? UserService.convertToDTO(created) : {
-      id: created.id,
-      name: created.name,
-      email: created.email,
-      phoneNumber: created.phone_number,
-      createdAt: created.created_at
-    };
+    const organizationId = await resolveDefaultRegistrationOrgId();
+    if (!organizationId) {
+      return errorResponse(res, 'No default organization configured', 500);
+    }
 
-    const token = signToken(created);
-    return successResponse(res, { token, user: dto }, 201);
+    const created = await UserModel.create({
+      name,
+      email,
+      password,
+      phoneNumber,
+      role: ROLES.MEMBER,
+      organizationId
+    });
+    const full = await UserModel.findByEmail(email);
+    const token = signToken(full);
+    const dto = UserService.convertToDTO(created);
+    const features = await EntitlementService.getFeatureKeysForUser(full);
+    const license = await licensePayloadForUser(full);
+
+    return successResponse(res, { token, user: { ...withLicensing(dto, features), license } }, 201);
   } catch (error) {
     return errorResponse(res, error.message || 'Registration failed', 500);
   }
 });
 
-// POST /api/auth/login
-// Verifies user credentials and returns a JWT.
+// POST /auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
+    const rawEmail = req.body?.email;
+    const password = req.body?.password;
+    const email = String(rawEmail || '').trim().toLowerCase();
 
     if (!email || !password) {
       return badRequestResponse(res, 'Email and password are required');
@@ -72,32 +102,32 @@ router.post('/login', async (req, res) => {
 
     const token = signToken(userRow);
 
-    const dto = {
-      id: userRow.id,
-      name: userRow.name,
-      email: userRow.email,
-      phoneNumber: userRow.phone_number,
-      createdAt: userRow.created_at
-    };
+    const dto = UserService.convertToDTO(await UserModel.findById(userRow.id));
+    const features = await EntitlementService.getFeatureKeysForUser(userRow);
+    const license = await licensePayloadForUser(userRow);
 
-    return successResponse(res, { token, user: dto });
+    return successResponse(res, { token, user: { ...withLicensing(dto, features), license } });
   } catch (error) {
     return errorResponse(res, error.message || 'Login failed', 500);
   }
 });
 
-// GET /api/auth/me - return current user (requires auth)
+// GET /auth/me
 router.get('/me', authenticate, async (req, res) => {
   try {
     const { id } = req.user || {};
     if (!id) return errorResponse(res, 'Invalid token payload', 401);
 
-    const user = await UserService.getUserById(id);
-    return successResponse(res, user);
+    const user = await UserModel.findById(id);
+    if (!user) return errorResponse(res, 'User not found', 404);
+
+    const features = await EntitlementService.getFeatureKeysForUser(user);
+    const dto = UserService.convertToDTO(user);
+    const license = await licensePayloadForUser(user);
+    return successResponse(res, { ...withLicensing(dto, features), license });
   } catch (error) {
     return errorResponse(res, error.message || 'Failed to load current user', 500);
   }
 });
 
 export default router;
-

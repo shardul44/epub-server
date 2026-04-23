@@ -1,0 +1,37 @@
+{
+  "totalFragments": 4,
+  "fragments": [
+    {
+      "begin": "0.000",
+      "end": "4.880",
+      "lines": [
+        "HorsesHorses"
+      ],
+      "id": "f000001"
+    },
+    {
+      "begin": "4.880",
+      "end": "6.600",
+      "lines": [
+        "UpUp"
+      ],
+      "id": "f000002"
+    },
+    {
+      "begin": "6.600",
+      "end": "17.440",
+      "lines": [
+        "Christopher Blazeman"
+      ],
+      "id": "f000003"
+    },
+    {
+      "begin": "17.440",
+      "end": "18.640",
+      "lines": [
+        "Horses Up Close Blazeman"
+      ],
+      "id": "f000004"
+    }
+  ]
+}

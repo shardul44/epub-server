@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="../page-0010.xhtml">
+    <par>
+      <text src="../page-0010.xhtml#SML0"/>
+      <audio src="../audio/page_22.mp3" clipBegin="0.000s" clipEnd="0.100s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML1"/>
+      <audio src="../audio/page_22.mp3" clipBegin="0.000s" clipEnd="0.100s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML2"/>
+      <audio src="../audio/page_22.mp3" clipBegin="0.000s" clipEnd="1.360s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML3"/>
+      <audio src="../audio/page_22.mp3" clipBegin="1.360s" clipEnd="2.172s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML4"/>
+      <audio src="../audio/page_22.mp3" clipBegin="2.080s" clipEnd="2.480s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML5"/>
+      <audio src="../audio/page_22.mp3" clipBegin="2.239s" clipEnd="3.160s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML6"/>
+      <audio src="../audio/page_22.mp3" clipBegin="3.029s" clipEnd="3.992s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML7"/>
+      <audio src="../audio/page_22.mp3" clipBegin="3.920s" clipEnd="4.640s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML8"/>
+      <audio src="../audio/page_22.mp3" clipBegin="4.631s" clipEnd="5.440s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML9"/>
+      <audio src="../audio/page_22.mp3" clipBegin="5.440s" clipEnd="6.000s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML10"/>
+      <audio src="../audio/page_22.mp3" clipBegin="6.000s" clipEnd="6.520s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML11"/>
+      <audio src="../audio/page_22.mp3" clipBegin="6.444s" clipEnd="7.200s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML12"/>
+      <audio src="../audio/page_22.mp3" clipBegin="7.025s" clipEnd="7.683s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML13"/>
+      <audio src="../audio/page_22.mp3" clipBegin="7.277s" clipEnd="7.920s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML14"/>
+      <audio src="../audio/page_22.mp3" clipBegin="7.761s" clipEnd="8.471s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML15"/>
+      <audio src="../audio/page_22.mp3" clipBegin="8.360s" clipEnd="8.880s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML16"/>
+      <audio src="../audio/page_22.mp3" clipBegin="8.880s" clipEnd="9.520s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML17"/>
+      <audio src="../audio/page_22.mp3" clipBegin="9.520s" clipEnd="9.880s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML18"/>
+      <audio src="../audio/page_22.mp3" clipBegin="9.880s" clipEnd="10.760s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML19"/>
+      <audio src="../audio/page_22.mp3" clipBegin="10.760s" clipEnd="11.511s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML20"/>
+      <audio src="../audio/page_22.mp3" clipBegin="11.400s" clipEnd="12.000s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML21"/>
+      <audio src="../audio/page_22.mp3" clipBegin="12.000s" clipEnd="12.554s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML22"/>
+      <audio src="../audio/page_22.mp3" clipBegin="12.400s" clipEnd="12.560s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML23"/>
+      <audio src="../audio/page_22.mp3" clipBegin="12.453s" clipEnd="13.115s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML24"/>
+      <audio src="../audio/page_22.mp3" clipBegin="13.080s" clipEnd="13.920s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML25"/>
+      <audio src="../audio/page_22.mp3" clipBegin="13.920s" clipEnd="14.440s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML26"/>
+      <audio src="../audio/page_22.mp3" clipBegin="14.440s" clipEnd="15.480s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML27"/>
+      <audio src="../audio/page_22.mp3" clipBegin="15.480s" clipEnd="17.054s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML28"/>
+      <audio src="../audio/page_22.mp3" clipBegin="16.870s" clipEnd="17.540s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML29"/>
+      <audio src="../audio/page_22.mp3" clipBegin="17.520s" clipEnd="18.600s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML30"/>
+      <audio src="../audio/page_22.mp3" clipBegin="18.600s" clipEnd="18.700s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML31"/>
+      <audio src="../audio/page_22.mp3" clipBegin="18.600s" clipEnd="18.700s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML32"/>
+      <audio src="../audio/page_22.mp3" clipBegin="18.600s" clipEnd="18.700s"/>
+    </par>
+    <par>
+      <text src="../page-0010.xhtml#SML33"/>
+      <audio src="../audio/page_22.mp3" clipBegin="18.600s" clipEnd="18.700s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

@@ -1,6 +1,43 @@
 import pool from '../config/database.js';
+import { pdfDocumentWhereClause } from '../utils/tenantScope.js';
 
 export class ConversionJobModel {
+  static async findAllForUser(user, options = {}) {
+    const w = pdfDocumentWhereClause(user, options);
+    const [rows] = await pool.execute(
+      `SELECT cj.* FROM conversion_jobs cj
+       INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
+       WHERE ${w.sql}
+       ORDER BY cj.created_at DESC`,
+      w.params
+    );
+    return rows;
+  }
+
+  static async findByStatusForUser(user, status, options = {}) {
+    const w = pdfDocumentWhereClause(user, options);
+    const [rows] = await pool.execute(
+      `SELECT cj.* FROM conversion_jobs cj
+       INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
+       WHERE cj.status = ? AND (${w.sql})
+       ORDER BY cj.created_at DESC`,
+      [status, ...w.params]
+    );
+    return rows;
+  }
+
+  static async findByRequiresReviewForUser(user, options = {}) {
+    const w = pdfDocumentWhereClause(user, options);
+    const [rows] = await pool.execute(
+      `SELECT cj.* FROM conversion_jobs cj
+       INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
+       WHERE cj.requires_review = TRUE AND (${w.sql})
+       ORDER BY cj.created_at DESC`,
+      w.params
+    );
+    return rows;
+  }
+
   static async findAll() {
     const [rows] = await pool.execute(
       'SELECT * FROM conversion_jobs ORDER BY created_at DESC'

@@ -3,8 +3,13 @@ import { ChapterConfigService } from '../services/chapterConfigService.js';
 import { ChapterDetectionService } from '../services/chapterDetectionService.js';
 import { ConversionJobModel } from '../models/ConversionJob.js';
 import { PdfDocumentModel } from '../models/PdfDocument.js';
+import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
 
 const router = express.Router();
+router.use(authenticate, requireFeature('conversion.basic'));
+
+router.param('jobId', paramJobTenantAccess);
 
 /**
  * GET /api/chapters/detect/:jobId
@@ -12,18 +17,12 @@ const router = express.Router();
  */
 router.get('/detect/:jobId', async (req, res) => {
   try {
-    const { jobId } = req.params;
     const { useAI = true, respectPageNumbers = true } = req.query;
-    
-    // Get job and PDF information
-    const job = await ConversionJobModel.findById(jobId);
-    if (!job) {
+
+    const job = req.tenantJob;
+    const pdf = req.tenantPdf;
+    if (!job || !pdf) {
       return res.status(404).json({ error: 'Conversion job not found' });
-    }
-    
-    const pdf = await PdfDocumentModel.findById(job.pdfDocumentId);
-    if (!pdf) {
-      return res.status(404).json({ error: 'PDF document not found' });
     }
     
     // For now, return a mock response since we'd need the actual extracted pages
@@ -48,7 +47,7 @@ router.get('/detect/:jobId', async (req, res) => {
     
     res.json({
       success: true,
-      jobId,
+      jobId: job.id,
       chapters: chapters.map(chapter => ({
         title: chapter.title,
         startPage: chapter.startPage,

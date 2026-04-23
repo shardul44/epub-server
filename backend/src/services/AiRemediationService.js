@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AiConfigService } from './aiConfigService.js';
+import { normalizeGeminiModelName } from './geminiService.js';
 
 export class AiRemediationService {
   static async _getModel() {
@@ -9,7 +10,7 @@ export class AiRemediationService {
     }
 
     const genAI = new GoogleGenerativeAI(config.apiKey);
-    const modelName = config.modelName || 'gemini-2.0-flash';
+    const modelName = normalizeGeminiModelName(config.modelName || '');
     const model = genAI.getGenerativeModel({ model: modelName });
     return { model, modelName };
   }

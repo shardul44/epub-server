@@ -41,9 +41,17 @@ const PdfUpload = () => {
       const response = await pdfService.uploadPdf(file, layoutType);
       console.log('Upload successful:', response);
       setSuccess('PDF uploaded successfully!');
+      const newId = response?.id;
+      const name = response?.originalFileName || file?.name || '';
       setTimeout(() => {
-        navigate('/pdfs');
-      }, 1500);
+        if (newId != null) {
+          const q = new URLSearchParams({ highlight: String(newId) });
+          if (name) q.set('name', name.slice(0, 200));
+          navigate(`/pdfs?${q.toString()}`);
+        } else {
+          navigate('/pdfs');
+        }
+      }, 800);
     } catch (err) {
       console.error('Upload error:', err);
       const errorMessage = err.response?.data?.error ||

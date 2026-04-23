@@ -4,9 +4,9 @@ export const conversionService = {
   /**
    * Upload EPUB for direct audio sync (reflowable → /sync-studio/:id, FXL → /fxl-sync-studio/:jobId).
    * @param {File} file
-   * @param {'auto'|'reflowable'|'fxl'} mode
+   * @param {'reflowable'|'fxl'} mode
    */
-  importEpubForSync: (file, mode = 'auto') => {
+  importEpubForSync: (file, mode = 'reflowable') => {
     const formData = new FormData();
     formData.append('epub', file);
     formData.append('mode', mode);
@@ -25,8 +25,9 @@ export const conversionService = {
   getConversionsByPdf: (pdfDocumentId) => 
     api.get(`/conversions/pdf/${pdfDocumentId}`).then(res => res.data.data),
   
-  getConversionsByStatus: (status) =>
-    api.get(`/conversions/status/${status}`).then(res => {
+  /** @param {{ scope?: 'own' }} [params] - scope=own: only conversions for PDFs this user created (dashboard) */
+  getConversionsByStatus: (status, params = {}) =>
+    api.get(`/conversions/status/${status}`, { params }).then(res => {
       console.log(`Conversion API response for ${status}:`, res.data);
       return res.data.data || [];
     }).catch(error => {

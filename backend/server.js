@@ -20,6 +20,10 @@ import kitabooRoutes from './src/routes/kitabooRoutes.js';
 import accessibilityRoutes from './src/routes/accessibilityRoutes.js';
 import epubcheckRoutes from './src/routes/epubcheckRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
+import adminRoutes from './src/routes/adminRoutes.js';
+import orgTeamRoutes from './src/routes/orgTeamRoutes.js';
+import interactiveRoutes from './src/routes/interactiveRoutes.js';
+import activityRoutes from './src/routes/activityRoutes.js';
 
 // Import middleware
 import { errorHandler } from './src/middlewares/errorHandler.js';
@@ -131,6 +135,10 @@ app.use('/kitaboo', kitabooRoutes);
 app.use('/accessibility', accessibilityRoutes);
 app.use('/epubcheck', epubcheckRoutes);
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/org', orgTeamRoutes);
+app.use('/interactive', interactiveRoutes);
+app.use('/activities', activityRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
@@ -164,7 +172,14 @@ function tryKillProcessOnPort(port) {
 const MAX_RETRIES = 5;
 const RETRY_DELAY_MS = 1500;
 
-function startServer(retryCount = 0) {
+async function startServer(retryCount = 0) {
+  try {
+    const { ensurePlatformAdmin } = await import('./src/bootstrap/ensurePlatformAdmin.js');
+    await ensurePlatformAdmin();
+  } catch (e) {
+    console.warn('[bootstrap] ensurePlatformAdmin failed:', e.message);
+  }
+
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -183,7 +198,7 @@ function startServer(retryCount = 0) {
       const killed = tryKillProcessOnPort(PORT);
       const delay = killed ? 800 : RETRY_DELAY_MS;
       console.warn(`Port ${PORT} in use. ${killed ? 'Previous process killed.' : ''} Retrying in ${delay / 1000}s... (${retryCount + 1}/${MAX_RETRIES})`);
-      setTimeout(() => startServer(retryCount + 1), delay);
+      setTimeout(() => void startServer(retryCount + 1), delay);
       return;
     }
     if (error.code === 'EADDRINUSE') {
@@ -202,7 +217,7 @@ function startServer(retryCount = 0) {
 }
 
 try {
-  startServer();
+  void startServer();
 } catch (e) {
   console.error('Failed to start server:', e);
   process.exit(1);
