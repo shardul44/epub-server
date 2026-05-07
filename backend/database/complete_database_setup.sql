@@ -137,6 +137,7 @@ CREATE TABLE IF NOT EXISTS pdf_documents (
     scanned_pages_count INT DEFAULT 0,
     digital_pages_count INT DEFAULT 0,
     analysis_metadata TEXT,
+    layout_type ENUM('REFLOWABLE', 'FIXED_LAYOUT') NOT NULL DEFAULT 'REFLOWABLE',
     zip_file_name VARCHAR(500),
     zip_file_group_id VARCHAR(255),
     audio_file_path VARCHAR(1000),

@@ -7,7 +7,26 @@ import { useParams, useNavigate } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js';
-import { HiOutlineSave, HiOutlinePlay, HiOutlineCalculator, HiOutlineChevronLeft, HiOutlineDocument, HiOutlineCheck, HiOutlineTrash, HiOutlineCursorClick, HiOutlineZoomIn, HiOutlineZoomOut, HiOutlineStop, HiOutlineBookOpen } from 'react-icons/hi';
+import {
+  AlertCircle,
+  BookOpen,
+  Calculator,
+  Check,
+  ChevronLeft,
+  ExternalLink,
+  FileText,
+  Loader2,
+  MousePointerClick,
+  Pause,
+  Play,
+  Save,
+  Trash2,
+  Upload,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
+
+const fxlIc = { strokeWidth: 2, 'aria-hidden': true };
 import api, { API_BASE_URL } from '../services/api';
 import { withAuthImageQuery } from '../utils/authImageUrl';
 import { buildEpubReaderPath } from '../utils/epubReaderUrl';
@@ -530,7 +549,7 @@ export default function FxlSyncStudio() {
   if (loading && pages.length === 0) {
     return (
       <div className="fxl-sync-studio-loading">
-        <div className="spinner" />
+        <Loader2 size={48} strokeWidth={2} className="fxl-lucide-spin" aria-hidden />
         <p>Loading FXL Sync Studio...</p>
       </div>
     );
@@ -541,7 +560,7 @@ export default function FxlSyncStudio() {
       <header className="studio-header">
         <div className="header-left">
           <button type="button" onClick={() => navigate(`/kitaboo-studio/${jobId}`)} className="btn-back">
-            <HiOutlineChevronLeft size={18} /> Back to Zoning Studio
+            <ChevronLeft size={18} {...fxlIc} /> Back to Zoning Studio
           </button>
           <h1>FXL Sync Studio</h1>
           <span className="job-badge">Job #{jobId}</span>
@@ -558,7 +577,8 @@ export default function FxlSyncStudio() {
             title="Run automatic alignment (requires single narration file)"
             style={{ display: 'none' }}
           >
-            <HiOutlineCalculator size={18} /> {aligning ? 'Aligning...' : 'Run alignment (auto)'}
+            {aligning ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Calculator size={18} {...fxlIc} />}
+            {aligning ? 'Aligning...' : 'Run alignment (auto)'}
           </button>
           <button
             type="button"
@@ -570,13 +590,14 @@ export default function FxlSyncStudio() {
             Configure page boundaries
           </button>
           <button type="button" onClick={handleSave} disabled={saving || !segments.length} className="btn-save">
-            <HiOutlineSave size={18} /> {saving ? 'Saving...' : 'Save alignment'}
+            {saving ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Save size={18} {...fxlIc} />}
+            {saving ? 'Saving...' : 'Save alignment'}
           </button>
           <button type="button" onClick={handleClearAll} disabled={saving || !segments.length} className="btn-clear" title="Clear all alignment data">
-            <HiOutlineTrash size={18} /> Clear all data
+            <Trash2 size={18} {...fxlIc} /> Clear all data
           </button>
           <div className="manual-sync-group">
-            <span className="manual-sync-label"><HiOutlineCursorClick size={18} /> Manual sync</span>
+            <span className="manual-sync-label"><MousePointerClick size={18} {...fxlIc} /> Manual sync</span>
             <button type="button" onClick={setStartAtPlayhead} disabled={!effectiveAudioUrl || !selectedZoneId} className="btn-manual" title="Set selected zone start to current playhead">
               Set start
             </button>
@@ -588,13 +609,23 @@ export default function FxlSyncStudio() {
         </div>
       </header>
 
-      {error && <div className="error-banner">{error}</div>}
-      {success && <div className="success-banner"><HiOutlineCheck size={18} /> {success}</div>}
+      {error && (
+        <div className="error-banner" role="alert">
+          <AlertCircle size={18} {...fxlIc} />
+          <span>{error}</span>
+        </div>
+      )}
+      {success && (
+        <div className="success-banner">
+          <Check size={18} {...fxlIc} />
+          <span>{success}</span>
+        </div>
+      )}
 
       <div className="studio-layout">
         <aside className="viewer-panel left-panel">
           <div className="panel-header fxl-left-panel-header">
-            <h3><HiOutlineDocument size={18} /> Pages</h3>
+            <h3><FileText size={18} {...fxlIc} /> Pages</h3>
             <div className="fxl-reader-actions">
               <button
                 type="button"
@@ -605,20 +636,21 @@ export default function FxlSyncStudio() {
                   navigate(buildEpubReaderPath(jobId, { source: 'kitaboo', fixedLayout: true, spine }));
                 }}
               >
-                <HiOutlineBookOpen size={16} />
+                <BookOpen size={16} {...fxlIc} />
                 Reader
               </button>
               <button
                 type="button"
                 className="fxl-reader-toggle fxl-reader-newtab"
                 title="Open reader in a new browser tab"
+                aria-label="Open reader in a new browser tab"
                 onClick={() => {
                   const spine = currentPage ? `page${currentPage.pageNumber}.xhtml` : 'page1.xhtml';
                   const path = buildEpubReaderPath(jobId, { source: 'kitaboo', fixedLayout: true, spine });
                   window.open(`${window.location.origin}${path}`, '_blank', 'noopener,noreferrer');
                 }}
               >
-                ↗
+                <ExternalLink size={16} {...fxlIc} />
               </button>
             </div>
           </div>
@@ -679,10 +711,10 @@ export default function FxlSyncStudio() {
             <div className="waveform-toolbar">
               <div className="playback-controls">
                 <button type="button" onClick={() => wavesurferRef.current?.play()} disabled={!effectiveAudioUrl || !isReady || isPlaying} className="btn-playback" title="Play">
-                  <HiOutlinePlay size={20} />
+                  <Play size={20} {...fxlIc} />
                 </button>
-                <button type="button" onClick={() => wavesurferRef.current?.pause()} disabled={!effectiveAudioUrl || !isReady || !isPlaying} className="btn-playback" title="Stop">
-                  <HiOutlineStop size={20} />
+                <button type="button" onClick={() => wavesurferRef.current?.pause()} disabled={!effectiveAudioUrl || !isReady || !isPlaying} className="btn-playback" title="Pause">
+                  <Pause size={20} {...fxlIc} />
                 </button>
                 <span className="playback-time" title="Current position">
                   {typeof currentTime === 'number' ? currentTime.toFixed(2) : '0.00'} s
@@ -690,11 +722,11 @@ export default function FxlSyncStudio() {
               </div>
               <div className="zoom-controls">
                 <button type="button" onClick={() => setZoom(z => Math.max(10, z - 20))} disabled={!effectiveAudioUrl || zoom <= 10} className="btn-zoom" title="Zoom out">
-                  <HiOutlineZoomOut size={18} />
+                  <ZoomOut size={18} {...fxlIc} />
                 </button>
                 <span className="zoom-label">{zoom}×</span>
                 <button type="button" onClick={() => setZoom(z => Math.min(200, z + 20))} disabled={!effectiveAudioUrl || zoom >= 200} className="btn-zoom" title="Zoom in">
-                  <HiOutlineZoomIn size={18} />
+                  <ZoomIn size={18} {...fxlIc} />
                 </button>
               </div>
             </div>
@@ -705,7 +737,7 @@ export default function FxlSyncStudio() {
               <div className="fxl-timeline-placeholder">
                 <p className="fxl-timeline-placeholder-title">Audio timeline</p>
                 <p className="fxl-timeline-placeholder-text">
-                  The waveform stays above. This area is not a broken preview — FXL Sync Studio focuses on timing here. To see the full fixed-layout page while you work, open <strong>Reader</strong> (top left) or use the ↗ tab button.
+                  The waveform stays above. This area is not a broken preview — FXL Sync Studio focuses on timing here. To see the full fixed-layout page while you work, open <strong>Reader</strong> (top left) or use the <strong>Open in new tab</strong> button beside it.
                 </p>
               </div>
             </>
@@ -736,7 +768,7 @@ export default function FxlSyncStudio() {
                       {start.toFixed(2)}s – {end.toFixed(2)}s
                     </span>
                     <button type="button" className="btn-play-segment" onClick={() => playSegment(seg.id)} title="Play">
-                      <HiOutlinePlay size={14} />
+                      <Play size={14} {...fxlIc} />
                     </button>
                   </div>
                 );
@@ -865,7 +897,10 @@ export default function FxlSyncStudio() {
                         <td>
                           {pagesWithPerPageAudio.includes(p.pageNumber) && !perPageFiles[p.pageNumber] ? (
                             <span className="per-page-uploaded-cell">
-                              <span className="per-page-uploaded">✓ Uploaded</span>
+                              <span className="per-page-uploaded">
+                                <Check size={14} strokeWidth={2.5} aria-hidden />
+                                Uploaded
+                              </span>
                               <label className="per-page-upload-label per-page-replace-label">
                                 <input
                                   type="file"
@@ -924,7 +959,17 @@ export default function FxlSyncStudio() {
                     handleRunAlignment(true, { skipPages: manualConfig.skipPages || [], pageBoundaries });
                   }}
                 >
-                  {aligning ? 'Aligning...' : 'Run alignment with these boundaries'}
+                  {aligning ? (
+                    <>
+                      <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+                      Aligning…
+                    </>
+                  ) : (
+                    <>
+                      <Calculator size={18} {...fxlIc} />
+                      Run alignment with these boundaries
+                    </>
+                  )}
                 </button>
               )}
               {boundaryMode === 'perPage' && (
@@ -934,7 +979,22 @@ export default function FxlSyncStudio() {
                   disabled={aligning || uploadingPerPage || (pagesWithPerPageAudio.length === 0 && !Object.values(perPageFiles).some(f => f instanceof File))}
                   onClick={handlePerPageUploadAndAlign}
                 >
-                  {uploadingPerPage ? 'Uploading...' : aligning ? 'Aligning...' : 'Upload & run alignment'}
+                  {uploadingPerPage ? (
+                    <>
+                      <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+                      Uploading…
+                    </>
+                  ) : aligning ? (
+                    <>
+                      <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+                      Aligning…
+                    </>
+                  ) : (
+                    <>
+                      <Upload size={18} {...fxlIc} />
+                      Upload & run alignment
+                    </>
+                  )}
                 </button>
               )}
             </div>

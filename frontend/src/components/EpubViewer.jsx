@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { conversionService } from '../services/conversionService';
-import { HiOutlineChevronLeft, HiOutlineChevronRight, HiOutlineZoomIn, HiOutlineZoomOut, HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-icons/hi';
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, ChevronsLeft, ChevronsRight, FileText } from 'lucide-react';
 import './EpubViewer.css';
 
 /**
@@ -378,7 +378,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
                 onClick={() => setSidebarCollapsed(true)}
                 title="Collapse Sidebar"
               >
-                <HiOutlineChevronDoubleLeft size={16} />
+                <ChevronsLeft size={16} />
               </button>
             </div>
             <nav className="epub-sections-nav">
@@ -417,7 +417,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
           onClick={() => setSidebarCollapsed(false)}
           title="Expand Sidebar"
         >
-          <HiOutlineChevronDoubleRight size={20} />
+          <ChevronsRight size={20} />
         </button>
       )}
 
@@ -425,7 +425,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
       <div className="epub-viewer-content">
         <div className="epub-viewer-header">
           <div className="epub-viewer-header-left">
-            <HiOutlineDocumentText size={20} style={{ color: '#666' }} />
+            <FileText size={20} style={{ color: '#666' }} />
             <div className="epub-page-navigation">
               <button
                 onClick={handlePreviousPage}
@@ -433,7 +433,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
                 className="epub-nav-btn-header"
                 title="Previous Page"
               >
-                <HiOutlineChevronLeft size={20} />
+                <ChevronLeft size={20} />
               </button>
               <div className="epub-page-selector">
                 <select
@@ -454,7 +454,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
                 className="epub-nav-btn-header"
                 title="Next Page"
               >
-                <HiOutlineChevronRight size={20} />
+                <ChevronRight size={20} />
               </button>
             </div>
           </div>
@@ -495,7 +495,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
               title="Zoom Out"
               disabled={zoom <= 0.5}
             >
-              <HiOutlineZoomOut size={20} />
+              <ZoomOut size={20} />
             </button>
             <button 
               onClick={handleZoomIn} 
@@ -503,7 +503,7 @@ const EpubViewer = ({ jobId, onTextSelect }) => {
               title="Zoom In"
               disabled={zoom >= 2}
             >
-              <HiOutlineZoomIn size={20} />
+              <ZoomIn size={20} />
             </button>
           </div>
         </div>

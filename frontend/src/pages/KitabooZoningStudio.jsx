@@ -1,12 +1,29 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import * as fabric from 'fabric';
 import api, { API_BASE_URL } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import OrgAdminSidebar from '../components/layout/OrgAdminSidebar';
+import {
+  ArrowLeft,
+  BookOpen,
+  LayoutGrid,
+  Film,
+  FolderOpen,
+  Gauge,
+  Users,
+  RefreshCw,
+  FileText,
+  LogOut,
+} from 'lucide-react';
 import './KitabooZoningStudio.css';
 
 const KitabooZoningStudio = () => {
   const { jobId: routeJobId } = useParams();
   const navigate = useNavigate();
+  const { user, setUser } = useAuth();
+  const isOrgAdmin = user?.role === 'org_admin';
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const canvasRef = useRef(null);
   const isInitialMount = useRef(true);
   const processingStarted = useRef(false);
@@ -397,6 +414,24 @@ const KitabooZoningStudio = () => {
           canvas.backgroundImage = img;
           canvas.renderAll();
           console.log('[Studio] Background applied 1:1:', img.width, 'x', img.height);
+
+          // 3. Fit canvas to the visible container using Fabric's own zoom.
+          //    This resizes the actual canvas element (no CSS transform tricks)
+          //    so the container scrolls correctly and zone hit-testing stays accurate.
+          requestAnimationFrame(() => {
+            const scrollEl = canvasContainerRef.current;
+            if (!scrollEl) return;
+            const padding = 48; // 24px each side
+            const availW = scrollEl.clientWidth  - padding;
+            const availH = scrollEl.clientHeight - padding;
+            const scale  = Math.min(availW / img.width, availH / img.height, 1);
+            canvas.setZoom(scale);
+            canvas.setDimensions({
+              width:  Math.round(img.width  * scale),
+              height: Math.round(img.height * scale),
+            });
+            canvas.renderAll();
+          });
         }).catch(err => {
           console.error('[Studio] Background load failed:', err);
         });
@@ -1429,225 +1464,205 @@ const KitabooZoningStudio = () => {
 
   if (loading) {
     return (
-      <div className="kitaboo-loading kitaboo-loading-progress">
-        <h3>Converting PDF to FXL (WebP)</h3>
-        <p className="kitaboo-loading-step">{currentStep || 'Starting...'}</p>
-        <div className="kitaboo-progress-bar-container">
-          <div
-            className="kitaboo-progress-bar-fill"
-            style={{ width: `${progressPercentage}%` }}
-          />
+      <div className={`kitaboo-studio${isOrgAdmin ? ' kitaboo-studio--with-sidebar' : ''}`}>
+        {isOrgAdmin && (
+          <OrgAdminSidebar onCollapse={setSidebarCollapsed} />
+        )}
+        <div className={`kitaboo-studio-body${isOrgAdmin ? (sidebarCollapsed ? ' kitaboo-studio-body--sb-collapsed' : ' kitaboo-studio-body--with-sidebar') : ''}`}>
+          <div className="kitaboo-loading kitaboo-loading-progress">
+            <h3>Converting PDF to FXL (WebP)</h3>
+            <p className="kitaboo-loading-step">{currentStep || 'Starting...'}</p>
+            <div className="kitaboo-progress-bar-container">
+              <div
+                className="kitaboo-progress-bar-fill"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+            <span className="kitaboo-progress-percent">{progressPercentage}%</span>
+          </div>
         </div>
-        <span className="kitaboo-progress-percent">{progressPercentage}%</span>
       </div>
     );
   }
 
   if (loadError) {
     return (
-      <div className="kitaboo-loading kitaboo-loading-error">
-        <h3>Conversion failed</h3>
-        <p>{loadError}</p>
-        <button className="btn-back" onClick={() => navigate('/conversions')}>← Back to Conversions</button>
-        <button className="btn-back" style={{ marginLeft: 8 }} onClick={() => { processingStarted.current = false; setLoadError(null); setRetryKey(k => k + 1); }}>Retry</button>
+      <div className={`kitaboo-studio${isOrgAdmin ? ' kitaboo-studio--with-sidebar' : ''}`}>
+        {isOrgAdmin && (
+          <OrgAdminSidebar onCollapse={setSidebarCollapsed} />
+        )}
+        <div className={`kitaboo-studio-body${isOrgAdmin ? (sidebarCollapsed ? ' kitaboo-studio-body--sb-collapsed' : ' kitaboo-studio-body--with-sidebar') : ''}`}>
+          <div className="kitaboo-loading kitaboo-loading-error">
+            <h3>Conversion failed</h3>
+            <p>{loadError}</p>
+            <button className="btn-back" onClick={() => navigate('/conversions')}>← Back to Conversions</button>
+            <button className="btn-back" style={{ marginLeft: 8 }} onClick={() => { processingStarted.current = false; setLoadError(null); setRetryKey(k => k + 1); }}>Retry</button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="kitaboo-studio">
-      {!toolbarHidden && (
-        <>
-          <div className="kitaboo-header">
-            <div className="kitaboo-header-row">
-              <button className="btn-back" onClick={() => navigate('/conversions')}>← Back</button>
-              <h2 style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '1.15rem' }}>FXL Zoning Studio</h2>
-              <button className="publish-btn" style={{ margin: 0 }} onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving...' : 'Save Current Page'}
-              </button>
-              <div className="kitaboo-controls" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <button onClick={() => handlePageChange('prev')} disabled={currentPage === 0}>Prev</button>
-                <span className="page-indicator" style={{ margin: '0 8px' }}>Page {currentPage + 1} of {pages.length}</span>
-                <button onClick={() => handlePageChange('next')} disabled={currentPage === pages.length - 1}>Next</button>
+    <div className={`kitaboo-studio${isOrgAdmin ? ' kitaboo-studio--with-sidebar' : ''}`}>
+      {/* ── Org Admin Sidebar ── */}
+      {isOrgAdmin && (
+        <OrgAdminSidebar onCollapse={setSidebarCollapsed} />
+      )}
+
+      <div className={`kitaboo-studio-body${isOrgAdmin ? (sidebarCollapsed ? ' kitaboo-studio-body--sb-collapsed' : ' kitaboo-studio-body--with-sidebar') : ''}`}>
+
+        {/* ── Top Header ── */}
+        <header className="ife-selector-header-bar">
+          <div className="kz-topbar-left">
+            <button
+              type="button"
+              className="ife-selector-back-btn"
+              onClick={() => navigate('/conversions')}
+              title="Back to Conversions"
+            >
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+            <div className="ife-selector-header-title">
+              <BookOpen size={18} />
+              <span>FXL Zoning Studio</span>
+              {jobId && <span className="ife-selector-job-badge">Job #{jobId}</span>}
+            </div>
+          </div>
+          <div className="kz-topbar-right">
+            <button className="kz-btn kz-btn--ghost" onClick={() => navigate(`/fxl-sync-studio/${jobId}`)} title="Audio sync studio">
+              Sync Studio
+            </button>
+            <button className="kz-btn kz-btn--primary" onClick={publishEpub} disabled={exporting}>
+              {exporting ? 'Exporting…' : 'Export FXL EPUB 3'}
+            </button>
+            <button className="kz-btn kz-btn--save" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving…' : 'Save Page'}
+            </button>
+          </div>
+        </header>
+
+        {/* ── Studio: canvas + right panel ── */}
+        <div className="kitaboo-workspace">
+
+          {/* ── CENTER: canvas area ── */}
+          <main className="kitaboo-canvas-area">
+
+            {/* ── Toolbar ── */}
+            <div className="kz-toolbar">
+              {/* Page navigation */}
+              <div className="kz-toolbar-pager">
+                <button className="kz-pager-btn" onClick={() => handlePageChange('prev')} disabled={currentPage === 0}>‹</button>
+                <span className="kz-pager-label">Page {currentPage + 1} <span className="kz-pager-sep">/ {pages.length}</span></span>
+                <button className="kz-pager-btn" onClick={() => handlePageChange('next')} disabled={currentPage === pages.length - 1}>›</button>
               </div>
-              <div className="kitaboo-sync-settings" style={{ color: '#333' }}>
-                <label style={{ fontSize: '13px', marginRight: 4 }}>TTS Voice:</label>
-                <select
-                  value={ttsVoice ? ttsVoice.name : ''}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    const v = ttsVoices.find(x => x.name === name);
-                    if (v) {
-                      setTtsVoice({ name: v.name, gender: v.gender, description: v.description });
-                      if (jobId) {
-                        try {
-                          localStorage.setItem(`kitaboo_ttsVoice_${jobId}`, JSON.stringify({ name: v.name, gender: v.gender }));
-                        } catch (err) { /* ignore */ }
-                      }
-                    } else {
-                      setTtsVoice(null);
-                      if (jobId) {
-                        try { localStorage.removeItem(`kitaboo_ttsVoice_${jobId}`); } catch (err) { /* ignore */ }
-                      }
-                    }
-                  }}
-                  style={{ padding: '5px 8px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '13px', minWidth: 160 }}
-                  title="Voice used for read-aloud when exporting FXL EPUB"
-                >
-                  <option value="">Default</option>
-                  {ttsVoices.map((v) => (
-                    <option key={v.name} value={v.name}>
-                      {v.description || v.name} ({v.gender || '—'})
-                    </option>
-                  ))}
-                </select>
-                {applyingToAllPages && <span style={{ fontSize: '12px', color: '#2196f3', marginLeft: 6 }}>Applying to all pages…</span>}
+
+              {/* Divider */}
+              <div className="kz-toolbar-divider" />
+
+              {/* Zone actions */}
+              <div className="kz-toolbar-actions">
                 <button
                   type="button"
+                  className={`kz-btn kz-btn--tool${selectedObjects.length >= 2 ? ' kz-btn--active' : ''}`}
                   onClick={mergeZones}
                   disabled={!fabricCanvas || selectedObjects.length < 2 || applyingToAllPages}
-                  style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ddd', background: selectedObjects.length >= 2 ? '#1976d2' : '#ccc', color: selectedObjects.length >= 2 ? '#fff' : '#666', fontWeight: 500, cursor: selectedObjects.length >= 2 ? 'pointer' : 'not-allowed', fontSize: '13px' }}
-                  title="Select 2+ zones, then Merge."
+                  title="Select 2+ zones then merge"
                 >
-                  Merge ({selectedObjects.length >= 2 ? selectedObjects.length : 0})
+                  Merge {selectedObjects.length >= 2 ? `(${selectedObjects.length})` : ''}
                 </button>
                 <button
                   type="button"
-                  onClick={addZone}
-                  disabled={!fabricCanvas || polygonDrawingMode}
-                  style={{ display: 'none', padding: '6px 10px', borderRadius: '4px', border: '1px solid #28a745', background: '#28a745', color: '#fff', fontWeight: 500, cursor: fabricCanvas && !polygonDrawingMode ? 'pointer' : 'not-allowed', fontSize: '13px' }}
-                  title="Add a new rectangular zone to the current page"
-                >
-                  Add zone
-                </button>
-                <button
-                  type="button"
+                  className={`kz-btn kz-btn--tool${polygonDrawingMode ? ' kz-btn--active' : ''}`}
                   onClick={() => setPolygonDrawingMode(prev => !prev)}
                   disabled={!fabricCanvas}
-                  style={{ display: 'none', padding: '6px 10px', borderRadius: '4px', border: '1px solid #6f42c1', background: polygonDrawingMode ? '#6f42c1' : '#fff', color: polygonDrawingMode ? '#fff' : '#6f42c1', fontWeight: 500, cursor: fabricCanvas ? 'pointer' : 'not-allowed', fontSize: '13px' }}
-                  title="Click canvas to add polygon corners; close with the button below to create one zone that wraps multiple lines"
+                  title="Draw a multi-line polygon zone"
                 >
-                  Add Multi-line Zone{polygonDrawingMode ? ` (${polygonPoints.length} pts)` : ''}
+                  {polygonDrawingMode ? `Polygon (${polygonPoints.length} pts)` : 'Add Polygon'}
                 </button>
                 {polygonDrawingMode && polygonPoints.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setPolygonPoints(prev => prev.slice(0, -1))}
-                    style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #6c757d', background: '#fff', color: '#333', fontWeight: 500, cursor: 'pointer', fontSize: '13px' }}
-                    title="Remove last polygon point (undo misclick)"
-                  >
-                    Remove last point
+                  <button type="button" className="kz-btn kz-btn--tool" onClick={() => setPolygonPoints(prev => prev.slice(0, -1))} title="Undo last point">
+                    Undo point
                   </button>
                 )}
                 {polygonDrawingMode && polygonPoints.length >= 3 && (
-                  <button
-                    type="button"
-                    onClick={closePolygonZone}
-                    style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #0d6efd', background: '#0d6efd', color: '#fff', fontWeight: 500, cursor: 'pointer', fontSize: '13px' }}
-                    title="Finish polygon and create zone"
-                  >
+                  <button type="button" className="kz-btn kz-btn--primary" onClick={closePolygonZone} title="Close polygon and create zone">
                     Close polygon
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={deleteSelectedZones}
-                  disabled={!fabricCanvas || selectedObjects.length === 0}
-                  style={{ display: 'none', padding: '6px 10px', borderRadius: '4px', border: '1px solid #dc3545', background: selectedObjects.length > 0 ? '#dc3545' : '#ccc', color: '#fff', fontWeight: 500, cursor: selectedObjects.length > 0 ? 'pointer' : 'not-allowed', fontSize: '13px' }}
-                  title="Delete selected zone(s). Keyboard: Delete or Backspace."
-                >
-                  Delete zone{selectedObjects.length !== 1 ? 's' : ''} {selectedObjects.length > 0 ? `(${selectedObjects.length})` : ''}
-                </button>
+                {applyingToAllPages && <span className="kz-status-text">Applying to all pages…</span>}
               </div>
-              <input
-                ref={cleanPageInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                style={{ display: 'none' }}
-                onChange={handleCleanPageUpload}
-              />
+
+              {/* Divider */}
+              <div className="kz-toolbar-divider" />
+
+              {/* Settings */}
+              <div className="kz-toolbar-settings">
+                <label className="kz-setting-label">
+                  <span>TTS Voice</span>
+                  <select
+                    className="kz-select"
+                    value={ttsVoice ? ttsVoice.name : ''}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      const v = ttsVoices.find(x => x.name === name);
+                      if (v) {
+                        setTtsVoice({ name: v.name, gender: v.gender, description: v.description });
+                        if (jobId) { try { localStorage.setItem(`kitaboo_ttsVoice_${jobId}`, JSON.stringify({ name: v.name, gender: v.gender })); } catch (err) { /* ignore */ } }
+                      } else {
+                        setTtsVoice(null);
+                        if (jobId) { try { localStorage.removeItem(`kitaboo_ttsVoice_${jobId}`); } catch (err) { /* ignore */ } }
+                      }
+                    }}
+                    title="Voice used for read-aloud when exporting FXL EPUB"
+                  >
+                    <option value="">Default</option>
+                    {ttsVoices.map((v) => (
+                      <option key={v.name} value={v.name}>{v.description || v.name} ({v.gender || '—'})</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="kz-setting-label">
+                  <span>Font</span>
+                  <input
+                    type="text"
+                    className="kz-input"
+                    value={bodyFontFamily}
+                    onChange={(e) => setBodyFontFamily(e.target.value)}
+                    placeholder="e.g. Times New Roman, serif"
+                  />
+                </label>
+                <label className="kz-setting-label kz-setting-label--muted" title="Sync level set at conversion time">
+                  <span>Sync</span>
+                  <select className="kz-select kz-select--disabled" value={syncLevel} disabled>
+                    <option value="word">Word</option>
+                    <option value="sentence">Sentence</option>
+                  </select>
+                </label>
+              </div>
+
+              {/* Upload clean page — right-aligned */}
+              <input ref={cleanPageInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleCleanPageUpload} />
               <button
                 type="button"
+                className="kz-btn kz-btn--ghost kz-toolbar-end"
                 onClick={() => cleanPageInputRef.current?.click()}
                 disabled={uploadingCleanPage || !jobId || pages.length === 0}
-                style={{ marginLeft: 'auto', padding: '8px 12px', borderRadius: '6px', border: '1px solid #6c757d', background: uploadingCleanPage ? '#ccc' : '#6c757d', color: '#fff', fontWeight: 500, cursor: uploadingCleanPage ? 'wait' : 'pointer', fontSize: '13px', flexShrink: 0 }}
-                title="Optional: upload a custom clean (text-removed) image for this page. Export will use it instead of auto-cleaned."
+                title="Upload a clean (text-removed) image for this page"
               >
-                {uploadingCleanPage ? 'Uploading…' : `Upload clean page (${currentPage + 1})`}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate(`/fxl-sync-studio/${jobId}`)}
-                style={{ marginLeft: '8px', padding: '8px 14px', borderRadius: '6px', border: '1px solid #4A7B54', background: '#4A7B54', color: '#fff', fontWeight: 500, cursor: 'pointer', fontSize: '13px', flexShrink: 0 }}
-                title="Edit audio–text sync: upload per-page MP3, run alignment, save. Export uses Sync Studio alignment when present."
-              >
-                Sync Studio
-              </button>
-              <label
-                title="Sync level comes from the initial Hi-Fi FXL selection and cannot be changed here."
-                style={{ marginLeft: '8px', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, fontSize: '12px', opacity: 0.7 }}
-              >
-                <span style={{ color: '#555' }}>Sync level:</span>
-                <select
-                  value={syncLevel}
-                  disabled
-                  style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #ccc', fontSize: '12px', backgroundColor: '#f5f5f5', color: '#777', cursor: 'not-allowed' }}
-                >
-                  <option value="word">Word</option>
-                  <option value="sentence">Sentence</option>
-                </select>
-              </label>
-              <label
-                title="Override the body font for all FXL pages (e.g. 'Times New Roman, serif' or 'Arial, sans-serif'). Leave blank to use the embedded font."
-                style={{ marginLeft: '8px', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, fontSize: '12px' }}
-              >
-                <span style={{ color: '#555' }}>Font:</span>
-                <input
-                  type="text"
-                  value={bodyFontFamily}
-                  onChange={(e) => setBodyFontFamily(e.target.value)}
-                  placeholder="e.g. Times New Roman, serif"
-                  style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #ccc', fontSize: '12px', minWidth: 180 }}
-                />
-              </label>
-              <label title="Absolute HTML text layer (pdf2htmlEX-style): closer to PDF rendering, no SVG overlay." style={{ display: 'none', marginLeft: '8px', alignItems: 'center', gap: 6, flexShrink: 0, cursor: 'pointer', fontSize: '12px' }}>
-                <input type="checkbox" checked={useAbsoluteHtml} onChange={(e) => setUseAbsoluteHtml(e.target.checked)} />
-                Absolute HTML
-              </label>
-              <button className="publish-btn-top" onClick={publishEpub} disabled={exporting} style={{ marginLeft: '8px', flexShrink: 0 }}>
-                {exporting ? 'Exporting…' : 'Export FXL EPUB 3'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setToolbarHidden(true)}
-                title="Hide toolbar for full canvas"
-                style={{ marginLeft: '8px', padding: '6px 10px', borderRadius: '4px', border: '1px solid #ddd', background: '#f5f5f5', cursor: 'pointer', fontSize: '12px' }}
-              >
-                Hide toolbar
+                {uploadingCleanPage ? 'Uploading…' : `Upload clean (p.${currentPage + 1})`}
               </button>
             </div>
-          </div>
-        </>
-      )}
-      {toolbarHidden && (
-        <div style={{ position: 'fixed', top: 12, left: 12, zIndex: 1000 }}>
-          <button
-            type="button"
-            onClick={() => setToolbarHidden(false)}
-            title="Show toolbar"
-            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #ddd', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Show toolbar
-          </button>
-        </div>
-      )}
 
-      <div className="kitaboo-workspace">
-        <div className="kitaboo-canvas-container" ref={canvasContainerRef}>
-          <canvas id="kitaboo-canvas" />
-        </div>
+            {/* ── Canvas ── */}
+            <div className="kitaboo-canvas-container" ref={canvasContainerRef}>
+              <canvas id="kitaboo-canvas" />
+            </div>
+          </main>
 
-        <div className="kitaboo-sidebar">
+          {/* ── RIGHT: zone properties panel ── */}
+          <aside className="kitaboo-sidebar">
           <h3>Zone Properties</h3>
           {selectedZone ? (
             <div className="tagging-panel">
@@ -1830,9 +1845,10 @@ const KitabooZoningStudio = () => {
               <p>Select a zone on the canvas to configure properties and enrichments.</p>
             </div>
           )}
+        </aside>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 

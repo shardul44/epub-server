@@ -15,6 +15,8 @@ import { getUploadDir, ensureDirectories } from '../config/fileStorage.js';
 import fs from 'fs/promises';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
+import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
+import { httpCache } from '../middlewares/httpCache.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('conversion.basic'));
@@ -34,7 +36,22 @@ const upload = multer({
 ensureDirectories();
 
 // POST /api/pdfs/upload - Upload PDF and convert to EPUB3
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/upload', (req, res, next) => {
+  // Run multer manually so we can catch its errors (e.g. LIMIT_FILE_SIZE)
+  // and return a clean JSON response instead of a raw Express error.
+  upload.single('file')(req, res, (multerErr) => {
+    if (multerErr) {
+      if (multerErr.code === 'LIMIT_FILE_SIZE') {
+        const limitMB = Math.round(
+          parseInt(process.env.MAX_FILE_SIZE || '209715200') / (1024 * 1024)
+        );
+        return badRequestResponse(res, `File too large. Maximum allowed size is ${limitMB} MB.`);
+      }
+      return badRequestResponse(res, multerErr.message || 'File upload error');
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return badRequestResponse(res, 'PDF file is required');
@@ -67,12 +84,20 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         entityId: response.id,
         summary: `Uploaded ${response.originalFileName || 'PDF'}`
       }).catch(() => {});
+      // Invalidate PDF list caches so next fetch returns fresh data
+      cacheDelByPrefix('pdfs:');
       return successResponse(res, response, 201);
     }
   } catch (error) {
     if (error.code === 'USAGE_LIMIT') {
       return forbiddenResponse(res, error.message);
     }
+    console.error('[POST /pdfs/upload] Upload failed:', {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage,
+      stack: error.stack,
+    });
     return errorResponse(res, error.message, 500);
   }
 });
@@ -135,10 +160,15 @@ router.post('/upload/bulk', upload.array('files', 10), async (req, res) => {
 });
 
 // GET /api/pdfs - Get all PDFs (?scope=own = only PDFs this user uploaded; org admins default: full org)
-router.get('/', async (req, res) => {
+router.get('/', httpCache(TTL.MEDIUM), async (req, res) => {
   try {
     const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
-    const pdfs = await PdfService.getAllPdfs(req.user, scope);
+    const userId = req.user?.id ?? 'anon';
+    const orgId  = req.user?.organizationId ?? 'none';
+    const scopeKey = req.query.scope === 'own' ? 'own' : 'org';
+    const cacheKey = `pdfs:list:${orgId}:${userId}:${scopeKey}`;
+
+    const pdfs = await cacheWrap(cacheKey, () => PdfService.getAllPdfs(req.user, scope), TTL.MEDIUM);
     return successResponse(res, pdfs);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -146,10 +176,12 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/pdfs/grouped - Get PDFs grouped by ZIP
-router.get('/grouped', async (req, res) => {
+router.get('/grouped', httpCache(TTL.MEDIUM), async (req, res) => {
   try {
     const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
-    const grouped = await PdfService.getPdfsGroupedByZip(req.user, scope);
+    const orgId  = req.user?.organizationId ?? 'none';
+    const cacheKey = `pdfs:grouped:${orgId}`;
+    const grouped = await cacheWrap(cacheKey, () => PdfService.getPdfsGroupedByZip(req.user, scope), TTL.MEDIUM);
     return successResponse(res, grouped);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -213,6 +245,67 @@ router.get('/:id/download', async (req, res) => {
       return notFoundResponse(res, error.message);
     }
     return errorResponse(res, error.message, 500);
+  }
+});
+
+// GET /api/pdfs/:id/page/:pageNumber/thumbnail - Serve actual page PNG from conversion output
+router.get('/:id/page/:pageNumber/thumbnail', async (req, res) => {
+  try {
+    const pdfId      = parseInt(req.params.id);
+    const pageNumber = parseInt(req.params.pageNumber);
+
+    if (isNaN(pdfId) || isNaN(pageNumber) || pageNumber < 1) {
+      return res.status(400).json({ error: 'Invalid PDF ID or page number' });
+    }
+
+    const { getHtmlIntermediateDir } = await import('../config/fileStorage.js');
+    const htmlIntermediateDir = getHtmlIntermediateDir();
+
+    // Find the most recent conversion job for this PDF
+    const { ConversionJobModel } = await import('../models/ConversionJob.js');
+    const jobs = await ConversionJobModel.findByPdfDocumentId(pdfId);
+    const job  = jobs.find(j => j.status === 'COMPLETED') ?? jobs[0];
+
+    if (job) {
+      const jobId = job.id;
+
+      // Try job-specific PNG folder first: html_intermediate/job_{id}_png/page_{N}.png
+      const pngDir  = path.join(htmlIntermediateDir, `job_${jobId}_png`);
+      const pngFile = path.join(pngDir, `page_${pageNumber}.png`);
+
+      try {
+        await fs.access(pngFile);
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.sendFile(path.resolve(pngFile));
+      } catch {
+        // Try flat job folder: html_intermediate/job_{id}/page_{N}.png
+        const altFile = path.join(htmlIntermediateDir, `job_${jobId}`, `page_${pageNumber}.png`);
+        try {
+          await fs.access(altFile);
+          res.setHeader('Content-Type', 'image/png');
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          return res.sendFile(path.resolve(altFile));
+        } catch {
+          // PNG not found — fall through to SVG placeholder
+        }
+      }
+    }
+
+    // Fallback: return an SVG placeholder so the browser never gets a 404
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="560" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="560" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="2" rx="4"/>
+  <text x="200" y="260" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#9ca3af">Page ${pageNumber}</text>
+  <text x="200" y="285" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#d1d5db">No preview available</text>
+</svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.send(svg);
+
+  } catch (error) {
+    console.error(`[page thumbnail] PDF ${req.params.id} page ${req.params.pageNumber}:`, error.message);
+    return res.status(500).json({ error: 'Failed to serve page thumbnail' });
   }
 });
 
@@ -354,6 +447,10 @@ router.delete('/:id', async (req, res) => {
     }
     
     await PdfService.deletePdfDocument(id);
+    
+    // Invalidate all PDF list caches
+    cacheDelByPrefix('pdfs:');
+    
     console.log('✓ Successfully processed deletion request for PDF id:', id);
     return res.status(204).send();
   } catch (error) {

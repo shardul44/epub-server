@@ -35,16 +35,29 @@ export const kitabooService = {
   publishClassic: (jobId) =>
     api.post(`/kitaboo/publish/${jobId}`, { classicLayout: true }).then(res => res.data?.data ?? res.data),
 
-  /** Download FXL EPUB file (blob) and trigger browser download. */
-  downloadFxlEpub: async (jobId, filename = null) => {
-    const baseUrl = api.defaults.baseURL ?? '';
-    const pathOnly = `/kitaboo/download/${jobId}`;
-    const url = pathOnly.startsWith('http') ? pathOnly : `${baseUrl.replace(/\/$/, '')}${pathOnly.startsWith('/') ? '' : '/'}${pathOnly}`;
-    const res = await api.get(url, { responseType: 'blob' });
-    if (res.status < 200 || res.status >= 300) throw new Error(res.status === 404 ? 'EPUB not found' : `Download failed (${res.status})`);
-    const name = filename || res.headers['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1] || `kitaboo_fxl_${jobId}.epub`;
-    const blob = res.data;
-    const blobUrl = URL.createObjectURL(blob);
+  /** Download FXL EPUB file (blob) and trigger browser download.
+   * If the EPUB hasn't been published yet, publishes it first then downloads.
+   */
+  downloadFxlEpub: async (jobId, filename = null, onStatus = null) => {
+    // Try to download directly first
+    let downloadRes;
+    try {
+      downloadRes = await api.get(`/kitaboo/download/${jobId}`, { responseType: 'blob' });
+    } catch (err) {
+      // 404 means not published yet — publish first, then download
+      if (err.response?.status === 404) {
+        if (onStatus) onStatus('Publishing EPUB…');
+        await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });
+        if (onStatus) onStatus('Downloading…');
+        downloadRes = await api.get(`/kitaboo/download/${jobId}`, { responseType: 'blob' });
+      } else {
+        throw err;
+      }
+    }
+    const name = filename
+      || downloadRes.headers['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1]
+      || `fxl_${jobId}.epub`;
+    const blobUrl = URL.createObjectURL(downloadRes.data);
     const a = document.createElement('a');
     a.href = blobUrl;
     a.download = name;

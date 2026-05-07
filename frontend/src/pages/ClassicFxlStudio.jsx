@@ -2,11 +2,10 @@
  * Classic FXL Studio — layout-only pipeline (no AI zoning).
  * Start from PDF list with "Classic FXL"; poll job until complete; Publish Classic EPUB and download.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiOutlineArrowLeft, HiOutlineDocument, HiOutlineDownload, HiOutlineCheck } from 'react-icons/hi';
+import { ArrowLeft, FileText, Download, Check } from 'lucide-react';
 import { kitabooService } from '../services/kitabooService';
-import { API_BASE_URL } from '../services/api';
 import './ClassicFxlStudio.css';
 
 const POLL_INTERVAL_MS = 1500;
@@ -20,7 +19,6 @@ export default function ClassicFxlStudio() {
   const [publishing, setPublishing] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
   const pollRef = useRef(null);
-  const backendOrigin = (API_BASE_URL || '').replace(/\/api\/?$/, '');
 
   const hasLayoutFragments = job?.pages?.some(p => Array.isArray(p.layoutFragments) && p.layoutFragments.length > 0);
   const hasZonesOnly = job?.pages?.length > 0 && !hasLayoutFragments && job?.pages?.some(p => (p.zones || []).length > 0);
@@ -64,6 +62,8 @@ export default function ClassicFxlStudio() {
   useEffect(() => {
     if (!jobId || !job) return;
     if (job.status === 'IN_PROGRESS' || job.status === 'PENDING') {
+      // Clear any existing interval before creating a new one to prevent stacking
+      if (pollRef.current) clearInterval(pollRef.current);
       pollRef.current = setInterval(async () => {
         try {
           const data = await kitabooService.getJob(jobId);
@@ -101,7 +101,7 @@ export default function ClassicFxlStudio() {
       <div className="classic-fxl-studio">
         <div className="classic-fxl-header">
           <button type="button" className="classic-fxl-back" onClick={() => navigate(-1)}>
-            <HiOutlineArrowLeft size={20} /> Back
+            <ArrowLeft size={20} /> Back
           </button>
         </div>
         <div className="classic-fxl-content">
@@ -115,7 +115,7 @@ export default function ClassicFxlStudio() {
     <div className="classic-fxl-studio">
       <header className="classic-fxl-header">
         <button type="button" className="classic-fxl-back" onClick={() => navigate('/pdfs')}>
-          <HiOutlineArrowLeft size={20} /> Back
+          <ArrowLeft size={20} /> Back
         </button>
         <h1 className="classic-fxl-title">Classic FXL</h1>
         <span className="classic-fxl-job-badge">Job #{jobId}</span>
@@ -165,7 +165,7 @@ export default function ClassicFxlStudio() {
 
         {job?.status === 'COMPLETED' && hasLayoutFragments && (
           <div className="classic-fxl-card classic-fxl-card-success">
-            <h2><HiOutlineCheck size={24} style={{ verticalAlign: 'middle', marginRight: 8 }} /> Ready</h2>
+            <h2><Check size={24} style={{ verticalAlign: 'middle', marginRight: 8 }} /> Ready</h2>
             <p className="classic-fxl-stats">
               {job.pages?.length ?? 0} pages · {totalFragments} text fragments (PDF coordinates)
             </p>
@@ -185,7 +185,7 @@ export default function ClassicFxlStudio() {
               >
                 {publishing ? 'Publishing…' : (
                   <>
-                    <HiOutlineDocument size={18} /> Publish Classic EPUB
+                    <FileText size={18} /> Publish Classic EPUB
                   </>
                 )}
               </button>
@@ -195,7 +195,7 @@ export default function ClassicFxlStudio() {
                   className="classic-fxl-btn secondary"
                   onClick={() => kitabooService.downloadFxlEpub(jobId)}
                 >
-                  <HiOutlineDownload size={18} /> Download again
+                  <Download size={18} /> Download again
                 </button>
               )}
             </div>

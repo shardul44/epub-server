@@ -220,23 +220,38 @@ export class KitabooZoneModel {
 
   /** List distinct FXL jobs that have zones in DB (for recovering jobs after server restart). */
   static async getDistinctJobs() {
-    const [rows] = await pool.execute(
-      `SELECT DISTINCT job_id, pdf_document_id 
-       FROM kitaboo_zones 
-       WHERE job_id IS NOT NULL AND job_id != '' 
-       ORDER BY job_id`
-    );
-    return rows.map(r => ({ jobId: String(r.job_id), pdfId: r.pdf_document_id }));
+    try {
+      const [rows] = await pool.execute(
+        `SELECT DISTINCT job_id, pdf_document_id 
+         FROM kitaboo_zones 
+         WHERE job_id IS NOT NULL AND job_id != '' 
+         ORDER BY job_id`
+      );
+      return rows.map(r => ({ jobId: String(r.job_id), pdfId: r.pdf_document_id }));
+    } catch (err) {
+      // Table may not exist yet — return empty list instead of crashing
+      if (err.code === 'ER_NO_SUCH_TABLE' || err.message?.includes("doesn't exist")) {
+        return [];
+      }
+      throw err;
+    }
   }
 
   /** Get one FXL job by jobId from DB (for recovering when opening studio). Returns { jobId, pdfId } or null. */
   static async getJobByJobId(jobId) {
-    const [rows] = await pool.execute(
-      'SELECT job_id, pdf_document_id FROM kitaboo_zones WHERE job_id = ? LIMIT 1',
-      [String(jobId)]
-    );
-    if (rows.length === 0) return null;
-    return { jobId: String(rows[0].job_id), pdfId: rows[0].pdf_document_id };
+    try {
+      const [rows] = await pool.execute(
+        'SELECT job_id, pdf_document_id FROM kitaboo_zones WHERE job_id = ? LIMIT 1',
+        [String(jobId)]
+      );
+      if (rows.length === 0) return null;
+      return { jobId: String(rows[0].job_id), pdfId: rows[0].pdf_document_id };
+    } catch (err) {
+      if (err.code === 'ER_NO_SUCH_TABLE' || err.message?.includes("doesn't exist")) {
+        return null;
+      }
+      throw err;
+    }
   }
 
   /** Delete all zones for an FXL job (used when deleting the job). */

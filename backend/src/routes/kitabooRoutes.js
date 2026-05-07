@@ -12,6 +12,8 @@ import { execSync } from 'child_process';
 import sharp from 'sharp';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
+import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
+import { httpCache } from '../middlewares/httpCache.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('kitaboo.import'));
@@ -75,11 +77,13 @@ router.get('/ready/:jobId', async (req, res) => {
       if (fromDb) {
         const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
         const webpDir = path.join(intermediateDir, 'webp');
-        try {
-          await fs.access(webpDir);
+        const highFiDir = path.join(intermediateDir, 'high_fidelity_render');
+        const hasWebp = await fs.access(webpDir).then(() => true).catch(() => false);
+        const hasHighFi = await fs.access(highFiDir).then(() => true).catch(() => false);
+        if (hasWebp || hasHighFi) {
           kitabooFxlJobStore.restore(jobId, fromDb.pdfId);
           job = kitabooFxlJobStore.get(jobId);
-        } catch {
+        } else {
           return successResponse(res, { ready: false });
         }
       }
@@ -200,30 +204,36 @@ router.get('/ready/:jobId', async (req, res) => {
  * List all FXL conversion jobs (for Conversions page). In-memory jobs are merged with
  * jobs recovered from kitaboo_zones so completed FXL jobs survive server restart.
  */
-router.get('/jobs', async (req, res) => {
+router.get('/jobs', httpCache(TTL.SHORT), async (req, res) => {
   try {
-    const inMemory = kitabooFxlJobStore.listAll();
-    const inMemoryIds = new Set(inMemory.map(j => String(j.jobId)));
-    const fromDb = await KitabooZoneModel.getDistinctJobs();
-    const recovered = fromDb
-      .filter(({ jobId }) => !inMemoryIds.has(String(jobId)))
-      .map(({ jobId, pdfId }) => ({
-        jobId,
-        pdfId: String(pdfId),
-        pdfDocumentId: parseInt(pdfId, 10),
-        jobType: 'FXL',
-        id: jobId,
-        status: 'COMPLETED',
-        progressPercentage: 100,
-        currentStep: 'Complete',
-        createdAt: null,
-        completedAt: null
-      }));
-    const jobs = [...inMemory, ...recovered].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
+    const orgId = req.user?.organizationId ?? 'none';
+    const cacheKey = `kitaboo:jobs:${orgId}`;
+
+    const jobs = await cacheWrap(cacheKey, async () => {
+      const inMemory = kitabooFxlJobStore.listAll();
+      const inMemoryIds = new Set(inMemory.map(j => String(j.jobId)));
+      const fromDb = await KitabooZoneModel.getDistinctJobs();
+      const recovered = fromDb
+        .filter(({ jobId }) => !inMemoryIds.has(String(jobId)))
+        .map(({ jobId, pdfId }) => ({
+          jobId,
+          pdfId: String(pdfId),
+          pdfDocumentId: parseInt(pdfId, 10),
+          jobType: 'FXL',
+          id: jobId,
+          status: 'COMPLETED',
+          progressPercentage: 100,
+          currentStep: 'Complete',
+          createdAt: null,
+          completedAt: null
+        }));
+      return [...inMemory, ...recovered].sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+    }, TTL.SHORT);
+
     return successResponse(res, jobs);
   } catch (error) {
     console.error('[KitabooRoute] List jobs error:', error);
@@ -234,12 +244,16 @@ router.get('/jobs', async (req, res) => {
 /**
  * DELETE /api/kitaboo/jobs/:jobId
  * Permanently delete an FXL job: in-memory store, DB zones, intermediate dir, and EPUB output.
+ * Idempotent: if the job record is already gone (e.g. failed before zones were saved, or server
+ * restarted after in-memory failure), still remove store entry, zones, and on-disk dirs — 204.
  */
 router.delete('/jobs/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
     const job = kitabooFxlJobStore.get(jobId) || await KitabooZoneModel.getJobByJobId(jobId);
-    if (!job) return errorResponse(res, 'FXL job not found', 404);
+    if (!job) {
+      console.warn(`[KitabooRoute] DELETE jobs/${jobId}: no store/DB row; running cleanup anyway`);
+    }
 
     kitabooFxlJobStore.remove(jobId);
     const deletedZones = await KitabooZoneModel.deleteByJobId(jobId);
@@ -261,6 +275,7 @@ router.delete('/jobs/:jobId', async (req, res) => {
       if (e.code !== 'ENOENT') console.warn(`[KitabooRoute] Could not delete output dir: ${e.message}`);
     }
 
+    cacheDelByPrefix('kitaboo:jobs:');
     return res.status(204).send();
   } catch (error) {
     console.error('[KitabooRoute] Delete job error:', error);
@@ -388,12 +403,15 @@ router.post('/process/:pdfId', async (req, res) => {
     })
       .then((result) => {
         kitabooFxlJobStore.complete(jobId, result.pages);
+        cacheDelByPrefix('kitaboo:jobs:');
       })
       .catch((err) => {
         console.error('[KitabooRoute] FXL process error:', err);
         kitabooFxlJobStore.fail(jobId, err.message);
+        cacheDelByPrefix('kitaboo:jobs:');
       });
 
+    cacheDelByPrefix('kitaboo:jobs:');
     res.status(202).json({
       success: true,
       data: {

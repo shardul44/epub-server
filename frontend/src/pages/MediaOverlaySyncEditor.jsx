@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { HiOutlinePlay, HiOutlinePause, HiOutlineArrowLeft, HiOutlineDownload, HiOutlineCloudUpload, HiOutlineRefresh } from 'react-icons/hi';
+import { Play, Pause, ArrowLeft, Download, CloudUpload, RefreshCw, AlertTriangle, FileText, FileX, CheckCircle, ChevronRight } from 'lucide-react';
 import { conversionService } from '../services/conversionService';
 import './MediaOverlaySyncEditor.css';
 
@@ -709,9 +709,8 @@ const MediaOverlaySyncEditor = () => {
           <button
             onClick={() => navigate('/conversions')}
             className="btn btn-secondary"
-            style={{ marginTop: '20px' }}
           >
-            <HiOutlineArrowLeft size={20} />
+            <ArrowLeft size={20} />
             Back to Conversions
           </button>
         </div>
@@ -726,7 +725,7 @@ const MediaOverlaySyncEditor = () => {
           onClick={() => navigate('/conversions')}
           className="btn btn-secondary"
         >
-          <HiOutlineArrowLeft size={20} />
+          <ArrowLeft size={20} />
           Back
         </button>
         <h1>EPUB Media Overlay Sync Editor</h1>
@@ -745,10 +744,10 @@ const MediaOverlaySyncEditor = () => {
               fontWeight: '500'
             }}>
               {syncValidation.errors.length > 0 && (
-                <span>⚠ {syncValidation.errors.length} error(s)</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={14} /> {syncValidation.errors.length} error(s)</span>
               )}
               {syncValidation.warnings.length > 0 && (
-                <span>⚠ {syncValidation.warnings.length} warning(s)</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={14} /> {syncValidation.warnings.length} warning(s)</span>
               )}
             </div>
           )}
@@ -789,7 +788,7 @@ const MediaOverlaySyncEditor = () => {
               {generatingTts ? 'Generating TTS...' : 'Generate TTS'}
             </button>
             <label className="btn btn-secondary" style={{ cursor: uploadingAudio ? 'not-allowed' : 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', opacity: uploadingAudio ? 0.6 : 1 }}>
-              <HiOutlineCloudUpload size={18} />
+              <CloudUpload size={18} />
               {uploadingAudio ? 'Uploading...' : 'Upload Audio'}
               <input
                 ref={(input) => setAudioFileInput(input)}
@@ -805,7 +804,7 @@ const MediaOverlaySyncEditor = () => {
               className="btn btn-primary"
               disabled={saving || loading}
             >
-              <HiOutlineDownload size={18} />
+              <Download size={18} />
               {saving ? 'Saving...' : 'Save Sync JSON'}
             </button>
             <button
@@ -814,7 +813,7 @@ const MediaOverlaySyncEditor = () => {
               disabled={regeneratingEpub || loading}
               style={{ backgroundColor: '#4caf50', display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              <HiOutlineRefresh size={18} />
+              <RefreshCw size={18} />
               {regeneratingEpub ? 'Regenerating...' : 'Regenerate EPUB'}
             </button>
             <button
@@ -824,7 +823,7 @@ const MediaOverlaySyncEditor = () => {
               style={{ backgroundColor: '#2196f3', display: 'flex', alignItems: 'center', gap: '8px' }}
               title="Download the EPUB file"
             >
-              <HiOutlineDownload size={18} />
+              <Download size={18} />
               Download EPUB
             </button>
           </div>
@@ -862,7 +861,7 @@ const MediaOverlaySyncEditor = () => {
                     }}
                   />
                   <div className="image-error" style={{ display: 'none', padding: '40px', textAlign: 'center', color: '#d32f2f' }}>
-                    <div style={{ fontSize: '16px', marginBottom: '8px' }}>⚠️ Image not found</div>
+                  <div style={{ fontSize: '16px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><FileX size={20} /> Image not found</div>
                     <div style={{ fontSize: '14px', color: '#666' }}>
                       The page image may not have been generated yet. Please check if the conversion completed successfully.
                     </div>
@@ -874,7 +873,7 @@ const MediaOverlaySyncEditor = () => {
                 </>
               ) : (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                  <div style={{ fontSize: '16px', marginBottom: '8px' }}>📄 Page image not available</div>
+                <div style={{ fontSize: '16px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><FileText size={20} /> Page image not available</div>
                   <div style={{ fontSize: '14px', color: '#999' }}>
                     The page image may not have been generated yet.
                   </div>
@@ -898,7 +897,7 @@ const MediaOverlaySyncEditor = () => {
                     onClick={handlePlayPause}
                     className="play-pause-btn"
                   >
-                    {isPlaying ? <HiOutlinePause size={24} /> : <HiOutlinePlay size={24} />}
+                    {isPlaying ? <Pause size={24} /> : <Play size={24} />}
                   </button>
 
                   <div className="audio-progress-container">
@@ -1075,18 +1074,18 @@ const MediaOverlaySyncEditor = () => {
                     <span className="block-number">Block {index + 1}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       {syncValidation.errors.some(e => e.blockId === block.id) && (
-                        <span style={{ fontSize: '12px', color: '#d32f2f', fontWeight: '600' }}>⚠ Error</span>
+                        <span style={{ fontSize: '12px', color: '#d32f2f', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> Error</span>
                       )}
                       {syncValidation.warnings.some(w => w.blockId === block.id) && !syncValidation.errors.some(e => e.blockId === block.id) && (
-                        <span style={{ fontSize: '12px', color: '#f57c00', fontWeight: '600' }}>⚠ Warning</span>
+                        <span style={{ fontSize: '12px', color: '#f57c00', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}><AlertTriangle size={12} /> Warning</span>
                       )}
                       {block.clipBegin !== null && block.clipEnd !== null && 
                        !syncValidation.errors.some(e => e.blockId === block.id) && 
                        !syncValidation.warnings.some(w => w.blockId === block.id) && (
-                        <span style={{ fontSize: '12px', color: '#4caf50', fontWeight: '600' }}>✓ Valid</span>
+                        <span style={{ fontSize: '12px', color: '#4caf50', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={12} /> Valid</span>
                       )}
                       {selectedBlockId === block.id && (
-                        <span className="selected-indicator">✓ Selected</span>
+                        <span className="selected-indicator" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={12} /> Selected</span>
                       )}
                     </div>
                   </div>
@@ -1134,7 +1133,7 @@ const MediaOverlaySyncEditor = () => {
                           }}
                           title="Seek to CLIPBEGIN time"
                         >
-                          ▶ Play
+                          <ChevronRight size={12} /> Play
                         </button>
                       )}
                     </div>
@@ -1154,13 +1153,13 @@ const MediaOverlaySyncEditor = () => {
                         placeholder="0.000"
                       />
                       {duration > 0 && block.clipEnd !== null && block.clipEnd > duration && (
-                        <span style={{ fontSize: '11px', color: '#d32f2f', marginTop: '4px', display: 'block' }}>
-                          ⚠ Exceeds audio duration ({duration.toFixed(2)}s)
+                        <span style={{ fontSize: '11px', color: '#d32f2f', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <AlertTriangle size={11} /> Exceeds audio duration ({duration.toFixed(2)}s)
                         </span>
                       )}
                       {block.clipBegin !== null && block.clipEnd !== null && (
-                        <span style={{ fontSize: '11px', color: '#4caf50', marginTop: '4px', display: 'block' }}>
-                          ✓ Auto-detected: {formatTime(block.clipBegin)} - {formatTime(block.clipEnd)}
+                        <span style={{ fontSize: '11px', color: '#4caf50', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <CheckCircle size={11} /> Auto-detected: {formatTime(block.clipBegin)} - {formatTime(block.clipEnd)}
                         </span>
                       )}
                     </div>
@@ -1172,8 +1171,8 @@ const MediaOverlaySyncEditor = () => {
                       {syncValidation.errors
                         .filter(e => e.blockId === block.id)
                         .map((error, idx) => (
-                          <div key={idx} style={{ color: '#d32f2f', marginBottom: '4px' }}>
-                            ⚠ {error.message}
+                          <div key={idx} style={{ color: '#d32f2f', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <AlertTriangle size={12} /> {error.message}
                           </div>
                         ))}
                     </div>
@@ -1184,8 +1183,8 @@ const MediaOverlaySyncEditor = () => {
                       {syncValidation.warnings
                         .filter(w => w.blockId === block.id)
                         .map((warning, idx) => (
-                          <div key={idx} style={{ color: '#f57c00', marginBottom: '4px' }}>
-                            ⚠ {warning.message}
+                          <div key={idx} style={{ color: '#f57c00', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <AlertTriangle size={12} /> {warning.message}
                           </div>
                         ))}
                     </div>
@@ -1221,7 +1220,7 @@ const MediaOverlaySyncEditor = () => {
               ))
               ) : (
                 <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                  <div style={{ fontSize: '16px', marginBottom: '8px' }}>📝 No text blocks found</div>
+                  <div style={{ fontSize: '16px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><FileText size={20} /> No text blocks found</div>
                   <div style={{ fontSize: '14px', color: '#999' }}>
                     {error 
                       ? 'Unable to load text blocks. Please check if the conversion completed successfully.'

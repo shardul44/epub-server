@@ -10,7 +10,7 @@ import AdvancedJsonEditor from '../../components/interactive/AdvancedJsonEditor'
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableItem } from '../../components/SortableItem';
-import { HiOutlineSelector } from 'react-icons/hi';
+import { GripVertical, X } from 'lucide-react';
 
 function defaultContentForType(type) {
   const t = String(type || '').trim();
@@ -304,7 +304,7 @@ export default function InteractiveEditor() {
                                 {...listeners}
                                 disabled={savingOrder}
                               >
-                                <HiOutlineSelector />
+                                <GripVertical size={16} />
                               </button>
                               <button
                                 type="button"
@@ -359,9 +359,9 @@ export default function InteractiveEditor() {
                                   Rename
                                 </button>
                               ) : null}
-                              <button type="button" className="btn btn-danger" onClick={() => deleteChapter(c.id)} disabled={savingOrder}>
-                                ×
-                              </button>
+                                <button type="button" className="btn btn-danger" onClick={() => deleteChapter(c.id)} disabled={savingOrder}>
+                                  <X size={16} />
+                                </button>
                             </div>
                           </div>
                         )}
@@ -462,7 +462,7 @@ export default function InteractiveEditor() {
                                   {...listeners}
                                   disabled={savingOrder}
                                 >
-                                  <HiOutlineSelector />
+                                  <GripVertical size={16} />
                                 </button>
                                 <div style={{ color: '#666', fontSize: 13 }}>Drag to reorder</div>
                               </div>

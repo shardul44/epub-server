@@ -129,9 +129,11 @@ function buildReportHtml(data) {
 export async function renderEpubcheckReportPdf(data) {
   const html = buildReportHtml(data);
   const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    headless: true,
+    executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
+  
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });

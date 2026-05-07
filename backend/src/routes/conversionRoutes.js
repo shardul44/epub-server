@@ -11,6 +11,8 @@ import { successResponse, errorResponse, notFoundResponse, badRequestResponse } 
 import { getHtmlIntermediateDir } from '../config/fileStorage.js';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess, paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
+import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
+import { httpCache, noCache } from '../middlewares/httpCache.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('conversion.basic'));
@@ -35,15 +37,15 @@ const epubImportUpload = multer({
 });
 
 // GET /api/conversions - Get all conversions (?scope=own = only jobs for PDFs this user created)
-router.get('/', async (req, res) => {
+router.get('/', httpCache(TTL.SHORT), async (req, res) => {
   try {
     const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
-    const jobs = await ConversionService.getAllConversions(req.user, scope);
-    
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    
+    const userId  = req.user?.id ?? 'anon';
+    const orgId   = req.user?.organizationId ?? 'none';
+    const scopeKey = req.query.scope === 'own' ? 'own' : 'org';
+    const cacheKey = `conversions:all:${orgId}:${userId}:${scopeKey}`;
+
+    const jobs = await cacheWrap(cacheKey, () => ConversionService.getAllConversions(req.user, scope), TTL.SHORT);
     return successResponse(res, jobs);
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -58,6 +60,8 @@ router.post('/start/:pdfDocumentId', async (req, res) => {
       chapterPlan,
       user: req.user
     });
+    // Invalidate conversion caches so next poll sees the new job
+    cacheDelByPrefix('conversions:');
     return successResponse(res, job, 201);
   } catch (error) {
     if (error.message.includes('not found')) {
@@ -125,25 +129,30 @@ router.get('/pdf/:pdfDocumentId', async (req, res) => {
 });
 
 // GET /api/conversions/status/:status - Get conversions by status
-router.get('/status/:status', async (req, res) => {
+router.get('/status/:status', httpCache(TTL.SHORT), async (req, res) => {
   try {
     const status = req.params.status.toUpperCase();
     const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'REVIEW_REQUIRED', 'CANCELLED'];
-    
+
     if (!validStatuses.includes(status)) {
       return badRequestResponse(res, 'Invalid status');
     }
 
     const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
-    const jobs = await ConversionService.getConversionsByStatus(status, req.user, scope);
-    
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    
+    const userId  = req.user?.id ?? 'anon';
+    const orgId   = req.user?.organizationId ?? 'none';
+    const scopeKey = req.query.scope === 'own' ? 'own' : 'org';
+    const cacheKey = `conversions:status:${status}:${orgId}:${userId}:${scopeKey}`;
+
+    // Active jobs change frequently — use SHORT TTL; terminal jobs can use MEDIUM
+    const ttl = ['IN_PROGRESS', 'PENDING'].includes(status) ? TTL.SHORT : TTL.MEDIUM;
+    const jobs = await cacheWrap(cacheKey, () => ConversionService.getConversionsByStatus(status, req.user, scope), ttl);
+
     return successResponse(res, jobs);
   } catch (error) {
-    return errorResponse(res, error.message, 500);
+    // Return empty array instead of 500 for non-critical status queries
+    console.warn(`[ConversionRoute] GET /status/${req.params.status} failed:`, error.message);
+    return successResponse(res, []);
   }
 });
 
@@ -188,7 +197,7 @@ router.post('/:jobId/stop', async (req, res) => {
     const updatedJob = await ConversionService.updateJobStatus(parseInt(req.params.jobId), {
       status: 'CANCELLED'
     });
-    
+    cacheDelByPrefix('conversions:');
     return successResponse(res, updatedJob);
   } catch (error) {
     if (error.message.includes('not found')) {
@@ -211,7 +220,7 @@ router.post('/:jobId/retry', async (req, res) => {
 
     // If job is IN_PROGRESS, check if it's been stuck for more than 5 minutes
     if (job.status === 'IN_PROGRESS') {
-      const updatedAt = new Date(job.updated_at || job.updatedAt);
+      const updatedAt = new Date(job.updatedAt || job.updated_at);
       const now = new Date();
       const minutesSinceUpdate = (now - updatedAt) / (1000 * 60);
       
@@ -222,18 +231,26 @@ router.post('/:jobId/retry', async (req, res) => {
       console.log(`[Job ${req.params.jobId}] Retrying stuck IN_PROGRESS job (stuck for ${Math.round(minutesSinceUpdate)} minutes)`);
     }
 
+    // Increment retry counter and reset job state from scratch
+    const newRetryCount = (job.retryCount ?? 0) + 1;
+
     const updatedJob = await ConversionService.updateJobStatus(parseInt(req.params.jobId), {
       status: 'PENDING',
       currentStep: 'STEP_0_CLASSIFICATION',
       progressPercentage: 0,
-      errorMessage: job.status === 'IN_PROGRESS' ? 'Job was interrupted by server restart' : null
+      // Clear previous error so the UI shows a clean slate
+      errorMessage: null,
+      retryCount: newRetryCount
     });
 
-    // Restart conversion
+    console.log(`[Job ${req.params.jobId}] Retry #${newRetryCount} — restarting full conversion pipeline`);
+
+    // Restart conversion from the beginning
     ConversionService.processConversion(parseInt(req.params.jobId)).catch(error => {
       console.error('Retry conversion error:', error);
     });
 
+    cacheDelByPrefix('conversions:');
     return successResponse(res, updatedJob);
   } catch (error) {
     if (error.message.includes('not found')) {
@@ -603,6 +620,7 @@ router.get('/:jobId/text-blocks', async (req, res) => {
 router.delete('/:jobId', async (req, res) => {
   try {
     await ConversionService.deleteConversionJob(parseInt(req.params.jobId));
+    cacheDelByPrefix('conversions:');
     return res.status(204).send();
   } catch (error) {
     if (error.message.includes('not found')) {

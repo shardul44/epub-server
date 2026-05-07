@@ -24,6 +24,8 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import orgTeamRoutes from './src/routes/orgTeamRoutes.js';
 import interactiveRoutes from './src/routes/interactiveRoutes.js';
 import activityRoutes from './src/routes/activityRoutes.js';
+import mediaRoutes from './src/routes/mediaRoutes.js';
+import bootstrapRoutes from './src/routes/bootstrapRoutes.js';
 
 // Import middleware
 import { errorHandler } from './src/middlewares/errorHandler.js';
@@ -42,7 +44,7 @@ const allowedOrigins = new Set([
   'https://epub.kodeit.digital',
   'https://epub.legatolxp.online',
   'http://localhost:3000',
-  'http://127.0.0.1:5173'
+  'http://127.0.0.1:5173',
 ]);
 
 const corsOptions = {
@@ -84,7 +86,13 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve static files
-app.use('/uploads', staticCorsMiddleware, express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', staticCorsMiddleware, express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1y',
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  },
+}));
 app.use('/epub_output', staticCorsMiddleware, express.static(path.join(__dirname, 'epub_output')));
 app.use('/html_intermediate', staticCorsMiddleware, express.static(path.join(__dirname, 'html_intermediate')));
 app.use('/reports', staticCorsMiddleware, express.static(path.join(__dirname, 'reports')));
@@ -103,12 +111,15 @@ app.get('/health', async (req, res) => {
     const connection = await pool.getConnection();
     await connection.ping();
     connection.release();
+
+    const { cacheStats } = await import('./src/services/cacheService.js');
     
     res.json({ 
       status: 'OK', 
       timestamp: new Date().toISOString(),
       database: 'connected',
-      uptime: process.uptime()
+      uptime: process.uptime(),
+      cache: cacheStats(),
     });
   } catch (error) {
     console.error('[Health Check] Database connection failed:', error.message);
@@ -139,6 +150,8 @@ app.use('/admin', adminRoutes);
 app.use('/org', orgTeamRoutes);
 app.use('/interactive', interactiveRoutes);
 app.use('/activities', activityRoutes);
+app.use('/media', mediaRoutes);
+app.use('/', bootstrapRoutes); // Mount at root for /app-bootstrap and /conversion-status/:id
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

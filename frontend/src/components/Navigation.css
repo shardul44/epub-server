@@ -1,0 +1,282 @@
+/* ─── Navigation.css ────────────────────────────────────────────────────────
+   Fixed top navigation bar for EPUB Studio.
+   Design language: matches Layout.css (white bg, #1976d2 accent, slate text).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Root bar ── */
+.nav-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  height: 60px;
+  background: #1e293b;           /* slate-800 */
+  border-bottom: 1px solid #334155; /* slate-700 */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 20px;
+  gap: 12px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* ── Brand / Logo ── */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.nav-brand:hover {
+  opacity: 0.85;
+}
+
+.nav-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); /* indigo */
+  border-radius: 8px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+.nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.nav-brand-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f5f9;   /* slate-100 */
+  letter-spacing: -0.2px;
+}
+
+.nav-brand-sub {
+  font-size: 10px;
+  color: #94a3b8;   /* slate-400 */
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 500;
+}
+
+/* ── Middle nav ── */
+.nav-middle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 8px;
+}
+
+.nav-middle::-webkit-scrollbar {
+  display: none;
+}
+
+/* Nav button labels — hidden on small screens */
+.nav-label {
+  display: inline;
+}
+
+/* ── Right section ── */
+.nav-right {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* User trigger button */
+.nav-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  color: #f1f5f9;
+}
+
+.nav-user-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Avatar circle */
+.nav-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.nav-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 140px;
+}
+
+.nav-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* Chevron */
+.nav-chevron {
+  color: #94a3b8;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-chevron--open {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown ── */
+.nav-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  animation: nav-dropdown-in 0.15s ease;
+  z-index: 1200;
+}
+
+@keyframes nav-dropdown-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nav-dropdown-header {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-dropdown-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.nav-dropdown-email {
+  font-size: 12px;
+  color: #94a3b8;
+  word-break: break-all;
+}
+
+.nav-dropdown-divider {
+  height: 1px;
+  background: #334155;
+  margin: 0;
+}
+
+.nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #cbd5e1;
+  transition: background 0.12s, color 0.12s;
+  text-align: left;
+}
+
+.nav-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+}
+
+.nav-dropdown-item--danger {
+  color: #f87171;
+}
+
+.nav-dropdown-item--danger:hover {
+  background: rgba(248, 113, 113, 0.1);
+  color: #fca5a5;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────────── */
+
+/* Medium screens: hide brand subtitle */
+@media (max-width: 900px) {
+  .nav-brand-sub {
+    display: none;
+  }
+  .nav-user-info {
+    display: none;
+  }
+  .nav-chevron {
+    display: none;
+  }
+}
+
+/* Small screens: hide nav labels, show icon-only buttons */
+@media (max-width: 640px) {
+  .nav-label {
+    display: none;
+  }
+  .nav-brand-text {
+    display: none;
+  }
+  .nav-inner {
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .nav-middle {
+    padding: 0 4px;
+    gap: 2px;
+  }
+  .nav-user-btn {
+    padding: 5px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+  }
+  .nav-user-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}

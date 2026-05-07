@@ -38,13 +38,3 @@ export const forbiddenResponse = (res, message = 'Forbidden') => {
   });
 };
 
-
-
-
-
-
-
-
-
-
-

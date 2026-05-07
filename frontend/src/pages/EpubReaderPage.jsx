@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { HiOutlineChevronLeft, HiOutlineExternalLink } from 'react-icons/hi';
+import { ChevronLeft, ExternalLink } from 'lucide-react';
 import SyncStudioEpubReader from '../components/SyncStudioEpubReader';
 import './EpubReaderPage.css';
 
@@ -28,7 +28,7 @@ export default function EpubReaderPage() {
     <div className="epub-reader-page">
       <header className="epub-reader-page-header">
         <button type="button" className="epub-reader-back" onClick={() => navigate(backPath)}>
-          <HiOutlineChevronLeft size={20} />
+          <ChevronLeft size={20} />
           {source === 'kitaboo' ? 'Back to FXL Sync Studio' : 'Back to Sync Studio'}
         </button>
         <div className="epub-reader-page-title">
@@ -36,7 +36,7 @@ export default function EpubReaderPage() {
           <span className="epub-reader-job">Job {jobId}</span>
         </div>
         <button type="button" className="epub-reader-newtab" onClick={openInNewTab} title="Open this reader in a new browser tab">
-          <HiOutlineExternalLink size={18} />
+          <ExternalLink size={18} />
           New tab
         </button>
       </header>

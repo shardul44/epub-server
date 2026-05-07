@@ -1,6 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api, { API_BASE_URL } from '../services/api';
 import { useSearchParams } from 'react-router-dom';
+import {
+  X,
+  Loader2,
+  Play,
+  CircleCheck,
+  Download,
+  FileText,
+  Sparkles,
+  Wrench,
+  Check,
+  Settings,
+  Lightbulb,
+  AlertTriangle,
+  Info,
+  ArrowRight,
+  RefreshCw,
+  Save,
+} from 'lucide-react';
 import './AccessibilityWizard.css';
 
 const SEVERITIES = ['critical', 'serious', 'moderate', 'minor'];
@@ -124,12 +142,19 @@ function hasHeadingOrderIssues(headings) {
   return false;
 }
 
-const AccessibilityWizard = () => {
+const AccessibilityWizard = ({ onStateChange }) => {
   const [searchParams] = useSearchParams();
   const initialJobId = searchParams.get('jobId');
   const autoSuggest = searchParams.get('autoSuggest') === '1' || searchParams.get('autoSuggest') === 'true';
 
   const [file, setFile] = useState(null);
+  const [standards, setStandards] = useState({
+    wcag21aa: true,
+    epubA11y: true,
+    wcag22aa: false,
+    section508: false,
+    ariaLandmarks: false,
+  });
   const [loadingCheck, setLoadingCheck] = useState(false);
   const [loadingFix, setLoadingFix] = useState(false);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -143,6 +168,7 @@ const AccessibilityWizard = () => {
   const [reportUrl, setReportUrl] = useState('');
   const [report, setReport] = useState(null);
   const [allViolations, setAllViolations] = useState([]);
+  const [metadata, setMetadata] = useState({});
 
   const [revalidateFailed, setRevalidateFailed] = useState(false);
   const [revalidateError, setRevalidateError] = useState('');
@@ -368,6 +394,25 @@ const AccessibilityWizard = () => {
     setRevalidateError('');
   };
 
+  const handleRemoveFile = () => {
+    setError('');
+    setFile(null);
+    setJobId('');
+    setReport(null);
+    setAllViolations([]);
+    setSummary(initialSummary);
+    setReportUrl('');
+    setImageAltDrafts({});
+    setHeadingDrafts([]);
+    setCodeRepairDrafts([]);
+    setAiError('');
+    setRevalidateFailed(false);
+    setRevalidateError('');
+    // Reset the hidden file input so the same file can be re-selected
+    const input = document.getElementById('epub-file-input');
+    if (input) input.value = '';
+  };
+
   const applyReportData = (data, reportData) => {
     setSummary(data.summary || initialSummary);
     setReportUrl(data.reportUrl || '');
@@ -376,6 +421,13 @@ const AccessibilityWizard = () => {
     if (Array.isArray(reportData?.allViolations)) setAllViolations(reportData.allViolations);
     onResetDraftsFromReport(nextReport);
   };
+
+  // Notify parent page of state changes so it can render dashboard tiles
+  useEffect(() => {
+    if (onStateChange) {
+      onStateChange({ jobId, summary, allViolations, file, metadata });
+    }
+  }, [jobId, summary, allViolations, file, metadata]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRunCheck = async (event) => {
     if (event) event.preventDefault();
@@ -394,6 +446,7 @@ const AccessibilityWizard = () => {
       setJobId(nextJobId);
       setSummary(data.summary || initialSummary);
       setReportUrl(data.reportUrl || '');
+      setMetadata(data.metadata || {});
       setCodeRepairDrafts([]);
       setAiError('');
 
@@ -404,7 +457,12 @@ const AccessibilityWizard = () => {
       if (Array.isArray(nextReport?.allViolations)) setAllViolations(nextReport.allViolations);
       onResetDraftsFromReport(nextReport);
     } catch (err) {
-      const message = err.response?.data?.error || err.message || 'Failed to analyze EPUB.';
+      const raw = err.response?.data?.error || err.message || 'Failed to analyze EPUB.';
+      const status = err.response?.status;
+      // Give a clear, actionable message for the Ace CLI failure case
+      const message = status === 500
+        ? `Accessibility check failed: ${raw} — Make sure the EPUB is a valid, non-password-protected file and try again.`
+        : raw;
       setError(message);
     } finally {
       setLoadingCheck(false);
@@ -494,6 +552,7 @@ const AccessibilityWizard = () => {
         setReportUrl(`/backend/reports/${targetJobId}/report.html`);
         setReport(nextReport);
         setAllViolations(nextAllViolations);
+        setMetadata(nextReport?.metadata || nextReport?.publication || {});
         setCodeRepairDrafts([]);
         onResetDraftsFromReport(nextReport);
 
@@ -625,25 +684,129 @@ const AccessibilityWizard = () => {
 
       {/* ── Step 1: Upload ── */}
       <div className="aw-upload-section">
-        <label className="aw-file-label" htmlFor="epub-file-input">Select EPUB file</label>
-        <div className="aw-file-row">
+        {/* Label above row */}
+        <span className="aw-file-label-inline">Select EPUB file</span>
+
+        {/* Row 1: file controls + centre hint + run button */}
+        <div className="aw-upload-row">
+          {/* Left: choose + filename */}
+          <label className="aw-file-btn" htmlFor="epub-file-input">
+            Choose File
+          </label>
           <input
             id="epub-file-input"
             type="file"
             accept=".epub,application/epub+zip"
             onChange={handleFileChange}
             disabled={busy}
+            className="aw-file-input-hidden"
           />
-          <button
-            type="button"
-            className="aw-run-btn"
-            onClick={handleRunCheck}
-            disabled={busy || !file}
-          >
-            {loadingCheck ? '⏳ Analyzing…' : '▶ Run Accessibility Check'}
-          </button>
+          {file
+            ? (
+              <span className="aw-file-chosen">
+                <FileText size={14} strokeWidth={2} className="aw-file-chosen-doc" aria-hidden />
+                <span className="aw-file-chosen-name" title={file.name}>{file.name}</span>
+                <button
+                  type="button"
+                  className="aw-file-remove-btn"
+                  onClick={handleRemoveFile}
+                  disabled={busy}
+                  aria-label="Remove selected file"
+                  title="Remove file"
+                >
+                  <X size={11} strokeWidth={2.75} aria-hidden />
+                </button>
+              </span>
+            )
+            : <span className="aw-file-placeholder">No file chosen</span>
+          }
+
+          {/* Centre: mini bar chart + pre-scan hint */}
+          <div className="aw-upload-center">
+            <div className="aw-prescan-bars">
+              <div className="aw-prescan-bar" style={{ height: 14, background: '#6366f1' }} />
+              <div className="aw-prescan-bar" style={{ height: 22, background: '#6366f1' }} />
+              <div className="aw-prescan-bar" style={{ height: 18, background: '#6366f1' }} />
+              <div className="aw-prescan-bar" style={{ height: 26, background: '#6366f1' }} />
+              <div className="aw-prescan-bar" style={{ height: 10, background: '#f59e0b' }} />
+              <div className="aw-prescan-bar" style={{ height: 16, background: '#f59e0b' }} />
+              <div className="aw-prescan-bar" style={{ height: 20, background: '#10b981' }} />
+              <div className="aw-prescan-bar" style={{ height: 8,  background: '#10b981' }} />
+              <div className="aw-prescan-bar" style={{ height: 12, background: '#94a3b8' }} />
+            </div>
+            <div className="aw-prescan-labels">
+              <span>Text</span>
+              <span>Structure</span>
+              <span>Media</span>
+              <span>Prints</span>
+            </div>
+            {file && (
+              <p className="aw-prescan-hint">
+                File pre-scan completed: structure identified. Press to run detailed standard checks.
+              </p>
+            )}
+          </div>
+
+          {/* Right: run button + status */}
+          <div className="aw-upload-right">
+            <button
+              type="button"
+              className="aw-run-btn"
+              onClick={handleRunCheck}
+              disabled={busy || !file}
+            >
+              {loadingCheck ? (
+                <>
+                  <Loader2 size={16} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                  Analyzing…
+                </>
+              ) : (
+                <>
+                  <Play size={16} strokeWidth={2} className="aw-run-play" aria-hidden />
+                  Run Accessibility Check
+                </>
+              )}
+            </button>
+            {file && !loadingCheck && (
+              <span className="aw-analysis-status">
+                <span className="aw-analysis-status-dot" />
+                Analysis ready
+              </span>
+            )}
+            {loadingCheck && (
+              <span className="aw-analysis-status">
+                <Loader2 size={12} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                Running checks…
+              </span>
+            )}
+          </div>
         </div>
-        {file && <div className="aw-file-name">📄 {file.name}</div>}
+
+        {/* Row 2: standards checkboxes */}
+        <div className="aw-upload-divider" />
+        <div className="aw-standards-row">
+          {[
+            { key: 'wcag21aa',      label: 'WCAG 2.1 AA' },
+            { key: 'epubA11y',      label: 'EPUB Accessibility 1.1' },
+            { key: 'wcag22aa',      label: 'Section 508' },
+            { key: 'section508',    label: 'WCAG 2.2 AA' },
+            { key: 'ariaLandmarks', label: 'ARIA landmarks' },
+          ].map(({ key, label }) => (
+            <label key={key} className="aw-std-label">
+              <input
+                type="checkbox"
+                className="aw-std-checkbox"
+                checked={standards[key]}
+                onChange={() => setStandards(prev => ({ ...prev, [key]: !prev[key] }))}
+              />
+              <span className="aw-std-text">{label}</span>
+              <span className="aw-std-info" title={`Learn more about ${label}`} aria-hidden>
+                <Info size={9} strokeWidth={2.75} />
+              </span>
+            </label>
+          ))}
+        </div>
+
         {error && <div className="aw-error-bar">{error}</div>}
       </div>
 
@@ -668,23 +831,28 @@ const AccessibilityWizard = () => {
           {/* ── Step 3 (success): 0 violations ── */}
           {!hasViolations && !revalidateFailed && summary.totalViolations === 0 && (
             <div className="aw-success-banner">
-              <div className="aw-success-icon">✅</div>
+              <div className="aw-success-icon" aria-hidden>
+                <CircleCheck size={40} strokeWidth={2} />
+              </div>
               <div className="aw-success-content">
                 <strong>0 violations — EPUB meets WCAG AA!</strong>
                 <p>All accessibility issues have been resolved.</p>
               </div>
               <div className="aw-success-actions">
                 <a className="aw-download-btn" href={downloadEpubUrl}>
-                  ⬇ Download AA-Compliant EPUB
+                  <Download size={16} strokeWidth={2.25} aria-hidden />
+                  Download AA-Compliant EPUB
                 </a>
                 {absoluteReportUrl && (
                   <a className="aw-view-report-link" href={absoluteReportUrl} target="_blank" rel="noreferrer">
-                    📄 View Ace Report
+                    <FileText size={15} strokeWidth={2} aria-hidden />
+                    View Ace Report
                   </a>
                 )}
                 {downloadReportPdfUrl && (
                   <a className="aw-download-report-link" href={downloadReportPdfUrl} target="_blank" rel="noreferrer">
-                    ⬇ Download Report (PDF)
+                    <Download size={15} strokeWidth={2.25} aria-hidden />
+                    Download Report (PDF)
                   </a>
                 )}
               </div>
@@ -698,7 +866,10 @@ const AccessibilityWizard = () => {
               {/* Toolbar */}
               <div className="aw-fix-toolbar">
                 <div className="aw-fix-toolbar-left">
-                  <span className="aw-fix-badge">🔧 Fix Mode ON</span>
+                  <span className="aw-fix-badge">
+                    <Wrench size={13} strokeWidth={2.25} aria-hidden />
+                    Fix Mode ON
+                  </span>
                   <span className="aw-fix-hint">AI suggestions are drafts — review, edit, approve, then save.</span>
                 </div>
                 <div className="aw-fix-toolbar-right">
@@ -708,7 +879,17 @@ const AccessibilityWizard = () => {
                     onClick={handleGenerateAiSuggestions}
                     disabled={loadingAi || busy}
                   >
-                    {loadingAi ? '⏳ Running AI in parallel… (may take ~30s)' : '✦ Generate AI Suggestions'}
+                    {loadingAi ? (
+                      <>
+                        <Loader2 size={15} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                        Running AI in parallel… (may take ~30s)
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={15} strokeWidth={2} aria-hidden />
+                        Generate AI Suggestions
+                      </>
+                    )}
                   </button>
                   {codeRepairDrafts.length > 0 && (
                     <button
@@ -717,7 +898,8 @@ const AccessibilityWizard = () => {
                       onClick={handleApproveAllAiFixes}
                       disabled={busy}
                     >
-                      ✓ Approve All AI Fixes
+                      <Check size={15} strokeWidth={2.75} aria-hidden />
+                      Approve All AI Fixes
                     </button>
                   )}
                 </div>
@@ -730,7 +912,17 @@ const AccessibilityWizard = () => {
                   <strong>Fixes saved.</strong> Re-validation failed — Ace could not load a content page.
                   {revalidateError && <p className="aw-rv-detail">{revalidateError}</p>}
                   <button type="button" className="aw-recheck-btn" onClick={handleRunCheckAgain} disabled={loadingRecheck}>
-                    {loadingRecheck ? '⏳ Re-running…' : 'Run check again'}
+                    {loadingRecheck ? (
+                      <>
+                        <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                        Re-running…
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw size={14} strokeWidth={2.25} aria-hidden />
+                        Run check again
+                      </>
+                    )}
                   </button>
                 </div>
               )}
@@ -762,13 +954,22 @@ const AccessibilityWizard = () => {
                             <div className="aw-alt-src">
                               {src.split('/').pop()}
                               {isSvgPage && (
-                                <span className="aw-alt-decorative-badge">⚙ FXL Page SVG — auto role=&quot;img&quot; on Save</span>
+                                <span className="aw-alt-decorative-badge">
+                                  <Settings size={12} strokeWidth={2.25} aria-hidden />
+                                  FXL Page SVG — auto role=&quot;img&quot; on Save
+                                </span>
                               )}
                               {isFxlCanvasPage && (
-                                <span className="aw-alt-decorative-badge">⚙ FXL Page Image — auto handled on Save</span>
+                                <span className="aw-alt-decorative-badge">
+                                  <Settings size={12} strokeWidth={2.25} aria-hidden />
+                                  FXL Page Image — auto handled on Save
+                                </span>
                               )}
                               {isDecorative && (
-                                <span className="aw-alt-decorative-badge">⚙ Decorative — auto alt=&quot;&quot; on Save</span>
+                                <span className="aw-alt-decorative-badge">
+                                  <Settings size={12} strokeWidth={2.25} aria-hidden />
+                                  Decorative — auto alt=&quot;&quot; on Save
+                                </span>
                               )}
                             </div>
                             {isSvgPage ? (
@@ -824,7 +1025,9 @@ const AccessibilityWizard = () => {
                           <span>{h.text}</span>
                           <span className="aw-heading-cur">Currently H{h.currentLevel ?? '?'}</span>
                         </div>
-                        <span className="aw-heading-arrow">→</span>
+                        <span className="aw-heading-arrow" aria-hidden>
+                          <ArrowRight size={16} strokeWidth={2} />
+                        </span>
                         <select
                           className="aw-heading-select"
                           value={h.nextLevel}
@@ -885,7 +1088,9 @@ const AccessibilityWizard = () => {
                             {AUTO_FIXED_RULES[violation.title] ? (
                               <div className="aw-auto-fix-card">
                                 <div className="aw-auto-fix-header">
-                                  <span className="aw-auto-fix-icon">⚙</span>
+                                  <span className="aw-auto-fix-icon" aria-hidden>
+                                    <Settings size={15} strokeWidth={2.25} />
+                                  </span>
                                   <strong>Auto-fixed on Save</strong>
                                   <span className="aw-auto-fix-file">{AUTO_FIXED_RULES[violation.title].file}</span>
                                 </div>
@@ -895,8 +1100,18 @@ const AccessibilityWizard = () => {
                               </div>
                             ) : draft ? (
                               <div className="aw-fix-area">
-                                {draft.reason && <p className="aw-fix-reason">💡 {draft.reason}</p>}
-                                {draft.error && <p className="aw-fix-error">⚠ {draft.error}</p>}
+                                {draft.reason && (
+                                  <p className="aw-fix-reason">
+                                    <Lightbulb size={14} strokeWidth={2.25} className="aw-fix-reason-icon" aria-hidden />
+                                    <span>{draft.reason}</span>
+                                  </p>
+                                )}
+                                {draft.error && (
+                                  <p className="aw-fix-error">
+                                    <AlertTriangle size={14} strokeWidth={2.25} className="aw-fix-error-icon" aria-hidden />
+                                    <span>{draft.error}</span>
+                                  </p>
+                                )}
                                 <div className="aw-fix-label">AI Suggested Fix (editable)</div>
                                 <textarea
                                   className="aw-fix-textarea"
@@ -933,8 +1148,11 @@ const AccessibilityWizard = () => {
                               </div>
                             ) : (
                               <div className="aw-no-snippet-hint">
-                                ℹ No HTML snippet available — this is a structural/metadata issue.
-                                Click <strong>Save Changes &amp; Re-validate</strong> to apply all global fixes.
+                                <Info size={15} strokeWidth={2.25} className="aw-no-snippet-icon" aria-hidden />
+                                <span>
+                                  No HTML snippet available — this is a structural/metadata issue.
+                                  Click <strong>Save Changes &amp; Re-validate</strong> to apply all global fixes.
+                                </span>
                               </div>
                             )}
                           </div>
@@ -949,12 +1167,14 @@ const AccessibilityWizard = () => {
               <div className="aw-save-bar">
                 {absoluteReportUrl && (
                   <a className="aw-view-report-link" href={absoluteReportUrl} target="_blank" rel="noreferrer">
-                    📄 View Ace Report
+                    <FileText size={15} strokeWidth={2} aria-hidden />
+                    View Ace Report
                   </a>
                 )}
                 {downloadReportPdfUrl && (
                   <a className="aw-download-report-link" href={downloadReportPdfUrl} target="_blank" rel="noreferrer">
-                    ⬇ Download Report (PDF)
+                    <Download size={15} strokeWidth={2.25} aria-hidden />
+                    Download Report (PDF)
                   </a>
                 )}
                 <button
@@ -963,7 +1183,17 @@ const AccessibilityWizard = () => {
                   onClick={handleSaveAndRevalidate}
                   disabled={loadingFix || loadingRecheck}
                 >
-                  {loadingFix ? '⏳ Applying & Re-validating…' : '💾 Save Changes & Re-validate'}
+                  {loadingFix ? (
+                    <>
+                      <Loader2 size={16} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                      Applying &amp; Re-validating…
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} strokeWidth={2.25} aria-hidden />
+                      Save Changes &amp; Re-validate
+                    </>
+                  )}
                 </button>
               </div>
 

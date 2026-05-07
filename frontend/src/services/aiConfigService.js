@@ -1,25 +1,40 @@
 import api from './api';
 
+/** Backend uses { success, data, timestamp }; tolerate plain payloads */
+function unwrapSuccess(res) {
+  const body = res?.data;
+  if (body == null) return null;
+  if (typeof body === 'object' && 'data' in body && body.data !== undefined) {
+    return body.data;
+  }
+  return body;
+}
+
 export const aiConfigService = {
-  getCurrentConfig: () => api.get('/ai/config/current').then(res => res.data.data),
-  
-  saveConfig: (config) => api.post('/ai/config', config).then(res => res.data.data),
-  
-  getStatus: () => api.get('/ai/status').then(res => res.data.data),
-  
-  getAvailableModels: () => api.get('/ai/models').then(res => res.data.data),
-  
-  testConnection: (apiKey, modelName) => 
-    api.post('/ai/test', { apiKey, modelName }).then(res => res.data.data)
+  /** No row yet → backend returns 200 with data: null (legacy servers may still 404). */
+  getCurrentConfig: async () => {
+    try {
+      const res = await api.get('/ai/config/current');
+      return unwrapSuccess(res);
+    } catch (err) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  },
+
+  saveConfig: (config) => api.post('/ai/config', config).then((res) => unwrapSuccess(res)),
+
+  getStatus: () => api.get('/ai/status').then((res) => unwrapSuccess(res)),
+
+  getAvailableModels: () =>
+    api
+      .get('/ai/models')
+      .then((res) => {
+        const data = unwrapSuccess(res);
+        return Array.isArray(data) ? data : [];
+      })
+      .catch(() => []),
+
+  testConnection: (apiKey, modelName) =>
+    api.post('/ai/test', { apiKey, modelName }).then((res) => unwrapSuccess(res)),
 };
-
-
-
-
-
-
-
-
-
-
-

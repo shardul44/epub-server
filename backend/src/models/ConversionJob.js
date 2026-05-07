@@ -81,8 +81,8 @@ export class ConversionJobModel {
       `INSERT INTO conversion_jobs (
         pdf_document_id, status, current_step, progress_percentage,
         epub_file_path, error_message, intermediate_data, confidence_score,
-        requires_review, reviewed_by, reviewed_at, completed_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        requires_review, reviewed_by, reviewed_at, completed_at, retry_count
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         jobData.pdfDocumentId,
         jobData.status || 'PENDING',
@@ -95,7 +95,8 @@ export class ConversionJobModel {
         jobData.requiresReview || false,
         jobData.reviewedBy || null,
         jobData.reviewedAt || null,
-        jobData.completedAt || null
+        jobData.completedAt || null,
+        jobData.retryCount || 0
       ]
     );
     return await this.findById(result.insertId);
@@ -117,7 +118,8 @@ export class ConversionJobModel {
       requires_review: jobData.requiresReview,
       reviewed_by: jobData.reviewedBy,
       reviewed_at: jobData.reviewedAt,
-      completed_at: jobData.completedAt
+      completed_at: jobData.completedAt,
+      retry_count: jobData.retryCount
     };
 
     Object.entries(fields).forEach(([key, value]) => {

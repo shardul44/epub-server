@@ -4,6 +4,7 @@ import { ROLES } from '../constants/roles.js';
 /**
  * If PLATFORM_ADMIN_EMAIL is set, promote that user to platform_admin (no org).
  */
+
 async function usersHasRoleColumn() {
   try {
     await pool.query('SELECT role FROM users LIMIT 0');
@@ -18,6 +19,7 @@ async function usersHasRoleColumn() {
 
 export async function ensurePlatformAdmin() {
   const email = process.env.PLATFORM_ADMIN_EMAIL;
+  const password = process.env.PLATFORM_ADMIN_PASSWORD;
   if (!email || !String(email).trim()) return;
 
   if (!(await usersHasRoleColumn())) {

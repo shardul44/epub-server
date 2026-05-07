@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api, { API_BASE_URL } from '../services/api';
+
+const HEALTH_POLL_INTERVAL = 30000; // 30 seconds — avoids hammering the backend
 
 const HealthCheck = ({ showDetails = false }) => {
   const [backendStatus, setBackendStatus] = useState('checking');
   const [databaseStatus, setDatabaseStatus] = useState('checking');
   const [apiUrl, setApiUrl] = useState('');
-
-  useEffect(() => {
-    setApiUrl(API_BASE_URL);
-    checkHealth();
-  }, []);
+  const intervalRef = useRef(null);
+  const mountedRef = useRef(true);
 
   const checkHealth = async () => {
     try {
@@ -17,6 +16,8 @@ const HealthCheck = ({ showDetails = false }) => {
       console.log('Checking backend health...');
       const response = await api.get('/health');
       console.log('Health check response:', response.data);
+
+      if (!mountedRef.current) return;
 
       if (response.data.status === 'OK') {
         setBackendStatus('healthy');
@@ -29,6 +30,7 @@ const HealthCheck = ({ showDetails = false }) => {
         setDatabaseStatus('unhealthy');
       }
     } catch (error) {
+      if (!mountedRef.current) return;
       console.error('Health check failed:', error);
       console.error('API Base URL being used:', window.location.href.includes('localhost') ? 'Development (localhost)' : 'Production');
 
@@ -43,6 +45,26 @@ const HealthCheck = ({ showDetails = false }) => {
       setDatabaseStatus('unhealthy');
     }
   };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    setApiUrl(API_BASE_URL);
+
+    // Initial check on mount
+    checkHealth();
+
+    // Poll every 30 seconds — clear any previous interval first to prevent duplicates
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(checkHealth, HEALTH_POLL_INTERVAL);
+
+    return () => {
+      mountedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — run once on mount
 
   const getStatusColor = (status) => {
     switch (status) {

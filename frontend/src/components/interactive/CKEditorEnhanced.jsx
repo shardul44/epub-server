@@ -1,11 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import {
+  Check,
+  HelpCircle,
+  Image as ImageIcon,
+  Layers,
+  Lightbulb,
+  Volume2,
+} from 'lucide-react';
 import QuizModal from './QuizModal';
 import ImageModal from './ImageModal';
 import AudioModal from './AudioModal';
 import DragDropModal from './DragDropModal';
 import './CKEditorEnhanced.css';
+
+const toolbarIcon = { size: 16, strokeWidth: 2, 'aria-hidden': true };
 
 export default function CKEditorEnhanced({ onAddBlock }) {
   const [showQuizModal, setShowQuizModal] = useState(false);
@@ -121,36 +131,80 @@ export default function CKEditorEnhanced({ onAddBlock }) {
             className="btn"
             onClick={() => setShowQuizModal(true)}
             title="Add Quiz"
-            style={{ padding: '6px 12px', background: '#9c27b0', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              background: '#9c27b0',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
           >
-            ❓ Quiz
+            <HelpCircle {...toolbarIcon} />
+            Quiz
           </button>
           <button
             type="button"
             className="btn"
             onClick={() => setShowImageModal(true)}
             title="Add Image"
-            style={{ padding: '6px 12px', background: '#4caf50', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              background: '#4caf50',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
           >
-            🖼️ Image
+            <ImageIcon {...toolbarIcon} />
+            Image
           </button>
           <button
             type="button"
             className="btn"
             onClick={() => setShowAudioModal(true)}
             title="Add Audio"
-            style={{ padding: '6px 12px', background: '#ff9800', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              background: '#ff9800',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
           >
-            🔊 Audio
+            <Volume2 {...toolbarIcon} />
+            Audio
           </button>
           <button
             type="button"
             className="btn"
             onClick={() => setShowDragDropModal(true)}
             title="Add Drag & Drop"
-            style={{ padding: '6px 12px', background: '#2196f3', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              background: '#2196f3',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 4,
+              cursor: 'pointer',
+            }}
           >
-            🎯 Drag-Drop
+            <Layers {...toolbarIcon} />
+            Drag-Drop
           </button>
         </div>
 
@@ -160,9 +214,20 @@ export default function CKEditorEnhanced({ onAddBlock }) {
           className="btn btn-success"
           onClick={handleAddTextBlock}
           title="Add Text Block"
-          style={{ padding: '6px 16px', background: '#4caf50', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 16px',
+            background: '#4caf50',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 4,
+            cursor: 'pointer',
+          }}
         >
-          ✓ Add Text Block
+          <Check {...toolbarIcon} />
+          Add Text Block
         </button>
       </div>
 
@@ -183,31 +248,32 @@ export default function CKEditorEnhanced({ onAddBlock }) {
           }}
           config={{
             placeholder: 'Start writing your content...',
-            toolbar: [
-              'heading', '|',
-              'bold', 'italic', 'strikethrough', '|',
-              'link', '|',
-              'bulletedList', 'numberedList', '|',
-              'undo', 'redo'
-            ]
+            // Use Classic build’s default toolbar only — custom items must exist in this build
+            // or you get toolbarview-item-unavailable (names/plugins change between versions).
           }}
         />
         
         {/* Paste hint */}
         {(!editorData || editorData === '') && (
-          <div style={{
-            position: 'absolute',
-            bottom: 20,
-            right: 20,
-            padding: '8px 12px',
-            background: '#e3f2fd',
-            border: '1px solid #2196f3',
-            borderRadius: 6,
-            fontSize: 12,
-            color: '#1565c0',
-            pointerEvents: 'none'
-          }}>
-            💡 Tip: Paste images here with Ctrl+V
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              right: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 12px',
+              background: '#e3f2fd',
+              border: '1px solid #2196f3',
+              borderRadius: 6,
+              fontSize: 12,
+              color: '#1565c0',
+              pointerEvents: 'none',
+            }}
+          >
+            <Lightbulb size={16} strokeWidth={2} aria-hidden />
+            <span>Tip: Paste images here with Ctrl+V</span>
           </div>
         )}
       </div>

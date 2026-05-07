@@ -19,8 +19,17 @@ export const conversionService = {
   startBulkConversion: (pdfIds) => 
     api.post('/conversions/start/bulk', { pdfIds }).then(res => res.data.data),
   
-  getConversionJob: (jobId) => 
-    api.get(`/conversions/${jobId}`).then(res => res.data.data),
+  getConversionJob: async (jobId) => {
+    try {
+      const res = await api.get(`/conversions/${jobId}`);
+      return res.data.data;
+    } catch (err) {
+      // 404 = job was deleted — return null instead of throwing so callers
+      // can handle it gracefully without spamming the console.
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  },
   
   getConversionsByPdf: (pdfDocumentId) => 
     api.get(`/conversions/pdf/${pdfDocumentId}`).then(res => res.data.data),
@@ -48,16 +57,44 @@ export const conversionService = {
   retryConversion: (jobId) => 
     api.post(`/conversions/${jobId}/retry`).then(res => res.data.data),
   
-  downloadEpub: (jobId) => {
-    return api.get(`/conversions/${jobId}/download`, { responseType: 'blob' }).then(res => {
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `converted_${jobId}.epub`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+  downloadEpub: async (jobId) => {
+    const { API_BASE_URL } = await import('./api');
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_BASE_URL}/conversions/${jobId}/download`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
+
+    if (!response.ok) {
+      // Try to extract a readable error message even from non-JSON responses
+      let msg = `Download failed (${response.status})`;
+      try {
+        const text = await response.text();
+        const json = JSON.parse(text);
+        msg = json.error || json.message || msg;
+      } catch { /* ignore parse errors */ }
+      throw new Error(msg);
+    }
+
+    const blob = await response.blob();
+
+    // Derive filename from Content-Disposition header if present
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename[^;=\n]*=(?:(['"])([^'"]*)\1|([^;\n]*))/i);
+    const rawName = match ? (match[2] || match[3] || '').trim() : '';
+    const fileName = rawName
+      ? decodeURIComponent(rawName)
+      : `converted_${jobId}.epub`;
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   },
   
   deleteConversionJob: (jobId) => api.delete(`/conversions/${jobId}`),
@@ -86,14 +123,28 @@ export const conversionService = {
       headers: { 'Content-Type': 'multipart/form-data' }
     }).then(res => res.data.data),
   
-  getJobPages: (jobId) =>
-    api.get(`/conversions/${jobId}/pages`).then(res => res.data.data),
-  
+  getJobPages: async (jobId) => {
+    try {
+      const res = await api.get(`/conversions/${jobId}/pages`);
+      return res.data.data;
+    } catch (err) {
+      if (err.response?.status === 404) return [];
+      throw err;
+    }
+  },
+
   savePageXhtml: (jobId, pageNumber, xhtml) =>
     api.put(`/conversions/${jobId}/xhtml/${pageNumber}`, { xhtml }).then(res => res.data.data),
-  
-  regenerateEpub: (jobId, options = {}) =>
-    api.post(`/conversions/${jobId}/regenerate`, options).then(res => res.data.data),
+
+  regenerateEpub: async (jobId, options = {}) => {
+    try {
+      const res = await api.post(`/conversions/${jobId}/regenerate`, options);
+      return res.data.data;
+    } catch (err) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  },
   
   regeneratePageXhtml: (jobId, pageNumber) =>
     api.post(`/conversions/${jobId}/regenerate-page/${pageNumber}`).then(res => res.data.data)

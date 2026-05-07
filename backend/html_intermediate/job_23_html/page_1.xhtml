@@ -1,0 +1,407 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Chapter 1</title>
+  <style type="text/css">
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      color: #333;
+    }
+    .page {
+      position: relative;
+      width: 100%;
+      min-height: 200vh; /* Set to accommodate two pages vertically */
+      display: block;
+      overflow: hidden;
+    }
+    .canvas-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .draggable-text-block {
+      position: absolute;
+      z-index: 10;
+      cursor: move;
+      padding: 0;
+    }
+    .image-drop-zone, .image-placeholder {
+      background: transparent;
+      border: none;
+      display: block;
+      position: absolute;
+      z-index: 5;
+    }
+    .-epub-media-overlay-active {
+      fill: #2196F3 !important;
+      color: #2196F3 !important;
+    }
+    .paragraph-block {
+      margin: 0;
+    }
+    .sync-sentence {
+      display: inline;
+    }
+    .sync-word {
+      display: inline;
+    }
+    .stat-card {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1.5%;
+      box-sizing: border-box;
+    }
+    .chart-container {
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 2%;
+      box-sizing: border-box;
+    }
+    .legend-item {
+      display: inline-block;
+      margin-right: 1.5%;
+      font-size: 0.8em;
+    }
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 5px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="chapter1_page_container">
+
+    <!-- Page 1 Content -->
+    <div class="draggable-text-block" id="chapter1_page1_div1" style="position: absolute; top: 4%; left: 5.5%; width: 90%; height: auto; z-index: 10;">
+      <h1 id="chapter1_h1" data-read-aloud="true" style="font-size: 1.5em; margin: 0; color: #333;">
+        <span class="sync-sentence" id="chapter1_h1_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_h1_s1_w1">Teachers</span>
+          <span class="sync-word" id="chapter1_h1_s1_w2">—</span>
+          <span class="sync-word" id="chapter1_h1_s1_w3">analytics</span>
+          <span class="sync-word" id="chapter1_h1_s1_w4">export</span>
+        </span>
+      </h1>
+      <p id="chapter1_page1_p1" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; margin-top: 0.5%;">
+        <span class="sync-sentence" id="chapter1_page1_p1_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p1_s1_w1">All</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w2">dates</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w3">in</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w4">filter</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w5">scope</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w6">·</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w7">Generated</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w8">4/10/2026,</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w9">10:51:39</span>
+          <span class="sync-word" id="chapter1_page1_p1_s1_w10">AM</span>
+        </span>
+      </p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-card" id="chapter1_page1_div2" style="position: absolute; top: 11%; left: 5.5%; width: 21%; height: 13%; z-index: 10;">
+      <p id="chapter1_page1_p2" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; text-transform: uppercase; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p2_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p2_s1_w1">Total</span>
+          <span class="sync-word" id="chapter1_page1_p2_s1_w2">Teachers</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p3" class="paragraph-block" data-read-aloud="true" style="font-size: 2.5em; font-weight: bold; color: #000; margin: 5% 0 0 0;">
+        <span class="sync-sentence" id="chapter1_page1_p3_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p3_s1_w1">4</span>
+        </span>
+      </p>
+    </div>
+
+    <div class="stat-card" id="chapter1_page1_div3" style="position: absolute; top: 11%; left: 28%; width: 21%; height: 13%; z-index: 10;">
+      <p id="chapter1_page1_p4" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; text-transform: uppercase; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p4_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p4_s1_w1">Teacher</span>
+          <span class="sync-word" id="chapter1_page1_p4_s1_w2">Assessment</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p5" class="paragraph-block" data-read-aloud="true" style="font-size: 2.5em; font-weight: bold; color: #000; margin: 5% 0 0 0;">
+        <span class="sync-sentence" id="chapter1_page1_p5_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p5_s1_w1">58.2%</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p6" class="paragraph-block" data-read-aloud="true" style="font-size: 0.7em; color: #666; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p6_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p6_s1_w1">Avg</span>
+          <span class="sync-word" id="chapter1_page1_p6_s1_w2">score</span>
+          <span class="sync-word" id="chapter1_page1_p6_s1_w3">across</span>
+          <span class="sync-word" id="chapter1_page1_p6_s1_w4">assignment</span>
+          <span class="sync-word" id="chapter1_page1_p6_s1_w5">in</span>
+          <span class="sync-word" id="chapter1_page1_p6_s1_w6">scope</span>
+        </span>
+      </p>
+    </div>
+
+    <div class="stat-card" id="chapter1_page1_div4" style="position: absolute; top: 11%; left: 50.5%; width: 21%; height: 13%; z-index: 10;">
+      <p id="chapter1_page1_p7" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; text-transform: uppercase; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p7_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p7_s1_w1">Active</span>
+          <span class="sync-word" id="chapter1_page1_p7_s1_w2">Assignment</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p8" class="paragraph-block" data-read-aloud="true" style="font-size: 2.5em; font-weight: bold; color: #000; margin: 5% 0 0 0;">
+        <span class="sync-sentence" id="chapter1_page1_p8_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p8_s1_w1">24</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p9" class="paragraph-block" data-read-aloud="true" style="font-size: 0.7em; color: #666; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p9_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p9_s1_w1">Currently</span>
+          <span class="sync-word" id="chapter1_page1_p9_s1_w2">active</span>
+          <span class="sync-word" id="chapter1_page1_p9_s1_w3">assignment</span>
+          <span class="sync-word" id="chapter1_page1_p9_s1_w4">windows</span>
+        </span>
+      </p>
+    </div>
+
+    <div class="stat-card" id="chapter1_page1_div5" style="position: absolute; top: 11%; left: 73%; width: 21%; height: 13%; z-index: 10; border-top: 3px solid #00c4a7;">
+      <p id="chapter1_page1_p10" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; text-transform: uppercase; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p10_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p10_s1_w1">Students</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p11" class="paragraph-block" data-read-aloud="true" style="font-size: 2.5em; font-weight: bold; color: #000; margin: 5% 0 0 0;">
+        <span class="sync-sentence" id="chapter1_page1_p11_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p11_s1_w1">268</span>
+        </span>
+      </p>
+      <p id="chapter1_page1_p12" class="paragraph-block" data-read-aloud="true" style="font-size: 0.7em; color: #666; margin: 0;">
+        <span class="sync-sentence" id="chapter1_page1_p12_s1" data-read-aloud="true">
+          <span class="sync-word" id="chapter1_page1_p12_s1_w1">Students</span>
+          <span class="sync-word" id="chapter1_page1_p12_s1_w2">in</span>
+          <span class="sync-word" id="chapter1_page1_p12_s1_w3">filtered</span>
+          <span class="sync-word" id="chapter1_page1_p12_s1_w4">scope</span>
+        </span>
+      </p>
+    </div>
+
+    <!-- Chart 1 -->
+    <div class="chart-container" id="chapter1_page1_div6" style="position: absolute; top: 26%; left: 5.5%; width: 89%; height: 40%; z-index: 5; background: linear-gradient(to bottom, #f0f8ff, #ffffff);">
+      <div class="draggable-text-block" id="chapter1_page1_div7" style="position: absolute; top: 5%; left: 3%; width: 94%; height: auto; z-index: 10;">
+        <p id="chapter1_page1_p13" class="paragraph-block" data-read-aloud="true" style="font-size: 0.7em; color: #00c4a7; margin: 0;">
+          <span class="sync-sentence" id="chapter1_page1_p13_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page1_p13_s1_w1">Data</span>
+            <span class="sync-word" id="chapter1_page1_p13_s1_w2">updated</span>
+            <span class="sync-word" id="chapter1_page1_p13_s1_w3">just</span>
+            <span class="sync-word" id="chapter1_page1_p13_s1_w4">now</span>
+          </span>
+        </p>
+        <h2 id="chapter1_h2" data-read-aloud="true" style="font-size: 1.1em; margin: 1% 0 0 0; color: #333;">
+          <span class="sync-sentence" id="chapter1_h2_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_h2_s1_w1">Teacher</span>
+            <span class="sync-word" id="chapter1_h2_s1_w2">distribution</span>
+            <span class="sync-word" id="chapter1_h2_s1_w3">by</span>
+            <span class="sync-word" id="chapter1_h2_s1_w4">school</span>
+          </span>
+        </h2>
+        <p id="chapter1_page1_p14" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; margin: 0.5% 0 0 0;">
+          <span class="sync-sentence" id="chapter1_page1_p14_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page1_p14_s1_w1">Teachers</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w2">per</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w3">school</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w4">for</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w5">the</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w6">current</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w7">filters</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w8">(same</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w9">scope</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w10">as</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w11">Total</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w12">Teachers).</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w13">Curve</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w14">follows</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w15">the</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w16">order</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w17">you</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w18">select</span>
+            <span class="sync-word" id="chapter1_page1_p14_s1_w19">above.</span>
+          </span>
+        </p>
+      </div>
+      <div class="image-drop-zone" id="chapter1_page1_img1" title="Line chart showing teacher distribution by school. A single point for Ajyal International shows 4 teachers." style="top: 25%; left: 3%; width: 94%; height: 70%; z-index: 5;"></div>
+    </div>
+
+    <!-- Page 2 Content -->
+    <div class="chart-container" id="chapter1_page2_div1" style="position: absolute; top: 70%; left: 5.5%; width: 89%; height: 30%; z-index: 5;">
+      <div class="draggable-text-block" id="chapter1_page2_div2" style="position: absolute; top: 7%; left: 3%; width: 94%; height: auto; z-index: 10;">
+        <h2 id="chapter1_h3" data-read-aloud="true" style="font-size: 1.1em; margin: 0; color: #333;">
+          <span class="sync-sentence" id="chapter1_h3_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_h3_s1_w1">Teachers</span>
+            <span class="sync-word" id="chapter1_h3_s1_w2">by</span>
+            <span class="sync-word" id="chapter1_h3_s1_w3">region</span>
+          </span>
+        </h2>
+        <p id="chapter1_page2_p1" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; margin: 0.5% 0 0 0;">
+          <span class="sync-sentence" id="chapter1_page2_p1_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_p1_s1_w1">Number</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w2">of</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w3">teachers</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w4">in</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w5">each</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w6">region</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w7">for</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w8">the</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w9">current</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w10">filters</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w11">(same</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w12">scope</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w13">as</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w14">Total</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w15">Teachers).</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w16">Hover</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w17">a</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w18">point</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w19">for</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w20">counts</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w21">and</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w22">share</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w23">of</span>
+            <span class="sync-word" id="chapter1_page2_p1_s1_w24">total.</span>
+          </span>
+        </p>
+      </div>
+      <div class="draggable-text-block" id="chapter1_page2_div3" style="position: absolute; top: 30%; left: 8%; width: 20%; height: auto; z-index: 10;">
+        <p id="chapter1_page2_p2" class="paragraph-block" data-read-aloud="true" style="font-size: 2em; font-weight: bold; color: #00a991; margin: 0;">
+          <span class="sync-sentence" id="chapter1_page2_p2_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_p2_s1_w1">100%</span>
+          </span>
+        </p>
+        <p id="chapter1_page2_p3" class="paragraph-block" data-read-aloud="true" style="font-size: 0.9em; color: #333; margin: 2% 0 0 0;">
+          <span class="sync-sentence" id="chapter1_page2_p3_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_p3_s1_w1">Middle</span>
+            <span class="sync-word" id="chapter1_page2_p3_s1_w2">East</span>
+          </span>
+        </p>
+        <p id="chapter1_page2_p4" class="paragraph-block" data-read-aloud="true" style="font-size: 0.7em; color: #666; margin: 2% 0 0 0;">
+          <span class="sync-sentence" id="chapter1_page2_p4_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_p4_s1_w1">of</span>
+            <span class="sync-word" id="chapter1_page2_p4_s1_w2">all</span>
+            <span class="sync-word" id="chapter1_page2_p4_s1_w3">teachers</span>
+            <span class="sync-word" id="chapter1_page2_p4_s1_w4">in</span>
+            <span class="sync-word" id="chapter1_page2_p4_s1_w5">filtered</span>
+            <span class="sync-word" id="chapter1_page2_p4_s1_w6">scope</span>
+          </span>
+        </p>
+      </div>
+      <div class="image-drop-zone" id="chapter1_page2_img1" title="Horizontal bar chart for Teachers by region, showing one region, Middle East, at 100%." style="top: 30%; left: 30%; width: 65%; height: 40%; z-index: 5;"></div>
+      <div class="draggable-text-block" id="chapter1_page2_div4" style="position: absolute; top: 85%; left: 8%; width: 90%; height: auto; z-index: 10; font-size: 0.8em; color: #666;">
+        <p id="chapter1_page2_p5" class="paragraph-block" data-read-aloud="true">
+          <span class="sync-sentence" id="chapter1_page2_p5_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_p5_s1_w1">Middle</span>
+            <span class="sync-word" id="chapter1_page2_p5_s1_w2">East:</span>
+            <span class="sync-word" id="chapter1_page2_p5_s1_w3">4</span>
+          </span>
+        </p>
+      </div>
+    </div>
+
+    <div class="chart-container" id="chapter1_page2_div5" style="position: absolute; top: 103%; left: 5.5%; width: 89%; height: 45%; z-index: 5;">
+      <div class="draggable-text-block" id="chapter1_page2_div6" style="position: absolute; top: 5%; left: 3%; width: 94%; height: auto; z-index: 10;">
+        <h2 id="chapter1_h4" data-read-aloud="true" style="font-size: 1.1em; margin: 0; color: #333;">
+          <span class="sync-sentence" id="chapter1_h4_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_h4_s1_w1">Teachers</span>
+            <span class="sync-word" id="chapter1_h4_s1_w2">by</span>
+            <span class="sync-word" id="chapter1_h4_s1_w3">region</span>
+            <span class="sync-word" id="chapter1_h4_s1_w4">and</span>
+            <span class="sync-word" id="chapter1_h4_s1_w5">grade</span>
+          </span>
+        </h2>
+        <p id="chapter1_page2_p6" class="paragraph-block" data-read-aloud="true" style="font-size: 0.8em; color: #666; margin: 0.5% 0 0 0;">
+          <span class="sync-sentence" id="chapter1_page2_p6_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_p6_s1_w1">Teacher</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w2">counts</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w3">per</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w4">region,</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w5">stacked</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w6">by</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w7">assigned</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w8">grade</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w9">(same</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w10">scope</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w11">as</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w12">Total</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w13">Teachers).</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w14">Teachers</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w15">with</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w16">multiple</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w17">grades</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w18">appear</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w19">in</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w20">each</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w21">relevant</span>
+            <span class="sync-word" id="chapter1_page2_p6_s1_w22">grade.</span>
+          </span>
+        </p>
+      </div>
+      <div class="image-drop-zone" id="chapter1_page2_img2" title="Stacked bar chart showing teacher counts by grade for the Middle East region." style="top: 25%; left: 5%; width: 90%; height: 55%; z-index: 5;"></div>
+      <div class="draggable-text-block" id="chapter1_page2_div7" style="position: absolute; top: 85%; left: 15%; width: 70%; height: auto; z-index: 10; text-align: center;">
+        <div id="chapter1_page2_div8" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #4285f4;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div8_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div8_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div8_s1_w2">1</span>
+          </span>
+        </div>
+        <div id="chapter1_page2_div9" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #34a853;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div9_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div9_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div9_s1_w2">11</span>
+          </span>
+        </div>
+        <div id="chapter1_page2_div10" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #ea4335;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div10_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div10_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div10_s1_w2">12</span>
+          </span>
+        </div>
+        <div id="chapter1_page2_div11" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #00c4a7;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div11_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div11_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div11_s1_w2">2</span>
+          </span>
+        </div>
+        <div id="chapter1_page2_div12" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #fbbc05;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div12_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div12_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div12_s1_w2">3</span>
+          </span>
+        </div>
+        <div id="chapter1_page2_div13" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #9c27b0;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div13_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div13_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div13_s1_w2">4</span>
+          </span>
+        </div>
+        <div id="chapter1_page2_div14" class="legend-item" data-read-aloud="true">
+          <span class="legend-color" style="background-color: #e53935;"></span>
+          <span class="sync-sentence" id="chapter1_page2_div14_s1" data-read-aloud="true">
+            <span class="sync-word" id="chapter1_page2_div14_s1_w1">Grade</span>
+            <span class="sync-word" id="chapter1_page2_div14_s1_w2">9</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -30,13 +30,9 @@
   color: var(--studio-text);
 }
 
-.fxl-sync-studio-loading .spinner {
-  width: 48px;
-  height: 48px;
-  border: 3px solid var(--studio-border);
-  border-top-color: var(--studio-accent);
-  border-radius: 50%;
-  animation: fxl-spin 1s linear infinite;
+.fxl-sync-studio-loading .fxl-lucide-spin {
+  color: var(--studio-accent);
+  animation: fxl-spin 0.85s linear infinite;
 }
 
 @keyframes fxl-spin {
@@ -210,6 +206,14 @@
   color: #fff;
   padding: 10px 20px;
   font-size: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.fxl-sync-studio .error-banner svg {
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .fxl-sync-studio .success-banner {
@@ -255,6 +259,15 @@
 .fxl-sync-studio .fxl-left-panel-header {
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+.fxl-sync-studio .fxl-left-panel-header h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .fxl-sync-studio .fxl-reader-actions {
@@ -647,8 +660,15 @@
 }
 
 .per-page-uploaded {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   color: var(--studio-success);
+}
+
+.per-page-uploaded svg {
+  flex-shrink: 0;
 }
 
 .per-page-uploaded-cell {
@@ -759,6 +779,17 @@
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.manual-config-actions .btn-align {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.manual-config-actions .btn-align svg {
+  flex-shrink: 0;
 }
 
 .manual-config-actions button:first-child {

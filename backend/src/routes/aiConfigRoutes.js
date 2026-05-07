@@ -10,14 +10,11 @@ const router = express.Router();
 router.use(authenticate, requireFeature('ai_config'));
 const upload = multer({ storage: multer.memoryStorage() });
 
-// GET /api/ai/config/current - Get current AI configuration
+// GET /ai/config/current — 200 + data:null when nothing saved yet (avoid 404 in clients / Network tab)
 router.get('/config/current', async (req, res) => {
   try {
     const config = await AiConfigService.getCurrentConfiguration();
-    if (!config) {
-      return res.status(404).json({ error: 'No active configuration found' });
-    }
-    return successResponse(res, config);
+    return successResponse(res, config ?? null);
   } catch (error) {
     return errorResponse(res, error.message, 500);
   }

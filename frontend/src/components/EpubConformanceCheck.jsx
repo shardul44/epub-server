@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { Play, Upload } from 'lucide-react';
 import api from '../services/api';
+import { EPUBCHECK_HISTORY_KEY } from '../utils/epubCheckerMeta';
 import './AccessibilityWizard.css';
 import './EpubConformanceCheck.css';
 
@@ -158,7 +160,20 @@ function buildFileIssueGroups(messages, drafts) {
   return groups;
 }
 
-const EpubConformanceCheck = () => {
+const EpubConformanceCheck = ({
+  checkerPageLayout = false,
+  onCheckerUiState,
+  onFileUploaded,
+}) => {
+  const fileInputRef = useRef(null);
+  const [dragActive, setDragActive] = useState(false);
+  /** 'errors' | 'errors-warnings' | 'full' — used when checkerPageLayout */
+  const [checkLevel, setCheckLevel] = useState('errors');
+  const [includeNoticesExtra, setIncludeNoticesExtra] = useState(false);
+  const [prefAutoFix, setPrefAutoFix] = useState(true);
+  const [prefAiDrafts, setPrefAiDrafts] = useState(true);
+  const [prefRecheckAfterFix, setPrefRecheckAfterFix] = useState(true);
+
   const [file, setFile] = useState(null);
   const [includeWarnings, setIncludeWarnings] = useState(true);
   const [includeNotices, setIncludeNotices] = useState(false);
@@ -195,8 +210,53 @@ const EpubConformanceCheck = () => {
     };
   }, []);
 
-  const handleFileChange = (event) => {
-    const selected = event.target.files?.[0] || null;
+  const effectiveCheckOptions = useMemo(() => {
+    if (checkerPageLayout) {
+      return {
+        includeWarnings: checkLevel !== 'errors',
+        includeNotices:
+          checkLevel === 'full' || (checkLevel === 'errors-warnings' && includeNoticesExtra),
+      };
+    }
+    return { includeWarnings, includeNotices };
+  }, [
+    checkerPageLayout,
+    checkLevel,
+    includeNoticesExtra,
+    includeWarnings,
+    includeNotices,
+  ]);
+
+  useEffect(() => {
+    if (!onCheckerUiState) return;
+    let step = 0;
+    if (file) step = Math.max(step, 1);
+    if (loadingCheck) step = Math.max(step, 1);
+    if (result.valid !== null) step = Math.max(step, 2);
+    if (loadingAutoFix || (autoFixSummary && String(autoFixSummary).trim().length > 0))
+      step = Math.max(step, 3);
+    if (loadingAi || fileRepairDrafts.length > 0) step = Math.max(step, 4);
+    if (lastDownloadId) step = Math.max(step, 5);
+    onCheckerUiState({
+      javaStatus,
+      stepperStep: step,
+      checkerLabel: javaStatus?.checker ?? result.checkerVersion ?? null,
+    });
+  }, [
+    onCheckerUiState,
+    file,
+    loadingCheck,
+    result.valid,
+    result.checkerVersion,
+    loadingAutoFix,
+    autoFixSummary,
+    loadingAi,
+    fileRepairDrafts.length,
+    lastDownloadId,
+    javaStatus,
+  ]);
+
+  const selectFile = useCallback((selected) => {
     setError('');
     setAiError('');
     setResult(emptyResult);
@@ -212,6 +272,11 @@ const EpubConformanceCheck = () => {
       return;
     }
     setFile(selected);
+    if (selected) onFileUploaded?.(selected);
+  }, [onFileUploaded]);
+
+  const handleFileChange = (event) => {
+    selectFile(event.target.files?.[0] || null);
   };
 
   const ensureRepairSession = useCallback(async () => {
@@ -244,8 +309,8 @@ const EpubConformanceCheck = () => {
     setShowIssuesBesideAi(false);
 
     const params = new URLSearchParams({
-      includeWarnings: includeWarnings ? 'true' : 'false',
-      includeNotices: includeNotices ? 'true' : 'false',
+      includeWarnings: effectiveCheckOptions.includeWarnings ? 'true' : 'false',
+      includeNotices: effectiveCheckOptions.includeNotices ? 'true' : 'false',
     });
 
     try {
@@ -264,6 +329,23 @@ const EpubConformanceCheck = () => {
         note: data.note ?? null,
         sourceFileName: file?.name ?? null,
       });
+
+      try {
+        const raw = sessionStorage.getItem(EPUBCHECK_HISTORY_KEY);
+        const prev = JSON.parse(raw || '[]');
+        const list = Array.isArray(prev) ? prev : [];
+        list.unshift({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          fileName: file?.name ?? '—',
+          valid: data.valid === true,
+          publicationTitle: data.publicationTitle ?? null,
+          checkerVersion: data.checkerVersion ?? null,
+          at: new Date().toISOString(),
+        });
+        sessionStorage.setItem(EPUBCHECK_HISTORY_KEY, JSON.stringify(list.slice(0, 40)));
+      } catch {
+        /* ignore quota / private mode */
+      }
 
       const fd2 = new FormData();
       fd2.append('file', file);
@@ -290,6 +372,22 @@ const EpubConformanceCheck = () => {
   const hasIssues = totalMessages > 0;
   const busy = loadingCheck || loadingAi || loadingAutoFix || loadingRecheckSession || loadingFix;
 
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (busy) return;
+    const dropped = e.dataTransfer.files?.[0];
+    if (dropped) selectFile(dropped);
+  };
+
   const handleDeterministicAutoFix = async () => {
     setError('');
     setAiError('');
@@ -306,8 +404,8 @@ const EpubConformanceCheck = () => {
         return;
       }
       const params = new URLSearchParams({
-        includeWarnings: includeWarnings ? 'true' : 'false',
-        includeNotices: includeNotices ? 'true' : 'false',
+        includeWarnings: effectiveCheckOptions.includeWarnings ? 'true' : 'false',
+        includeNotices: effectiveCheckOptions.includeNotices ? 'true' : 'false',
       });
       const body =
         Array.isArray(result.messages) && result.messages.length > 0
@@ -385,8 +483,8 @@ const EpubConformanceCheck = () => {
     setLoadingRecheckSession(true);
     try {
       const params = new URLSearchParams({
-        includeWarnings: includeWarnings ? 'true' : 'false',
-        includeNotices: includeNotices ? 'true' : 'false',
+        includeWarnings: effectiveCheckOptions.includeWarnings ? 'true' : 'false',
+        includeNotices: effectiveCheckOptions.includeNotices ? 'true' : 'false',
       });
       const recheck = await api.post(
         `/epubcheck/repair-session/${repairSessionId}/epubcheck?${params.toString()}`,
@@ -428,8 +526,8 @@ const EpubConformanceCheck = () => {
         `/epubcheck/repair-session/${sid}/ai-suggest`,
         {
           messages: result.messages,
-          includeWarnings,
-          includeNotices,
+          includeWarnings: effectiveCheckOptions.includeWarnings,
+          includeNotices: effectiveCheckOptions.includeNotices,
         },
         { timeout: 300000 }
       );
@@ -515,8 +613,8 @@ const EpubConformanceCheck = () => {
         `/epubcheck/repair-session/${repairSessionId}/apply`,
         {
           approvedFiles,
-          includeWarnings,
-          includeNotices,
+          includeWarnings: effectiveCheckOptions.includeWarnings,
+          includeNotices: effectiveCheckOptions.includeNotices,
         },
         { timeout: 600000 }
       );
@@ -528,8 +626,8 @@ const EpubConformanceCheck = () => {
       if (data.downloadId) setLastDownloadId(data.downloadId);
 
       const params = new URLSearchParams({
-        includeWarnings: includeWarnings ? 'true' : 'false',
-        includeNotices: includeNotices ? 'true' : 'false',
+        includeWarnings: effectiveCheckOptions.includeWarnings ? 'true' : 'false',
+        includeNotices: effectiveCheckOptions.includeNotices ? 'true' : 'false',
       });
       const recheck = await api.post(
         `/epubcheck/repair-session/${repairSessionId}/epubcheck?${params.toString()}`,
@@ -624,17 +722,28 @@ const EpubConformanceCheck = () => {
 
   const checkDone = result.valid !== null;
 
-  return (
-    <div className="aw-card">
-      <div className="aw-header">
-        <h2 className="aw-title">EPUB Checker</h2>
-        <p className="aw-subtitle">
-          Upload an EPUB → run W3C EPUBCheck → optional <strong>deterministic auto-fix</strong> (safe, code-based) →
-          or generate AI file fixes (drafts) → approve → save &amp; re-validate → download the repaired package.
-        </p>
-      </div>
+  const checkLevels = useMemo(
+    () => [
+      { id: 'errors', title: 'Errors only', sub: 'Fastest — critical issues only' },
+      { id: 'errors-warnings', title: 'Errors + warnings', sub: 'Recommended for publishing' },
+      { id: 'full', title: 'Full (+ INFO)', sub: 'Most verbose output' },
+    ],
+    []
+  );
 
-      {javaStatus && (
+  return (
+    <div className={`aw-card${checkerPageLayout ? ' aw-card--checker-shell' : ''}`}>
+      {!checkerPageLayout && (
+        <div className="aw-header">
+          <h2 className="aw-title">EPUB Checker</h2>
+          <p className="aw-subtitle">
+            Upload an EPUB → run W3C EPUBCheck → optional <strong>deterministic auto-fix</strong> (safe, code-based) →
+            or generate AI file fixes (drafts) → approve → save &amp; re-validate → download the repaired package.
+          </p>
+        </div>
+      )}
+
+      {javaStatus && !checkerPageLayout && (
         <div
           style={{
             marginBottom: 16,
@@ -665,72 +774,231 @@ const EpubConformanceCheck = () => {
         </div>
       )}
 
-      <div className="aw-upload-section">
-        <label className="aw-file-label" htmlFor="epubcheck-file-input">
-          Select EPUB file
-        </label>
-        <div className="aw-file-row">
-          <input
-            id="epubcheck-file-input"
-            type="file"
-            accept=".epub,application/epub+zip"
-            onChange={handleFileChange}
-            disabled={busy}
-          />
-          <button
-            type="button"
-            className="aw-run-btn"
-            onClick={handleRunCheck}
-            disabled={busy || !file || javaStatus?.javaAvailable === false}
-          >
-            {loadingCheck ? '⏳ Running EPUBCheck…' : '▶ Run EPUBCheck'}
-          </button>
-          {repairSessionId && (
+      {checkerPageLayout ? (
+        <div className="ecc-shell">
+          <div className="ecc-card ecc-card--upload">
+            <div className="ecc-step-head">
+              <span className="ecc-step-badge" aria-hidden="true">
+                1
+              </span>
+              <h3 className="ecc-step-title">Select EPUB file</h3>
+            </div>
+            <input
+              ref={fileInputRef}
+              id="epubcheck-file-input-shell"
+              className="ecc-file-input-hidden"
+              type="file"
+              accept=".epub,application/epub+zip"
+              onChange={handleFileChange}
+              disabled={busy}
+            />
+            <label
+              htmlFor="epubcheck-file-input-shell"
+              className={`ecc-dropzone${dragActive ? ' ecc-dropzone--active' : ''}${busy ? ' ecc-dropzone--disabled' : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <span className="ecc-dropzone-icon" aria-hidden="true">
+                <Upload size={22} strokeWidth={2.25} />
+              </span>
+              <span className="ecc-dropzone-title">Drop your .epub here or click to browse</span>
+              <span className="ecc-dropzone-sub">Supports EPUB 2 and EPUB 3 · Max 200 MB</span>
+            </label>
+            {file && (
+              <div className="ecc-file-pill">
+                <span className="ecc-file-pill-name">{file.name}</span>
+                <button
+                  type="button"
+                  className="ecc-file-clear"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    selectFile(null);
+                    if (fileInputRef.current) fileInputRef.current.value = '';
+                  }}
+                  disabled={busy}
+                  aria-label="Remove file"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="ecc-card ecc-card--options">
+            <div className="ecc-step-head">
+              <span className="ecc-step-badge" aria-hidden="true">
+                2
+              </span>
+              <h3 className="ecc-step-title">Check options</h3>
+            </div>
+            <div className="ecc-level-grid" role="radiogroup" aria-label="Check severity">
+              {checkLevels.map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={checkLevel === opt.id}
+                  className={`ecc-level-card${checkLevel === opt.id ? ' ecc-level-card--selected' : ''}`}
+                  onClick={() => setCheckLevel(opt.id)}
+                  disabled={busy}
+                >
+                  <span className="ecc-level-title">{opt.title}</span>
+                  <span className="ecc-level-sub">{opt.sub}</span>
+                </button>
+              ))}
+            </div>
+            <div className="ecc-pref-row">
+              <label className="ecc-check-label">
+                <input
+                  type="checkbox"
+                  checked={prefAutoFix}
+                  onChange={(e) => setPrefAutoFix(e.target.checked)}
+                  disabled={busy}
+                />
+                Deterministic auto-fix
+              </label>
+              <label className="ecc-check-label">
+                <input
+                  type="checkbox"
+                  checked={prefAiDrafts}
+                  onChange={(e) => setPrefAiDrafts(e.target.checked)}
+                  disabled={busy}
+                />
+                Generate AI fix drafts
+              </label>
+              <label className="ecc-check-label">
+                <input
+                  type="checkbox"
+                  checked={prefRecheckAfterFix}
+                  onChange={(e) => setPrefRecheckAfterFix(e.target.checked)}
+                  disabled={busy}
+                />
+                Re-validate after fix
+              </label>
+            </div>
+            <label className="ecc-check-label ecc-check-label--solo">
+              <input
+                type="checkbox"
+                checked={
+                  checkLevel === 'full' ? true : checkLevel === 'errors-warnings' ? includeNoticesExtra : false
+                }
+                onChange={(e) => {
+                  const on = e.target.checked;
+                  if (checkLevel === 'full') return;
+                  if (checkLevel === 'errors-warnings') {
+                    setIncludeNoticesExtra(on);
+                  } else if (on) {
+                    setCheckLevel('errors-warnings');
+                    setIncludeNoticesExtra(true);
+                  }
+                }}
+                disabled={busy || checkLevel === 'full'}
+              />
+              Include notices (INFO)
+            </label>
+
             <button
               type="button"
-              className="aw-view-report-link"
-              onClick={handleRecheckSessionEpub}
-              disabled={busy || javaStatus?.javaAvailable === false}
-              title="Runs EPUBCheck on the EPUB stored in the current repair session (e.g. after auto-fix), without using the file picker."
-              style={{
-                border: '1px solid #cbd5e1',
-                borderRadius: 8,
-                padding: '8px 14px',
-                fontWeight: 600,
-              }}
+              className="ecc-run-primary"
+              onClick={handleRunCheck}
+              disabled={busy || !file || javaStatus?.javaAvailable === false}
             >
-              {loadingRecheckSession ? '⏳ Re-checking…' : '🔁 Re-check session EPUB'}
+              <Play className="ecc-run-icon" size={18} fill="currentColor" aria-hidden="true" />
+              {loadingCheck ? 'Running EPUBCheck…' : 'Run EPUBCheck'}
             </button>
+            {repairSessionId && (
+              <button
+                type="button"
+                className="ecc-recheck-btn"
+                onClick={handleRecheckSessionEpub}
+                disabled={busy || javaStatus?.javaAvailable === false}
+                title="Runs EPUBCheck on the EPUB in the current repair session (e.g. after auto-fix)."
+              >
+                {loadingRecheckSession ? 'Re-checking…' : 'Re-check session EPUB'}
+              </button>
+            )}
+            <p className="ecc-hint">
+              Run EPUBCheck uploads the selected file. After auto-fix, use <strong>Re-check session EPUB</strong> or
+              select your downloaded <code>epub-repaired.epub</code> and run again.
+            </p>
+          </div>
+          {error && <div className="aw-error-bar ecc-error-bar">{error}</div>}
+          {javaStatus?.geminiConfigured === false && (
+            <p className="ecc-ai-warning">
+              AI suggestions require <code>GEMINI_API_KEY</code> on the server.
+            </p>
           )}
         </div>
-        <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: '#64748b', maxWidth: 720 }}>
-          <strong>Run EPUBCheck</strong> uploads the file you selected above. After auto-fix, either use{' '}
-          <strong>Re-check session EPUB</strong> (validates the fixed package on the server) or select your downloaded{' '}
-          <code>epub-repaired.epub</code> and then run EPUBCheck.
-        </p>
-        <div className="aw-file-row" style={{ marginTop: 10 }}>
-          <label style={{ fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+      ) : (
+        <div className="aw-upload-section">
+          <label className="aw-file-label" htmlFor="epubcheck-file-input">
+            Select EPUB file
+          </label>
+          <div className="aw-file-row">
             <input
-              type="checkbox"
-              checked={includeWarnings}
-              onChange={(e) => setIncludeWarnings(e.target.checked)}
+              id="epubcheck-file-input"
+              type="file"
+              accept=".epub,application/epub+zip"
+              onChange={handleFileChange}
               disabled={busy}
             />
-            Include warnings
-          </label>
-          <label style={{ fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={includeNotices}
-              onChange={(e) => setIncludeNotices(e.target.checked)}
-              disabled={busy}
-            />
-            Include notices (INFO)
-          </label>
+            <button
+              type="button"
+              className="aw-run-btn"
+              onClick={handleRunCheck}
+              disabled={busy || !file || javaStatus?.javaAvailable === false}
+            >
+              {loadingCheck ? '⏳ Running EPUBCheck…' : '▶ Run EPUBCheck'}
+            </button>
+            {repairSessionId && (
+              <button
+                type="button"
+                className="aw-view-report-link"
+                onClick={handleRecheckSessionEpub}
+                disabled={busy || javaStatus?.javaAvailable === false}
+                title="Runs EPUBCheck on the EPUB stored in the current repair session (e.g. after auto-fix), without using the file picker."
+                style={{
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 8,
+                  padding: '8px 14px',
+                  fontWeight: 600,
+                }}
+              >
+                {loadingRecheckSession ? '⏳ Re-checking…' : '🔁 Re-check session EPUB'}
+              </button>
+            )}
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: '#64748b', maxWidth: 720 }}>
+            <strong>Run EPUBCheck</strong> uploads the file you selected above. After auto-fix, either use{' '}
+            <strong>Re-check session EPUB</strong> (validates the fixed package on the server) or select your downloaded{' '}
+            <code>epub-repaired.epub</code> and then run EPUBCheck.
+          </p>
+          <div className="aw-file-row" style={{ marginTop: 10 }}>
+            <label style={{ fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={includeWarnings}
+                onChange={(e) => setIncludeWarnings(e.target.checked)}
+                disabled={busy}
+              />
+              Include warnings
+            </label>
+            <label style={{ fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={includeNotices}
+                onChange={(e) => setIncludeNotices(e.target.checked)}
+                disabled={busy}
+              />
+              Include notices (INFO)
+            </label>
+          </div>
+          {file && <div className="aw-file-name">📄 {file.name}</div>}
+          {error && <div className="aw-error-bar">{error}</div>}
         </div>
-        {file && <div className="aw-file-name">📄 {file.name}</div>}
-        {error && <div className="aw-error-bar">{error}</div>}
-      </div>
+      )}
 
       {checkDone && (
         <div className="aw-results">
@@ -782,7 +1050,7 @@ const EpubConformanceCheck = () => {
                     type="button"
                     className="aw-view-report-link"
                     onClick={handleDeterministicAutoFix}
-                    disabled={busy || !repairSessionId}
+                    disabled={busy || !repairSessionId || (checkerPageLayout && !prefAutoFix)}
                     style={{
                       border: '1px solid #0d9488',
                       borderRadius: 8,
@@ -807,7 +1075,8 @@ const EpubConformanceCheck = () => {
                       loadingAi ||
                       busy ||
                       !repairSessionId ||
-                      javaStatus?.geminiConfigured === false
+                      javaStatus?.geminiConfigured === false ||
+                      (checkerPageLayout && !prefAiDrafts)
                     }
                   >
                     {loadingAi
@@ -1058,7 +1327,7 @@ const EpubConformanceCheck = () => {
                 type="button"
                 className="aw-view-report-link"
                 onClick={handleDeterministicAutoFix}
-                disabled={busy || !repairSessionId}
+                disabled={busy || !repairSessionId || (checkerPageLayout && !prefAutoFix)}
                 style={{
                   border: '1px solid #0d9488',
                   borderRadius: 8,

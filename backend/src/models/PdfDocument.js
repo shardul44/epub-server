@@ -155,44 +155,58 @@ export class PdfDocumentModel {
     try {
       console.log('Executing DELETE FROM pdf_documents WHERE id =', id);
       
-      // First, manually delete related records to avoid foreign key constraint issues
-      // (Some MySQL versions may not properly handle CASCADE)
+      // Disable FK checks for this session, delete everything, then re-enable.
+      // This avoids ordering issues when child tables have cross-references.
+      await pool.execute('SET FOREIGN_KEY_CHECKS = 0');
       try {
-        await pool.execute('DELETE FROM pdf_languages WHERE pdf_document_id = ?', [id]);
-        console.log('Deleted related pdf_languages records');
-      } catch (langError) {
-        console.warn('Error deleting pdf_languages (may not exist):', langError.message);
+        // Delete all child records first
+        try {
+          await pool.execute('DELETE FROM pdf_languages WHERE pdf_document_id = ?', [id]);
+          console.log('Deleted related pdf_languages records');
+        } catch (langError) {
+          console.warn('Error deleting pdf_languages (may not exist):', langError.message);
+        }
+        
+        try {
+          await pool.execute('DELETE FROM audio_syncs WHERE pdf_document_id = ?', [id]);
+          console.log('Deleted related audio_syncs records');
+        } catch (audioError) {
+          console.warn('Error deleting audio_syncs (may not exist):', audioError.message);
+        }
+        
+        try {
+          await pool.execute('DELETE FROM kitaboo_zones WHERE pdf_document_id = ?', [id]);
+          console.log('Deleted related kitaboo_zones records');
+        } catch (zonesError) {
+          console.warn('Error deleting kitaboo_zones (may not exist):', zonesError.message);
+        }
+        
+        try {
+          // Delete conversion jobs that reference this PDF
+          await pool.execute('DELETE FROM conversion_jobs WHERE pdf_document_id = ?', [id]);
+          console.log('Deleted related conversion_jobs records');
+        } catch (convError) {
+          console.warn('Error deleting conversion_jobs (may not exist):', convError.message);
+        }
+        
+        // Now delete the main record
+        const [result] = await pool.execute('DELETE FROM pdf_documents WHERE id = ?', [id]);
+        
+        console.log('Delete result:', {
+          affectedRows: result.affectedRows,
+          insertId: result.insertId,
+          warningCount: result.warningCount
+        });
+        
+        if (result.affectedRows === 0) {
+          throw new Error('PDF document not found with id: ' + id);
+        }
+        
+        return result;
+      } finally {
+        // Always re-enable FK checks, even if deletion failed
+        await pool.execute('SET FOREIGN_KEY_CHECKS = 1');
       }
-      
-      try {
-        await pool.execute('DELETE FROM audio_syncs WHERE pdf_document_id = ?', [id]);
-        console.log('Deleted related audio_syncs records');
-      } catch (audioError) {
-        console.warn('Error deleting audio_syncs (may not exist):', audioError.message);
-      }
-      
-      try {
-        // Delete conversion jobs that reference this PDF
-        await pool.execute('DELETE FROM conversion_jobs WHERE pdf_document_id = ?', [id]);
-        console.log('Deleted related conversion_jobs records');
-      } catch (convError) {
-        console.warn('Error deleting conversion_jobs (may not exist):', convError.message);
-      }
-      
-      // Now delete the main record
-      const [result] = await pool.execute('DELETE FROM pdf_documents WHERE id = ?', [id]);
-      
-      console.log('Delete result:', {
-        affectedRows: result.affectedRows,
-        insertId: result.insertId,
-        warningCount: result.warningCount
-      });
-      
-      if (result.affectedRows === 0) {
-        throw new Error('PDF document not found with id: ' + id);
-      }
-      
-      return result;
     } catch (error) {
       console.error('Database delete error:', {
         message: error.message,

@@ -1,14 +1,43 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowUp,
+  BookOpen,
+  GripVertical,
+  HelpCircle,
+  Headphones,
+  Layers,
+  Loader2,
+  Music,
+  Pencil,
+  Sparkles,
+} from 'lucide-react';
 import { interactiveService } from '../../services/interactiveService';
-import { useRef } from 'react';
+import './InteractiveReader.css';
+
+function getBlockContent(block) {
+  return block.content_json ?? block.contentJson ?? {};
+}
 
 function TextBlock({ html }) {
+  return <div className="irr-block irr-block--text" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+function ImageBlock({ c }) {
+  const url = c.url || c.src;
+  const alt = c.alt || '';
+  const caption = c.caption || '';
   return (
-    <div
-      style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: '#fff', marginBottom: 10 }}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <figure className="irr-block irr-block--image">
+      {url ? (
+        <img src={url} alt={alt} style={c.width ? { maxWidth: c.width } : undefined} />
+      ) : (
+        <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8' }}>No image URL</div>
+      )}
+      {caption ? <figcaption>{caption}</figcaption> : null}
+    </figure>
   );
 }
 
@@ -19,40 +48,43 @@ function QuizBlock({ block }) {
   const answer = block.answer;
 
   return (
-    <div style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: '#fff', marginBottom: 10 }}>
-      <div style={{ fontWeight: 700, marginBottom: 8 }}>Quiz</div>
-      <div style={{ marginBottom: 8 }}>{block.question || 'Question'}</div>
-      <div style={{ display: 'grid', gap: 8 }}>
-        {opts.map((o, idx) => (
-          <button
-            key={idx}
-            type="button"
-            className="btn btn-secondary"
-            style={{
-              textAlign: 'left',
-              border: selected === idx ? '2px solid #1976d2' : undefined
-            }}
-            onClick={() => {
-              setSelected(idx);
-              setSubmitted(false);
-            }}
-          >
-            {o}
-          </button>
-        ))}
+    <div className="irr-block irr-block-card">
+      <div className="irr-block-label">
+        <HelpCircle size={16} aria-hidden />
+        Quiz
       </div>
-      <div style={{ marginTop: 10 }}>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setSubmitted(true)}
-          disabled={selected == null}
-        >
-          Submit
+      <div className="irr-quiz-q">{block.question || 'Question'}</div>
+      <div className="irr-quiz-options">
+        {opts.map((o, idx) => {
+          let extra = '';
+          if (submitted) {
+            if (idx === answer) extra = ' is-correct';
+            else if (idx === selected && selected !== answer) extra = ' is-wrong';
+          } else if (selected === idx) {
+            extra = ' is-selected';
+          }
+          return (
+            <button
+              key={idx}
+              type="button"
+              className={`irr-quiz-opt${extra}`}
+              onClick={() => {
+                setSelected(idx);
+                setSubmitted(false);
+              }}
+            >
+              {o}
+            </button>
+          );
+        })}
+      </div>
+      <div className="irr-quiz-actions">
+        <button type="button" className="irr-btn irr-btn-primary" onClick={() => setSubmitted(true)} disabled={selected == null}>
+          Check answer
         </button>
         {submitted ? (
-          <span style={{ marginLeft: 10, fontWeight: 700 }}>
-            {selected === answer ? 'Correct' : 'Wrong'}
+          <span className={`irr-feedback ${selected === answer ? 'ok' : 'bad'}`}>
+            {selected === answer ? 'Correct — well done!' : 'Not quite — try again.'}
           </span>
         ) : null}
       </div>
@@ -63,6 +95,7 @@ function QuizBlock({ block }) {
 function DragDropBlock({ block }) {
   const [matches, setMatches] = useState({});
   const [submitted, setSubmitted] = useState(false);
+  const [dragOver, setDragOver] = useState(null);
   const items = Array.isArray(block.items) ? block.items : [];
   const targets = Array.isArray(block.targets) ? block.targets : [];
   const correct = block.correct && typeof block.correct === 'object' ? block.correct : {};
@@ -80,53 +113,52 @@ function DragDropBlock({ block }) {
     return s;
   }, [matches, correct]);
 
-  return (
-    <div style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: '#fff', marginBottom: 10 }}>
-      <div style={{ fontWeight: 700, marginBottom: 8 }}>Drag &amp; Drop</div>
-      <div style={{ marginBottom: 10 }}>{block.question || 'Match the items'}</div>
+  const total = Object.keys(correct).length || 0;
 
-      <div style={{ display: 'flex', gap: 24 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ color: '#666', marginBottom: 6 }}>Items</div>
+  return (
+    <div className="irr-block irr-block-card">
+      <div className="irr-block-label">
+        <Layers size={16} aria-hidden />
+        Drag &amp; drop
+      </div>
+      <div className="irr-quiz-q" style={{ marginBottom: 16 }}>
+        {block.question || 'Match the items'}
+      </div>
+
+      <div className="irr-dd-layout">
+        <div>
+          <div className="irr-dd-col-title">Draggable</div>
           {items.map((item) => (
             <div
               key={item}
               draggable
               onDragStart={(e) => e.dataTransfer.setData('item', item)}
-              style={{
-                border: '1px solid #ddd',
-                padding: 10,
-                borderRadius: 8,
-                marginBottom: 8,
-                background: '#fafafa',
-                cursor: 'grab'
-              }}
+              className="irr-dd-item"
             >
+              <GripVertical size={14} style={{ verticalAlign: 'middle', marginRight: 6, opacity: 0.4 }} aria-hidden />
               {item}
-              <div style={{ color: '#666', fontSize: 12, marginTop: 4 }}>
-                matched: {matches[item] ? String(matches[item]) : '—'}
-              </div>
+              <div className="irr-dd-match">→ {matches[item] ? String(matches[item]) : 'drop on a target'}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ flex: 1 }}>
-          <div style={{ color: '#666', marginBottom: 6 }}>Targets</div>
+        <div>
+          <div className="irr-dd-col-title">Drop zones</div>
           {targets.map((t) => (
             <div
               key={t}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(t);
+              }}
+              onDragLeave={() => setDragOver((d) => (d === t ? null : d))}
               onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(null);
                 const item = e.dataTransfer.getData('item');
                 if (item) onDrop(item, t);
               }}
-              style={{
-                border: '2px dashed #bbb',
-                padding: 14,
-                borderRadius: 8,
-                marginBottom: 10,
-                background: '#fff'
-              }}
+              className={`irr-dd-target${dragOver === t ? ' is-drag-over' : ''}`}
             >
               {t}
             </div>
@@ -134,13 +166,13 @@ function DragDropBlock({ block }) {
         </div>
       </div>
 
-      <div style={{ marginTop: 8 }}>
-        <button type="button" className="btn btn-primary" onClick={() => setSubmitted(true)}>
-          Submit
+      <div className="irr-quiz-actions">
+        <button type="button" className="irr-btn irr-btn-primary" onClick={() => setSubmitted(true)}>
+          Score matches
         </button>
         {submitted ? (
-          <span style={{ marginLeft: 10, fontWeight: 700 }}>
-            Score: {score}/{Object.keys(correct).length || 0}
+          <span className={`irr-feedback ${score === total && total > 0 ? 'ok' : 'bad'}`}>
+            Score: {score}/{total || '—'}
           </span>
         ) : null}
       </div>
@@ -151,17 +183,20 @@ function DragDropBlock({ block }) {
 function AudioBlock({ block }) {
   const src = block.src;
   return (
-    <div style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: '#fff', marginBottom: 10 }}>
-      <div style={{ fontWeight: 700, marginBottom: 8 }}>Audio</div>
+    <div className="irr-block irr-block-card">
+      <div className="irr-block-label">
+        <Music size={16} aria-hidden />
+        Audio
+      </div>
       {src ? (
-        <audio controls style={{ width: '100%' }}>
+        <audio controls className="irr-audio-player">
           <source src={src} type="audio/mpeg" />
         </audio>
       ) : (
-        <div style={{ color: '#666' }}>(no src set)</div>
+        <div style={{ color: '#94a3b8', fontSize: 14 }}>(no audio source)</div>
       )}
       {block.start != null || block.end != null ? (
-        <div style={{ color: '#666', marginTop: 6, fontSize: 13 }}>
+        <div style={{ color: '#64748b', marginTop: 10, fontSize: 13 }}>
           Range: {String(block.start ?? '')} → {String(block.end ?? '')}
         </div>
       ) : null}
@@ -189,7 +224,7 @@ function ReadAlongBlock({ block }) {
   const rafRef = useRef(null);
   const wordRefs = useRef({});
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [mode, setMode] = useState('word'); // word | sentence
+  const [mode, setMode] = useState('word');
 
   const sentenceBuckets = useMemo(() => {
     const buckets = [];
@@ -259,31 +294,31 @@ function ReadAlongBlock({ block }) {
   }, [words]);
 
   return (
-    <div style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: '#fff', marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ fontWeight: 700 }}>Read-along</div>
-        <select className="form-control" style={{ width: 170 }} value={mode} onChange={(e) => setMode(e.target.value)}>
+    <div className="irr-block irr-block-card">
+      <div className="irr-readalong-toolbar">
+        <div className="irr-block-label" style={{ marginBottom: 0 }}>
+          <Headphones size={16} aria-hidden />
+          Read-along
+        </div>
+        <select className="irr-select" value={mode} onChange={(e) => setMode(e.target.value)} aria-label="Highlight mode">
           <option value="word">Word highlight</option>
           <option value="sentence">Sentence highlight</option>
         </select>
       </div>
 
       {audio ? (
-        <audio ref={audioRef} controls style={{ width: '100%', marginBottom: 10 }}>
+        <audio ref={audioRef} controls className="irr-audio-player">
           <source src={audio} type="audio/mpeg" />
         </audio>
       ) : (
-        <div style={{ color: '#666', marginBottom: 10 }}>(no audio source)</div>
+        <div style={{ color: '#94a3b8', marginBottom: 12, fontSize: 14 }}>(no audio source)</div>
       )}
 
-      <div style={{ lineHeight: 2 }}>
+      <div style={{ lineHeight: 2.1, fontSize: '1.05rem' }}>
         {words.map((w, idx) => {
           const isWordActive = mode === 'word' && idx === activeIndex;
           const isSentenceActive =
-            mode === 'sentence' &&
-            activeSentenceRange &&
-            idx >= activeSentenceRange.first &&
-            idx <= activeSentenceRange.last;
+            mode === 'sentence' && activeSentenceRange && idx >= activeSentenceRange.first && idx <= activeSentenceRange.last;
           const active = isWordActive || isSentenceActive;
           return (
             <span
@@ -291,19 +326,12 @@ function ReadAlongBlock({ block }) {
               ref={(el) => {
                 if (el) wordRefs.current[idx] = el;
               }}
+              className={`irr-word${active ? ' is-active' : ''}`}
               onClick={() => {
                 if (!audioRef.current) return;
                 const start = Number(w.start ?? 0);
                 audioRef.current.currentTime = Number.isFinite(start) ? start : 0;
                 void audioRef.current.play();
-              }}
-              style={{
-                cursor: 'pointer',
-                padding: '2px 4px',
-                borderRadius: 4,
-                marginRight: 2,
-                transition: 'background 0.2s ease',
-                background: active ? '#ffeb3b' : 'transparent'
               }}
             >
               {w.text}{' '}
@@ -317,14 +345,17 @@ function ReadAlongBlock({ block }) {
 
 function RenderBlock({ block }) {
   const type = String(block.type || '').trim();
-  const c = block.content_json || {};
+  const c = getBlockContent(block);
 
   if (type === 'text') {
     if (Array.isArray(c.words) && c.words.length && c.audio) {
       return <ReadAlongBlock block={c} />;
     }
-    const html = (typeof c.html === 'string' ? c.html : (typeof c.content === 'string' ? c.content : '')).trim();
+    const html = (typeof c.html === 'string' ? c.html : typeof c.content === 'string' ? c.content : '').trim();
     return <TextBlock html={html || '<p>(empty text)</p>'} />;
+  }
+  if (type === 'image') {
+    return <ImageBlock c={c} />;
   }
   if (type === 'audio_sync' || type === 'readalong') return <ReadAlongBlock block={c} />;
   if (type === 'quiz') return <QuizBlock block={c} />;
@@ -332,13 +363,18 @@ function RenderBlock({ block }) {
   if (type === 'audio') return <AudioBlock block={c} />;
 
   return (
-    <div style={{ padding: 12, border: '1px solid #eee', borderRadius: 8, background: '#fff', marginBottom: 10 }}>
-      <div style={{ fontWeight: 700 }}>Block: {type || 'unknown'}</div>
-      <pre style={{ marginTop: 8, fontSize: 12, background: '#fafafa', padding: 10, borderRadius: 8, overflow: 'auto' }}>
-        {JSON.stringify(c, null, 2)}
-      </pre>
+    <div className="irr-block irr-block-card">
+      <div className="irr-block-label">
+        <Sparkles size={16} aria-hidden />
+        Block: {type || 'unknown'}
+      </div>
+      <pre className="irr-fallback-pre">{JSON.stringify(c, null, 2)}</pre>
     </div>
   );
+}
+
+function sortedChapters(chapters) {
+  return (chapters || []).slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 }
 
 export default function InteractiveReader() {
@@ -350,6 +386,12 @@ export default function InteractiveReader() {
   const [book, setBook] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [blocksByChapterId, setBlocksByChapterId] = useState(new Map());
+  const [activeChapterId, setActiveChapterId] = useState(null);
+  const [progress, setProgress] = useState(0);
+  const [showTopBtn, setShowTopBtn] = useState(false);
+
+  const chapterRefs = useRef({});
+  const ordered = useMemo(() => sortedChapters(chapters), [chapters]);
 
   async function loadAll() {
     setLoading(true);
@@ -377,50 +419,217 @@ export default function InteractiveReader() {
     loadAll();
   }, [id]);
 
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
-  if (error) return <div style={{ padding: 16 }}>{error}</div>;
-  if (!book) return <div style={{ padding: 16 }}>Book not found.</div>;
+  useEffect(() => {
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const h = doc.scrollHeight - doc.clientHeight;
+      setProgress(h > 0 ? (doc.scrollTop / h) * 100 : 0);
+      setShowTopBtn(window.scrollY > 420);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting && e.target?.dataset?.chapterId);
+        if (!visible.length) return;
+        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const cid = Number(visible[0].target.dataset.chapterId);
+        if (Number.isFinite(cid)) setActiveChapterId(cid);
+      },
+      { root: null, rootMargin: '-20% 0px -45% 0px', threshold: [0, 0.1, 0.25] },
+    );
+
+    const raf = requestAnimationFrame(() => {
+      for (const ch of ordered) {
+        const el = chapterRefs.current[ch.id];
+        if (el) obs.observe(el);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      obs.disconnect();
+    };
+  }, [ordered]);
+
+  function scrollToChapter(chapterId) {
+    const el = chapterRefs.current[chapterId];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  if (!Number.isFinite(id)) {
+    return (
+      <div className="irr-shell">
+        <div className="irr-error">
+          <div className="irr-error-box">Invalid book link.</div>
+          <Link to="/interactive" className="irr-back">
+            <ArrowLeft size={16} /> Back to books
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="irr-shell">
+        <div className="irr-loading">
+          <Loader2 size={40} className="irr-spinner" aria-hidden />
+          <p>Opening book…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="irr-shell">
+        <div className="irr-error">
+          <div className="irr-error-box" style={{ display: 'flex', alignItems: 'flex-start', gap: 12, textAlign: 'left' }}>
+            <AlertCircle size={22} style={{ flexShrink: 0 }} aria-hidden />
+            <span>{error}</span>
+          </div>
+          <Link to="/interactive" className="irr-back">
+            <ArrowLeft size={16} /> Back to books
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="irr-shell">
+        <div className="irr-error">
+          <p>Book not found.</p>
+          <Link to="/interactive" className="irr-back">
+            <ArrowLeft size={16} /> Back to books
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 16, maxWidth: 950 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <div>
-          <h2 style={{ margin: 0 }}>{book.title}</h2>
-          <div style={{ color: '#666', marginTop: 4 }}>
-            <Link to="/interactive">← Back to books</Link>
-          </div>
-        </div>
-        <Link className="btn btn-secondary" to={`/interactive/editor/${book.id}`}>
-          Open editor
-        </Link>
+    <div className="irr-shell">
+      <div className="irr-progress-track" aria-hidden>
+        <div className="irr-progress-fill" style={{ width: `${progress}%` }} />
       </div>
 
-      {book.description ? <div style={{ marginTop: 10, color: '#444' }}>{book.description}</div> : null}
+      <header className="irr-header">
+        <div className="irr-header-inner">
+          <div>
+            <Link to="/interactive" className="irr-back">
+              <ArrowLeft size={16} aria-hidden />
+              Books
+            </Link>
+            <div className="irr-title-row">
+              <div className="irr-title-icon" aria-hidden>
+                <BookOpen size={24} />
+              </div>
+              <div>
+                <h1 className="irr-title">{book.title}</h1>
+                <p className="irr-meta">Interactive reader · {ordered.length} chapter{ordered.length === 1 ? '' : 's'}</p>
+              </div>
+            </div>
+          </div>
+          <div className="irr-header-actions">
+            <Link to={`/interactive/editor/${book.id}`} className="irr-btn irr-btn-primary">
+              <Pencil size={18} aria-hidden />
+              Edit book
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      <div style={{ marginTop: 14 }}>
-        {(chapters || [])
-          .slice()
-          .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-          .map((ch, idx) => {
+      {book.description ? <p className="irr-desc">{book.description}</p> : null}
+
+      <div className="irr-layout">
+        <div className="irr-toc-wrap irr-toc-desktop">
+          <div className="irr-toc-card">
+            <h2 className="irr-toc-title">Contents</h2>
+            <nav className="irr-toc-nav" aria-label="Chapters">
+              {ordered.map((ch, idx) => (
+                <button
+                  key={ch.id}
+                  type="button"
+                  className={`irr-toc-item${ch.id === activeChapterId ? ' is-active' : ''}`}
+                  onClick={() => scrollToChapter(ch.id)}
+                >
+                  <span className="irr-toc-num">{idx + 1}.</span>
+                  {ch.title}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
+
+        <article className="irr-article">
+          {ordered.length > 1 ? (
+            <div className="irr-mobile-toc">
+              <label htmlFor="irr-chapter-jump" className="visually-hidden">
+                Jump to chapter
+              </label>
+              <select
+                id="irr-chapter-jump"
+                className="irr-mobile-select"
+                value={activeChapterId ?? ordered[0]?.id ?? ''}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  if (Number.isFinite(v)) scrollToChapter(v);
+                }}
+              >
+                {ordered.map((ch, idx) => (
+                  <option key={ch.id} value={ch.id}>
+                    {idx + 1}. {ch.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          {ordered.map((ch, idx) => {
             const blocks = blocksByChapterId.get(Number(ch.id)) || [];
             return (
-              <div key={ch.id} style={{ marginTop: 18 }}>
-                <h3 style={{ margin: '0 0 10px' }}>
-                  {idx + 1}. {ch.title}
-                </h3>
+              <section
+                key={ch.id}
+                id={`chapter-${ch.id}`}
+                ref={(el) => {
+                  chapterRefs.current[ch.id] = el;
+                }}
+                data-chapter-id={ch.id}
+                className="irr-chapter"
+              >
+                <div className="irr-chapter-header">
+                  <span className="irr-chapter-index">{idx + 1}</span>
+                  <h2 className="irr-chapter-title">{ch.title}</h2>
+                </div>
                 {blocks.length === 0 ? (
-                  <div style={{ color: '#666' }}>(empty chapter)</div>
+                  <div className="irr-empty-chapter">This chapter has no content yet.</div>
                 ) : (
                   blocks
                     .slice()
                     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                     .map((bl) => <RenderBlock key={bl.id} block={bl} />)
                 )}
-              </div>
+              </section>
             );
           })}
+        </article>
       </div>
+
+      <button
+        type="button"
+        className={`irr-fab-top${showTopBtn ? ' is-visible' : ''}`}
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label="Back to top"
+      >
+        <ArrowUp size={22} />
+      </button>
     </div>
   );
 }
-

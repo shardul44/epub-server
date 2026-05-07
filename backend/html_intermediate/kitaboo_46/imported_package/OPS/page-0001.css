@@ -1,0 +1,204 @@
+
+.t {
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 2;
+	position: absolute;
+	white-space: pre;
+	overflow: visible;
+}
+
+
+#t1_2{left:148px;top:770px;letter-spacing:-0.3px;word-spacing:0.5px;}
+#t2_2{left:275px;top:248px;}
+#t3_2{left:292px;top:248px;}
+#t4_2{left:224px;top:234px;letter-spacing:8.4px;}
+#t5_2{left:207px;top:245px;}
+#t6_2{left:243px;top:248px;}
+#t7_2{left:154px;top:213px;}
+#t8_2{left:189px;top:190px;}
+#t9_2{left:216px;top:180px;}
+#ta_2{left:250px;top:177px;}
+#tb_2{left:286px;top:182px;}
+#tc_2{left:319px;top:197px;}
+#td_2{left:151px;top:225px;}
+#te_2{left:66px;top:138px;}
+#tf_2{left:137px;top:93px;}
+#tg_2{left:188px;top:76px;}
+#th_2{left:259px;top:69px;}
+#ti_2{left:326px;top:80px;}
+#tj_2{left:390px;top:107px;}
+
+.s1_2{
+	FONT-SIZE: 110px;
+	FONT-FAMILY: HMAvenir-Regular_p5;
+	color: rgb(0,0,0);
+}
+
+.s2_2{
+	FONT-SIZE: 380.9px;
+	FONT-FAMILY: DomCasualStd-Bold_p6;
+	color: rgb(181,211,52);
+}
+
+.s3_2{
+	FONT-SIZE: 140.4px;
+	FONT-FAMILY: DomCasualStd-Bold_p6;
+	color: rgb(181,211,52)
+}
+
+.s4_2{
+	FONT-SIZE: 380.9px;
+	FONT-FAMILY: DomCasualStd-Bold_p6;
+	color: rgb(181,211,52)
+}
+
+.s5_2{
+	FONT-SIZE: 187.2px;
+	FONT-FAMILY: DomCasualStd-Bold_p6;
+	color: rgb(181,211,52)
+}
+
+.s6_2{
+	FONT-SIZE: 435.3px;
+	FONT-FAMILY: DomCasualStd-Bold_p6;
+	color: rgb(181,211,52)
+}
+
+.t.m1_2{
+	-webkit-transform: matrix(1.09,-0.22,0.2,0.98,0, 0) scale(0.25);
+	-ms-transform: matrix(1.09,-0.22,0.2,0.98,0, 0) scale(0.25);
+	-moz-transform: matrix(1.09,-0.22,0.2,0.98,0, 0) scale(0.25);
+	-o-transform: matrix(1.09,-0.22,0.2,0.98,0, 0) scale(0.25);
+}
+
+.t.m2_2{
+	-webkit-transform: matrix(1,-0.48,0.43,0.9,0, 0) scale(0.25);
+	-ms-transform: matrix(1,-0.48,0.43,0.9,0, 0) scale(0.25);
+	-moz-transform: matrix(1,-0.48,0.43,0.9,0, 0) scale(0.25);
+	-o-transform: matrix(1,-0.48,0.43,0.9,0, 0) scale(0.25);
+}
+
+.t.m3_2{
+	-webkit-transform: matrix(1.11,0.02,-0.02,1,0, 0) scale(0.25);
+	-ms-transform: matrix(1.11,0.02,-0.02,1,0, 0) scale(0.25);
+	-moz-transform: matrix(1.11,0.02,-0.02,1,0, 0) scale(0.25);
+	-o-transform: matrix(1.11,0.02,-0.02,1,0, 0) scale(0.25);
+}
+
+.t.m4_2{
+	-webkit-transform: matrix(1.11,0.08,-0.08,1,0, 0) scale(0.25);
+	-ms-transform: matrix(1.11,0.08,-0.08,1,0, 0) scale(0.25);
+	-moz-transform: matrix(1.11,0.08,-0.08,1,0, 0) scale(0.25);
+	-o-transform: matrix(1.11,0.08,-0.08,1,0, 0) scale(0.25);
+}
+
+.t.m5_2{
+	-webkit-transform: matrix(1.11,-0.05,0.05,1,0, 0) scale(0.25);
+	-ms-transform: matrix(1.11,-0.05,0.05,1,0, 0) scale(0.25);
+	-moz-transform: matrix(1.11,-0.05,0.05,1,0, 0) scale(0.25);
+	-o-transform: matrix(1.11,-0.05,0.05,1,0, 0) scale(0.25);
+}
+
+.t.m6_2{
+	-webkit-transform: matrix(0.89,-0.67,0.6,0.8,0, 0) scale(0.25);
+	-ms-transform: matrix(0.89,-0.67,0.6,0.8,0, 0) scale(0.25);
+	-moz-transform: matrix(0.89,-0.67,0.6,0.8,0, 0) scale(0.25);
+	-o-transform: matrix(0.89,-0.67,0.6,0.8,0, 0) scale(0.25);
+}
+
+.t.m7_2{
+	-webkit-transform: matrix(1.04,-0.4,0.36,0.93,0, 0) scale(0.25);
+	-ms-transform: matrix(1.04,-0.4,0.36,0.93,0, 0) scale(0.25);
+	-moz-transform: matrix(1.04,-0.4,0.36,0.93,0, 0) scale(0.25);
+	-o-transform: matrix(1.04,-0.4,0.36,0.93,0, 0) scale(0.25);
+}
+
+.t.m8_2{
+	-webkit-transform: matrix(1.1,-0.16,0.15,0.99,0, 0) scale(0.25);
+	-ms-transform: matrix(1.1,-0.16,0.15,0.99,0, 0) scale(0.25);
+	-moz-transform: matrix(1.1,-0.16,0.15,0.99,0, 0) scale(0.25);
+	-o-transform: matrix(1.1,-0.16,0.15,0.99,0, 0) scale(0.25);
+}
+
+.t.m9_2{
+	-webkit-transform: matrix(1.1,0.12,-0.11,0.99,0, 0) scale(0.25);
+	-ms-transform: matrix(1.1,0.12,-0.11,0.99,0, 0) scale(0.25);
+	-moz-transform: matrix(1.1,0.12,-0.11,0.99,0, 0) scale(0.25);
+	-o-transform: matrix(1.1,0.12,-0.11,0.99,0, 0) scale(0.25);
+}
+
+.t.m10_2{
+	-webkit-transform: matrix(1.03,0.41,-0.37,0.93,0, 0) scale(0.25);
+	-ms-transform: matrix(1.03,0.41,-0.37,0.93,0, 0) scale(0.25);
+	-moz-transform: matrix(1.03,0.41,-0.37,0.93,0, 0) scale(0.25);
+	-o-transform: matrix(1.03,0.41,-0.37,0.93,0, 0) scale(0.25);
+}
+
+.t.m11_2{
+	-webkit-transform: matrix(0.9,0.66,-0.59,0.81,0, 0) scale(0.25);
+	-ms-transform: matrix(0.9,0.66,-0.59,0.81,0, 0) scale(0.25);
+	-moz-transform: matrix(0.9,0.66,-0.59,0.81,0, 0) scale(0.25);
+	-o-transform: matrix(0.9,0.66,-0.59,0.81,0, 0) scale(0.25);
+}
+
+.t.m12_2{
+	-webkit-transform: matrix(1.05,0.35,-0.32,0.95,0, 0) scale(0.25);
+	-ms-transform: matrix(1.05,0.35,-0.32,0.95,0, 0) scale(0.25);
+	-moz-transform: matrix(1.05,0.35,-0.32,0.95,0, 0) scale(0.25);
+	-o-transform: matrix(1.05,0.35,-0.32,0.95,0, 0) scale(0.25);
+}
+
+.t.m13_2{
+	-webkit-transform: matrix(0.9,-0.65,0.59,0.81,0, 0) scale(0.25);
+	-ms-transform: matrix(0.9,-0.65,0.59,0.81,0, 0) scale(0.25);
+	-moz-transform: matrix(0.9,-0.65,0.59,0.81,0, 0) scale(0.25);
+	-o-transform: matrix(0.9,-0.65,0.59,0.81,0, 0) scale(0.25);
+}
+
+.t.m14_2{
+	-webkit-transform: matrix(1.1,-0.16,0.14,0.99,0, 0) scale(0.25);
+	-ms-transform: matrix(1.1,-0.16,0.14,0.99,0, 0) scale(0.25);
+	-moz-transform: matrix(1.1,-0.16,0.14,0.99,0, 0) scale(0.25);
+	-o-transform: matrix(1.1,-0.16,0.14,0.99,0, 0) scale(0.25);
+}
+
+.t.m15_2{
+	-webkit-transform: matrix(1.11,0.12,-0.1,0.99,0, 0) scale(0.25);
+	-ms-transform: matrix(1.11,0.12,-0.1,0.99,0, 0) scale(0.25);
+	-moz-transform: matrix(1.11,0.12,-0.1,0.99,0, 0) scale(0.25);
+	-o-transform: matrix(1.11,0.12,-0.1,0.99,0, 0) scale(0.25);
+}
+
+.t.m16_2{
+	-webkit-transform: matrix(1.05,0.38,-0.34,0.94,0, 0) scale(0.25);
+	-ms-transform: matrix(1.05,0.38,-0.34,0.94,0, 0) scale(0.25);
+	-moz-transform: matrix(1.05,0.38,-0.34,0.94,0, 0) scale(0.25);
+	-o-transform: matrix(1.05,0.38,-0.34,0.94,0, 0) scale(0.25);
+}
+
+.t.m17_2{
+	-webkit-transform: matrix(0.92,0.62,-0.56,0.83,0, 0) scale(0.25);
+	-ms-transform: matrix(0.92,0.62,-0.56,0.83,0, 0) scale(0.25);
+	-moz-transform: matrix(0.92,0.62,-0.56,0.83,0, 0) scale(0.25);
+	-o-transform: matrix(0.92,0.62,-0.56,0.83,0, 0) scale(0.25);
+}
+
+
+
+@font-face {
+	font-family: DomCasualStd-Bold_p6;
+	src: url("fonts/DomCasualStd-Bold_p6.woff") format("woff");
+}
+
+@font-face {
+	font-family: HMAvenir-Regular_p5;
+	src: url("fonts/HMAvenir-Regular_p5.woff") format("woff");
+}
+

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" version="3.0">
+	<body>
+		<par id="par1"><text src="../page-0009.xhtml#SML0"/><audio src="../audio/page-0009.mp3" clipBegin="0.000000s" clipEnd="1.038000s" /></par>
+		<par id="par2"><text src="../page-0009.xhtml#SML1"/><audio src="../audio/page-0009.mp3" clipBegin="1.038000s" clipEnd="1.581000s" /></par>
+		<par id="par3"><text src="../page-0009.xhtml#SML2"/><audio src="../audio/page-0009.mp3" clipBegin="1.581000s" clipEnd="1.922000s" /></par>
+		<par id="par4"><text src="../page-0009.xhtml#SML3"/><audio src="../audio/page-0009.mp3" clipBegin="1.922000s" clipEnd="2.445000s" /></par>
+		<par id="par5"><text src="../page-0009.xhtml#SML4"/><audio src="../audio/page-0009.mp3" clipBegin="2.445000s" clipEnd="2.766000s" /></par>
+		<par id="par6"><text src="../page-0009.xhtml#SML5"/><audio src="../audio/page-0009.mp3" clipBegin="2.766000s" clipEnd="3.957359s" /></par>
+		<par id="par7"><text src="../page-0009.xhtml#SML6"/><audio src="../audio/page-0009.mp3" clipBegin="3.957359s" clipEnd="4.273000s" /></par>
+		<par id="par8"><text src="../page-0009.xhtml#SML7"/><audio src="../audio/page-0009.mp3" clipBegin="4.273000s" clipEnd="4.494000s" /></par>
+		<par id="par9"><text src="../page-0009.xhtml#SML8"/><audio src="../audio/page-0009.mp3" clipBegin="4.494000s" clipEnd="4.816000s" /></par>
+		<par id="par10"><text src="../page-0009.xhtml#SML9"/><audio src="../audio/page-0009.mp3" clipBegin="4.816000s" clipEnd="5.338000s" /></par>
+		<par id="par11"><text src="../page-0009.xhtml#SML10"/><audio src="../audio/page-0009.mp3" clipBegin="5.338000s" clipEnd="5.479000s" /></par>
+		<par id="par12"><text src="../page-0009.xhtml#SML11"/><audio src="../audio/page-0009.mp3" clipBegin="5.479000s" clipEnd="6.162000s" /></par>
+		<par id="par13"><text src="../page-0009.xhtml#SML12"/><audio src="../audio/page-0009.mp3" clipBegin="6.162000s" clipEnd="6.363000s" /></par>
+		<par id="par14"><text src="../page-0009.xhtml#SML13"/><audio src="../audio/page-0009.mp3" clipBegin="6.363000s" clipEnd="7.277902s" /></par>
+	</body>
+</smil>

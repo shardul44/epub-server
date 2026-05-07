@@ -1,0 +1,930 @@
+{
+  "pages": [
+    {
+      "pageNumber": 1,
+      "text": "If YouWere a Horse Have you ever wished you were a horse?",
+      "textBlocks": [
+        {
+          "id": "block_1_0",
+          "text": "If YouWere a Horse Have you ever wished you were a horse?",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 561.3073,
+            "width": 460.8778,
+            "height": 172.20049999999992,
+            "pageNumber": 1
+          },
+          "fontName": "g_d5_f1",
+          "fontSize": 50,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 57,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 2,
+      "text": "If YouWere a Horse Have you ever wished you were a horse?",
+      "textBlocks": [
+        {
+          "id": "block_2_0",
+          "text": "If YouWere a Horse Have you ever wished you were a horse?",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 561.3073,
+            "width": 460.8778,
+            "height": 172.20049999999992,
+            "pageNumber": 2
+          },
+          "fontName": "g_d5_f1",
+          "fontSize": 50,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 57,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 3,
+      "text": "If you were a horse, you would run like the wind. You would have a long tail and mane.",
+      "textBlocks": [
+        {
+          "id": "block_3_0",
+          "text": "If you were a horse, you would run like the wind.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 218.9449,
+            "width": 375.165,
+            "height": 83.50000000000003,
+            "pageNumber": 3
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_3_1",
+          "text": "You would have a long tail and mane.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 83.9449,
+            "width": 415.1,
+            "height": 83.49999999999999,
+            "pageNumber": 3
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 86,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 4,
+      "text": "You would be powerful and strong. Oh, how wonderful to be a horse!",
+      "textBlocks": [
+        {
+          "id": "block_4_0",
+          "text": "You would be powerful and strong.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 218.9449,
+            "width": 427.7000000000001,
+            "height": 83.50000000000003,
+            "pageNumber": 4
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_4_1",
+          "text": "Oh, how wonderful to be a horse!",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 83.9449,
+            "width": 385.9100000000001,
+            "height": 83.49999999999999,
+            "pageNumber": 4
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 66,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 5,
+      "text": "All About Horses Horses are beautiful animals withstrong muscles. A horse can easilycarry a person on its back.",
+      "textBlocks": [
+        {
+          "id": "block_5_0",
+          "text": "All About Horses",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 660.0826,
+            "width": 366.72,
+            "height": 55,
+            "pageNumber": 5
+          },
+          "fontName": "g_d5_f1",
+          "fontSize": 50,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_5_1",
+          "text": "Horses are beautiful animals withstrong muscles. A horse can easilycarry a person on its back.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 83.9449,
+            "width": 505.47000000000014,
+            "height": 128.5,
+            "pageNumber": 5
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 111,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 6,
+      "text": "A horse’s powerful legs help the animal run far and jump high. Some horses can run more than 50 miles per hour! Horses are fast, too. They are one of the fastest animals in the world. People like to watch horse races and guess which horse will run the fastest.",
+      "textBlocks": [
+        {
+          "id": "block_6_0",
+          "text": "A horse’s powerful legs help the animal run far and jump high. Some horses can run more than 50 miles per hour!",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 318.4567,
+            "y": 328.0881,
+            "width": 208.85219999999998,
+            "height": 122.19999999999999,
+            "pageNumber": 6
+          },
+          "fontName": "g_d5_f3",
+          "fontSize": 18,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_6_1",
+          "text": "Horses are fast, too. They are one of the fastest animals in the world. People like to watch horse races and guess which horse will run the fastest.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 83.9449,
+            "width": 505.4000000000001,
+            "height": 218.5,
+            "pageNumber": 6
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 260,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 7,
+      "text": "Horses come in many colors. They can be black, white, brown, gray, red, yellow, and more. Sometimes they are two or three colors at once.",
+      "textBlocks": [
+        {
+          "id": "block_7_0",
+          "text": "Horses come in many colors. They can be black, white, brown, gray, red, yellow, and more. Sometimes they are two or three colors at once.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 83.9449,
+            "width": 466.55,
+            "height": 218.5,
+            "pageNumber": 7
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 137,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 8,
+      "text": "A white spot at a horse’seye level or above iscalled a star. Any whitemark below its eyes butabove its nostrils is calleda stripe. Did you know that a zebrais a type of horse? Some horses have spots. Some horses have stripes. Some have both, and some have none.",
+      "textBlocks": [
+        {
+          "id": "block_8_0",
+          "text": "A white spot at a horse’seye level or above iscalled a star. Any whitemark below its eyes butabove its nostrils is calleda stripe.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 55.8189,
+            "y": 608.3739,
+            "width": 209.84220000000005,
+            "height": 147.79999999999995,
+            "pageNumber": 8
+          },
+          "fontName": "g_d5_f3",
+          "fontSize": 18,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_8_1",
+          "text": "Did you know that a zebrais a type of horse?",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 318.4567,
+            "y": 290.514,
+            "width": 217.34819999999996,
+            "height": 45.39999999999998,
+            "pageNumber": 8
+          },
+          "fontName": "g_d5_f3",
+          "fontSize": 18,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_8_2",
+          "text": "Some horses have spots. Some horses have stripes. Some have both, and some have none.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 101.0159,
+            "width": 450.1000000000001,
+            "height": 128.5,
+            "pageNumber": 8
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 2,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 261,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 9,
+      "text": "Horses can be tall or short. Many horses are taller than people, but some horses are very small.",
+      "textBlocks": [
+        {
+          "id": "block_9_0",
+          "text": "Horses can be tall or short. Many horses are taller than people, but some horses are very small.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 101.0159,
+            "width": 500.605,
+            "height": 128.5,
+            "pageNumber": 9
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 96,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 10,
+      "text": "Some miniature (MIN-ee-uh-chur)horses are trained to help blind people.They are like seeing-eye dogs. A miniature horse may be only two feet tall!",
+      "textBlocks": [
+        {
+          "id": "block_10_0",
+          "text": "Some miniature (MIN-ee-uh-chur)horses are trained to help blind people.They are like seeing-eye dogs.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 198.9655,
+            "y": 241.1739,
+            "width": 323.0243999999999,
+            "height": 71,
+            "pageNumber": 10
+          },
+          "fontName": "g_d5_f3",
+          "fontSize": 18,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_10_1",
+          "text": "A miniature horse may be only two feet tall!",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 83.9449,
+            "width": 398.5450000000001,
+            "height": 83.49999999999999,
+            "pageNumber": 10
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 146,
+      "width": 595.276,
+      "height": 841.89
+    },
+    {
+      "pageNumber": 11,
+      "text": "No matter their size, all horses have the same body parts. They are called points. Here are some of a horse's points. A horse has only one toeon each foot. Each toe iscovered by a horny hoof.A horseshoe is used toprotect the hoof.",
+      "textBlocks": [
+        {
+          "id": "block_11_0",
+          "text": "No matter their size, all horses have the same body parts. They are called points. Here are some of a horse's points.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 41,
+            "y": 593.6852,
+            "width": 460.74000000000007,
+            "height": 173.5,
+            "pageNumber": 11
+          },
+          "fontName": "g_d5_f2",
+          "fontSize": 35,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "center",
+          "readingOrder": 0,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        },
+        {
+          "id": "block_11_1",
+          "text": "A horse has only one toeon each foot. Each toe iscovered by a horny hoof.A horseshoe is used toprotect the hoof.",
+          "type": "paragraph",
+          "level": null,
+          "boundingBox": {
+            "x": 55.8189,
+            "y": 363.2141,
+            "width": 203.84820000000008,
+            "height": 122.19990000000001,
+            "pageNumber": 11
+          },
+          "fontName": "g_d5_f3",
+          "fontSize": 18,
+          "isBold": false,
+          "isItalic": false,
+          "textColor": "#000000",
+          "textAlign": "left",
+          "readingOrder": 1,
+          "viewport": {
+            "viewBox": [
+              0,
+              0,
+              595.276,
+              841.89
+            ],
+            "userUnit": 1,
+            "scale": 1,
+            "rotation": 0,
+            "offsetX": 0,
+            "offsetY": 0,
+            "transform": [
+              1,
+              0,
+              0,
+              -1,
+              0,
+              841.89
+            ],
+            "width": 595.276,
+            "height": 841.89
+          }
+        }
+      ],
+      "charCount": 230,
+      "width": 595.276,
+      "height": 841.89
+    }
+  ],
+  "totalPages": 11,
+  "metadata": {
+    "title": "",
+    "author": "",
+    "subject": "",
+    "creator": "Adobe InDesign 21.1 (Windows)",
+    "producer": "Adobe PDF Library 18.0",
+    "creationDate": "D:20251227220313+05'30'",
+    "modificationDate": "D:20251227220315+05'30'"
+  }
+}

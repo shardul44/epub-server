@@ -1,0 +1,474 @@
+{
+  "@type": "earl:report",
+  "@context": "http://daisy.github.io/ace/ace-report-1.0.jsonld",
+  "dct:title": "Ace Report",
+  "dct:description": "Report on automated accessibility checks for EPUB",
+  "dct:date": "2/5/2026, 3:32:18 pm",
+  "earl:assertedBy": {
+    "@type": "earl:software",
+    "doap:name": "DAISY Ace",
+    "doap:description": "DAISY Accessibility Checker for EPUB",
+    "doap:homepage": "http://daisy.github.io/ace",
+    "doap:created": "2017-07-01",
+    "doap:release": {
+      "doap:revision": "1.3.7"
+    }
+  },
+  "outlines": {
+    "toc": "<ol xmlns=\"http://www.w3.org/1999/xhtml\">\n\t\t\t\t<li>Horses</li>\n\t\t\t</ol>",
+    "headings": "<ul><ul><li><span class=\"toc-h2\">Contents</span><li><span class=\"toc-h2\">Page List</span><li><span class=\"toc-h2\">Landmarks</span></li></ul></li></ul>",
+    "html": "<ol><li></li></ol>"
+  },
+  "data": {
+    "images": [
+      {
+        "src": "OEBPS/image/1.png",
+        "alt": "",
+        "role": "doc-cover",
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"image/1.png\" alt=\"\" style=\"max-width:100%;\" role=\"doc-cover\" />",
+        "location": "cover.xhtml#epubcfi(/4/2/2)"
+      },
+      {
+        "src": "OEBPS/image/horses-field.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/horses-field.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/8/2%5B_idContainer002%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/Screenshot_2025-12-27_210102.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/Screenshot_2025-12-27_210102.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/14/2%5B_idContainer004%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page5_4.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page5_4.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/22/2%5B_idContainer007%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/flat-lay-dog-hair-wallpaper.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/flat-lay-dog-hair-wallpaper.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/32/2%5B_idContainer011%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page6_3.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page6_3.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/34/2%5B_idContainer012%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/running_horse.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/running_horse.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/38/2%5B_idContainer013%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page6_6.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page6_6.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/42/2%5B_idContainer015%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_3.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_3.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/44/2%5B_idContainer019%5D/2%5B_idContainer016%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page7_2.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page7_2.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/48/2%5B_idContainer020%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page14_1.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page14_1.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/50/2%5B_idContainer021%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page8_1.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page8_1.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/54/2%5B_idContainer025%5D/2%5B_idContainer023%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page7_4.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page7_4.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/54/2%5B_idContainer025%5D/4%5B_idContainer024%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page8_4.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page8_4.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/58/2%5B_idContainer029%5D/2%5B_idContainer026%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page7_9.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page7_9.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/62/2%5B_idContainer031%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_3.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_3.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/64/2%5B_idContainer035%5D/2%5B_idContainer032%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page7_8_copy.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page7_8_copy.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/66/2%5B_idContainer036%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page8_2.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page8_2.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/70/2%5B_idContainer037%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page8_1.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page8_1.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/72/2%5B_idContainer038%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page8_3.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page8_3.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/76/2%5B_idContainer040%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page8_5.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page8_5.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/82/2%5B_idContainer042%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_31.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_31.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/84/2%5B_idContainer046%5D/2%5B_idContainer043%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_32.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_32.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/90/2%5B_idContainer051%5D/2%5B_idContainer048%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_2.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_2.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/92/2%5B_idContainer052%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_5.jpg",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_5.jpg\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/98/2%5B_idContainer054%5D/2)"
+      },
+      {
+        "src": "OEBPS/image/pdf_image_page9_33.png",
+        "alt": "",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" class=\"_idGenObjectAttribute-1\" src=\"image/pdf_image_page9_33.png\" alt=\"\" />",
+        "location": "Horses.xhtml#epubcfi(/4%5BHorses%5D/114/2%5B_idContainer062%5D/2)"
+      }
+    ]
+  },
+  "properties": {
+    "hasManifestFallbacks": false,
+    "hasBindings": false,
+    "hasSVGContentDocuments": false,
+    "hasFormElements": false,
+    "hasMathML": false,
+    "hasPageBreaks": true
+  },
+  "earl:testSubject": {
+    "url": "..\\..\\uploads\\epub_accessibility\\b76a9766-6a76-4ff1-a0c3-b12cc1a1b3e4.epub",
+    "metadata": {
+      "dc:title": "Horses1",
+      "dc:date": "2025-12-29T09:13:39Z",
+      "dc:language": [
+        "ar-SA",
+        "en-GB"
+      ],
+      "dc:identifier": "urn:uuid:0e2a1f29-da8c-441d-b5ce-78738fac5297",
+      "generator": "Adobe InDesign 21.1",
+      "cover": "x1.png",
+      "ibooks:specified-fonts": "true",
+      "dcterms:modified": "2025-12-29T09:13:39Z"
+    },
+    "links": {},
+    "epubVersion": "3.0"
+  },
+  "a11y-metadata": {
+    "missing": [
+      "schema:accessMode",
+      "schema:accessibilityFeature",
+      "schema:accessibilityHazard",
+      "schema:accessibilitySummary",
+      "schema:accessModeSufficient",
+      "a11y:certifiedBy",
+      "a11y:certifierCredential",
+      "a11y:certifierReport",
+      "dcterms:conformsTo"
+    ],
+    "empty": [],
+    "present": []
+  },
+  "assertions": [
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "/OEBPS\\toc.xhtml"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessMode' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "metadata-accessmode",
+            "dct:description": "Ensures a 'schema:accessMode' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessMode' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessModeSufficient' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "moderate",
+            "dct:title": "metadata-accessmodesufficient",
+            "dct:description": "Ensures a 'schema:accessModeSufficient' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessModeSufficient' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessibilityFeature' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "metadata-accessibilityfeature",
+            "dct:description": "Ensures a 'schema:accessibilityFeature' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessibilityFeature' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessibilityHazard' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "metadata-accessibilityhazard",
+            "dct:description": "Ensures a 'schema:accessibilityHazard' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessibilityHazard' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessibilitySummary' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "moderate",
+            "dct:title": "metadata-accessibilitysummary",
+            "dct:description": "Ensures a 'schema:accessibilitySummary' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessibilitySummary' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications with page breaks must declare the 'dc:source / pageBreakSource' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "epub-pagesource",
+            "dct:description": "Ensures the source of page breaks is identified",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/navigation/pagelist.html",
+              "dct:title": "Page Navigation",
+              "dct:description": "Add a 'dc:source / pageBreakSource' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "OEBPS\\content.opf",
+        "dct:title": "Horses1"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "ARIA role doc-cover is not allowed for given element",
+            "earl:pointer": {
+              "cfi": [
+                "/4/2/2"
+              ],
+              "css": [
+                "img"
+              ]
+            },
+            "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"image/1.png\" alt=\"\" style=\"max-width:100%;\" role=\"doc-cover\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "minor",
+            "dct:title": "aria-allowed-role",
+            "dct:description": "Ensure role attribute has an appropriate value for the element",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/roles.html",
+              "dct:title": "ARIA",
+              "dct:description": "ARIA role should be appropriate for the element"
+            },
+            "rulesetTags": [
+              "cat.aria",
+              "best-practice"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "cover.xhtml",
+        "dct:title": "Cover"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "Horses.xhtml",
+        "dct:title": "If YouWere a Horse"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "toc.xhtml",
+        "dct:title": "Contents"
+      }
+    }
+  ],
+  "earl:result": {
+    "earl:outcome": "fail"
+  }
+}

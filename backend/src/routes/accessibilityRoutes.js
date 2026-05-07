@@ -384,8 +384,9 @@ router.get('/report/:jobId/pdf', async (req, res) => {
       const htmlUrl = `file://${htmlPath.replace(/\\/g, '/')}`;
 
       const browser = await puppeteer.launch({
-        headless: 'new',
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        headless: true,
+        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
 
       try {

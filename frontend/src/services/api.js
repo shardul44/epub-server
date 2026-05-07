@@ -16,7 +16,7 @@ const api = axios.create({
   },
   // Add timeout and credentials for production
   timeout: 180000, // 3 minute timeout for AI operations
-  withCredentials: false // Disable credentials for CORS
+  withCredentials: false// Disable credentials for CORS
 });
 
 // Request interceptor for adding auth token

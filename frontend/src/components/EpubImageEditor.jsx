@@ -17,43 +17,42 @@ const DRAG_TYPE = 'EPUB_IMAGE';
 /**
  * Draggable Image Item Component
  */
-const DraggableImage = ({ image, pageNumber, onClick }) => {
+/**
+ * DraggableImage — renders a thumbnail using a plain <img src> tag.
+ *
+ * ✅ NO fetch() / axios / blob URLs for static images.
+ *    The backend already appends ?token= via withAuthImageQuery, so the
+ *    browser can load the image directly and cache it with the
+ *    Cache-Control: public, max-age=31536000 header the server sends.
+ *    Re-renders never re-trigger a network request because the src string
+ *    is stable (same URL → browser serves from disk cache).
+ *
+ * Wrapped in React.memo so the component only re-renders when its own
+ * props change, not when the parent EpubImageEditor re-renders.
+ */
+const DraggableImage = React.memo(({ image, pageNumber, onClick }) => {
   const [imgError, setImgError] = useState(false);
-  const [imgSrc, setImgSrc] = useState(null);
-  const [loading, setLoading] = useState(true);
+
   const [{ isDragging }, drag] = useDrag({
     type: DRAG_TYPE,
     item: () => {
-      console.log('[DraggableImage] Drag started:', image.fileName);
-      // Emit event to disable text block dragging
       window.dispatchEvent(new CustomEvent('image-drag-start'));
-      // Set global flag to track image dragging
       if (typeof window !== 'undefined') {
         window.__imageDragging = true;
       }
       return { image, pageNumber };
     },
-    end: (item, monitor) => {
+    end: (_item, monitor) => {
       const didDrop = monitor.didDrop();
-      console.log('[DraggableImage] Drag ended:', image.fileName, 'Did drop:', didDrop);
-      
-      // Only warn if react-dnd didn't handle the drop AND we didn't use native drag events
-      // Native drag events (used in GrapesJS mode) bypass react-dnd, so didDrop() will be false
-      const usedNativeDrag = typeof window !== 'undefined' && (window.__nativeDragActive || window.currentDragImage !== null);
+      const usedNativeDrag =
+        typeof window !== 'undefined' &&
+        (window.__nativeDragActive || window.currentDragImage !== null);
       if (!didDrop && !usedNativeDrag) {
-        // This is a genuine failed drop in react-dnd mode
         console.warn('[DraggableImage] Drop failed - image was not dropped on a valid target');
-      } else if (!didDrop && usedNativeDrag) {
-        // Native drag was used, react-dnd didn't see it - this is expected
-        console.log('[DraggableImage] Native drag event used (GrapesJS mode), react-dnd didDrop is false (expected)');
       }
-      
-      // Emit event to re-enable text block dragging
       window.dispatchEvent(new CustomEvent('image-drag-end'));
-      // Clear global flag
       if (typeof window !== 'undefined') {
         window.__imageDragging = false;
-        // Clear currentDragImage and native drag flag (they should already be cleared by native drag end, but ensure cleanup)
         setTimeout(() => {
           window.currentDragImage = null;
           window.__nativeDragActive = false;
@@ -61,217 +60,76 @@ const DraggableImage = ({ image, pageNumber, onClick }) => {
       }
     },
     collect: (monitor) => {
-      if (!monitor || typeof monitor.isDragging !== 'function') {
-        return { isDragging: false };
-      }
       try {
-        return {
-          isDragging: monitor.isDragging(),
-        };
-      } catch (error) {
-        console.error('[DraggableImage] collect - Error:', error);
+        return { isDragging: monitor.isDragging() };
+      } catch {
         return { isDragging: false };
       }
     },
   });
 
-  // Load image - try multiple approaches
-  useEffect(() => {
-    const loadImage = async () => {
-      try {
-        setLoading(true);
-        setImgError(false);
-        
-        console.log('[DraggableImage] Loading image:', {
-          fileName: image.fileName,
-          url: image.url,
-          originalUrl: image.originalUrl
-        });
-        
-        // Check if URL is a blob URL (uploaded images)
-        if (image.url.startsWith('blob:')) {
-          console.log('[DraggableImage] Using blob URL directly:', image.url);
-          setImgSrc(image.url);
-          setImgError(false);
-          setLoading(false);
-          return;
-        }
-        
-        // Check if URL is a data URL (base64 encoded local images)
-        if (image.url.startsWith('data:')) {
-          console.log('[DraggableImage] Using data URL directly:', image.url.substring(0, 50) + '...');
-          setImgSrc(image.url);
-          setImgError(false);
-          setLoading(false);
-          return;
-        }
-        
-        // Check if URL is already absolute (includes http/https)
-        const isAbsoluteUrl = image.url.startsWith('http://') || image.url.startsWith('https://');
-        
-        if (isAbsoluteUrl) {
-          // For absolute URLs, use fetch directly (axios has issues with baseURL)
-          const token = localStorage.getItem('token');
-          const headers = {
-            'Accept': 'image/*',
-          };
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
-          
-          console.log('[DraggableImage] Loading image with fetch:', image.url);
-          console.log('[DraggableImage] Headers:', headers);
-          
-          const fetchResponse = await fetch(image.url, {
-            headers: headers,
-            // Don't use credentials: 'include' - it conflicts with CORS wildcard
-            // We're already sending Authorization header manually
-          });
-          
-          console.log('[DraggableImage] Fetch response status:', fetchResponse.status, fetchResponse.statusText);
-          console.log('[DraggableImage] Response headers:', Object.fromEntries(fetchResponse.headers.entries()));
-          
-          if (!fetchResponse.ok) {
-            const errorText = await fetchResponse.text().catch(() => 'Unable to read error');
-            console.error('[DraggableImage] Fetch error response:', errorText);
-            throw new Error(`HTTP ${fetchResponse.status}: ${fetchResponse.statusText}. ${errorText.substring(0, 200)}`);
-          }
-          
-          const blob = await fetchResponse.blob();
-          console.log('[DraggableImage] Blob created, size:', blob.size, 'type:', blob.type);
-          
-          if (blob.size === 0) {
-            throw new Error('Received empty blob');
-          }
-          
-          // Check if blob type is valid image
-          if (!blob.type.startsWith('image/')) {
-            console.warn('[DraggableImage] Blob type is not an image:', blob.type, '- but trying to use it anyway');
-            // Still try to use it, might work
-          }
-          
-          const blobUrl = URL.createObjectURL(blob);
-          console.log('[DraggableImage] Created blob URL:', blobUrl);
-          setImgSrc(blobUrl);
-          setImgError(false);
-        } else {
-          // Relative URL - use axios
-          console.log('[DraggableImage] Loading image with axios (relative):', image.url);
-          const response = await api.get(image.url, {
-            responseType: 'blob',
-          });
-          console.log('[DraggableImage] Axios response received, size:', response.data.size, 'type:', response.data.type);
-          const blobUrl = URL.createObjectURL(response.data);
-          console.log('[DraggableImage] Created blob URL from axios:', blobUrl);
-          setImgSrc(blobUrl);
-          setImgError(false);
-        }
-      } catch (err) {
-        console.error('[DraggableImage] Error loading image:', {
-          fileName: image.fileName,
-          url: image.url,
-          originalUrl: image.originalUrl,
-          error: err.message,
-          stack: err.stack,
-          response: err.response?.data,
-          status: err.response?.status,
-        });
-        setImgError(true);
-        // Don't set imgSrc on error - let the error UI show
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (image && image.url) {
-      loadImage();
-    } else {
-      console.warn('[DraggableImage] Missing image or URL:', image);
-      setImgError(true);
-      setLoading(false);
-    }
-    
-    // Cleanup blob URL on unmount
-    return () => {
-      if (imgSrc && imgSrc.startsWith('blob:')) {
-        URL.revokeObjectURL(imgSrc);
-      }
-    };
-  }, [image.url, image.fileName]);
-
-  // Support both react-dnd and native HTML5 drag (for GrapesJS)
-  const handleNativeDragStart = (e) => {
-    console.log('[DraggableImage] Native drag started:', image.fileName);
-    // Set custom data for GrapesJS drop handler
+  // Native HTML5 drag handlers (needed for GrapesJS iframe cross-boundary drops)
+  const handleNativeDragStart = useCallback((e) => {
     e.dataTransfer.setData('application/epub-image', JSON.stringify(image));
-    e.dataTransfer.setData('text/plain', JSON.stringify(image)); // Fallback
+    e.dataTransfer.setData('text/plain', JSON.stringify(image));
     e.dataTransfer.effectAllowed = 'copy';
-    
-    // CRITICAL: Store in window global for iframe cross-boundary access
     if (typeof window !== 'undefined') {
       window.currentDragImage = image;
       window.__imageDragging = true;
-      window.__nativeDragActive = true; // Flag to track native drag usage
+      window.__nativeDragActive = true;
     }
-    
-    // Also set for react-dnd compatibility
     window.dispatchEvent(new CustomEvent('image-drag-start', { detail: image }));
-  };
+  }, [image]);
 
-  const handleNativeDragEnd = (e) => {
-    console.log('[DraggableImage] Native drag ended:', image.fileName);
+  const handleNativeDragEnd = useCallback(() => {
     window.dispatchEvent(new CustomEvent('image-drag-end'));
     if (typeof window !== 'undefined') {
       window.__imageDragging = false;
-      // Clear the global drag image and native drag flag after a delay (allows react-dnd end handler to check)
       setTimeout(() => {
-        if (window.currentDragImage === image) {
-          window.currentDragImage = null;
-        }
+        if (window.currentDragImage === image) window.currentDragImage = null;
         window.__nativeDragActive = false;
-      }, 200); // Increased delay to allow react-dnd end handler to check
+      }, 200);
     }
-  };
+  }, [image]);
+
+  const handleClick = useCallback(() => {
+    onClick && onClick(image);
+  }, [onClick, image]);
+
+  // Derive the src once — stable across re-renders for the same image.
+  // blob: and data: URLs are used as-is (uploaded / local images).
+  // All other URLs already have ?token= appended by withAuthImageQuery in loadData.
+  const imgSrc = image.url;
 
   return (
     <div
       ref={drag}
       className={`draggable-image ${isDragging ? 'dragging' : ''}`}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        cursor: 'move',
-        touchAction: 'none', // Prevent touch scrolling
-      }}
-      draggable={true} // Enable native HTML5 drag for GrapesJS
+      style={{ opacity: isDragging ? 0.5 : 1, cursor: 'move', touchAction: 'none' }}
+      draggable={true}
       onDragStart={handleNativeDragStart}
       onDragEnd={handleNativeDragEnd}
-      onClick={() => onClick && onClick(image)}
+      onClick={handleClick}
     >
-      {loading ? (
-        <div className="image-loading">
-          <div className="loading-spinner-small">Loading...</div>
-        </div>
-      ) : !imgError && imgSrc ? (
-        <img
-          src={imgSrc}
-          alt={image.fileName}
-          className="thumbnail-image"
-          onError={() => {
-            console.error('Failed to render image blob:', image.url);
-            setImgError(true);
-          }}
-          onLoad={() => console.log('Image loaded successfully:', image.fileName)}
-        />
-      ) : (
+      {imgError ? (
         <div className="image-error">
           <div className="error-icon">⚠️</div>
           <div className="error-text">Failed to load</div>
         </div>
+      ) : (
+        <img
+          src={imgSrc}
+          alt={image.fileName}
+          className="thumbnail-image"
+          loading="lazy"
+          decoding="async"
+          onError={() => setImgError(true)}
+        />
       )}
       <div className="image-label" title={image.url}>{image.fileName}</div>
     </div>
   );
-};
+});
 
 /**
  * Error Boundary Component to catch errors in XhtmlCanvas
@@ -312,7 +170,8 @@ const XhtmlCanvas = ({
   useGrapesJS = false,
   selectedPlaceholders = new Set(),
   onToggleSelectPlaceholder,
-  onDeletePlaceholder
+  onDeletePlaceholder,
+  onDropError,
 }) => {
   // Early return if onDrop is not a valid function
   if (!onDrop || typeof onDrop !== 'function') {
@@ -582,12 +441,11 @@ const XhtmlCanvas = ({
               return { dropped: true, placeholderId: hoveredPlaceholder.id };
             } else if (nextEmpty) {
               console.warn(`[XhtmlCanvas] Sequential mode: Can only drop on placeholder #${nextEmpty.index}, but hovered placeholder is different. Ignoring drop.`);
-              // Optionally show a message to the user
-              alert(`Please drop the image on placeholder #${nextEmpty.index} first.`);
+              onDropError?.(`Please drop the image on placeholder #${nextEmpty.index} first.`);
               return;
             } else {
               console.warn('[XhtmlCanvas] Sequential mode: All placeholders are filled');
-              alert('All placeholders are already filled.');
+              onDropError?.('All placeholders are already filled.');
               return;
             }
           } else {
@@ -602,7 +460,7 @@ const XhtmlCanvas = ({
             return { dropped: true, placeholderId: nextEmpty.placeholder.id };
           } else {
             console.warn('[XhtmlCanvas] Sequential mode: All placeholders are filled');
-            alert('All placeholders are already filled.');
+            onDropError?.('All placeholders are already filled.');
             return;
           }
         }
@@ -797,107 +655,6 @@ const XhtmlCanvas = ({
   useEffect(() => {
     hoveredPlaceholderIdRef.current = hoveredPlaceholderId;
   }, [hoveredPlaceholderId]);
-
-  useEffect(() => {
-    // Handle placeholder highlighting based on sequential mode
-    // DISABLED: Highlighting ONLY happens in GrapesJS mode, not in standard mode
-    // Since XhtmlCanvas only renders when useGrapesJS is false, checking for useGrapesJS 
-    // ensures this highlighting code never runs (which is what we want)
-    if (useGrapesJS && isOver && canvasRef.current) {
-      // Find the draggable-canvas-container inside canvasRef
-      const draggableCanvas = canvasRef.current.querySelector('[data-draggable-canvas="true"]') || 
-                               canvasRef.current.querySelector('.draggable-canvas-container') ||
-                               canvasRef.current;
-      
-      const placeholderDivs = draggableCanvas.querySelectorAll('.image-placeholder, .image-drop-zone');
-      
-      // Sort placeholders by position (same as in drop handler)
-      const sortedPlaceholders = Array.from(placeholderDivs).sort((a, b) => {
-        const rectA = a.getBoundingClientRect();
-        const rectB = b.getBoundingClientRect();
-        if (Math.abs(rectA.top - rectB.top) > 10) {
-          return rectA.top - rectB.top;
-        }
-        return rectA.left - rectB.left;
-      });
-      
-      // Find the next empty placeholder
-      const findNextEmptyPlaceholder = () => {
-        for (let i = 0; i < sortedPlaceholders.length; i++) {
-          const placeholder = sortedPlaceholders[i];
-          const hasImage = placeholder.querySelector('img') !== null;
-          if (!hasImage) {
-            return { placeholder, index: i + 1 };
-          }
-        }
-        return null;
-      };
-      
-      const nextEmpty = findNextEmptyPlaceholder();
-      
-      if (oneByOneMode) {
-        // In sequential mode: only highlight the next empty placeholder (or the hovered one if it's the next)
-        placeholderDivs.forEach((div) => {
-          const isNextEmpty = nextEmpty && div.id === nextEmpty.placeholder.id;
-          const isHovered = div.id === hoveredPlaceholderId;
-          const isTarget = isNextEmpty && (isHovered || !hoveredPlaceholderId); // Highlight next empty, or hovered if it's the next
-          
-          if (isTarget) {
-            div.classList.add('drag-over', 'drag-over-active');
-            // Add a label showing which placeholder number
-            let label = div.querySelector('.placeholder-label');
-            if (!label) {
-              label = document.createElement('div');
-              label.className = 'placeholder-label';
-              div.style.position = 'relative';
-              div.appendChild(label);
-            }
-            label.textContent = `Drop here: Placeholder #${nextEmpty.index}`;
-            label.style.cssText = `
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              background: rgba(76, 175, 80, 0.95);
-              color: white;
-              padding: 12px 20px;
-              border-radius: 8px;
-              font-weight: bold;
-              font-size: 14px;
-              z-index: 10000;
-              pointer-events: none;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-              white-space: nowrap;
-            `;
-          } else {
-            div.classList.remove('drag-over', 'drag-over-active');
-            div.classList.add('drag-over-disabled');
-            // Remove label from other placeholders
-            const label = div.querySelector('.placeholder-label');
-            if (label) label.remove();
-          }
-        });
-      } else {
-        // In normal mode: highlight all placeholders
-        placeholderDivs.forEach((div) => {
-          div.classList.add('drag-over');
-          div.classList.remove('drag-over-disabled', 'drag-over-active');
-          // Remove labels
-          const label = div.querySelector('.placeholder-label');
-          if (label) label.remove();
-        });
-      }
-      
-      return () => {
-        placeholderDivs.forEach((div) => {
-          div.classList.remove('drag-over', 'drag-over-active', 'drag-over-disabled');
-          const label = div.querySelector('.placeholder-label');
-          if (label) label.remove();
-        });
-        setHoveredPlaceholderId(null);
-      };
-    }
-  }, [isOver, canvasRef, oneByOneMode, hoveredPlaceholderId, useGrapesJS]);
 
   // Track mouse movement to find which placeholder is being hovered
   useEffect(() => {
@@ -1181,6 +938,18 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
   const [grapesjsEditor, setGrapesjsEditor] = useState(null); // GrapesJS editor instance
   const [showCodeViewer, setShowCodeViewer] = useState(false); // Show/hide XHTML code viewer
   const [editedXhtml, setEditedXhtml] = useState(''); // Editable XHTML code in viewer
+  // Toast for sequential-drop errors (replaces alert())
+  const [dropErrorMsg, setDropErrorMsg] = useState('');
+  const dropErrorTimerRef = useRef(null);
+  const handleDropError = useCallback((msg) => {
+    setDropErrorMsg(msg);
+    if (dropErrorTimerRef.current) clearTimeout(dropErrorTimerRef.current);
+    dropErrorTimerRef.current = setTimeout(() => setDropErrorMsg(''), 3000);
+  }, []);
+
+  // Stable memoized images list — prevents the gallery from re-rendering
+  // every time unrelated state (xhtml, editMode, etc.) changes.
+  const memoImages = useMemo(() => images, [images]);
 
   // Initialize edited XHTML when opening code viewer
   useEffect(() => {
@@ -3900,25 +3669,53 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
   }, [isResizing, handleResizeMove, handleResizeEnd]);
 
   // Expose state to parent component (after functions are defined)
-  // Only include state values in dependencies, not functions (they're memoized with useCallback)
+  // ─────────────────────────────────────────────────────────────────────────
+  // IMPORTANT: Do NOT put any function (handleSave, handleReset, etc.) in the
+  // dependency array of the state-emitting useEffect.  Those functions are
+  // recreated whenever their own deps change (xhtml, grapesjsEditor, …), which
+  // would fire this effect on every keystroke → parent setState → re-render →
+  // functions recreated → effect fires again → infinite loop.
+  //
+  // Instead we keep the latest function references in a single ref object and
+  // only re-fire the effect when the *primitive* state values change.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Ref that always holds the latest callback from the parent.
+  const onStateChangeRef = useRef(onStateChange);
   useEffect(() => {
-    if (onStateChange) {
-      onStateChange({ 
-        editMode, 
-        modified, 
-        saving, 
-        regenerating,
-        handleSave, 
-        handleReset, 
-        setEditMode,
-        handleRegenerateChapter,
-        openCodeViewer
-      });
-    }
-  // Include the callback functions so the parent receives fresh references when pageNumber changes.
-  // All functions are memoised with useCallback, so this only fires when their own deps (e.g. pageNumber) change.
+    onStateChangeRef.current = onStateChange;
+  }, [onStateChange]);
+
+  // Refs for the functions we expose — updated every render so the parent
+  // always receives a fresh reference without triggering the effect.
+  const handleSaveRef             = useRef(handleSave);
+  const handleResetRef            = useRef(handleReset);
+  const handleRegenerateChapterRef = useRef(handleRegenerateChapter);
+  const openCodeViewerRef         = useRef(openCodeViewer);
+  const setEditModeRef            = useRef(setEditMode);
+
+  // Keep refs in sync every render (no deps needed — runs after every render).
+  handleSaveRef.current             = handleSave;
+  handleResetRef.current            = handleReset;
+  handleRegenerateChapterRef.current = handleRegenerateChapter;
+  openCodeViewerRef.current         = openCodeViewer;
+  setEditModeRef.current            = setEditMode;
+
+  // Only fire when primitive state values change — never when functions change.
+  useEffect(() => {
+    onStateChangeRef.current?.({
+      editMode,
+      modified,
+      saving,
+      regenerating,
+      handleSave:             (...a) => handleSaveRef.current(...a),
+      handleReset:            (...a) => handleResetRef.current(...a),
+      handleRegenerateChapter:(...a) => handleRegenerateChapterRef.current(...a),
+      openCodeViewer:         (...a) => openCodeViewerRef.current(...a),
+      setEditMode:            (...a) => setEditModeRef.current(...a),
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editMode, modified, saving, regenerating, handleSave, handleReset, handleRegenerateChapter, openCodeViewer]);
+  }, [editMode, modified, saving, regenerating]);
 
   if (loading) {
     return (
@@ -3927,14 +3724,6 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       </div>
     );
   }
-
-  // Debug: Log button visibility state
-  console.log('[EpubImageEditor] Render state:', {
-    editMode,
-    modified,
-    saving,
-    saveButtonDisabled: saving || !modified || !editMode
-  });
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -4080,8 +3869,8 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
               <div className="gallery-scrollable-container">
                 <div className="gallery-grid">
                   {/* All Images (Server + Local) */}
-                  {images.map((image, index) => (
-                    <div key={`image_${index}`} className="image-container" style={{ position: 'relative' }}>
+                  {memoImages.map((image) => (
+                    <div key={image.url || image.fileName} className="image-container" style={{ position: 'relative' }}>
                       <DraggableImage
                         image={image}
                         pageNumber={pageNumber}
@@ -4283,8 +4072,33 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
                         selectedPlaceholder={selectedPlaceholder}
                         onSelectPlaceholder={handleSelectPlaceholder}
                         onDeletePlaceholder={handleDeletePlaceholder}
+                        onDropError={handleDropError}
                       />
                     </ErrorBoundary>
+                  )}
+                  {/* Sequential-drop error toast */}
+                  {dropErrorMsg && (
+                    <div
+                      role="alert"
+                      style={{
+                        position: 'absolute',
+                        bottom: 16,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#ef4444',
+                        color: '#fff',
+                        padding: '10px 18px',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        zIndex: 9999,
+                        pointerEvents: 'none',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      ⚠ {dropErrorMsg}
+                    </div>
                   )}
                 </>
               )}

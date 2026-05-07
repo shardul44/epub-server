@@ -28,36 +28,39 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: 100%; /* Use full height of parent */
-  min-height: 500px; /* Minimum height to prevent collapse */
+  height: 100%;
+  min-height: 0;        /* let flexbox shrink — no forced 500px */
   position: relative;
+ 
 }
 
 .canvas-header {
-  padding: 1em;
+  padding: 10px 16px;
   border-bottom: 1px solid #e0e0e0;
   background: #fafafa;
+  flex-shrink: 0;
 }
 
 .canvas-wrapper {
-  flex: 1;
-  overflow: auto; /* Allow scrolling for long content */
+  flex: 1 1 auto;
+  overflow: auto;       /* scroll when content is taller than viewport */
   position: relative;
-  min-height: 400px; /* Minimum height to prevent collapse */
-  height: 100%; /* Use full height of parent */
-  max-height: 100%;
+  min-height: 0;        /* allow flexbox to shrink */
   background-color: #fafafa;
   display: flex;
   flex-direction: column;
+  align-items: center;  /* center content horizontally */
+  width: 100%;
+  box-sizing: border-box;
 }
 .epub-image-editor {
   display: flex;
   flex-direction: column;
-  height: 100%; /* Use 100% of parent instead of 100vh */
+  height: 100%;
   width: 100%;
   background-color: #f5f5f5;
-  overflow: hidden; /* Prevent scrolling */
-  min-height: 0; /* Allow flexbox to shrink below content size */
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* Image Editor Modal */
@@ -391,11 +394,21 @@
 }
 
 .xhtml-content {
+  width: 100%;
   max-width: 100%;
   background-color: #fff;
-  padding: 2em;
+  padding: 1.5em;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* All images inside the canvas must scale to fit — never overflow */
+.canvas-wrapper img,
+.xhtml-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
 }
 
 /* Placeholder Styles */

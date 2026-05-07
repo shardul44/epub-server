@@ -1,41 +1,213 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { pdfService } from '../services/pdfService';
-import api from '../services/api';
-import { HiOutlineDocument, HiOutlineCloudUpload, HiOutlineTrash, HiOutlinePlay, HiOutlineSparkles } from 'react-icons/hi';
+import usePdfs from '../hooks/usePdfs';
+import ConfirmModal from '../components/Loadingmodal';
+import {
+  FileText,
+  CloudUpload,
+  Trash2,
+  Play,
+  Sparkles,
+  Search,
+  LayoutGrid,
+  List,
+  Database,
+  X,
+  Type,
+  TextQuote,
+  Check,
+  Loader2,
+  Info,
+} from 'lucide-react';
 import { kitabooService } from '../services/kitabooService';
+import PdfCard, { formatFileSize, getGradient } from '../components/PdfCard';
+import { mediaUrl } from '../utils/mediaUrl';
 import './PdfList.css';
 
+/* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
+const totalBytes = (pdfs) => pdfs.reduce((s, p) => s + (p.fileSize || 0), 0);
+
+/* ─────────────────────────────────────────────
+   StatCard
+───────────────────────────────────────────── */
+const StatCard = ({ icon, label, value, accent }) => (
+  <div className="pld-stat-card" style={{ '--accent': accent }}>
+    <div className="pld-stat-icon">{icon}</div>
+    <div className="pld-stat-body">
+      <span className="pld-stat-label">{label}</span>
+      <span className="pld-stat-value">{value}</span>
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   PdfRow (list view)
+───────────────────────────────────────────── */
+const PdfRow = ({ pdf, onConvert, onHifi, onDelete, isHighlight, rowRef }) => {
+  const isFixed = pdf.layoutType === 'FIXED_LAYOUT';
+  return (
+    <tr
+      ref={rowRef}
+      className={`pld-row${isHighlight ? ' pld-row--highlight' : ''}`}
+    >
+      <td>
+        <div className="pld-row-thumb" style={{ background: getGradient(pdf.id) }}>
+          <FileText size={20} />
+        </div>
+      </td>
+      <td>
+        <div className="pld-row-name">{pdf.originalFileName || 'Unnamed PDF'}</div>
+        <div className="pld-row-id">ID #{pdf.id}</div>
+      </td>
+      <td className="pld-row-center">{pdf.totalPages || 0}</td>
+      <td className="pld-row-center">
+        <span className={`pld-badge ${isFixed ? 'pld-badge-fxl' : 'pld-badge-reflow'}`}>
+          {isFixed ? 'FXL' : 'REFLOW'}
+        </span>
+      </td>
+      <td className="pld-row-center">{formatFileSize(pdf.fileSize)}</td>
+      <td className="pld-row-date">
+        {new Date(pdf.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+      </td>
+      <td>
+        <div className="pld-row-actions">
+          {!isFixed && (
+            <button className="pld-action-btn pld-action-convert" onClick={() => onConvert(pdf)}>
+              <Play size={13} /> Convert
+            </button>
+          )}
+          {isFixed && (
+            <button className="pld-action-btn pld-action-hifi" onClick={() => onHifi(pdf)}>
+              <Sparkles size={13} /> Hi-Fi FXL
+            </button>
+          )}
+          <button className="pld-action-btn pld-action-delete" onClick={() => onDelete(pdf.id)}>
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+};
+
+/* ─────────────────────────────────────────────
+   Toolbar
+───────────────────────────────────────────── */
+const Toolbar = ({ search, onSearch, filter, onFilter, viewMode, onViewMode }) => (
+  <div className="pld-toolbar">
+    <div className="pld-search-wrap">
+      <Search className="pld-search-icon" />
+      <input
+        className="pld-search"
+        placeholder="Search PDFs by name…"
+        value={search}
+        onChange={(e) => onSearch(e.target.value)}
+      />
+    </div>
+    <div className="pld-filter-group">
+      {['All', 'Reflow', 'Fixed'].map((f) => (
+        <button
+          key={f}
+          className={`pld-filter-btn${filter === f ? ' active' : ''}`}
+          onClick={() => onFilter(f)}
+        >
+          {f}
+        </button>
+      ))}
+    </div>
+    <div className="pld-view-toggle">
+      <button
+        className={`pld-view-btn${viewMode === 'grid' ? ' active' : ''}`}
+        onClick={() => onViewMode('grid')}
+        title="Grid view"
+      >
+        <LayoutGrid size={17} />
+      </button>
+      <button
+        className={`pld-view-btn${viewMode === 'list' ? ' active' : ''}`}
+        onClick={() => onViewMode('list')}
+        title="List view"
+      >
+        <List size={17} />
+      </button>
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Loading Skeleton
+───────────────────────────────────────────── */
+const SkeletonCard = () => (
+  <div className="pld-skeleton-card">
+    <div className="pld-skeleton-visual pld-shimmer" />
+    <div className="pld-skeleton-body">
+      <div className="pld-skeleton-line pld-shimmer" style={{ width: '70%' }} />
+      <div className="pld-skeleton-line pld-shimmer" style={{ width: '45%' }} />
+    </div>
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Empty State
+───────────────────────────────────────────── */
+const EmptyState = ({ filtered }) => (
+  <div className="pld-empty">
+    <div className="pld-empty-icon">
+      <FileText size={48} />
+    </div>
+    <h3>{filtered ? 'No results found' : 'No PDFs yet'}</h3>
+    <p>{filtered ? 'Try a different search or filter.' : 'Upload your first PDF to get started.'}</p>
+    {!filtered && (
+      <Link to="/pdfs/upload" className="pld-upload-btn">
+        <CloudUpload size={16} /> Upload PDF
+      </Link>
+    )}
+  </div>
+);
+
+/* ─────────────────────────────────────────────
+   Main Page
+───────────────────────────────────────────── */
 const PdfList = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [pdfs, setPdfs] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState('grid');
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('All');
   const [hifiModalPdf, setHifiModalPdf] = useState(null);
   const [hifiZoneLevel, setHifiZoneLevel] = useState('word');
   const [hifiTocEndPage, setHifiTocEndPage] = useState('');
+  const [hifiSubmitting, setHifiSubmitting] = useState(false);
+  const [previewPdf, setPreviewPdf] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null, loading: false });
+
+  // ── Single source of truth for PDFs — no duplicate API calls ──
+  const { pdfs, loading, error: fetchError, refetch: loadPdfs } = usePdfs();
+
   const highlightIdRaw = searchParams.get('highlight');
   const highlightId = highlightIdRaw != null && highlightIdRaw !== '' ? parseInt(highlightIdRaw, 10) : null;
   const highlightName = searchParams.get('name') || '';
   const rowRefs = useRef({});
 
+  // Merge fetch error into local error state for display
   useEffect(() => {
-    loadPdfs();
-  }, []);
+    if (fetchError) setError(fetchError);
+  }, [fetchError]);
 
+  // Refresh list when user returns to the tab after 2+ seconds away
   useEffect(() => {
     let hiddenAt = 0;
     const onVis = () => {
       if (document.visibilityState === 'hidden') hiddenAt = Date.now();
-      if (document.visibilityState === 'visible' && hiddenAt && Date.now() - hiddenAt > 2000) {
-        loadPdfs();
-      }
+      if (document.visibilityState === 'visible' && hiddenAt && Date.now() - hiddenAt > 2000) loadPdfs();
     };
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
-  }, []);
+  }, [loadPdfs]);
 
   useEffect(() => {
     if (loading || highlightId == null || Number.isNaN(highlightId)) return;
@@ -45,353 +217,189 @@ const PdfList = () => {
     }
   }, [loading, highlightId, pdfs]);
 
-  const loadPdfs = async () => {
-    try {
-      const data = await pdfService.getAllPdfs();
-      // Ensure we have an array
-      setPdfs(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Error loading PDFs:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load PDFs');
-      setPdfs([]); // Set empty array on error
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this PDF?')) {
-      return;
-    }
+    setDeleteModal({ open: true, pdfId: id, loading: false });
+  };
 
+  // Ref so confirmDelete always reads the latest deleteModal without stale closure
+  const deleteModalRef = useRef(null);
+  deleteModalRef.current = deleteModal;
+
+  const confirmDelete = async () => {
+    const { pdfId } = deleteModalRef.current;
+    if (!pdfId) return;
+    setDeleteModal((prev) => ({ ...prev, loading: true }));
     try {
-      setError(''); // Clear previous errors
-      await pdfService.deletePdf(id);
-      await loadPdfs();
-      // Optionally show success message
+      setError('');
+      await pdfService.deletePdf(pdfId);
+      // Success — close modal then refresh
+      setDeleteModal({ open: false, pdfId: null, loading: false });
+      loadPdfs();
     } catch (err) {
-      console.error('Delete error:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to delete PDF. Please check server logs.';
-      setError(errorMessage);
-      // Auto-hide error after 5 seconds
-      setTimeout(() => setError(''), 5000);
+      // deletePdf already re-throws as a plain Error with .message set
+      const msg = err.message || 'Failed to delete PDF.';
+      setDeleteModal({ open: false, pdfId: null, loading: false });
+      setError(msg);
+      setTimeout(() => setError(''), 6000);
+      loadPdfs(); // still refresh so list stays in sync
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
-
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  const handleConvert = (pdf) => navigate(`/chapter-plan/${pdf.id}`);
+  const handleHifi = (pdf) => {
+    setHifiModalPdf(pdf);
+    setHifiZoneLevel('word');
+    setHifiTocEndPage('');
   };
+  const handlePreview = (pdf) => setPreviewPdf(pdf);
 
-  const getDocumentTypeBadge = (type) => {
-    const types = {
-      'TEXTBOOK': { color: '#1976d2', bg: '#e3f2fd' },
-      'WORKBOOK': { color: '#388e3c', bg: '#e8f5e9' },
-      'TEACHER_GUIDE': { color: '#f57c00', bg: '#fff3e0' },
-      'ASSESSMENT': { color: '#c2185b', bg: '#fce4ec' },
-      'REFERENCE_MATERIAL': { color: '#7b1fa2', bg: '#f3e5f5' },
-      'OTHER': { color: '#616161', bg: '#f5f5f5' }
+  useEffect(() => {
+    if (!hifiModalPdf || hifiSubmitting) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setHifiModalPdf(null);
     };
-    return types[type] || types['OTHER'];
-  };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [hifiModalPdf, hifiSubmitting]);
+
+  /* Derived stats */
+  const fixedCount = pdfs.filter((p) => p.layoutType === 'FIXED_LAYOUT').length;
+  const totalPages = pdfs.reduce((s, p) => s + (p.totalPages || 0), 0);
+  const storageUsed = formatFileSize(totalBytes(pdfs));
+
+  /* Filtered list */
+  const filtered = pdfs.filter((p) => {
+    const matchSearch = !search || (p.originalFileName || '').toLowerCase().includes(search.toLowerCase());
+    const matchFilter =
+      filter === 'All' ||
+      (filter === 'Fixed' && p.layoutType === 'FIXED_LAYOUT') ||
+      (filter === 'Reflow' && p.layoutType !== 'FIXED_LAYOUT');
+    return matchSearch && matchFilter;
+  });
 
   return (
-    <div className="container">
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '32px',
-        paddingBottom: '20px',
-        borderBottom: '2px solid #e0e0e0'
-      }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '36px', fontWeight: '700', color: '#212121', letterSpacing: '-0.5px' }}>
-            PDF Documents
-          </h1>
-          <p style={{ margin: '8px 0 0 0', fontSize: '16px', color: '#757575', fontWeight: '400' }}>
-            Manage your PDF documents and start conversions
-          </p>
+    <div className="pld-page">
+
+      {/* ── Top Navbar ── */}
+      <div className="pld-navbar">
+        <span className="pld-navbar-title">PDF Library</span>
+      </div>
+
+      {/* ── Header ── */}
+      <div className="pld-header">
+        <div className="pld-header-left">
+          <h1 className="pld-title">PDF Library</h1>
+          <p className="pld-subtitle">All source PDFs uploaded by your team — browse like a bookshelf.</p>
         </div>
-        <Link to="/pdfs/upload" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <HiOutlineCloudUpload size={20} />
-          Upload PDF
+        <Link to="/pdfs/upload" className="pld-upload-btn">
+          <CloudUpload size={16} /> Upload PDF
         </Link>
       </div>
 
-      {error && <div className="error">{error}</div>}
+      {/* ── Stat Cards ── */}
+      <div className="pld-stats">
+        <StatCard
+          icon={<FileText size={22} />}
+          label="Total PDFs"
+          value={pdfs.length}
+          accent="#6366f1"
+        />
+        <StatCard
+          icon={<List size={22} />}
+          label="Total Pages"
+          value={totalPages.toLocaleString()}
+          accent="#0ea5e9"
+        />
+        <StatCard
+          icon={<Database size={22} />}
+          label="Storage Used"
+          value={storageUsed}
+          accent="#10b981"
+        />
+        <StatCard
+          icon={<Sparkles size={22} />}
+          label="Fixed Layout"
+          value={fixedCount}
+          accent="#f59e0b"
+        />
+      </div>
 
+      {/* ── Toolbar ── */}
+      <Toolbar
+        search={search}
+        onSearch={setSearch}
+        filter={filter}
+        onFilter={setFilter}
+        viewMode={viewMode}
+        onViewMode={setViewMode}
+      />
+
+      {/* ── Error ── */}
+      {error && <div className="pld-error">{error}</div>}
+
+      {/* ── Highlight banner ── */}
       {highlightId != null && !Number.isNaN(highlightId) && (
-        <div
-          className="card"
-          style={{
-            marginBottom: '16px',
-            padding: '12px 16px',
-            background: '#e8f5e9',
-            border: '1px solid #81c784',
-            borderRadius: '8px',
-            fontSize: '14px',
-            color: '#1b5e20'
-          }}
-        >
+        <div className="pld-highlight-banner">
           <strong>Just uploaded</strong>
-          {highlightName ? ` — ${highlightName}` : ''} (PDF ID <strong>{highlightId}</strong>). Use <strong>Hi-Fi FXL</strong> on{' '}
-          <strong>this row</strong> in the table — not an older document above/below.{' '}
-          <button
-            type="button"
-            className="btn btn-secondary"
-            style={{ marginLeft: '8px', padding: '4px 10px', fontSize: '13px' }}
-            onClick={() => {
-              setSearchParams({});
-            }}
-          >
+          {highlightName ? ` — ${highlightName}` : ''} (PDF ID <strong>{highlightId}</strong>).
+          Use <strong>Hi-Fi FXL</strong> on this row — not an older document.{' '}
+          <button type="button" className="pld-dismiss-btn" onClick={() => setSearchParams({})}>
             Dismiss
           </button>
         </div>
       )}
 
-      {pdfs.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: '60px 40px' }}>
-          <HiOutlineDocument size={64} style={{ color: '#bdbdbd', marginBottom: '16px' }} />
-          <h3 style={{ color: '#666', marginBottom: '8px' }}>No PDFs Found</h3>
-          <p style={{ color: '#999', marginBottom: '24px' }}>Upload your first PDF document to get started</p>
-          <Link to="/pdfs/upload" className="btn btn-primary">
-            <HiOutlineCloudUpload size={18} style={{ marginRight: '8px' }} />
-            Upload PDF
-          </Link>
+      {/* ── Content ── */}
+      {loading ? (
+        <div className="pld-grid">
+          {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState filtered={search !== '' || filter !== 'All'} />
+      ) : viewMode === 'grid' ? (
+        <div className="pld-grid">
+          {filtered.map((pdf) => {
+            if (!pdf || !pdf.id) return null;
+            return (
+              <PdfCard
+                key={pdf.id}
+                pdf={pdf}
+                onConvert={handleConvert}
+                onHifi={handleHifi}
+                onDelete={handleDelete}
+                onPreview={handlePreview}
+              />
+            );
+          })}
         </div>
       ) : (
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <table className="table" style={{ margin: 0 }}>
+        <div className="pld-table-wrap">
+          <table className="pld-table">
             <thead>
-              <tr style={{ backgroundColor: '#f5f5f5' }}>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Preview
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Name
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'center', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Pages
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'center', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Type
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'center', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Layout
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'center', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Size
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Created
-                </th>
-                <th style={{ padding: '16px 24px', textAlign: 'center', fontWeight: '600', fontSize: '14px', color: '#212121', borderBottom: '2px solid #e0e0e0' }}>
-                  Actions
-                </th>
+              <tr>
+                <th></th>
+                <th>Name</th>
+                <th className="pld-row-center">Pages</th>
+                <th className="pld-row-center">Layout</th>
+                <th className="pld-row-center">Size</th>
+                <th>Created</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {pdfs.map((pdf, index) => {
-                // Skip if pdf object is invalid
+              {filtered.map((pdf) => {
                 if (!pdf || !pdf.id) return null;
-
-                const typeBadge = getDocumentTypeBadge(pdf.documentType);
                 const isHighlight = highlightId != null && !Number.isNaN(highlightId) && pdf.id === highlightId;
                 return (
-                  <tr
+                  <PdfRow
                     key={pdf.id}
-                    ref={(el) => {
-                      if (el) rowRefs.current[pdf.id] = el;
-                    }}
-                    style={{
-                      borderBottom: index < pdfs.length - 1 ? '1px solid #e0e0e0' : 'none',
-                      transition: 'background-color 0.2s ease',
-                      ...(isHighlight
-                        ? { outline: '3px solid #2e7d32', outlineOffset: '-3px', backgroundColor: '#f1f8e9' }
-                        : {})
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isHighlight) e.currentTarget.style.backgroundColor = '#fafafa';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = isHighlight ? '#f1f8e9' : '#ffffff';
-                    }}
-                  >
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{
-                        width: '80px',
-                        height: '100px',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        backgroundColor: '#f5f5f5',
-                        border: '1px solid #e0e0e0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <img
-                          src={`/api/pdfs/${pdf.id}/thumbnail`}
-                          alt={`${pdf.originalFileName || 'PDF'} preview`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain'
-                          }}
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = 'flex';
-                            }
-                          }}
-                        />
-                        <div style={{
-                          display: 'none',
-                          width: '100%',
-                          height: '100%',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          backgroundColor: '#e3f2fd',
-                          color: '#1976d2',
-                          fontSize: '32px'
-                        }}>
-                          📄
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <div>
-                        <div style={{ fontWeight: '600', fontSize: '15px', color: '#212121', marginBottom: '4px' }}>
-                          {pdf.originalFileName || 'Unnamed PDF'}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#757575' }}>
-                          ID: {pdf.id}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '6px 12px',
-                        borderRadius: '12px',
-                        backgroundColor: '#e3f2fd',
-                        color: '#1976d2',
-                        fontWeight: '600',
-                        fontSize: '14px'
-                      }}>
-                        {pdf.totalPages || 0}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '6px 12px',
-                        borderRadius: '12px',
-                        backgroundColor: typeBadge.bg,
-                        color: typeBadge.color,
-                        fontWeight: '500',
-                        fontSize: '13px',
-                        border: `1px solid ${typeBadge.color}20`
-                      }}>
-                        {pdf.documentType || 'OTHER'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: pdf.layoutType === 'FIXED_LAYOUT' ? '#f3e5f5' : '#e8f5e9',
-                        color: pdf.layoutType === 'FIXED_LAYOUT' ? '#7b1fa2' : '#2e7d32',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        border: `1px solid ${pdf.layoutType === 'FIXED_LAYOUT' ? '#7b1fa2' : '#2e7d32'}40`
-                      }}>
-                        {pdf.layoutType === 'FIXED_LAYOUT' ? 'FXL' : 'REFLOW'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'center', fontWeight: '500', color: '#212121' }}>
-                      {formatFileSize(pdf.fileSize)}
-                    </td>
-                    <td style={{ padding: '16px 24px', color: '#666', fontSize: '14px' }}>
-                      {new Date(pdf.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </td>
-                    <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                        {pdf.layoutType !== 'FIXED_LAYOUT' && (
-                          <button
-                            onClick={async () => {
-                              navigate(`/chapter-plan/${pdf.id}`);
-                            }}
-                            className="btn btn-success"
-                            style={{
-                              padding: '8px 16px',
-                              fontSize: '14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              borderRadius: '6px'
-                            }}
-                            title="Plan chapters and convert"
-                          >
-                            <HiOutlinePlay size={16} />
-                            Convert
-                          </button>
-                        )}
-                        {pdf.layoutType === 'FIXED_LAYOUT' && (
-                          <button
-                            onClick={() => {
-                              setHifiModalPdf(pdf);
-                              setHifiZoneLevel('word');
-                            }}
-                            className="btn btn-warning"
-                            style={{
-                              padding: '8px 16px',
-                              fontSize: '14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              borderRadius: '6px',
-                              background: '#f57f17',
-                              color: '#fff',
-                              border: 'none'
-                            }}
-                            title="High-Fidelity FXL (300DPI, Inpainting Background, Exact Coords)"
-                          >
-                            <HiOutlineSparkles size={16} />
-                            Hi-Fi FXL
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(pdf.id)}
-                          className="btn btn-danger"
-                          style={{
-                            padding: '8px 16px',
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            borderRadius: '6px'
-                          }}
-                          title="Delete PDF"
-                        >
-                          <HiOutlineTrash size={16} />
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                    pdf={pdf}
+                    isHighlight={isHighlight}
+                    rowRef={(el) => { if (el) rowRefs.current[pdf.id] = el; }}
+                    onConvert={handleConvert}
+                    onHifi={handleHifi}
+                    onDelete={handleDelete}
+                  />
                 );
               })}
             </tbody>
@@ -399,101 +407,214 @@ const PdfList = () => {
         </div>
       )}
 
+      {/* ── Hi-Fi Modal ── */}
       {hifiModalPdf && (
-        <div className="hifi-convert-modal-overlay" onClick={() => setHifiModalPdf(null)}>
-          <div className="hifi-convert-modal" onClick={e => e.stopPropagation()}>
-            <h4>Hi-Fi FXL: Zone level</h4>
-            <p
-              style={{
-                marginBottom: '12px',
-                padding: '10px 12px',
-                background: '#fff8e1',
-                borderRadius: '6px',
-                fontSize: '14px',
-                color: '#5d4037',
-                border: '1px solid #ffcc80'
-              }}
-            >
-              <strong>Confirm PDF:</strong> {hifiModalPdf.originalFileName || hifiModalPdf.fileName || 'unknown'}{' '}
-              <span style={{ color: '#6d4c41' }}>(ID {hifiModalPdf.id})</span>
-              <br />
-              <span style={{ fontSize: '13px' }}>The job uses this document only. If this is not the file you just uploaded, close and click Hi-Fi on the correct row.</span>
-            </p>
-            <p style={{ marginBottom: '12px', color: '#666', fontSize: '14px' }}>
-              Extraction runs at glyph level by default. Choose how zones appear in Zoning Studio:
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="zoneLevel"
-                  value="word"
-                  checked={hifiZoneLevel === 'word'}
-                  onChange={() => setHifiZoneLevel('word')}
-                />
-                <span><strong>Word level</strong> — one zone per word in Zoning Studio</span>
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="zoneLevel"
-                  value="sentence"
-                  checked={hifiZoneLevel === 'sentence'}
-                  onChange={() => setHifiZoneLevel('sentence')}
-                />
-                <span><strong>Sentence level</strong> — one zone per sentence in Zoning Studio</span>
-              </label>
-            </div>
-            {hifiZoneLevel === 'sentence' && (
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', marginBottom: '4px', fontSize: '14px', color: '#555' }}>
-                  Last TOC page (optional)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="e.g. 3"
-                  value={hifiTocEndPage}
-                  onChange={(e) => setHifiTocEndPage(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  style={{ width: '80px', padding: '6px 8px', fontSize: '14px' }}
-                />
-                <span style={{ marginLeft: '8px', fontSize: '13px', color: '#666' }}>
-                  Pages 1–N use rectangle zones when auto-detect fails
-                </span>
+        <div
+          className="hifi-convert-modal-overlay"
+          onClick={() => !hifiSubmitting && setHifiModalPdf(null)}
+          role="presentation"
+        >
+          <div
+            className="hifi-convert-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="hifi-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <header className="hifi-modal-header">
+              <div className="hifi-modal-header-icon" aria-hidden>
+                <Sparkles size={22} strokeWidth={2} />
               </div>
-            )}
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setHifiModalPdf(null)}>Cancel</button>
+              <div className="hifi-modal-header-text">
+                <h4 id="hifi-modal-title">Hi-Fi FXL</h4>
+                <p className="hifi-modal-tagline">Glyph-level extraction · Zoning Studio zones</p>
+              </div>
               <button
                 type="button"
-                className="btn btn-warning"
-                style={{ background: '#f57f17', color: '#fff', border: 'none' }}
+                className="hifi-modal-close"
+                onClick={() => !hifiSubmitting && setHifiModalPdf(null)}
+                disabled={hifiSubmitting}
+                aria-label="Close dialog"
+              >
+                <X size={18} />
+              </button>
+            </header>
+
+            <div className="hifi-file-chip">
+              <div className="hifi-file-chip-icon" aria-hidden>
+                <FileText size={18} />
+              </div>
+              <div className="hifi-file-chip-body">
+                <span className="hifi-file-chip-label">Document for this job</span>
+                <span className="hifi-file-chip-name" title={hifiModalPdf.originalFileName || hifiModalPdf.fileName || ''}>
+                  {hifiModalPdf.originalFileName || hifiModalPdf.fileName || 'Unknown file'}
+                </span>
+                <span className="hifi-file-chip-meta">PDF ID {hifiModalPdf.id}</span>
+              </div>
+            </div>
+            <p className="hifi-hint">
+              <Info size={14} aria-hidden />
+              <span>If this is not the file you just uploaded, close and use Hi-Fi FXL on the correct row.</span>
+            </p>
+
+            <p className="hifi-desc">How should zones appear in Zoning Studio?</p>
+            <div className="hifi-zone-options" role="group" aria-label="Zone granularity">
+              <button
+                type="button"
+                className={`hifi-zone-option${hifiZoneLevel === 'word' ? ' hifi-zone-option--active' : ''}`}
+                onClick={() => setHifiZoneLevel('word')}
+                aria-pressed={hifiZoneLevel === 'word'}
+              >
+                <span className="hifi-zone-option-icon">
+                  <Type size={20} strokeWidth={2} />
+                </span>
+                <span className="hifi-zone-option-copy">
+                  <strong>Word level</strong>
+                  <span>One zone per word</span>
+                </span>
+                {hifiZoneLevel === 'word' && (
+                  <span className="hifi-zone-option-check" aria-hidden>
+                    <Check size={18} strokeWidth={2.5} />
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                className={`hifi-zone-option${hifiZoneLevel === 'sentence' ? ' hifi-zone-option--active' : ''}`}
+                onClick={() => setHifiZoneLevel('sentence')}
+                aria-pressed={hifiZoneLevel === 'sentence'}
+              >
+                <span className="hifi-zone-option-icon">
+                  <TextQuote size={20} strokeWidth={2} />
+                </span>
+                <span className="hifi-zone-option-copy">
+                  <strong>Sentence level</strong>
+                  <span>One zone per sentence</span>
+                </span>
+                {hifiZoneLevel === 'sentence' && (
+                  <span className="hifi-zone-option-check" aria-hidden>
+                    <Check size={18} strokeWidth={2.5} />
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {hifiZoneLevel === 'sentence' && (
+              <div className="hifi-toc-panel">
+                <div className="hifi-toc-inner">
+                  <label className="hifi-toc-label" htmlFor="hifi-toc-end-page">
+                    Last TOC page <span className="hifi-toc-optional">(optional)</span>
+                  </label>
+                  <div className="hifi-toc-controls">
+                    <input
+                      id="hifi-toc-end-page"
+                      type="number"
+                      min={1}
+                      placeholder="e.g. 3"
+                      value={hifiTocEndPage}
+                      onChange={(e) => setHifiTocEndPage(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    />
+                    <p className="hifi-toc-help">Pages 1 through N use rectangle zones when auto-detect fails.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <footer className="hifi-modal-footer">
+              <button
+                type="button"
+                className="hifi-btn hifi-btn--ghost"
+                onClick={() => setHifiModalPdf(null)}
+                disabled={hifiSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="hifi-btn hifi-btn--primary"
+                disabled={hifiSubmitting}
                 onClick={async () => {
                   const targetPdf = hifiModalPdf;
-                  setHifiModalPdf(null);
+                  setHifiSubmitting(true);
+                  setError('');
                   try {
                     const opts = { zoneLevel: hifiZoneLevel };
                     const tocNum = hifiTocEndPage.trim() ? parseInt(hifiTocEndPage, 10) : null;
-                    if (hifiZoneLevel === 'sentence' && tocNum != null && !isNaN(tocNum) && tocNum > 0) opts.tocEndPage = tocNum;
+                    if (hifiZoneLevel === 'sentence' && tocNum != null && !isNaN(tocNum) && tocNum > 0) {
+                      opts.tocEndPage = tocNum;
+                    }
                     const data = await kitabooService.startHighFidelity(targetPdf.id, opts);
                     const id = data?.jobId || data?.data?.jobId;
-                    if (id) navigate('/conversions');
-                    else setError('No job ID returned');
+                    if (id) {
+                      setHifiModalPdf(null);
+                      navigate('/conversions');
+                    } else {
+                      setError('No job ID returned');
+                    }
                   } catch (err) {
                     console.error('Failed to start High-Fidelity FXL:', err);
                     setError(err.response?.data?.message || err.message || 'Failed to start High-Fidelity FXL');
+                  } finally {
+                    setHifiSubmitting(false);
                   }
                 }}
               >
-                Convert
+                {hifiSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="hifi-btn-spinner" aria-hidden />
+                    Starting…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} aria-hidden />
+                    Start conversion
+                  </>
+                )}
               </button>
-            </div>
+            </footer>
           </div>
         </div>
       )}
+      {/* ── PDF Preview Modal ── */}
+      {previewPdf && (
+        <div className="pld-preview-overlay" onClick={() => setPreviewPdf(null)}>
+          <div className="pld-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pld-preview-header">
+              <span className="pld-preview-title" title={previewPdf.originalFileName}>
+                {previewPdf.originalFileName || 'PDF Preview'}
+              </span>
+              <button
+                className="pld-preview-close"
+                onClick={() => setPreviewPdf(null)}
+                aria-label="Close preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <iframe
+              className="pld-preview-iframe"
+              src={mediaUrl(`/api/pdfs/${previewPdf.id}/view`)}
+              title={`Preview: ${previewPdf.originalFileName}`}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete confirmation modal ── */}
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, pdfId: null, loading: false })}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        subtitle="This action cannot be undone."
+        message="Are you sure you want to delete this PDF? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleteModal.loading}
+      />
     </div>
   );
 };
 
 export default PdfList;
-

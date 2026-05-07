@@ -1,66 +1,147 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { aiConfigService } from '../services/aiConfigService';
+import {
+  Zap,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  Eye,
+  EyeOff,
+  Cpu,
+  KeyRound,
+  MessageSquare,
+  Wifi,
+} from 'lucide-react';
+import './AiConfig.css';
 
+/* ── helpers ─────────────────────────────────────────────────── */
+const isMasked = (key) => key && (key.includes('****') || key.length < 20);
+
+const fmtDate = (d) => {
+  if (!d) return null;
+  return new Date(d).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+};
+
+/* ── sub-components ──────────────────────────────────────────── */
+const StatusBadge = ({ enabled }) => (
+  <span className={`aic-badge ${enabled ? 'aic-badge--on' : 'aic-badge--off'}`}>
+    <span className="aic-badge-dot" />
+    {enabled ? 'Active' : 'Inactive'}
+  </span>
+);
+
+const Alert = ({ type, children, onDismiss }) => (
+  <div className={`aic-alert aic-alert--${type}`} role="alert">
+    <span className="aic-alert-icon">
+      {type === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+    </span>
+    <span className="aic-alert-msg">{children}</span>
+    {onDismiss && (
+      <button className="aic-alert-close" onClick={onDismiss} aria-label="Dismiss">×</button>
+    )}
+  </div>
+);
+
+const Skeleton = ({ w = '100%', h = 16, radius = 6 }) => (
+  <div className="aic-skel" style={{ width: w, height: h, borderRadius: radius }} />
+);
+
+/* ── AiConfig page ───────────────────────────────────────────── */
 const AiConfig = () => {
   const [config, setConfig] = useState({
     id: null,
     apiKey: '',
     modelName: 'gemini-2.5-flash',
-    isActive: false,
+    isActive: true,
     description: '',
-    updatedAt: null
+    updatedAt: null,
   });
-  const [originalApiKey, setOriginalApiKey] = useState(''); // Track if API key was masked
+  const [originalApiKey, setOriginalApiKey] = useState('');
   const [availableModels, setAvailableModels] = useState([]);
-  const [status, setStatus] = useState({});
+  const [aiStatus, setAiStatus] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [showKey, setShowKey] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [testDetails, setTestDetails] = useState(null);
 
-  // Helper function to detect if API key is masked
-  const isMaskedApiKey = (key) => {
-    return key && (key.includes('****') || key.length < 20);
-  };
-
-  useEffect(() => {
-    loadConfig();
-  }, []);
+  useEffect(() => { loadConfig(); }, []);
 
   const loadConfig = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const [currentConfig, models, aiStatus] = await Promise.all([
+      const settled = await Promise.allSettled([
         aiConfigService.getCurrentConfig(),
         aiConfigService.getAvailableModels(),
-        aiConfigService.getStatus()
+        aiConfigService.getStatus(),
       ]);
 
-      if (currentConfig) {
-        // Check if API key is masked
-        const apiKeyIsMasked = isMaskedApiKey(currentConfig.apiKey);
-        setConfig({
-          id: currentConfig.id || null,
-          apiKey: apiKeyIsMasked ? '' : currentConfig.apiKey, // Clear masked keys
-          modelName: currentConfig.modelName || 'gemini-2.5-flash',
-          isActive: currentConfig.isActive !== undefined ? currentConfig.isActive : true,
-          description: currentConfig.description || '',
-          updatedAt: currentConfig.updatedAt || null
-        });
-        // Store original masked key to detect if user changed it
-        setOriginalApiKey(apiKeyIsMasked ? currentConfig.apiKey : '');
+      const [cfgRes, modelsRes, statusRes] = settled;
+      const errs = [];
+
+      if (cfgRes.status === 'fulfilled') {
+        const currentConfig = cfgRes.value;
+        if (currentConfig) {
+          const masked = isMasked(currentConfig.apiKey);
+          setConfig({
+            id:          currentConfig.id ?? null,
+            apiKey:      masked ? '' : (currentConfig.apiKey ?? ''),
+            modelName:   currentConfig.modelName ?? 'gemini-2.5-flash',
+            isActive:    currentConfig.isActive !== undefined ? currentConfig.isActive : true,
+            description: currentConfig.description ?? '',
+            updatedAt:   currentConfig.updatedAt ?? null,
+          });
+          setOriginalApiKey(masked ? currentConfig.apiKey : '');
+        }
+      } else {
+        const e = cfgRes.reason;
+        errs.push(e?.response?.data?.error || e?.message || 'Could not load saved configuration.');
       }
-      setAvailableModels(models);
-      setStatus(aiStatus);
+
+      if (modelsRes.status === 'fulfilled') {
+        setAvailableModels(Array.isArray(modelsRes.value) ? modelsRes.value : []);
+      } else {
+        errs.push(
+          modelsRes.reason?.response?.data?.error ||
+            modelsRes.reason?.message ||
+            'Could not load model list.'
+        );
+        setAvailableModels([]);
+      }
+
+      if (statusRes.status === 'fulfilled') {
+        setAiStatus(statusRes.value ?? {});
+      } else {
+        errs.push(
+          statusRes.reason?.response?.data?.error ||
+            statusRes.reason?.message ||
+            'Could not load AI status.'
+        );
+        setAiStatus({});
+      }
+
+      if (errs.length) setError(errs.filter(Boolean).join(' '));
     } catch (err) {
-      console.error('Error loading config:', err);
-      setError('Failed to load configuration');
+      console.error('[AiConfig] load error:', err);
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to load configuration. Please refresh and try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError('');
@@ -68,31 +149,24 @@ const AiConfig = () => {
     setTestDetails(null);
 
     try {
-      // Prepare config to send - only include API key if it's new (not masked and different)
-      const configToSave = {
-        id: config.id,
-        modelName: config.modelName,
-        isActive: config.isActive,
-        description: config.description
+      const payload = {
+        id:          config.id,
+        modelName:   config.modelName,
+        isActive:    config.isActive,
+        description: config.description,
       };
 
-      // Only include API key if:
-      // 1. It's provided and not empty
-      // 2. It's not masked (doesn't contain ****)
-      // 3. It's different from the original masked key
-      if (config.apiKey && config.apiKey.trim().length > 0 && !isMaskedApiKey(config.apiKey)) {
-        if (config.apiKey !== originalApiKey) {
-          configToSave.apiKey = config.apiKey.trim();
-        }
+      // Only send apiKey if the user typed a new one
+      const newKey = config.apiKey?.trim();
+      if (newKey && !isMasked(newKey) && newKey !== originalApiKey) {
+        payload.apiKey = newKey;
       }
 
-      const savedConfig = await aiConfigService.saveConfig(configToSave);
-      setSuccess('Configuration saved successfully! All settings have been stored.');
-      
-      // Reload config to show updated values (API key will be masked)
+      await aiConfigService.saveConfig(payload);
+      setSuccess('Configuration saved successfully.');
       await loadConfig();
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Failed to save configuration');
+      setError(err?.response?.data?.error || err.message || 'Failed to save configuration.');
     } finally {
       setSaving(false);
     }
@@ -102,228 +176,282 @@ const AiConfig = () => {
     setError('');
     setSuccess('');
     setTestDetails(null);
-    
-    // Check if API key is provided
-    if (!config.apiKey || config.apiKey.trim().length === 0) {
-      if (!originalApiKey) {
-        setError('Please enter an API key to test the connection');
-        return;
-      }
-      // If there's an original masked key, we can't test without a new key
-      setError('Please enter a new API key to test the connection');
+
+    const keyToTest = config.apiKey?.trim();
+    if (!keyToTest && !originalApiKey) {
+      setError('Enter an API key before testing the connection.');
+      return;
+    }
+    if (keyToTest && isMasked(keyToTest)) {
+      setError('Enter a valid (unmasked) API key to test.');
+      return;
+    }
+    if (!keyToTest && originalApiKey) {
+      setError('Enter a new API key to test (the saved key is masked for security).');
       return;
     }
 
-    // Check if API key is masked
-    if (isMaskedApiKey(config.apiKey)) {
-      setError('Please enter a valid API key (not masked) to test the connection');
-      return;
-    }
-
+    setTesting(true);
     try {
-      const result = await aiConfigService.testConnection(config.apiKey, config.modelName);
-      setSuccess(result.summary || 'Connection test successful!');
-      if (result.details) {
-        setTestDetails(result.details);
-      }
+      const result = await aiConfigService.testConnection(keyToTest, config.modelName);
+      setSuccess(result?.summary || 'Connection test successful!');
+      if (result?.details) setTestDetails(result.details);
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Connection test failed');
-      setTestDetails(null);
+      setError(err?.response?.data?.error || err.message || 'Connection test failed.');
+    } finally {
+      setTesting(false);
     }
   };
 
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
-
+  /* ── render ── */
   return (
-    <div className="container">
-      <h1>AI Configuration</h1>
+    <div className="aic-root">
 
-      {error && <div className="error">{error}</div>}
-      {success && <div className="success">{success}</div>}
-      
+      {/* ── Page header ── */}
+      <header className="aic-page-header">
+        <div className="aic-page-header-left">
+          <span className="aic-page-icon">
+            <Zap size={20} />
+          </span>
+          <div>
+            <h1 className="aic-page-title">AI Configuration</h1>
+            <p className="aic-page-sub">Manage your Gemini API key, model selection, and connection settings</p>
+          </div>
+        </div>
+        <button
+          className="aic-refresh-btn"
+          onClick={loadConfig}
+          disabled={loading}
+          aria-label="Reload configuration"
+          title="Reload"
+        >
+          <RefreshCw size={16} className={loading ? 'aic-spin' : ''} />
+        </button>
+      </header>
+
+      {/* ── Alerts ── */}
+      {error   && <Alert type="error"   onDismiss={() => setError('')}>{error}</Alert>}
+      {success && <Alert type="success" onDismiss={() => setSuccess('')}>{success}</Alert>}
+
+      {/* ── Status bar ── */}
+      <div className="aic-status-bar">
+        <div className="aic-status-item">
+          <Wifi size={15} className="aic-status-icon" />
+          <span className="aic-status-label">Status</span>
+          {loading ? <Skeleton w={60} h={22} radius={20} /> : <StatusBadge enabled={aiStatus.enabled} />}
+        </div>
+        {aiStatus.model && (
+          <div className="aic-status-item">
+            <Cpu size={15} className="aic-status-icon" />
+            <span className="aic-status-label">Active model</span>
+            <span className="aic-status-value">{aiStatus.model}</span>
+          </div>
+        )}
+        {config.updatedAt && (
+          <div className="aic-status-item aic-status-item--right">
+            <span className="aic-status-label">Last saved</span>
+            <span className="aic-status-value">{fmtDate(config.updatedAt)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Test result details ── */}
       {testDetails && (
-        <div className="card" style={{ marginTop: '20px', backgroundColor: '#f0f9ff', border: '1px solid #0ea5e9' }}>
-          <h3 style={{ marginTop: '0', color: '#0369a1' }}>Test Configuration Details</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-            <div>
-              <strong style={{ color: '#64748b' }}>Status:</strong>
-              <div style={{ color: '#059669', fontWeight: 'bold', marginTop: '5px' }}>
-                ✓ {testDetails.status === 'connected' ? 'Connected' : testDetails.status}
-              </div>
+        <div className="aic-test-result">
+          <div className="aic-test-result-header">
+            <CheckCircle size={16} />
+            Connection verified
+          </div>
+          <div className="aic-test-result-grid">
+            <div className="aic-test-cell">
+              <span className="aic-test-cell-label">Status</span>
+              <span className="aic-test-cell-value aic-test-cell-value--green">
+                {testDetails.status === 'connected' ? '✓ Connected' : testDetails.status}
+              </span>
             </div>
-            <div>
-              <strong style={{ color: '#64748b' }}>Model:</strong>
-              <div style={{ marginTop: '5px' }}>{testDetails.model}</div>
+            <div className="aic-test-cell">
+              <span className="aic-test-cell-label">Model</span>
+              <span className="aic-test-cell-value">{testDetails.model}</span>
             </div>
-            <div>
-              <strong style={{ color: '#64748b' }}>API Key:</strong>
-              <div style={{ marginTop: '5px', fontFamily: 'monospace' }}>{testDetails.apiKey}</div>
+            <div className="aic-test-cell">
+              <span className="aic-test-cell-label">API key</span>
+              <span className="aic-test-cell-value aic-mono">{testDetails.apiKey}</span>
             </div>
-            <div>
-              <strong style={{ color: '#64748b' }}>Response Time:</strong>
-              <div style={{ marginTop: '5px', color: '#059669' }}>{testDetails.responseTime}</div>
+            <div className="aic-test-cell">
+              <span className="aic-test-cell-label">Response time</span>
+              <span className="aic-test-cell-value aic-test-cell-value--green">{testDetails.responseTime}</span>
             </div>
-            <div>
-              <strong style={{ color: '#64748b' }}>Response Received:</strong>
-              <div style={{ marginTop: '5px', color: '#059669' }}>✓ {testDetails.responseReceived}</div>
+            <div className="aic-test-cell">
+              <span className="aic-test-cell-label">Response received</span>
+              <span className="aic-test-cell-value aic-test-cell-value--green">✓ {testDetails.responseReceived}</span>
             </div>
-            <div>
-              <strong style={{ color: '#64748b' }}>Tested At:</strong>
-              <div style={{ marginTop: '5px', fontSize: '0.9em' }}>
-                {new Date(testDetails.timestamp).toLocaleString()}
-              </div>
+            <div className="aic-test-cell">
+              <span className="aic-test-cell-label">Tested at</span>
+              <span className="aic-test-cell-value">{fmtDate(testDetails.timestamp)}</span>
             </div>
           </div>
         </div>
       )}
 
-      <div className="card">
-        <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
-            <div>
-              <strong>Status: </strong>
-              <span className={status.enabled ? 'badge badge-success' : 'badge badge-danger'}>
-                {status.enabled ? 'Enabled' : 'Disabled'}
-              </span>
-            </div>
-            {status.model && (
-              <div>
-                <strong>Model: </strong>
-                <span style={{ color: '#495057', fontWeight: '500' }}>{status.model}</span>
-              </div>
-            )}
-            {config.id && (
-              <div style={{ marginLeft: 'auto', fontSize: '0.9em', color: '#6c757d' }}>
-                ✓ Configuration Saved
-                {config.updatedAt && (
-                  <div style={{ fontSize: '0.85em', marginTop: '4px', color: '#868e96' }}>
-                    Last updated: {new Date(config.updatedAt).toLocaleString()}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+      {/* ── Main form card ── */}
+      <div className="aic-card">
+        <div className="aic-card-header">
+          <Settings size={16} />
+          <span>Configuration settings</span>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>API Key {originalApiKey ? '(leave blank to keep current)' : '*'}</label>
-            {originalApiKey && (
-              <div style={{ 
-                padding: '8px 12px', 
-                backgroundColor: '#e7f5e7', 
-                border: '1px solid #c3e6c3', 
-                borderRadius: '4px', 
-                marginBottom: '8px',
-                fontSize: '0.9em',
-                color: '#155724'
-              }}>
-                ✓ API Key is saved and configured: {originalApiKey}
-              </div>
-            )}
-            <input
-              type="password"
-              value={config.apiKey}
-              onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-              placeholder={originalApiKey ? "Enter new API key or leave blank to keep current" : "Enter your Gemini API key"}
-              required={!originalApiKey}
-            />
-            <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-              {originalApiKey ? (
-                <>Current API key is configured and saved. Enter a new key only if you want to change it.<br /></>
-              ) : null}
-              Get your API key from https://aistudio.google.com/app/apikey
-            </small>
+        {loading ? (
+          <div className="aic-form-skeleton">
+            <Skeleton w="30%" h={13} />
+            <Skeleton w="100%" h={42} />
+            <Skeleton w="30%" h={13} />
+            <Skeleton w="100%" h={42} />
+            <Skeleton w="30%" h={13} />
+            <Skeleton w="100%" h={80} />
           </div>
+        ) : (
+          <form onSubmit={handleSave} noValidate>
 
-          <div className="form-group">
-            <label>Model Name *</label>
-            {config.id && config.modelName && (
-              <div style={{ 
-                padding: '6px 10px', 
-                backgroundColor: '#f0f9ff', 
-                border: '1px solid #bae6fd', 
-                borderRadius: '4px', 
-                marginBottom: '8px',
-                fontSize: '0.85em',
-                color: '#0369a1',
-                display: 'inline-block'
-              }}>
-                Current saved: {config.modelName}
+            {/* API Key */}
+            <div className="aic-field">
+              <label className="aic-label" htmlFor="aic-api-key">
+                <KeyRound size={13} />
+                API Key
+                {!originalApiKey && <span className="aic-required">*</span>}
+              </label>
+
+              {originalApiKey && (
+                <div className="aic-saved-notice">
+                  <CheckCircle size={13} />
+                  API key is saved — enter a new one only to replace it
+                  <span className="aic-saved-masked">{originalApiKey}</span>
+                </div>
+              )}
+
+              <div className="aic-input-wrap">
+                <input
+                  id="aic-api-key"
+                  className="aic-input"
+                  type={showKey ? 'text' : 'password'}
+                  value={config.apiKey}
+                  onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                  placeholder={
+                    originalApiKey
+                      ? 'Enter new key to replace, or leave blank to keep current'
+                      : 'Enter your Gemini API key'
+                  }
+                  required={!originalApiKey}
+                  autoComplete="off"
+                />
+                <button
+                  type="button"
+                  className="aic-input-toggle"
+                  onClick={() => setShowKey((v) => !v)}
+                  aria-label={showKey ? 'Hide API key' : 'Show API key'}
+                >
+                  {showKey ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
-            )}
-            <select
-              value={config.modelName}
-              onChange={(e) => setConfig({ ...config, modelName: e.target.value })}
-              required
-            >
-              {availableModels.map(model => (
-                <option key={model} value={model}>{model}</option>
-              ))}
-            </select>
-          </div>
+              <p className="aic-hint">
+                Get your key at{' '}
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">
+                  aistudio.google.com
+                </a>
+              </p>
+            </div>
 
-          <div className="form-group">
-            <label>
-              <input
-                type="checkbox"
-                checked={config.isActive}
-                onChange={(e) => setConfig({ ...config, isActive: e.target.checked })}
-                style={{ width: 'auto', marginRight: '10px' }}
+            {/* Model */}
+            <div className="aic-field">
+              <label className="aic-label" htmlFor="aic-model">
+                <Cpu size={13} />
+                Model
+                <span className="aic-required">*</span>
+              </label>
+              <select
+                id="aic-model"
+                className="aic-select"
+                value={config.modelName}
+                onChange={(e) => setConfig({ ...config, modelName: e.target.value })}
+                required
+              >
+                {availableModels.length === 0 ? (
+                  <option value={config.modelName}>{config.modelName}</option>
+                ) : (
+                  availableModels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Description */}
+            <div className="aic-field">
+              <label className="aic-label" htmlFor="aic-desc">
+                <MessageSquare size={13} />
+                Description
+                <span className="aic-optional">(optional)</span>
+              </label>
+              <textarea
+                id="aic-desc"
+                className="aic-textarea"
+                rows={3}
+                value={config.description}
+                onChange={(e) => setConfig({ ...config, description: e.target.value })}
+                placeholder="Add a note about this configuration…"
               />
-              Active
-            </label>
-          </div>
+            </div>
 
-          <div className="form-group">
-            <label>Description</label>
-            {config.id && config.description && (
-              <div style={{ 
-                padding: '6px 10px', 
-                backgroundColor: '#f0f9ff', 
-                border: '1px solid #bae6fd', 
-                borderRadius: '4px', 
-                marginBottom: '8px',
-                fontSize: '0.85em',
-                color: '#0369a1'
-              }}>
-                Current saved description shown below
-              </div>
-            )}
-            <textarea
-              value={config.description || ''}
-              onChange={(e) => setConfig({ ...config, description: e.target.value })}
-              rows="3"
-              placeholder="Enter a description for this configuration"
-            />
-          </div>
+            {/* Active toggle */}
+            <div className="aic-field aic-field--inline">
+              <label className="aic-toggle-label" htmlFor="aic-active">
+                <div className={`aic-toggle ${config.isActive ? 'aic-toggle--on' : ''}`}>
+                  <input
+                    id="aic-active"
+                    type="checkbox"
+                    className="aic-toggle-input"
+                    checked={config.isActive}
+                    onChange={(e) => setConfig({ ...config, isActive: e.target.checked })}
+                  />
+                  <span className="aic-toggle-thumb" />
+                </div>
+                <span className="aic-toggle-text">
+                  {config.isActive ? 'Configuration active' : 'Configuration inactive'}
+                </span>
+              </label>
+            </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={saving}
-            >
-              {saving ? 'Saving...' : 'Save Configuration'}
-            </button>
-            <button
-              type="button"
-              onClick={handleTest}
-              className="btn btn-success"
-            >
-              Test Connection
-            </button>
-          </div>
-        </form>
+            {/* Actions */}
+            <div className="aic-actions">
+              <button
+                type="submit"
+                className="aic-btn aic-btn--primary"
+                disabled={saving}
+              >
+                {saving ? (
+                  <><RefreshCw size={14} className="aic-spin" /> Saving…</>
+                ) : (
+                  <><Settings size={14} /> Save configuration</>
+                )}
+              </button>
+              <button
+                type="button"
+                className="aic-btn aic-btn--secondary"
+                onClick={handleTest}
+                disabled={testing || saving}
+              >
+                {testing ? (
+                  <><RefreshCw size={14} className="aic-spin" /> Testing…</>
+                ) : (
+                  <><Zap size={14} /> Test connection</>
+                )}
+              </button>
+            </div>
+
+          </form>
+        )}
       </div>
     </div>
   );
 };
 
 export default AiConfig;
-
-
-
-

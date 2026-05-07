@@ -1,8 +1,22 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { conversionService } from '../services/conversionService';
 import EpubImageEditor from '../components/EpubImageEditor';
-import { HiOutlineVolumeUp } from 'react-icons/hi';
+import {
+  AlertCircle,
+  ArrowLeft,
+  FileCode,
+  FilePenLine,
+  FileWarning,
+  LayoutDashboard,
+  Loader2,
+  PenLine,
+  Save,
+  Sparkles,
+} from 'lucide-react';
+import './EpubImageEditorPage.css';
+
+const ic = { strokeWidth: 2, 'aria-hidden': true };
 
 const EpubImageEditorPage = () => {
   const { jobId } = useParams();
@@ -11,39 +25,135 @@ const EpubImageEditorPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Guard against Strict Mode double-invoke and stale jobId
+  const loadingRef   = useRef(false);
+  const mountedRef   = useRef(true);
+  const lastJobIdRef = useRef(null);
+
   useEffect(() => {
-    if (jobId) {
-      loadPages();
-    }
-  }, [jobId]);
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  useEffect(() => {
+    // Skip if no jobId, already loading for this jobId, or component unmounted
+    if (!jobId) return;
+    if (loadingRef.current && lastJobIdRef.current === jobId) return;
+
+    loadingRef.current   = true;
+    lastJobIdRef.current = jobId;
+
+    loadPages();
+
+    // No cleanup interval needed here — loadPages is a one-shot async call
+  }, [jobId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPages = async () => {
+    if (!mountedRef.current) return;
+
     try {
       setLoading(true);
-      const pagesList = await conversionService.getJobPages(parseInt(jobId));
-      setPages(pagesList || []);
-      
-      // Set first page as default
-      if (pagesList && pagesList.length > 0) {
-        setSelectedPage(pagesList[0].pageNumber);
+      setError('');
+
+      // Verify the job exists and is completed
+      let job;
+      try {
+        job = await conversionService.getConversionJob(parseInt(jobId));
+      } catch (jobErr) {
+        if (!mountedRef.current) return;
+        console.error('Error checking job status:', jobErr);
+        setError('Failed to load conversion job details.');
+        return;
       }
+
+      if (!mountedRef.current) return;
+
+      // null = 404 (job deleted)
+      if (!job) {
+        setError('Conversion job not found. It may have been deleted.');
+        return;
+      }
+
+      if (job.status !== 'COMPLETED') {
+        setError(`Job is ${job.status} — please wait for conversion to complete before editing.`);
+        return;
+      }
+
+      // Load XHTML pages
+      let pagesList = await conversionService.getJobPages(parseInt(jobId));
+      if (!mountedRef.current) return;
+
+      // If no pages, try regenerating once
+      if (!pagesList || pagesList.length === 0) {
+        try {
+          await conversionService.regenerateEpub(parseInt(jobId));
+          if (!mountedRef.current) return;
+          pagesList = await conversionService.getJobPages(parseInt(jobId));
+          if (!mountedRef.current) return;
+        } catch (regenErr) {
+          console.error('[EpubImageEditorPage] Regeneration failed:', regenErr);
+        }
+      }
+
+      if (!pagesList || pagesList.length === 0) {
+        setError(
+          'No editable XHTML pages found for this job. ' +
+          'This may happen if the conversion did not produce intermediate HTML files. ' +
+          'Try re-running the conversion from the Conversions page.'
+        );
+        return;
+      }
+
+      setPages(pagesList);
+      setSelectedPage(pagesList[0].pageNumber);
     } catch (err) {
+      if (!mountedRef.current) return;
+      // Swallow 404 — job was deleted between checks
+      if (err.response?.status === 404) {
+        setError('Conversion job not found. It may have been deleted.');
+        return;
+      }
       console.error('Error loading pages:', err);
       setError(err.response?.data?.message || err.message || 'Failed to load pages');
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        loadingRef.current = false;
+      }
     }
   };
 
   const [editorState, setEditorState] = useState(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [saveToast, setSaveToast] = useState(null); // { type: 'success' | 'error', message: string }
 
-  const handleSave = (xhtml) => {
-    console.log('XHTML saved:', xhtml);
-  };
+  // Auto-dismiss toast after 3 s
+  useEffect(() => {
+    if (!saveToast) return;
+    const t = setTimeout(() => setSaveToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [saveToast]);
+
+  const handleSave = useCallback(async (xhtml) => {
+    if (!jobId || !selectedPage) return;
+    try {
+      await conversionService.savePageXhtml(parseInt(jobId), selectedPage, xhtml);
+      setSaveToast({ type: 'success', message: 'Page saved successfully.' });
+    } catch (err) {
+      console.error('[EpubImageEditorPage] Save failed:', err);
+      setSaveToast({
+        type: 'error',
+        message: err.response?.data?.message || err.message || 'Save failed. Please try again.',
+      });
+    }
+  }, [jobId, selectedPage]);
   
   const handleEditorStateChange = useCallback((state) => {
     setEditorState(state);
+  }, []);
+
+  const handleRequestPageChange = useCallback((nextPage) => {
+    setSelectedPage(nextPage);
   }, []);
 
   const handleSyncStudio = async () => {
@@ -62,174 +172,219 @@ const EpubImageEditorPage = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '2em', textAlign: 'center' }}>
-        <p>Loading pages...</p>
+      <div style={{ padding: '2em', textAlign: 'center', color: '#374151' }}>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <Loader2 size={36} strokeWidth={2.25} className="eiep-icon-spin" aria-hidden />
+          <p style={{ margin: 0 }}>Loading pages…</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '2em' }}>
-        <div style={{ color: 'red', marginBottom: '1em' }}>{error}</div>
-        <button onClick={() => { window.location.href = '/conversions'; }}>Back to Conversions</button>
+      <div style={{ padding: '2em', maxWidth: 560, margin: '0 auto' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: 8,
+            padding: '14px 16px',
+            color: '#b91c1c',
+            marginBottom: '1em',
+            lineHeight: 1.55,
+          }}
+        >
+          <AlertCircle size={20} {...ic} style={{ flexShrink: 0, marginTop: 2 }} />
+          <span>{error}</span>
+        </div>
+        <button
+          type="button"
+          className="eiep-btn-inline"
+          onClick={() => { window.location.href = '/conversions'; }}
+        >
+          <ArrowLeft size={18} {...ic} />
+          Back to Conversions
+        </button>
       </div>
     );
   }
 
   if (pages.length === 0) {
     return (
-      <div style={{ padding: '2em', textAlign: 'center' }}>
-        <p>No pages found for this conversion job.</p>
-        <button onClick={() => { window.location.href = '/conversions'; }}>Back to Conversions</button>
+      <div style={{ padding: '2em', textAlign: 'center', color: '#374151' }}>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <FileWarning size={40} {...ic} style={{ color: '#9ca3af' }} />
+          <p style={{ margin: 0 }}>No pages found for this conversion job.</p>
+          <button
+            type="button"
+            className="eiep-btn-inline"
+            onClick={() => { window.location.href = '/conversions'; }}
+          >
+            <ArrowLeft size={18} {...ic} />
+            Back to Conversions
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '1em', background: '#fff', borderBottom: '1px solid #e0e0e0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1>EPUB Image Editor - Job {jobId}</h1>
-          <div style={{ display: 'flex', gap: '1em', alignItems: 'center' }}>
-            <label>
-              Select Page:
-              <select
-                value={selectedPage || ''}
-                onChange={(e) => setSelectedPage(parseInt(e.target.value))}
-                style={{ marginLeft: '0.5em', padding: '0.5em' }}
-              >
-                {pages.map((page) => (
-                  <option key={page.pageNumber} value={page.pageNumber}>
-                    Page {page.pageNumber}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {editorState && (
-              <>
-                <button
-                  onClick={() => editorState.setEditMode(!editorState.editMode)}
-                  style={{
-                    padding: '0.5em 1em',
-                    backgroundColor: editorState.editMode ? '#2196F3' : '#f5f5f5',
-                    color: editorState.editMode ? 'white' : '#666',
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  {editorState.editMode ? '✏️ Edit Mode ON' : '✏️ Edit Mode OFF'}
-                </button>
-                {editorState.modified && (
-                  <span style={{ color: '#ff9800', fontWeight: 'bold', fontSize: '0.9em' }}>Modified</span>
-                )}
-                <button
-                  onClick={editorState.handleReset}
-                  disabled={!editorState.modified || !editorState.editMode}
-                  style={{
-                    padding: '0.5em 1.5em',
-                    backgroundColor: '#f5f5f5',
-                    color: '#666',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: (!editorState.modified || !editorState.editMode) ? 'not-allowed' : 'pointer',
-                    opacity: (!editorState.modified || !editorState.editMode) ? 0.5 : 1
-                  }}
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={editorState.handleSave}
-                  disabled={editorState.saving || !editorState.modified || !editorState.editMode}
-                  style={{
-                    padding: '0.5em 1.5em',
-                    backgroundColor: '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: (editorState.saving || !editorState.modified || !editorState.editMode) ? 'not-allowed' : 'pointer',
-                    opacity: (editorState.saving || !editorState.modified || !editorState.editMode) ? 0.6 : 1,
-                    minWidth: '120px'
-                  }}
-                >
-                  {editorState.saving ? 'Saving...' : 'Save XHTML'}
-                </button>
-              </>
-            )}
-            <button
-              onClick={handleSyncStudio}
-              disabled={regenerating}
-              style={{
-                padding: '0.5em 1em',
-                backgroundColor: regenerating ? '#7B1FA2' : '#9C27B0',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: regenerating ? 'not-allowed' : 'pointer',
-                opacity: regenerating ? 0.7 : 1,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5em'
-              }}
-            >
-              <HiOutlineVolumeUp size={18} />
-              {regenerating ? 'Regenerating...' : 'Sync Studio'}
-            </button>
-            {editorState?.handleRegenerateChapter && (
-              <button
-                onClick={editorState.handleRegenerateChapter}
-                disabled={editorState.regenerating}
-                style={{
-                  padding: '0.5em 1em',
-                  backgroundColor: editorState.regenerating ? '#999' : '#E91E63',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: editorState.regenerating ? 'not-allowed' : 'pointer',
-                  opacity: editorState.regenerating ? 0.6 : 1,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5em'
-                }}
-                title={editorState.regenerating ? 'Regenerating chapter...' : `Regenerate chapter containing current page using Gemini AI`}
-              >
-                {editorState.regenerating ? '🔄 Regenerating...' : '📚 Regenerate Chapter'}
-              </button>
-            )}
-            {editorState?.openCodeViewer && (
-              <button
-                onClick={editorState.openCodeViewer}
-                style={{
-                  padding: '0.5em 1em',
-                  backgroundColor: '#2196F3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5em'
-                }}
-                title="View XHTML Code"
-              >
-                📄 View Code
-              </button>
-            )}
-            <button onClick={() => { window.location.href = '/conversions'; }}>Back to Conversions</button>
-          </div>
+    <div className="eiep-root">
+
+      {/* ── Toast notification ── */}
+      {saveToast && (
+        <div
+          className={`eiep-toast eiep-toast--${saveToast.type}`}
+          role="alert"
+          style={{
+            position: 'fixed',
+            top: 16,
+            right: 16,
+            zIndex: 9999,
+            background: saveToast.type === 'success' ? '#10b981' : '#ef4444',
+            color: '#fff',
+            padding: '12px 20px',
+            borderRadius: 8,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 14,
+            fontWeight: 500,
+            animation: 'eiep-toast-slide-in 0.2s ease-out',
+          }}
+        >
+          {saveToast.type === 'success' ? '✓' : '⚠'} {saveToast.message}
         </div>
-      </div>
-      
+      )}
+
+      {/* ── Top bar ── */}
+      <header className="eiep-topbar">
+        <div className="eiep-topbar-left">
+          <h1 className="eiep-topbar-title">EPUB Image Editor</h1>
+          <span className="eiep-job-chip">Job #{jobId}</span>
+          <label className="eiep-page-label">
+            Page
+            <select
+              className="eiep-page-select"
+              value={selectedPage || ''}
+              onChange={(e) => setSelectedPage(parseInt(e.target.value))}
+            >
+              {pages.map((page) => (
+                <option key={page.pageNumber} value={page.pageNumber}>
+                  {page.pageNumber}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="eiep-topbar-right">
+          {editorState && (
+            <>
+              <button
+                type="button"
+                className={`eiep-btn${editorState.editMode ? ' eiep-btn--active' : ' eiep-btn--ghost'}`}
+                onClick={() => editorState.setEditMode(!editorState.editMode)}
+              >
+                <PenLine size={15} {...ic} />
+                {editorState.editMode ? 'Edit Mode ON' : 'Edit Mode OFF'}
+              </button>
+
+              {editorState.modified && (
+                <span className="eiep-modified-badge">
+                  <FilePenLine size={13} {...ic} />
+                  Modified
+                </span>
+              )}
+
+              <button
+                type="button"
+                className="eiep-btn eiep-btn--ghost"
+                onClick={editorState.handleReset}
+                disabled={!editorState.modified || !editorState.editMode}
+              >
+                Reset
+              </button>
+
+              <button
+                type="button"
+                className="eiep-btn eiep-btn--save"
+                onClick={editorState.handleSave}
+                disabled={editorState.saving || !editorState.modified || !editorState.editMode}
+              >
+                {editorState.saving ? (
+                  <><Loader2 size={15} strokeWidth={2.25} className="eiep-icon-spin" aria-hidden /> Saving…</>
+                ) : (
+                  <><Save size={15} {...ic} /> Save XHTML</>
+                )}
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            className="eiep-btn eiep-btn--purple"
+            onClick={handleSyncStudio}
+            disabled={regenerating}
+          >
+            {regenerating ? (
+              <><Loader2 size={15} strokeWidth={2.25} className="eiep-icon-spin" aria-hidden /> Regenerating…</>
+            ) : (
+              <><LayoutDashboard size={15} {...ic} /> Sync Studio</>
+            )}
+          </button>
+
+          {editorState?.handleRegenerateChapter && (
+            <button
+              type="button"
+              className="eiep-btn eiep-btn--pink"
+              onClick={editorState.handleRegenerateChapter}
+              disabled={editorState.regenerating}
+              title="Regenerate chapter containing current page using Gemini AI"
+            >
+              {editorState.regenerating ? (
+                <><Loader2 size={15} strokeWidth={2.25} className="eiep-icon-spin" aria-hidden /> Regenerating…</>
+              ) : (
+                <><Sparkles size={15} {...ic} /> Regenerate Chapter</>
+              )}
+            </button>
+          )}
+
+          {editorState?.openCodeViewer && (
+            <button
+              type="button"
+              className="eiep-btn eiep-btn--blue"
+              onClick={editorState.openCodeViewer}
+              title="View XHTML Code"
+            >
+              <FileCode size={15} {...ic} /> View Code
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="eiep-btn eiep-btn--ghost"
+            onClick={() => { window.location.href = '/conversions'; }}
+          >
+            <ArrowLeft size={15} {...ic} /> Back to Conversions
+          </button>
+        </div>
+      </header>
+
+      {/* ── Editor body ── */}
       {selectedPage && (
-        <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div className="eiep-body">
           <EpubImageEditor
             jobId={parseInt(jobId)}
             pageNumber={selectedPage}
             onSave={handleSave}
             onStateChange={handleEditorStateChange}
-            onRequestPageChange={(nextPage) => setSelectedPage(nextPage)}
+            onRequestPageChange={handleRequestPageChange}
           />
         </div>
       )}

@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Assessments Report</title>
+  <style type="text/css">
+    /*<![CDATA[*/
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #f8f9fa;
+    }
+    .page {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: block;
+      overflow: hidden;
+    }
+    .canvas-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    .draggable-text-block {
+      position: absolute;
+      z-index: 10;
+      cursor: move;
+      color: #333;
+    }
+    .image-drop-zone, .image-placeholder {
+      background: transparent;
+      border: none;
+      display: block;
+      position: absolute;
+    }
+    .-epub-media-overlay-active {
+      fill: #2196F3 !important;
+      color: #2196F3 !important;
+    }
+    .sync-sentence, .sync-word {
+      display: inline;
+    }
+    .content-box {
+      position: absolute;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      padding: 2%;
+    }
+    .assessment-list-item {
+      position: absolute;
+      width: 100%;
+      display: block;
+    }
+    .assessment-name {
+      position: absolute;
+      left: 0;
+      color: #4F4F4F;
+    }
+    .assessment-score {
+      position: absolute;
+      right: 0;
+      color: #E53935;
+      font-weight: bold;
+    }
+    .assessments-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9em;
+    }
+    .assessments-table th, .assessments-table td {
+      text-align: left;
+      padding: 12px 8px;
+      vertical-align: top;
+    }
+    .assessments-table thead {
+      background-color: #F8F9FA;
+      color: #828282;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .assessments-table tbody tr {
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .assessments-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .school-cell {
+      line-height: 1.4;
+    }
+    /*]]>*/
+  </style>
+</head>
+<body>
+  <div class="page" id="page4_container">
+    <div class="content-box" id="page4_box1" style="top: 4%; left: 4%; width: 90%; height: 28%;">
+      <div id="page4_img1" class="image-drop-zone" title="Red trending down icon" style="top: 8%; left: 3%; width: 3%; height: 3%; z-index: 11;"></div>
+      <div class="draggable-text-block" id="page4_div1" style="top: 7%; left: 7%; width: 80%; z-index: 10;">
+        <h2 id="page4_h1" data-read-aloud="true">
+          <span class="sync-sentence" id="page4_h1_s1" data-read-aloud="true">
+            <span class="sync-word" id="page4_h1_s1_w1">Lowest</span>
+            <span class="sync-word" id="page4_h1_s1_w2">assessments</span>
+            <span class="sync-word" id="page4_h1_s1_w3">(score)</span>
+          </span>
+        </h2>
+      </div>
+      <div class="assessment-list-item" id="page4_div2" style="top: 25%; left: 3%; width: 94%;">
+        <div class="draggable-text-block assessment-name" id="page4_div3" style="width: 50%;">
+          <p id="page4_p1" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p1_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p1_s1_w1">Unit</span>
+              <span class="sync-word" id="page4_p1_s1_w2">Assessment</span>
+            </span>
+          </p>
+        </div>
+        <div class="draggable-text-block assessment-score" id="page4_div4" style="width: 20%;">
+          <p id="page4_p2" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p2_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p2_s1_w1">33.3%</span>
+            </span>
+          </p>
+        </div>
+      </div>
+      <div class="assessment-list-item" id="page4_div5" style="top: 40%; left: 3%; width: 94%;">
+        <div class="draggable-text-block assessment-name" id="page4_div6" style="width: 50%;">
+          <p id="page4_p3" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p3_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p3_s1_w1">Concept</span>
+              <span class="sync-word" id="page4_p3_s1_w2">Check</span>
+            </span>
+          </p>
+        </div>
+        <div class="draggable-text-block assessment-score" id="page4_div7" style="width: 20%;">
+          <p id="page4_p4" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p4_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p4_s1_w1">34.7%</span>
+            </span>
+          </p>
+        </div>
+      </div>
+      <div class="assessment-list-item" id="page4_div8" style="top: 55%; left: 3%; width: 94%;">
+        <div class="draggable-text-block assessment-name" id="page4_div9" style="width: 50%;">
+          <p id="page4_p5" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p5_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p5_s1_w1">English</span>
+              <span class="sync-word" id="page4_p5_s1_w2">Grade</span>
+              <span class="sync-word" id="page4_p5_s1_w3">6</span>
+              <span class="sync-word" id="page4_p5_s1_w4">BOY</span>
+            </span>
+          </p>
+        </div>
+        <div class="draggable-text-block assessment-score" id="page4_div10" style="width: 20%;">
+          <p id="page4_p6" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p6_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p6_s1_w1">37.3%</span>
+            </span>
+          </p>
+        </div>
+      </div>
+      <div class="assessment-list-item" id="page4_div11" style="top: 70%; left: 3%; width: 94%;">
+        <div class="draggable-text-block assessment-name" id="page4_div12" style="width: 50%;">
+          <p id="page4_p7" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p7_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p7_s1_w1">Assessment</span>
+              <span class="sync-word" id="page4_p7_s1_w2">with</span>
+              <span class="sync-word" id="page4_p7_s1_w3">Lexile</span>
+              <span class="sync-word" id="page4_p7_s1_w4">Level</span>
+            </span>
+          </p>
+        </div>
+        <div class="draggable-text-block assessment-score" id="page4_div13" style="width: 20%;">
+          <p id="page4_p8" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p8_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p8_s1_w1">41.0%</span>
+            </span>
+          </p>
+        </div>
+      </div>
+      <div class="assessment-list-item" id="page4_div14" style="top: 85%; left: 3%; width: 94%;">
+        <div class="draggable-text-block assessment-name" id="page4_div15" style="width: 50%;">
+          <p id="page4_p9" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p9_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p9_s1_w1">English</span>
+              <span class="sync-word" id="page4_p9_s1_w2">Assessment</span>
+              <span class="sync-word" id="page4_p9_s1_w3">(BOY)</span>
+            </span>
+          </p>
+        </div>
+        <div class="draggable-text-block assessment-score" id="page4_div16" style="width: 20%;">
+          <p id="page4_p10" data-read-aloud="true">
+            <span class="sync-sentence" id="page4_p10_s1" data-read-aloud="true">
+              <span class="sync-word" id="page4_p10_s1_w1">41.7%</span>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-box" id="page4_box2" style="top: 34%; left: 4%; width: 90%; height: 63%;">
+      <div class="draggable-text-block" id="page4_div17" style="top: 3%; left: 3%; width: 80%; z-index: 10;">
+        <h2 id="page4_h2" data-read-aloud="true">
+          <span class="sync-sentence" id="page4_h2_s1" data-read-aloud="true">
+            <span class="sync-word" id="page4_h2_s1_w1">Assessments</span>
+          </span>
+        </h2>
+      </div>
+      <div class="draggable-text-block" id="page4_div18" style="top: 12%; left: 0%; width: 100%; height: 85%; z-index: 10;">
+        <table class="assessments-table" id="page4_table1">
+          <thead id="page4_thead1">
+            <tr id="page4_tr1">
+              <th id="page4_th1" data-read-aloud="true"><span class="sync-sentence" id="page4_th1_s1" data-read-aloud="true"><span class="sync-word" id="page4_th1_s1_w1">ASSESSMENT</span></span></th>
+              <th id="page4_th2" data-read-aloud="true"><span class="sync-sentence" id="page4_th2_s1" data-read-aloud="true"><span class="sync-word" id="page4_th2_s1_w1">REGION</span></span></th>
+              <th id="page4_th3" data-read-aloud="true"><span class="sync-sentence" id="page4_th3_s1" data-read-aloud="true"><span class="sync-word" id="page4_th3_s1_w1">SCHOOL</span></span></th>
+              <th id="page4_th4" data-read-aloud="true"><span class="sync-sentence" id="page4_th4_s1" data-read-aloud="true"><span class="sync-word" id="page4_th4_s1_w1">STUDENTS</span></span></th>
+              <th id="page4_th5" data-read-aloud="true"><span class="sync-sentence" id="page4_th5_s1" data-read-aloud="true"><span class="sync-word" id="page4_th5_s1_w1">DONE</span></span></th>
+              <th id="page4_th6" data-read-aloud="true"><span class="sync-sentence" id="page4_th6_s1" data-read-aloud="true"><span class="sync-word" id="page4_th6_s1_w1">AVG</span> <span class="sync-word" id="page4_th6_s1_w2">SCORE</span></span></th>
+              <th id="page4_th7" data-read-aloud="true"><span class="sync-sentence" id="page4_th7_s1" data-read-aloud="true"><span class="sync-word" id="page4_th7_s1_w1">COMPLETION</span></span></th>
+              <th id="page4_th8" data-read-aloud="true"><span class="sync-sentence" id="page4_th8_s1" data-read-aloud="true"><span class="sync-word" id="page4_th8_s1_w1">PARTICIPATION</span></span></th>
+              <th id="page4_th9" data-read-aloud="true"><span class="sync-sentence" id="page4_th9_s1" data-read-aloud="true"><span class="sync-word" id="page4_th9_s1_w1">STATUS</span></span></th>
+            </tr>
+          </thead>
+          <tbody id="page4_tbody1">
+            <tr id="page4_tr2">
+              <td id="page4_td1" data-read-aloud="true"><span class="sync-sentence" id="page4_td1_s1" data-read-aloud="true"><span class="sync-word" id="page4_td1_s1_w1">English</span> <span class="sync-word" id="page4_td1_s1_w2">Grade</span> <span class="sync-word" id="page4_td1_s1_w3">7</span></span><br /><span class="sync-sentence" id="page4_td1_s2" data-read-aloud="true"><span class="sync-word" id="page4_td1_s2_w1">BOY</span></span></td>
+              <td id="page4_td2" data-read-aloud="true"><span class="sync-sentence" id="page4_td2_s1" data-read-aloud="true"><span class="sync-word" id="page4_td2_s1_w1">Middle</span> <span class="sync-word" id="page4_td2_s1_w2">East</span></span></td>
+              <td id="page4_td3" data-read-aloud="true"><span class="sync-sentence" id="page4_td3_s1" data-read-aloud="true"><span class="sync-word" id="page4_td3_s1_w1">Ajyal</span> <span class="sync-word" id="page4_td3_s1_w2">International</span></span></td>
+              <td id="page4_td4" data-read-aloud="true"><span class="sync-sentence" id="page4_td4_s1" data-read-aloud="true"><span class="sync-word" id="page4_td4_s1_w1">10</span></span></td>
+              <td id="page4_td5" data-read-aloud="true"><span class="sync-sentence" id="page4_td5_s1" data-read-aloud="true"><span class="sync-word" id="page4_td5_s1_w1">1</span></span></td>
+              <td id="page4_td6" data-read-aloud="true"><span class="sync-sentence" id="page4_td6_s1" data-read-aloud="true"><span class="sync-word" id="page4_td6_s1_w1">87.0%</span></span></td>
+              <td id="page4_td7" data-read-aloud="true"><span class="sync-sentence" id="page4_td7_s1" data-read-aloud="true"><span class="sync-word" id="page4_td7_s1_w1">10.0%</span></span></td>
+              <td id="page4_td8" data-read-aloud="true"><span class="sync-sentence" id="page4_td8_s1" data-read-aloud="true"><span class="sync-word" id="page4_td8_s1_w1">10.0%</span></span></td>
+              <td id="page4_td9" data-read-aloud="true"><span class="sync-sentence" id="page4_td9_s1" data-read-aloud="true"><span class="sync-word" id="page4_td9_s1_w1">In</span> <span class="sync-word" id="page4_td9_s1_w2">Progress</span></span></td>
+            </tr>
+            <tr id="page4_tr3">
+              <td id="page4_td10" data-read-aloud="true"><span class="sync-sentence" id="page4_td10_s1" data-read-aloud="true"><span class="sync-word" id="page4_td10_s1_w1">Maths</span> <span class="sync-word" id="page4_td10_s1_w2">Standard</span></span><br /><span class="sync-sentence" id="page4_td10_s2" data-read-aloud="true"><span class="sync-word" id="page4_td10_s2_w1">Assessment</span> <span class="sync-word" id="page4_td10_s2_w2">2025</span></span><br /><span class="sync-sentence" id="page4_td10_s3" data-read-aloud="true"><span class="sync-word" id="page4_td10_s3_w1">BOY</span> <span class="sync-word" id="page4_td10_s3_w2">Grade</span> <span class="sync-word" id="page4_td10_s3_w3">1</span></span></td>
+              <td id="page4_td11" data-read-aloud="true"><span class="sync-sentence" id="page4_td11_s1" data-read-aloud="true"><span class="sync-word" id="page4_td11_s1_w1">Middle</span> <span class="sync-word" id="page4_td11_s1_w2">East</span></span></td>
+              <td id="page4_td12" class="school-cell" data-read-aloud="true"><span class="sync-sentence" id="page4_td12_s1" data-read-aloud="true"><span class="sync-word" id="page4_td12_s1_w1">Ajyal</span></span><br /><span class="sync-sentence" id="page4_td12_s2" data-read-aloud="true"><span class="sync-word" id="page4_td12_s2_w1">International,</span> <span class="sync-word" id="page4_td12_s2_w2">Al-</span></span><br /><span class="sync-sentence" id="page4_td12_s3" data-read-aloud="true"><span class="sync-word" id="page4_td12_s3_w1">Faisaliah</span> <span class="sync-word" id="page4_td12_s3_w2">Islamic,</span></span><br /><span class="sync-sentence" id="page4_td12_s4" data-read-aloud="true"><span class="sync-word" id="page4_td12_s4_w1">Manarat</span> <span class="sync-word" id="page4_td12_s4_w2">Jeddah</span></span></td>
+              <td id="page4_td13" data-read-aloud="true"><span class="sync-sentence" id="page4_td13_s1" data-read-aloud="true"><span class="sync-word" id="page4_td13_s1_w1">19</span></span></td>
+              <td id="page4_td14" data-read-aloud="true"><span class="sync-sentence" id="page4_td14_s1" data-read-aloud="true"><span class="sync-word" id="page4_td14_s1_w1">1</span></span></td>
+              <td id="page4_td15" data-read-aloud="true"><span class="sync-sentence" id="page4_td15_s1" data-read-aloud="true"><span class="sync-word" id="page4_td15_s1_w1">80.0%</span></span></td>
+              <td id="page4_td16" data-read-aloud="true"><span class="sync-sentence" id="page4_td16_s1" data-read-aloud="true"><span class="sync-word" id="page4_td16_s1_w1">5.3%</span></span></td>
+              <td id="page4_td17" data-read-aloud="true"><span class="sync-sentence" id="page4_td17_s1" data-read-aloud="true"><span class="sync-word" id="page4_td17_s1_w1">52.6%</span></span></td>
+              <td id="page4_td18" data-read-aloud="true"><span class="sync-sentence" id="page4_td18_s1" data-read-aloud="true"><span class="sync-word" id="page4_td18_s1_w1">In</span> <span class="sync-word" id="page4_td18_s1_w2">Progress</span></span></td>
+            </tr>
+            <tr id="page4_tr4">
+              <td id="page4_td19" data-read-aloud="true"><span class="sync-sentence" id="page4_td19_s1" data-read-aloud="true"><span class="sync-word" id="page4_td19_s1_w1">Maths</span> <span class="sync-word" id="page4_td19_s1_w2">Standard</span></span><br /><span class="sync-sentence" id="page4_td19_s2" data-read-aloud="true"><span class="sync-word" id="page4_td19_s2_w1">Assessment</span> <span class="sync-word" id="page4_td19_s2_w2">2024</span></span><br /><span class="sync-sentence" id="page4_td19_s3" data-read-aloud="true"><span class="sync-word" id="page4_td19_s3_w1">EOY</span> <span class="sync-word" id="page4_td19_s3_w2">Grade</span> <span class="sync-word" id="page4_td19_s3_w3">1</span></span></td>
+              <td id="page4_td20" data-read-aloud="true"><span class="sync-sentence" id="page4_td20_s1" data-read-aloud="true"><span class="sync-word" id="page4_td20_s1_w1">Middle</span> <span class="sync-word" id="page4_td20_s1_w2">East</span></span></td>
+              <td id="page4_td21" class="school-cell" data-read-aloud="true"><span class="sync-sentence" id="page4_td21_s1" data-read-aloud="true"><span class="sync-word" id="page4_td21_s1_w1">Ajyal</span></span><br /><span class="sync-sentence" id="page4_td21_s2" data-read-aloud="true"><span class="sync-word" id="page4_td21_s2_w1">International,</span> <span class="sync-word" id="page4_td21_s2_w2">Al-</span></span><br /><span class="sync-sentence" id="page4_td21_s3" data-read-aloud="true"><span class="sync-word" id="page4_td21_s3_w1">Faisaliah</span> <span class="sync-word" id="page4_td21_s3_w2">Islamic,</span></span><br /><span class="sync-sentence" id="page4_td21_s4" data-read-aloud="true"><span class="sync-word" id="page4_td21_s4_w1">Manarat</span> <span class="sync-word" id="page4_td21_s4_w2">Jeddah</span></span></td>
+              <td id="page4_td22" data-read-aloud="true"><span class="sync-sentence" id="page4_td22_s1" data-read-aloud="true"><span class="sync-word" id="page4_td22_s1_w1">19</span></span></td>
+              <td id="page4_td23" data-read-aloud="true"><span class="sync-sentence" id="page4_td23_s1" data-read-aloud="true"><span class="sync-word" id="page4_td23_s1_w1">1</span></span></td>
+              <td id="page4_td24" data-read-aloud="true"><span class="sync-sentence" id="page4_td24_s1" data-read-aloud="true"><span class="sync-word" id="page4_td24_s1_w1">77.2%</span></span></td>
+              <td id="page4_td25" data-read-aloud="true"><span class="sync-sentence" id="page4_td25_s1" data-read-aloud="true"><span class="sync-word" id="page4_td25_s1_w1">5.3%</span></span></td>
+              <td id="page4_td26" data-read-aloud="true"><span class="sync-sentence" id="page4_td26_s1" data-read-aloud="true"><span class="sync-word" id="page4_td26_s1_w1">52.6%</span></span></td>
+              <td id="page4_td27" data-read-aloud="true"><span class="sync-sentence" id="page4_td27_s1" data-read-aloud="true"><span class="sync-word" id="page4_td27_s1_w1">In</span> <span class="sync-word" id="page4_td27_s1_w2">Progress</span></span></td>
+            </tr>
+            <tr id="page4_tr5">
+              <td id="page4_td28" data-read-aloud="true"><span class="sync-sentence" id="page4_td28_s1" data-read-aloud="true"><span class="sync-word" id="page4_td28_s1_w1">Maths</span> <span class="sync-word" id="page4_td28_s1_w2">Standard</span></span><br /><span class="sync-sentence" id="page4_td28_s2" data-read-aloud="true"><span class="sync-word" id="page4_td28_s2_w1">Assessment</span> <span class="sync-word" id="page4_td28_s2_w2">2023</span></span><br /><span class="sync-sentence" id="page4_td28_s3" data-read-aloud="true"><span class="sync-word" id="page4_td28_s3_w1">EOY</span> <span class="sync-word" id="page4_td28_s3_w2">Grade</span> <span class="sync-word" id="page4_td28_s3_w3">1</span></span></td>
+              <td id="page4_td29" data-read-aloud="true"><span class="sync-sentence" id="page4_td29_s1" data-read-aloud="true"><span class="sync-word" id="page4_td29_s1_w1">Middle</span> <span class="sync-word" id="page4_td29_s1_w2">East</span></span></td>
+              <td id="page4_td30" class="school-cell" data-read-aloud="true"><span class="sync-sentence" id="page4_td30_s1" data-read-aloud="true"><span class="sync-word" id="page4_td30_s1_w1">Ajyal</span></span><br /><span class="sync-sentence" id="page4_td30_s2" data-read-aloud="true"><span class="sync-word" id="page4_td30_s2_w1">International,</span> <span class="sync-word" id="page4_td30_s2_w2">Al-</span></span><br /><span class="sync-sentence" id="page4_td30_s3" data-read-aloud="true"><span class="sync-word" id="page4_td30_s3_w1">Faisaliah</span> <span class="sync-word" id="page4_td30_s3_w2">Islamic,</span></span><br /><span class="sync-sentence" id="page4_td30_s4" data-read-aloud="true"><span class="sync-word" id="page4_td30_s4_w1">Manarat</span> <span class="sync-word" id="page4_td30_s4_w2">Jeddah</span></span></td>
+              <td id="page4_td31" data-read-aloud="true"><span class="sync-sentence" id="page4_td31_s1" data-read-aloud="true"><span class="sync-word" id="page4_td31_s1_w1">19</span></span></td>
+              <td id="page4_td32" data-read-aloud="true"><span class="sync-sentence" id="page4_td32_s1" data-read-aloud="true"><span class="sync-word" id="page4_td32_s1_w1">1</span></span></td>
+              <td id="page4_td33" data-read-aloud="true"><span class="sync-sentence" id="page4_td33_s1" data-read-aloud="true"><span class="sync-word" id="page4_td33_s1_w1">76.0%</span></span></td>
+              <td id="page4_td34" data-read-aloud="true"><span class="sync-sentence" id="page4_td34_s1" data-read-aloud="true"><span class="sync-word" id="page4_td34_s1_w1">5.3%</span></span></td>
+              <td id="page4_td35" data-read-aloud="true"><span class="sync-sentence" id="page4_td35_s1" data-read-aloud="true"><span class="sync-word" id="page4_td35_s1_w1">52.6%</span></span></td>
+              <td id="page4_td36" data-read-aloud="true"><span class="sync-sentence" id="page4_td36_s1" data-read-aloud="true"><span class="sync-word" id="page4_td36_s1_w1">In</span> <span class="sync-word" id="page4_td36_s1_w2">Progress</span></span></td>
+            </tr>
+            <tr id="page4_tr6">
+              <td id="page4_td37" data-read-aloud="true"><span class="sync-sentence" id="page4_td37_s1" data-read-aloud="true"><span class="sync-word" id="page4_td37_s1_w1">Maths</span> <span class="sync-word" id="page4_td37_s1_w2">Standard</span></span><br /><span class="sync-sentence" id="page4_td37_s2" data-read-aloud="true"><span class="sync-word" id="page4_td37_s2_w1">Assessment</span> <span class="sync-word" id="page4_td37_s2_w2">2024</span></span><br /><span class="sync-sentence" id="page4_td37_s3" data-read-aloud="true"><span class="sync-word" id="page4_td37_s3_w1">BOY</span> <span class="sync-word" id="page4_td37_s3_w2">Grade</span> <span class="sync-word" id="page4_td37_s3_w3">1</span></span></td>
+              <td id="page4_td38" data-read-aloud="true"><span class="sync-sentence" id="page4_td38_s1" data-read-aloud="true"><span class="sync-word" id="page4_td38_s1_w1">Middle</span> <span class="sync-word" id="page4_td38_s1_w2">East</span></span></td>
+              <td id="page4_td39" class="school-cell" data-read-aloud="true"><span class="sync-sentence" id="page4_td39_s1" data-read-aloud="true"><span class="sync-word" id="page4_td39_s1_w1">Ajyal</span></span><br /><span class="sync-sentence" id="page4_td39_s2" data-read-aloud="true"><span class="sync-word" id="page4_td39_s2_w1">International,</span> <span class="sync-word" id="page4_td39_s2_w2">Al-</span></span><br /><span class="sync-sentence" id="page4_td39_s3" data-read-aloud="true"><span class="sync-word" id="page4_td39_s3_w1">Faisaliah</span> <span class="sync-word" id="page4_td39_s3_w2">Islamic,</span></span><br /><span class="sync-sentence" id="page4_td39_s4" data-read-aloud="true"><span class="sync-word" id="page4_td39_s4_w1">Manarat</span> <span class="sync-word" id="page4_td39_s4_w2">Jeddah</span></span></td>
+              <td id="page4_td40" data-read-aloud="true"><span class="sync-sentence" id="page4_td40_s1" data-read-aloud="true"><span class="sync-word" id="page4_td40_s1_w1">19</span></span></td>
+              <td id="page4_td41" data-read-aloud="true"><span class="sync-sentence" id="page4_td41_s1" data-read-aloud="true"><span class="sync-word" id="page4_td41_s1_w1">1</span></span></td>
+              <td id="page4_td42" data-read-aloud="true"><span class="sync-sentence" id="page4_td42_s1" data-read-aloud="true"><span class="sync-word" id="page4_td42_s1_w1">74.3%</span></span></td>
+              <td id="page4_td43" data-read-aloud="true"><span class="sync-sentence" id="page4_td43_s1" data-read-aloud="true"><span class="sync-word" id="page4_td43_s1_w1">5.3%</span></span></td>
+              <td id="page4_td44" data-read-aloud="true"><span class="sync-sentence" id="page4_td44_s1" data-read-aloud="true"><span class="sync-word" id="page4_td44_s1_w1">52.6%</span></span></td>
+              <td id="page4_td45" data-read-aloud="true"><span class="sync-sentence" id="page4_td45_s1" data-read-aloud="true"><span class="sync-word" id="page4_td45_s1_w1">In</span> <span class="sync-word" id="page4_td45_s1_w2">Progress</span></span></td>
+            </tr>
+            <tr id="page4_tr7">
+              <td id="page4_td46" data-read-aloud="true"><span class="sync-sentence" id="page4_td46_s1" data-read-aloud="true"><span class="sync-word" id="page4_td46_s1_w1">Maths</span> <span class="sync-word" id="page4_td46_s1_w2">Standard</span></span><br /><span class="sync-sentence" id="page4_td46_s2" data-read-aloud="true"><span class="sync-word" id="page4_td46_s2_w1">Assessment</span> <span class="sync-word" id="page4_td46_s2_w2">2022</span></span><br /><span class="sync-sentence" id="page4_td46_s3" data-read-aloud="true"><span class="sync-word" id="page4_td46_s3_w1">EOY</span> <span class="sync-word" id="page4_td46_s3_w2">Grade</span> <span class="sync-word" id="page4_td46_s3_w3">1</span></span></td>
+              <td id="page4_td47" data-read-aloud="true"><span class="sync-sentence" id="page4_td47_s1" data-read-aloud="true"><span class="sync-word" id="page4_td47_s1_w1">Middle</span> <span class="sync-word" id="page4_td47_s1_w2">East</span></span></td>
+              <td id="page4_td48" class="school-cell" data-read-aloud="true"><span class="sync-sentence" id="page4_td48_s1" data-read-aloud="true"><span class="sync-word" id="page4_td48_s1_w1">Ajyal</span></span><br /><span class="sync-sentence" id="page4_td48_s2" data-read-aloud="true"><span class="sync-word" id="page4_td48_s2_w1">International,</span> <span class="sync-word" id="page4_td48_s2_w2">Al-</span></span><br /><span class="sync-sentence" id="page4_td48_s3" data-read-aloud="true"><span class="sync-word" id="page4_td48_s3_w1">Faisaliah</span> <span class="sync-word" id="page4_td48_s3_w2">Islamic,</span></span><br /><span class="sync-sentence" id="page4_td48_s4" data-read-aloud="true"><span class="sync-word" id="page4_td48_s4_w1">Manarat</span> <span class="sync-word" id="page4_td48_s4_w2">Jeddah</span></span></td>
+              <td id="page4_td49" data-read-aloud="true"><span class="sync-sentence" id="page4_td49_s1" data-read-aloud="true"><span class="sync-word" id="page4_td49_s1_w1">19</span></span></td>
+              <td id="page4_td50" data-read-aloud="true"><span class="sync-sentence" id="page4_td50_s1" data-read-aloud="true"><span class="sync-word" id="page4_td50_s1_w1">1</span></span></td>
+              <td id="page4_td51" data-read-aloud="true"><span class="sync-sentence" id="page4_td51_s1" data-read-aloud="true"><span class="sync-word" id="page4_td51_s1_w1">66.5%</span></span></td>
+              <td id="page4_td52" data-read-aloud="true"><span class="sync-sentence" id="page4_td52_s1" data-read-aloud="true"><span class="sync-word" id="page4_td52_s1_w1">5.3%</span></span></td>
+              <td id="page4_td53" data-read-aloud="true"><span class="sync-sentence" id="page4_td53_s1" data-read-aloud="true"><span class="sync-word" id="page4_td53_s1_w1">52.6%</span></span></td>
+              <td id="page4_td54" data-read-aloud="true"><span class="sync-sentence" id="page4_td54_s1" data-read-aloud="true"><span class="sync-word" id="page4_td54_s1_w1">In</span> <span class="sync-word" id="page4_td54_s1_w2">Progress</span></span></td>
+            </tr>
+            <tr id="page4_tr8">
+              <td id="page4_td55" data-read-aloud="true"><span class="sync-sentence" id="page4_td55_s1" data-read-aloud="true"><span class="sync-word" id="page4_td55_s1_w1">Maths</span> <span class="sync-word" id="page4_td55_s1_w2">Standard</span></span><br /><span class="sync-sentence" id="page4_td55_s2" data-read-aloud="true"><span class="sync-word" id="page4_td55_s2_w1">Assessment</span> <span class="sync-word" id="page4_td55_s2_w2">2023</span></span><br /><span class="sync-sentence" id="page4_td55_s3" data-read-aloud="true"><span class="sync-word" id="page4_td55_s3_w1">BOY</span> <span class="sync-word" id="page4_td55_s3_w2">Grade</span> <span class="sync-word" id="page4_td55_s3_w3">1</span></span></td>
+              <td id="page4_td56" data-read-aloud="true"><span class="sync-sentence" id="page4_td56_s1" data-read-aloud="true"><span class="sync-word" id="page4_td56_s1_w1">Middle</span> <span class="sync-word" id="page4_td56_s1_w2">East</span></span></td>
+              <td id="page4_td57" data-read-aloud="true"><span class="sync-sentence" id="page4_td57_s1" data-read-aloud="true"><span class="sync-word" id="page4_td57_s1_w1">Ajyal</span> <span class="sync-word" id="page4_td57_s1_w2">International</span></span></td>
+              <td id="page4_td58" data-read-aloud="true"><span class="sync-sentence" id="page4_td58_s1" data-read-aloud="true"><span class="sync-word" id="page4_td58_s1_w1">1</span></span></td>
+              <td id="page4_td59" data-read-aloud="true"><span class="sync-sentence" id="page4_td59_s1" data-read-aloud="true"><span class="sync-word" id="page4_td59_s1_w1">1</span></span></td>
+              <td id="page4_td60" data-read-aloud="true"><span class="sync-sentence" id="page4_td60_s1" data-read-aloud="true"><span class="sync-word" id="page4_td60_s1_w1">66.0%</span></span></td>
+              <td id="page4_td61" data-read-aloud="true"><span class="sync-sentence" id="page4_td61_s1" data-read-aloud="true"><span class="sync-word" id="page4_td61_s1_w1">100.0%</span></span></td>
+              <td id="page4_td62" data-read-aloud="true"><span class="sync-sentence" id="page4_td62_s1" data-read-aloud="true"><span class="sync-word" id="page4_td62_s1_w1">100.0%</span></span></td>
+              <td id="page4_td63" data-read-aloud="true"><span class="sync-sentence" id="page4_td63_s1" data-read-aloud="true"><span class="sync-word" id="page4_td63_s1_w1">Completed</span></span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

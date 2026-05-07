@@ -1,0 +1,25 @@
+{
+  "documentId": 22,
+  "chapters": [
+    {
+      "title": "Chapter 1",
+      "startPage": 1,
+      "endPage": 1,
+      "pageType": "regular"
+    },
+    {
+      "title": "Chapter 2",
+      "startPage": 2,
+      "endPage": 2,
+      "pageType": "regular"
+    },
+    {
+      "title": "Chapter 3",
+      "startPage": 3,
+      "endPage": 5,
+      "pageType": "regular"
+    }
+  ],
+  "createdAt": "2026-04-29T12:36:28.411Z",
+  "updatedAt": "2026-04-29T12:36:28.411Z"
+}

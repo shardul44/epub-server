@@ -1,11 +1,81 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  Eye,
+  FileText,
+  HelpCircle,
+  Image as ImageIcon,
+  Layers,
+  ListOrdered,
+  Loader2,
+  Music,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { interactiveService } from '../../services/interactiveService';
 import CKEditorEnhanced from '../../components/interactive/CKEditorEnhanced';
+import './InteractiveEditorEnhanced.css';
+
+function stripHtml(html) {
+  if (!html || typeof html !== 'string') return '';
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  return (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
+function getBlockContent(block) {
+  return block.content_json ?? block.contentJson ?? {};
+}
+
+function blockPreview(block) {
+  const j = getBlockContent(block);
+  if (j == null) return '—';
+  switch (block.type) {
+    case 'text':
+      return stripHtml(j.html) || 'Empty text';
+    case 'image':
+      return j.caption || j.alt || (typeof j.url === 'string' && j.url.startsWith('data:') ? 'Image (embedded)' : 'Image');
+    case 'audio':
+      return j.title || j.label || 'Audio block';
+    case 'quiz':
+      return j.title || j.question || 'Quiz';
+    case 'dragdrop':
+      return j.title || j.instruction || 'Drag & drop';
+    default:
+      try {
+        return JSON.stringify(j).slice(0, 160);
+      } catch {
+        return String(block.type);
+      }
+  }
+}
+
+function BlockTypeIcon({ type }) {
+  const common = { size: 18, strokeWidth: 2, 'aria-hidden': true };
+  switch (type) {
+    case 'text':
+      return <FileText {...common} />;
+    case 'image':
+      return <ImageIcon {...common} />;
+    case 'audio':
+      return <Music {...common} />;
+    case 'quiz':
+      return <HelpCircle {...common} />;
+    case 'dragdrop':
+      return <Layers {...common} />;
+    default:
+      return <ListOrdered {...common} />;
+  }
+}
 
 export default function InteractiveEditorEnhanced() {
   const { bookId } = useParams();
   const [loading, setLoading] = useState(true);
+  const [blocksLoading, setBlocksLoading] = useState(false);
   const [error, setError] = useState('');
   const [book, setBook] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -23,6 +93,16 @@ export default function InteractiveEditorEnhanced() {
     }
   }, [activeChapterId]);
 
+  const sortedBlocks = useMemo(
+    () => [...blocks].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
+    [blocks],
+  );
+
+  const activeChapter = useMemo(
+    () => chapters.find((c) => c.id === activeChapterId) || null,
+    [chapters, activeChapterId],
+  );
+
   async function loadBook() {
     setLoading(true);
     setError('');
@@ -31,8 +111,11 @@ export default function InteractiveEditorEnhanced() {
       const ch = await interactiveService.listChapters(bookId);
       setBook(b);
       setChapters(ch);
-      if (ch.length > 0 && !activeChapterId) {
-        setActiveChapterId(ch[0].id);
+      setBlocks([]);
+      if (ch.length === 0) {
+        setActiveChapterId(null);
+      } else {
+        setActiveChapterId((prev) => (prev && ch.some((c) => c.id === prev) ? prev : ch[0].id));
       }
     } catch (e) {
       setError(e?.response?.data?.error || e.message || 'Failed to load book');
@@ -46,12 +129,15 @@ export default function InteractiveEditorEnhanced() {
       setBlocks([]);
       return;
     }
+    setBlocksLoading(true);
     setError('');
     try {
       const bl = await interactiveService.listBlocks(chapterId);
       setBlocks(bl);
     } catch (e) {
       setError(e?.response?.data?.error || e.message || 'Failed to load blocks');
+    } finally {
+      setBlocksLoading(false);
     }
   }
 
@@ -65,7 +151,7 @@ export default function InteractiveEditorEnhanced() {
       const position = chapters.length;
       const created = await interactiveService.createChapter(bookId, {
         title: newChapterTitle.trim(),
-        position
+        position,
       });
       setNewChapterTitle('');
       setChapters([...chapters, created]);
@@ -76,13 +162,13 @@ export default function InteractiveEditorEnhanced() {
   }
 
   async function deleteChapter(chapterId) {
-    const ch = chapters.find(c => c.id === chapterId);
+    const ch = chapters.find((c) => c.id === chapterId);
     if (!window.confirm(`Delete chapter "${ch?.title}"?`)) return;
-    
+
     setError('');
     try {
       await interactiveService.deleteChapter(chapterId);
-      const remaining = chapters.filter(c => c.id !== chapterId);
+      const remaining = chapters.filter((c) => c.id !== chapterId);
       setChapters(remaining);
       if (activeChapterId === chapterId) {
         setActiveChapterId(remaining[0]?.id || null);
@@ -112,7 +198,7 @@ export default function InteractiveEditorEnhanced() {
       await interactiveService.createBlock(activeChapterId, {
         type: blockData.type,
         contentJson,
-        position
+        position,
       });
 
       await loadBlocks(activeChapterId);
@@ -123,7 +209,7 @@ export default function InteractiveEditorEnhanced() {
 
   async function deleteBlock(block) {
     if (!window.confirm(`Delete this ${block.type} block?`)) return;
-    
+
     setError('');
     try {
       await interactiveService.deleteBlock(block.id);
@@ -133,191 +219,230 @@ export default function InteractiveEditorEnhanced() {
     }
   }
 
-  if (loading) return <div style={{ padding: 20 }}>Loading...</div>;
-  if (!book) return <div style={{ padding: 20 }}>Book not found</div>;
-
-  return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
-      {/* Header */}
-      <div style={{
-        background: '#fff',
-        borderBottom: '1px solid #e0e0e0',
-        padding: '16px 24px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>
-              📚 {book.title}
-            </h1>
-            <div style={{ marginTop: 4, fontSize: 14, color: '#666' }}>
-              <Link to="/interactive" style={{ color: '#2196f3', textDecoration: 'none' }}>
-                ← Back to books
-              </Link>
-            </div>
-          </div>
-          <Link
-            to={`/interactive/reader/${book.id}`}
-            className="btn btn-primary"
-            style={{ padding: '10px 20px', fontSize: 16 }}
-          >
-            👁️ Preview Reader
-          </Link>
+  if (loading) {
+    return (
+      <div className="iee-shell">
+        <div className="iee-loading">
+          <Loader2 size={40} strokeWidth={2.25} className="iee-spinner" aria-hidden />
+          <p>Loading book…</p>
         </div>
       </div>
+    );
+  }
+
+  if (!book) {
+    return (
+      <div className="iee-shell">
+        <div className="iee-layout">
+          <div className="iee-card" style={{ gridColumn: '1 / -1' }}>
+            <p style={{ margin: 0, color: '#6b7280' }}>Book not found.</p>
+            <Link to="/interactive" className="iee-back" style={{ marginTop: 12 }}>
+              <ArrowLeft size={16} strokeWidth={2} aria-hidden /> Back to books
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="iee-shell">
+      <header className="iee-header">
+        <div className="iee-header-inner">
+          <div>
+            <Link to="/interactive" className="iee-back">
+              <ArrowLeft size={16} strokeWidth={2} aria-hidden />
+              Back to books
+            </Link>
+            <div className="iee-title-row">
+              <div className="iee-title-icon" aria-hidden>
+                <BookOpen size={22} strokeWidth={2} />
+              </div>
+              <div>
+                <h1 className="iee-title">{book.title}</h1>
+                <p className="iee-meta">
+                  Interactive editor · {chapters.length} chapter{chapters.length === 1 ? '' : 's'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="iee-header-actions">
+            <Link to={`/interactive/reader/${book.id}`} className="iee-btn iee-btn-primary">
+              <Eye size={18} strokeWidth={2} aria-hidden />
+              Preview reader
+            </Link>
+          </div>
+        </div>
+      </header>
 
       {error && (
-        <div style={{
-          maxWidth: 1400,
-          margin: '16px auto',
-          padding: 16,
-          background: '#ffebee',
-          border: '1px solid #f44336',
-          borderRadius: 8,
-          color: '#c62828'
-        }}>
-          {error}
+        <div className="iee-alert" role="alert">
+          <div className="iee-alert-inner">
+            <AlertCircle size={20} strokeWidth={2} style={{ flexShrink: 0, marginTop: 2 }} aria-hidden />
+            <span>{error}</span>
+          </div>
         </div>
       )}
 
-      <div style={{
-        maxWidth: 1400,
-        margin: '0 auto',
-        padding: 24,
-        display: 'grid',
-        gridTemplateColumns: '280px 1fr',
-        gap: 24
-      }}>
-        {/* Sidebar - Chapters */}
-        <div>
-          <div style={{
-            background: '#fff',
-            borderRadius: 12,
-            padding: 16,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            position: 'sticky',
-            top: 100
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 18, fontWeight: 700 }}>
-              Chapters
-            </h3>
+      <div className="iee-layout">
+        <aside className="iee-sidebar">
+          <div className="iee-card">
+            <h2 className="iee-card-title">Chapters</h2>
 
-            <div style={{ marginBottom: 16 }}>
+            <div className="iee-new-chapter">
               <input
-                className="form-control"
-                placeholder="New chapter..."
+                type="text"
+                className="iee-input"
+                placeholder="New chapter title…"
                 value={newChapterTitle}
                 onChange={(e) => setNewChapterTitle(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') createChapter();
                 }}
-                style={{ marginBottom: 8 }}
+                aria-label="New chapter title"
               />
-              <button
-                className="btn btn-primary"
-                onClick={createChapter}
-                style={{ width: '100%' }}
-              >
-                + Add Chapter
+              <button type="button" className="iee-btn iee-btn-primary" onClick={createChapter}>
+                <Plus size={18} strokeWidth={2} aria-hidden />
+                Add chapter
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: 8 }}>
-              {chapters.length === 0 ? (
-                <div style={{ color: '#666', fontSize: 14, textAlign: 'center', padding: 16 }}>
-                  No chapters yet
-                </div>
-              ) : (
-                chapters.map((ch) => (
-                  <div
-                    key={ch.id}
-                    style={{
-                      padding: 12,
-                      background: ch.id === activeChapterId ? '#e3f2fd' : '#f5f5f5',
-                      border: ch.id === activeChapterId ? '2px solid #2196f3' : '1px solid #e0e0e0',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onClick={() => setActiveChapterId(ch.id)}
-                  >
-                    <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>
-                      {ch.title}
-                    </div>
-                    <button
-                      className="btn btn-danger"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteChapter(ch.id);
-                      }}
-                      style={{ padding: '4px 8px', fontSize: 12, width: '100%', marginTop: 8 }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
+            {chapters.length === 0 ? (
+              <div className="iee-empty-sidebar">No chapters yet — add one above.</div>
+            ) : (
+              <ul className="iee-chapter-list" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {chapters.map((ch, idx) => {
+                  const isActive = ch.id === activeChapterId;
+                  return (
+                    <li key={ch.id} className="iee-chapter-wrap">
+                      <button
+                        type="button"
+                        className={`iee-chapter-item${isActive ? ' is-active' : ''}`}
+                        onClick={() => setActiveChapterId(ch.id)}
+                        aria-current={isActive ? 'true' : undefined}
+                      >
+                        <div className="iee-chapter-body">
+                          <div className="iee-chapter-name">{ch.title}</div>
+                          <div className="iee-chapter-sub">Chapter {idx + 1}</div>
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        className="iee-chapter-delete"
+                        title="Delete chapter"
+                        aria-label={`Delete chapter ${ch.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteChapter(ch.id);
+                        }}
+                      >
+                        <Trash2 size={18} strokeWidth={2} aria-hidden />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </div>
-        </div>
+        </aside>
 
-        {/* Main Content */}
-        <div>
+        <main className="iee-main-stack">
           {!activeChapterId ? (
-            <div style={{
-              background: '#fff',
-              borderRadius: 12,
-              padding: 40,
-              textAlign: 'center',
-              color: '#666',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>📖</div>
-              <div style={{ fontSize: 18 }}>Select or create a chapter to start editing</div>
+            <div className="iee-card iee-empty-main">
+              <div className="iee-empty-icon">
+                <Layers size={32} strokeWidth={2} aria-hidden />
+              </div>
+              <h2>Choose a chapter</h2>
+              <p>Create a chapter in the sidebar, then add text, quizzes, images, and more.</p>
             </div>
           ) : (
-            <div style={{
-              background: '#fff',
-              borderRadius: 12,
-              padding: 20,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-            }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: 20, fontWeight: 700 }}>
-                ✏️ Content Editor
-              </h3>
-              <CKEditorEnhanced onAddBlock={handleAddBlock} />
-              
-              <div style={{
-                marginTop: 20,
-                padding: 16,
-                background: '#e3f2fd',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12
-              }}>
-                <div style={{ fontSize: 24 }}>💡</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: '#1565c0', marginBottom: 4 }}>
-                    Preview Your Content
+            <>
+              <div className="iee-card">
+                <div className="iee-editor-header">
+                  <div>
+                    <h2 className="iee-editor-heading">
+                      <Sparkles size={22} strokeWidth={2} className="iee-heading-sparkles" aria-hidden />
+                      Content for “{activeChapter?.title || 'Chapter'}”
+                    </h2>
+                    <span className="iee-badge">Block editor</span>
                   </div>
-                  <div style={{ fontSize: 14, color: '#1976d2' }}>
-                    Click the "Preview Reader" button at the top to see how your content looks with all interactive elements.
+                </div>
+
+                <section className="iee-blocks" aria-labelledby="blocks-heading">
+                  <div className="iee-blocks-head">
+                    <h3 id="blocks-heading" className="iee-blocks-title">
+                      <Layers size={16} strokeWidth={2} aria-hidden />
+                      Blocks on this page
+                      {!blocksLoading && (
+                        <span style={{ fontWeight: 600, color: '#6366f1' }}>({sortedBlocks.length})</span>
+                      )}
+                    </h3>
+                  </div>
+                  {blocksLoading ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '20px',
+                        color: '#6b7280',
+                        fontSize: 14,
+                      }}
+                    >
+                      <Loader2 size={20} strokeWidth={2.25} className="iee-spinner" aria-hidden />
+                      Loading blocks…
+                    </div>
+                  ) : sortedBlocks.length === 0 ? (
+                    <div className="iee-empty-sidebar" style={{ textAlign: 'left' }}>
+                      No blocks yet. Write below and use <strong>Add text block</strong> or the quiz / image / audio tools.
+                    </div>
+                  ) : (
+                    <div className="iee-blocks-grid">
+                      {sortedBlocks.map((block, index) => (
+                        <div key={block.id} className="iee-block-row">
+                          <div className="iee-block-icon" aria-hidden>
+                            <BlockTypeIcon type={block.type} />
+                          </div>
+                          <div className="iee-block-body">
+                            <div className="iee-block-type">
+                              {block.type} · #{index + 1}
+                            </div>
+                            <div className="iee-block-preview">{blockPreview(block)}</div>
+                          </div>
+                          <div className="iee-block-actions">
+                            <button
+                              type="button"
+                              className="iee-btn iee-btn-danger"
+                              title="Delete block"
+                              onClick={() => deleteBlock(block)}
+                            >
+                              <Trash2 size={16} strokeWidth={2} aria-hidden />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <CKEditorEnhanced onAddBlock={handleAddBlock} />
+
+                <div className="iee-tip" style={{ marginTop: 24 }}>
+                  <div className="iee-tip-icon" aria-hidden>
+                    <Eye size={20} strokeWidth={2} aria-hidden />
+                  </div>
+                  <div>
+                    <h4>Preview your lesson</h4>
+                    <p>
+                      Use <strong>Preview reader</strong> in the header to see how blocks render with all interactive
+                      elements.
+                    </p>
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );

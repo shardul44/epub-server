@@ -4,37 +4,37 @@ import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
 import TimelinePlugin from 'wavesurfer.js/dist/plugins/timeline.esm.js';
 import {
-  HiOutlineDownload,
-  HiOutlineCheck,
-  HiOutlinePencil,
-  HiOutlineX,
-  HiOutlineSave,
-  HiOutlineDocument,
-  HiOutlineCog,
-  HiOutlineCheckCircle,
-  HiOutlineCalculator,
-  HiOutlineMicrophone,
-  HiOutlineStop,
-  HiOutlinePlay,
-  HiOutlinePause,
-  HiOutlineVolumeUp,
-  HiOutlineClipboard,
-  HiOutlineDocumentText,
-  HiOutlineHashtag,
-  HiOutlineArrowUp,
-  HiOutlineStar,
-  HiOutlineTrash,
-  HiOutlineRefresh,
-  HiOutlinePaperClip,
-  HiOutlineSun,
-  HiOutlineClock,
-  HiOutlineChevronLeft,
-  HiOutlineChevronRight,
-  HiOutlineInformationCircle,
-  HiOutlineXCircle,
-  HiOutlineBookOpen
-} from 'react-icons/hi';
-import { HiOutlineSparkles } from 'react-icons/hi2';
+  Download,
+  Check,
+  Pencil,
+  X,
+  Save,
+  FileText,
+  Settings,
+  CircleCheck,
+  Calculator,
+  Mic,
+  Square,
+  Play,
+  Pause,
+  Volume2,
+  Clipboard,
+  Hash,
+  ArrowUp,
+  Star,
+  Trash2,
+  RefreshCw,
+  Paperclip,
+  Sun,
+  Clock3,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  CircleX,
+  BookOpen,
+  Sparkles,
+  ChevronsUpDown
+} from 'lucide-react';
 import { audioSyncService } from '../services/audioSyncService';
 import { conversionService } from '../services/conversionService';
 import api from '../services/api';
@@ -58,7 +58,6 @@ import {
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableItem } from '../components/SortableItem';
-import { HiOutlineSelector } from 'react-icons/hi';
 import { buildEpubReaderPath } from '../utils/epubReaderUrl';
 
 /** Parser-generated ids (not in client XHTML). Namespaced to avoid shadowing a publisher `ss_imp_*` id. */
@@ -5573,7 +5572,7 @@ const SyncStudio = () => {
       <header className="studio-header">
         <div className="header-left">
           <button onClick={() => navigate(`/epub-image-editor/${jobId}`)} className="btn-back">
-            ← Back
+            <ChevronLeft size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Back
           </button>
           <h1>Sync Studio</h1>
           <span className="job-badge">Job #{jobId}</span>
@@ -5608,13 +5607,13 @@ const SyncStudio = () => {
               e.target.style.borderColor = '#444';
             }}
           >
-            <HiOutlineDocumentText size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+            <FileText size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
             Audio Script
           </button>
           {saveSuccess ? (
             <div className="save-success-actions">
               <span className="save-success-message">
-                <HiOutlineCheck size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                <Check size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                 Saved successfully!
               </span>
               <button
@@ -5622,7 +5621,7 @@ const SyncStudio = () => {
                 className="btn-download"
                 disabled={downloading}
               >
-                <HiOutlineDownload size={18} />
+                <Download size={18} />
                 {downloading ? 'Downloading...' : 'Download EPUB'}
               </button>
               <button
@@ -5630,14 +5629,14 @@ const SyncStudio = () => {
                 className="btn-save-again"
                 title="Save again"
               >
-                <HiOutlineSave size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Save Again
+                <Save size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Save Again
               </button>
             </div>
           ) : (
             <button onClick={handleSave} className="btn-save" disabled={loading}>
               {loading ? 'Saving...' : (
                 <>
-                  <HiOutlineSave size={18} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                  <Save size={18} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                   Save & Export
                 </>
               )}
@@ -5647,10 +5646,10 @@ const SyncStudio = () => {
       </header>
 
       {error && <div className="error-banner">{error}</div>}
-      {success && <div className="success-banner"><HiOutlineCheck size={18} /> <span>{success}</span></div>}
+      {success && <div className="success-banner"><Check size={18} /> <span>{success}</span></div>}
       {saveSuccess && !error && !success && (
         <div className="success-banner">
-          <HiOutlineCheck size={18} />
+          <Check size={18} />
           <span>Sync data saved successfully! EPUB has been regenerated with your settings. Click "Download EPUB" in the header to get your file.</span>
         </div>
       )}
@@ -5662,7 +5661,7 @@ const SyncStudio = () => {
           style={{ width: `${leftPanelWidth}px`, minWidth: `${leftPanelWidth}px`, maxWidth: `${leftPanelWidth}px` }}
         >
           <div className="panel-header">
-            <h3><HiOutlineDocument size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Page {currentPageNumber}</h3>
+            <h3><FileText size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Page {currentPageNumber}</h3>
             <div className="page-nav-buttons" style={{ flexWrap: 'wrap', gap: '6px', justifyContent: 'flex-end' }}>
               <button
                 type="button"
@@ -5677,13 +5676,14 @@ const SyncStudio = () => {
                 }}
                 style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
               >
-                <HiOutlineBookOpen size={14} />
+                <BookOpen size={14} />
                 Reader
               </button>
               <button
                 type="button"
                 className="btn-page-nav"
                 title="Open EPUB reader in a new browser tab"
+                aria-label="Open EPUB reader in a new browser tab"
                 onClick={() => {
                   const spine = sections[currentSectionIndex]?.href;
                   const anchorId = parsedElements.find(
@@ -5694,14 +5694,14 @@ const SyncStudio = () => {
                 }}
                 style={{ padding: '4px 8px', fontSize: '11px' }}
               >
-                ↗
+                <ArrowUp size={14} style={{ transform: 'rotate(45deg)' }} />
               </button>
               <button
                 onClick={() => handleSectionChange(Math.max(0, currentSectionIndex - 1))}
                 disabled={currentSectionIndex === 0}
                 className="btn-page-nav"
               >
-                <HiOutlineChevronLeft size={14} />
+                <ChevronLeft size={14} />
               </button>
               {sections.length > 1 && (
                 <select
@@ -5721,7 +5721,7 @@ const SyncStudio = () => {
                 disabled={currentSectionIndex >= sections.length - 1}
                 className="btn-page-nav"
               >
-                <HiOutlinePlay size={14} />
+                <Play size={14} />
               </button>
             </div>
           </div>
@@ -5748,7 +5748,7 @@ const SyncStudio = () => {
             <div className="control-group">
               {/* Upload Audio — hidden; use Manual section boundaries or per-section upload instead */}
               <label className="upload-btn" style={{ display: 'none' }}>
-                <HiOutlineVolumeUp size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Upload Audio
+                <Volume2 size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Upload Audio
                 <input type="file" accept="audio/*" onChange={handleAudioUpload} hidden />
               </label>
 
@@ -5796,12 +5796,12 @@ const SyncStudio = () => {
                 >
                   {generating ? (
                     <>
-                      <HiOutlineClock size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                      <Clock3 size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                       Generating...
                     </>
                   ) : (
                     <>
-                      <HiOutlineVolumeUp size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                      <Volume2 size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                       Generate TTS ({granularity || 'sentence'})
                     </>
                   )}
@@ -5846,12 +5846,12 @@ const SyncStudio = () => {
               >
                 {isPlaying ? (
                   <>
-                    <HiOutlinePause size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Pause size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Pause
                   </>
                 ) : (
                   <>
-                    <HiOutlinePlay size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Play size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Play
                   </>
                 )}
@@ -5860,7 +5860,7 @@ const SyncStudio = () => {
                 onClick={() => wavesurferRef.current?.stop()}
                 disabled={!isReady}
               >
-                <HiOutlineStop size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Stop
+                <Square size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Stop
               </button>
               <span className="time-display">
                 {formatTime(currentTime)} / {formatTime(duration)}
@@ -5897,7 +5897,7 @@ const SyncStudio = () => {
             {!audioUrl && (
               <div className="waveform-placeholder">
                 <p>
-                  <HiOutlineVolumeUp size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                  <Volume2 size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
                   {perSectionMode
                     ? 'No audio for this section — open Manual section boundaries to upload or generate TTS'
                     : 'Upload or generate audio to see waveform'}
@@ -5921,16 +5921,16 @@ const SyncStudio = () => {
           {/* Magic Sync Section */}
           <div className="auto-sync-section">
             <div className="auto-sync-header">
-              <h3><HiOutlineCog size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Magic Sync</h3>
+              <h3><Settings size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Magic Sync</h3>
               <span className={`aeneas-badge ${aeneasAvailable ? 'available' : 'unavailable'}`}>
                 {aeneasAvailable === null ? '...' : aeneasAvailable ? (
                   <>
-                    <HiOutlineCheckCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <CircleCheck size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Aeneas Ready
                   </>
                 ) : (
                   <>
-                    <HiOutlineXCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <CircleX size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Aeneas Not Available
                   </>
                 )}
@@ -5945,7 +5945,7 @@ const SyncStudio = () => {
                 title="Aligns audio to text (Aeneas). Run this after TTS for accurate highlights."
                 style={{ marginRight: '10px', display: 'none' }}
               >
-                <HiOutlineCalculator size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                <Calculator size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                 {autoSyncing ? 'Aligning...' : 'Run alignment (auto)'}
               </button>
               <button
@@ -5973,7 +5973,7 @@ const SyncStudio = () => {
                   boxShadow: (autoSyncing || sections.length === 0) ? 'none' : '0 2px 8px rgba(14, 165, 233, 0.3)'
                 }}
               >
-                <HiOutlineDocumentText size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                <FileText size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
                 Manual section boundaries
               </button>
               <button
@@ -5995,12 +5995,12 @@ const SyncStudio = () => {
               >
                 {autoSyncing ? (
                   <>
-                    <HiOutlineClock size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Clock3 size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Syncing...
                   </>
                 ) : (
                   <>
-                    <HiOutlineStar size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Star size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Magic Sync
                   </>
                 )}
@@ -6066,13 +6066,13 @@ const SyncStudio = () => {
                 className="btn-clear-sync"
                 title="Clear all sync data and start fresh"
               >
-                <HiOutlineTrash size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Clear
+                <Trash2 size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Clear
               </button>
             </div>
 
             {autoSyncProgress && (
               <div className="auto-sync-progress">
-                <span className="progress-spinner"><HiOutlineClock size={16} /></span>
+                <span className="progress-spinner"><Clock3 size={16} /></span>
                 <span>{autoSyncProgress}</span>
               </div>
             )}
@@ -6081,12 +6081,12 @@ const SyncStudio = () => {
               {aeneasAvailable
                 ? (
                   <>
-                    <HiOutlineCheckCircle size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                    Aeneas analyzes audio phonemes. Run alignment after TTS for accurate text–audio sync. | <HiOutlineSparkles size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Magic Sync uses AI to skip TOC/unspoken content
+                    <CircleCheck size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    Aeneas analyzes audio phonemes. Run alignment after TTS for accurate text–audio sync. | <Sparkles size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Magic Sync uses AI to skip TOC/unspoken content
                   </>
                 ) : (
                   <>
-                    <HiOutlineCalculator size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Calculator size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Linear spread calculates timings based on character count
                   </>
                 )}
@@ -6096,7 +6096,7 @@ const SyncStudio = () => {
           {/* Recording Controls (Manual Tap-to-Sync) */}
           <div className="recording-section">
             <div className="section-header">
-              <h3><HiOutlineMicrophone size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Manual Tap-to-Sync</h3>
+              <h3><Mic size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Manual Tap-to-Sync</h3>
             </div>
             <div className="recording-controls">
               <button
@@ -6106,12 +6106,12 @@ const SyncStudio = () => {
               >
                 {isRecording ? (
                   <>
-                    <HiOutlineStop size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Square size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Stop Recording
                   </>
                 ) : (
                   <>
-                    <HiOutlineMicrophone size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                    <Mic size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                     Start Tap-to-Sync
                   </>
                 )}
@@ -6135,7 +6135,7 @@ const SyncStudio = () => {
               disabled={Object.keys(syncData.sentences).length === 0}
               className="btn-refresh"
             >
-              <HiOutlineRefresh size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Refresh Word Map
+              <RefreshCw size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Refresh Word Map
             </button>
           </div>
 
@@ -6147,7 +6147,7 @@ const SyncStudio = () => {
                 checked={snapToSilence}
                 onChange={(e) => setSnapToSilence(e.target.checked)}
               />
-              <span><HiOutlinePaperClip size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Snap to Silence</span>
+              <span><Paperclip size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Snap to Silence</span>
             </label>
             <label className="setting">
               <input
@@ -6155,7 +6155,7 @@ const SyncStudio = () => {
                 checked={showWordTrack}
                 onChange={(e) => setShowWordTrack(e.target.checked)}
               />
-              <span><HiOutlineDocumentText size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Show Word Track</span>
+              <span><FileText size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Show Word Track</span>
             </label>
             <label className="setting">
               <input
@@ -6163,7 +6163,7 @@ const SyncStudio = () => {
                 checked={scrubOnDrag}
                 onChange={(e) => setScrubOnDrag(e.target.checked)}
               />
-              <span><HiOutlineVolumeUp size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Scrub on Drag</span>
+              <span><Volume2 size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Scrub on Drag</span>
             </label>
           </div>
         </main>
@@ -6183,7 +6183,7 @@ const SyncStudio = () => {
           style={{ width: `${rightPanelWidth}px`, minWidth: `${rightPanelWidth}px`, maxWidth: `${rightPanelWidth}px` }}
         >
           <div className="panel-header">
-            <h3><HiOutlineClipboard size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Page {currentPageNumber} Sync</h3>
+            <h3><Clipboard size={18} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Page {currentPageNumber} Sync</h3>
             
             {/* Auto-save indicator */}
             {autoSaveIndicator && (
@@ -6200,7 +6200,7 @@ const SyncStudio = () => {
                 marginLeft: '12px',
                 animation: 'fadeIn 0.2s ease-in'
               }}>
-                <HiOutlineCheckCircle size={14} />
+                <CircleCheck size={14} />
                 Reading order saved
               </div>
             )}
@@ -6211,7 +6211,7 @@ const SyncStudio = () => {
                 disabled={currentSectionIndex === 0}
                 className="btn-page-nav"
               >
-                <HiOutlineChevronLeft size={14} />
+                <ChevronLeft size={14} />
               </button>
               <span className="page-indicator">Section {currentSectionIndex + 1} / {sections.length} (Page {currentPageNumber})</span>
               <button
@@ -6219,7 +6219,7 @@ const SyncStudio = () => {
                 disabled={currentSectionIndex >= sections.length - 1}
                 className="btn-page-nav"
               >
-                <HiOutlinePlay size={14} />
+                <Play size={14} />
               </button>
             </div>
           </div>
@@ -6227,7 +6227,7 @@ const SyncStudio = () => {
           {/* Page Stats */}
           <div className="page-stats">
             <span className="stat">
-              <HiOutlineDocumentText size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {[
+              <FileText size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {[
                 // Sentences: exclude word ids (avoid double-count)
                 ...Object.entries(syncData.sentences).filter(([id]) => !id.includes('_w')).map(([id, data]) => ({ id, data })),
                 // Words: only word ids from words
@@ -6243,7 +6243,7 @@ const SyncStudio = () => {
               }).length} {granularity === 'word' ? 'words' : granularity === 'sentence' ? 'sentences' : 'paragraphs'}
             </span>
             <span className="stat">
-              <HiOutlineHashtag size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {Object.entries(syncData.words).filter(([id, data]) => {
+              <Hash size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {Object.entries(syncData.words).filter(([id, data]) => {
                 const parsedElement = parsedElements.find(el => el.id === id);
                 return parsedElement ? (parsedElement.sectionIndex === currentSectionIndex) : (data.pageNumber === currentPageNumber);
               }).length} words
@@ -6324,7 +6324,7 @@ const SyncStudio = () => {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <HiOutlineSelector />
+                            <ChevronsUpDown />
                           </div>
 
                           <div className="sync-item-content" style={{ paddingLeft: '24px' }}>
@@ -6397,7 +6397,7 @@ const SyncStudio = () => {
                                         }}
                                         title="Clear sync timing to allow resyncing"
                                       >
-                                        <HiOutlineRefresh size={12} />
+                                        <RefreshCw size={12} />
                                         Clear Sync
                                       </button>
                                     )}
@@ -6425,7 +6425,7 @@ const SyncStudio = () => {
                                 </div>
                                 {regeneratingBlock === id && (
                                   <div style={{ fontSize: '11px', color: '#1976d2', marginTop: '4px', fontStyle: 'italic' }}>
-                                    <HiOutlineSun size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Regenerating audio with new text...
+                                    <Sun size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Regenerating audio with new text...
                                   </div>
                                 )}
                               </div>
@@ -6442,7 +6442,7 @@ const SyncStudio = () => {
                                         }}
                                         className="btn-clear-sync"
                                       >
-                                        <HiOutlineRefresh size={12} />
+                                        <RefreshCw size={12} />
                                       </button>
                                     )}
                                   </div>
@@ -6684,7 +6684,7 @@ const SyncStudio = () => {
                 alignItems: 'center',
                 gap: '8px'
               }}>
-                <HiOutlineDocumentText size={24} />
+                <FileText size={24} />
                 Complete Audio Script
               </h2>
               <button
@@ -6706,7 +6706,7 @@ const SyncStudio = () => {
                 onMouseEnter={(e) => e.target.style.background = '#333'}
                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
               >
-                <HiOutlineX size={20} />
+                <X size={20} />
               </button>
             </div>
 
@@ -6718,7 +6718,7 @@ const SyncStudio = () => {
             }}>
               {loadingAudioScript ? (
                 <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-                  <HiOutlineClock size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <Clock3 size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <p>Loading audio script...</p>
                 </div>
               ) : (() => {
@@ -6837,12 +6837,12 @@ const SyncStudio = () => {
                               >
                                 {regeneratingScriptBlock === id ? (
                                   <>
-                                    <HiOutlineClock size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                    <Clock3 size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                                     Regenerating...
                                   </>
                                 ) : (
                                   <>
-                                    <HiOutlineSave size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                    <Save size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
                                     Save & Regenerate
                                   </>
                                 )}
@@ -6861,12 +6861,12 @@ const SyncStudio = () => {
                                   opacity: regeneratingScriptBlock === id ? 0.5 : 1
                                 }}
                               >
-                                <HiOutlineX size={14} style={{ verticalAlign: 'middle' }} /> Cancel
+                                <X size={14} style={{ verticalAlign: 'middle' }} /> Cancel
                               </button>
                             </div>
                             {regeneratingScriptBlock === id && (
                               <div style={{ fontSize: '11px', color: '#1976d2', marginTop: '4px', fontStyle: 'italic' }}>
-                                <HiOutlineSun size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Regenerating audio with new text...
+                                <Sun size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Regenerating audio with new text...
                               </div>
                             )}
                           </div>
@@ -6911,11 +6911,11 @@ const SyncStudio = () => {
                               >
                                 {playingScriptSegmentId === id && isPlaying ? (
                                   <>
-                                    <HiOutlinePause size={12} /> Pause
+                                    <Pause size={12} /> Pause
                                   </>
                                 ) : (
                                   <>
-                                    <HiOutlinePlay size={12} /> Play
+                                    <Play size={12} /> Play
                                   </>
                                 )}
                               </button>
@@ -6935,7 +6935,7 @@ const SyncStudio = () => {
                                 }}
                                 title="Edit text"
                               >
-                                <HiOutlinePencil size={12} /> Edit
+                                <Pencil size={12} /> Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteScriptBlock(id)}
@@ -6953,7 +6953,7 @@ const SyncStudio = () => {
                                 }}
                                 title="Delete this block"
                               >
-                                <HiOutlineTrash size={12} /> Delete
+                                <Trash2 size={12} /> Delete
                               </button>
                             </div>
                           </div>
@@ -7012,7 +7012,7 @@ const SyncStudio = () => {
                 color: '#b0b0b0'
               }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <HiOutlineDocumentText size={16} />
+                  <FileText size={16} />
                   {Object.entries(audioScriptData.sentences).filter(([, data]) => data.status !== 'SKIPPED').length} segments
                 </span>
                 {(() => {
@@ -7022,7 +7022,7 @@ const SyncStudio = () => {
                   const totalDuration = sorted.length > 0 ? sorted[sorted.length - 1][1].end : 0;
                   return (
                     <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <HiOutlineClock size={16} />
+                      <Clock3 size={16} />
                       {formatTime(totalDuration)} total duration
                     </span>
                   );
@@ -7101,7 +7101,7 @@ const SyncStudio = () => {
                 alignItems: 'center',
                 gap: '10px'
               }}>
-                <HiOutlineInformationCircle size={28} color="#ff9800" />
+                <Info size={28} color="#ff9800" />
                 Audio Playback Diagnostics
               </h2>
               <button
@@ -7123,7 +7123,7 @@ const SyncStudio = () => {
                 onMouseEnter={(e) => e.target.style.background = '#333'}
                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
               >
-                <HiOutlineX size={20} />
+                <X size={20} />
               </button>
             </div>
 
@@ -7135,7 +7135,7 @@ const SyncStudio = () => {
             }}>
               {loadingDiagnostics ? (
                 <div style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-                  <HiOutlineClock size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
+                  <Clock3 size={32} style={{ marginBottom: '10px', opacity: 0.5 }} />
                   <p>Loading diagnostics...</p>
                 </div>
               ) : diagnosticData.error ? (
@@ -7166,7 +7166,7 @@ const SyncStudio = () => {
                       alignItems: 'center',
                       gap: '8px'
                     }}>
-                      <HiOutlineHashtag size={18} />
+                      <Hash size={18} />
                       Segment ID: <span style={{ color: '#fff', fontFamily: 'Courier New, monospace' }}>{diagnosticData.segmentId}</span>
                     </h3>
                   </div>
@@ -7348,12 +7348,12 @@ const SyncStudio = () => {
                         >
                           {playingSegmentId === diagnosticData.segmentId && isPlaying ? (
                             <>
-                              <HiOutlinePause size={16} />
+                              <Pause size={16} />
                               Pause Test
                             </>
                           ) : (
                             <>
-                              <HiOutlinePlay size={16} />
+                              <Play size={16} />
                               Test Playback
                             </>
                           )}

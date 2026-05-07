@@ -790,12 +790,8 @@ export class PdfExtractionService {
       // Use Puppeteer with embedded PDF.js to render PDF pages (like Java PDFRenderer)
       const browser = await puppeteer.launch({
         headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu'
-        ]
+        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
 
       const pageImages = [];

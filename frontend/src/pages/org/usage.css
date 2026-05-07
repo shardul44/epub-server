@@ -1,0 +1,838 @@
+/* ─── Usage Page ──────────────────────────────────────────────── */
+.usage-page {
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 100vh;
+  background: #f7f7f2;
+}
+
+
+/* top bar */
+.usage-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  height: 70px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e0;
+}
+
+.usage-topbar__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.usage-topbar__help {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #555;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.usage-topbar__help:hover {
+  color: #1a7a3c;
+}
+
+/* body */
+.usage-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+   padding: 24px 28px 40px;
+  gap: 18px;
+}
+
+.usage-heading {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+}
+
+.usage-subheading {
+  font-size: 13px;
+  color: #777;
+  margin: 0 0 20px;
+}
+
+/* plan banner */
+.usage-plan-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.usage-plan-banner__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usage-plan-banner__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #e8f5ee;
+  border-radius: 8px;
+  color: #1a7a3c;
+}
+
+.usage-plan-banner__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.usage-plan-banner__badge {
+  background: #1a7a3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.usage-plan-banner__hint {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.usage-plan-banner__right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.usage-plan-banner__reset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.usage-plan-banner__reset-label {
+  font-size: 11px;
+  color: #999;
+}
+
+.usage-plan-banner__reset-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.usage-plan-banner__upgrade {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a7a3c;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.usage-plan-banner__upgrade:hover {
+  background: #155f30;
+}
+
+/* loading / error */
+.usage-loading,
+.usage-error {
+  padding: 20px 0;
+  font-size: 14px;
+  color: #888;
+}
+
+.usage-error {
+  color: #c0392b;
+}
+
+/* sections */
+.usage-section {
+  margin-bottom: 28px;
+}
+
+.usage-section__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 14px;
+}
+
+/* resource cards grid */
+.usage-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  
+}
+
+/* individual usage card */
+.usage-card {
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 15px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid #e5e7eb; 
+}
+
+.usage-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #888;
+}
+
+.usage-card__icon {
+  display: flex;
+  align-items: center;
+  color: #aaa;
+}
+
+.usage-card__label {
+  font-size: 11px;
+  color: #999;
+  font-weight: 500;
+}
+
+.usage-card__numbers {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.usage-card__used {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+}
+
+.usage-card__limit {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.usage-card__bar-track {
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+
+.usage-card__bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.usage-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.usage-card__pct {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.usage-card__remaining {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* buy add-ons button */
+.usage-addons-btn {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1a7a3c;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.usage-addons-btn:hover {
+  background: #155f30;
+}
+
+/* plan limits grid */
+.usage-limits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e5e5e0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.plan-limit-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  border-right: 1px solid #f0f0eb;
+  cursor: default;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+
+.plan-limit-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(26,122,60,0.06) 0%, rgba(26,122,60,0) 60%);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+  pointer-events: none;
+}
+
+.plan-limit-item:hover {
+  background: #f7fdf9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(26,122,60,0.08);
+  z-index: 1;
+}
+
+.plan-limit-item:hover::before {
+  opacity: 1;
+}
+
+.plan-limit-item:last-child {
+  border-right: none;
+}
+
+/* animated icon wrapper */
+.plan-limit-item__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #f3f4f6;
+  color: #aaa;
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.22s ease;
+}
+
+.plan-limit-item:hover .plan-limit-item__icon {
+  background: #e8f5ee;
+  color: #1a7a3c;
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.plan-limit-item__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.plan-limit-item__label {
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.18s ease;
+}
+
+.plan-limit-item:hover .plan-limit-item__label {
+  color: #666;
+}
+
+.plan-limit-item__value {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  transition: color 0.18s ease;
+  white-space: nowrap;
+}
+
+.plan-limit-item:hover .plan-limit-item__value {
+  color: #1a7a3c;
+}
+
+/* subtle bottom accent line on hover */
+.plan-limit-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, #1a7a3c, #34d399);
+  border-radius: 2px 2px 0 0;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease;
+}
+
+.plan-limit-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* responsive */
+@media (max-width: 768px) {
+  .usage-body {
+    padding: 20px 16px;
+  }
+
+  .usage-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .usage-limits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .plan-limit-item {
+    border-bottom: 1px solid #f0f0eb;
+  }
+
+  .plan-limit-item:nth-child(even) {
+    border-right: none;
+  }
+
+  .usage-plan-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .usage-plan-banner__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* ─── Modals ──────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.modal-box--upgrade {
+  max-width: 780px;
+}
+
+.modal-box--addons {
+  max-width: 680px;
+}
+
+/* modal header */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.modal-header__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-header__icon {
+  color: #1a7a3c;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 7px;
+  cursor: pointer;
+  color: #555;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.modal-subtitle {
+  font-size: 13px;
+  color: #666;
+  margin: 10px 24px 20px;
+  line-height: 1.5;
+}
+
+.modal-loading,
+.modal-empty {
+  padding: 24px;
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+}
+
+.modal-error {
+  margin: 0 24px 16px;
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #dc2626;
+}
+
+.modal-contact-note {
+  font-size: 12px;
+  color: #888;
+  margin: 0 24px 20px;
+  line-height: 1.5;
+}
+
+.modal-contact-note a {
+  color: #1a7a3c;
+  text-decoration: none;
+}
+
+.modal-contact-note a:hover {
+  text-decoration: underline;
+}
+
+/* ─── Plan cards (upgrade modal) ─────────────────────────────── */
+.modal-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  padding: 0 24px 20px;
+}
+
+.plan-card {
+  position: relative;
+  border: 1.5px solid #e5e5e0;
+  border-radius: 12px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.plan-card:hover {
+  border-color: #1a7a3c;
+  box-shadow: 0 4px 16px rgba(26, 122, 60, 0.1);
+}
+
+.plan-card--current {
+  border-color: #1a7a3c;
+  background: #f7fdf9;
+}
+
+.plan-card__badge {
+  position: absolute;
+  top: -10px;
+  left: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+}
+
+.plan-card__badge--current {
+  background: #1a7a3c;
+  color: #fff;
+}
+
+.plan-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-card__icon {
+  color: #1a7a3c;
+}
+
+.plan-card__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.plan-card__desc {
+  font-size: 12px;
+  color: #777;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.plan-card__features {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.plan-card__features li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+}
+
+.plan-card__features li svg {
+  color: #1a7a3c;
+  flex-shrink: 0;
+}
+
+.plan-card__btn {
+  margin-top: auto;
+  padding: 8px 12px;
+  border-radius: 7px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1a7a3c;
+  color: #fff;
+  transition: background 0.15s;
+}
+
+.plan-card__btn:hover:not(.plan-card__btn--disabled) {
+  background: #155f30;
+}
+
+.plan-card__btn--disabled {
+  background: #e5e5e0;
+  color: #999;
+  cursor: default;
+}
+
+/* ─── Add-on cards ────────────────────────────────────────────── */
+.addons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  padding: 0 24px 20px;
+}
+
+.addon-card {
+  position: relative;
+  border: 1.5px solid #e5e5e0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  background: #fff;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.addon-card:hover {
+  border-color: #1a7a3c;
+  box-shadow: 0 4px 14px rgba(26, 122, 60, 0.1);
+}
+
+.addon-card--selected {
+  border-color: #1a7a3c;
+  background: #f7fdf9;
+}
+
+.addon-card__badge {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: #f59e0b;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.addon-card__tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #1a7a3c;
+  background: #e8f5ee;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.4px;
+}
+
+.addon-card__icon {
+  color: #1a7a3c;
+  margin-top: 4px;
+}
+
+.addon-card__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.addon-card__desc {
+  font-size: 12px;
+  color: #777;
+  line-height: 1.4;
+}
+
+.addon-card__check {
+  color: #1a7a3c;
+  margin-top: 4px;
+}
+
+/* modal footer */
+.modal-footer {
+  border-top: 1px solid #f0f0eb;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.modal-footer .modal-contact-note {
+  margin: 0;
+  flex: 1;
+}
+
+.modal-footer__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.modal-btn--ghost {
+  background: #f3f4f6;
+  color: #555;
+}
+
+.modal-btn--ghost:hover {
+  background: #e5e7eb;
+}
+
+.modal-btn--primary {
+  background: #1a7a3c;
+  color: #fff;
+}
+
+.modal-btn--primary:hover:not(:disabled) {
+  background: #155f30;
+}
+
+.modal-btn--primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* responsive modals */
+@media (max-width: 600px) {
+  .modal-plans-grid,
+  .addons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .modal-footer__actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

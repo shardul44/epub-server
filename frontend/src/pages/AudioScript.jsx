@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  HiOutlineArrowLeft, 
-  HiOutlineDocumentText,
-  HiOutlineDownload,
-  HiOutlineClock
-} from 'react-icons/hi';
+import {
+  ArrowLeft,
+  FileText,
+  Download,
+  Clock,
+} from 'lucide-react';
 import { audioSyncService } from '../services/audioSyncService';
 import './AudioScript.css';
 
@@ -120,7 +120,7 @@ const AudioScript = () => {
       <div className="audio-script-container">
         <div className="error">{error}</div>
         <button onClick={() => navigate(`/sync-studio/${jobId}`)} className="btn-back">
-          <HiOutlineArrowLeft size={16} style={{ marginRight: '4px' }} />
+          <ArrowLeft size={16} style={{ marginRight: '4px' }} />
           Back to Sync Studio
         </button>
       </div>
@@ -135,17 +135,17 @@ const AudioScript = () => {
             onClick={() => navigate(`/sync-studio/${jobId}`)} 
             className="btn-back"
           >
-            <HiOutlineArrowLeft size={16} style={{ marginRight: '4px' }} />
+            <ArrowLeft size={16} style={{ marginRight: '4px' }} />
             Back to Sync Studio
           </button>
           <h1>
-            <HiOutlineDocumentText size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+            <FileText size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
             Audio Script
           </h1>
         </div>
         <div className="header-right">
           <button onClick={exportScript} className="btn-export">
-            <HiOutlineDownload size={16} style={{ marginRight: '4px' }} />
+            <Download size={16} style={{ marginRight: '4px' }} />
             Export Script
           </button>
         </div>
@@ -153,11 +153,11 @@ const AudioScript = () => {
 
       <div className="script-stats">
         <span>
-          <HiOutlineDocumentText size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+          <FileText size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
           {sortedSentences.length} segments
         </span>
         <span>
-          <HiOutlineClock size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+          <Clock size={16} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
           {sortedSentences.length > 0 
             ? formatTime(sortedSentences[sortedSentences.length - 1][1].end)
             : '0:00.00'

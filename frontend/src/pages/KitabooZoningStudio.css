@@ -1,240 +1,468 @@
+/* ═══════════════════════════════════════════════════════════════
+   KitabooZoningStudio — layout mirroring ImageFxlEditor
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Tokens ────────────────────────────────────────────────────── */
+:root {
+  --kz-blue:       #2563eb;
+  --kz-blue-lt:    #eff6ff;
+  --kz-blue-mid:   #dbeafe;
+  --kz-green:      #22c55e;
+  --kz-border:     #e5e7eb;
+  --kz-bg:         #f7f7f2;
+  --kz-white:      #ffffff;
+  --kz-text:       #111827;
+  --kz-muted:      #6b7280;
+  --kz-right-w:    300px;
+  --kz-topbar-h:   70px;
+  --kz-toolbar-h:  48px;
+  --kz-radius:     8px;
+  --kz-shadow:     0 1px 4px rgba(0,0,0,0.07);
+}
+
+/* ── Root ──────────────────────────────────────────────────────── */
 .kitaboo-studio {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f0f2f5;
+  background: var(--kz-bg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
 }
 
-.kitaboo-header {
-  padding: 10px 20px;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  overflow-x: auto;
-  min-height: 52px;
+/* Org admin: sidebar sits in a row next to the body */
+.kitaboo-studio--with-sidebar {
+  flex-direction: row;
+  overflow: hidden;
 }
 
-.kitaboo-header-row {
+/* Body column (everything right of the sidebar) */
+.kitaboo-studio-body {
   display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
   flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.kitaboo-studio-body--with-sidebar,
+.kitaboo-studio-body--sb-collapsed {
+  margin-left: 0; /* sidebar is in the flex row */
+}
+
+/* ── Top header bar ────────────────────────────────────────────── */
+.ife-selector-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--kz-topbar-h);
+  padding: 0 20px;
+  background: var(--kz-white);
+  border-bottom: 1px solid var(--kz-border);
+  flex-shrink: 0;
+  gap: 12px;
+  z-index: 10;
+}
+
+.kz-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
-.kitaboo-sync-settings {
+.kz-topbar-right {
   display: flex;
-  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ife-selector-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--kz-radius);
+  border: 1px solid var(--kz-border);
+  background: transparent;
+  color: var(--kz-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.ife-selector-back-btn:hover {
+  background: var(--kz-blue-lt);
+  border-color: var(--kz-blue);
+  color: var(--kz-blue);
+}
+
+.ife-selector-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--kz-text);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.ife-selector-job-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--kz-blue-lt);
+  border: 1px solid var(--kz-blue-mid);
+  color: var(--kz-blue);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Shared button system ──────────────────────────────────────── */
+.kz-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: var(--kz-radius);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
+  border: 1px solid transparent;
+}
+.kz-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.kz-btn--primary {
+  background: var(--kz-blue);
+  color: #fff;
+  border-color: var(--kz-blue);
+}
+.kz-btn--primary:hover:not(:disabled) { background: #1d4ed8; border-color: #1d4ed8; }
+
+.kz-btn--save {
+  background: var(--kz-green);
+  color: #fff;
+  border-color: var(--kz-green);
+}
+.kz-btn--save:hover:not(:disabled) { background: #16a34a; border-color: #16a34a; }
+
+.kz-btn--ghost {
+  background: transparent;
+  color: var(--kz-muted);
+  border-color: var(--kz-border);
+}
+.kz-btn--ghost:hover:not(:disabled) { background: #f3f4f6; color: var(--kz-text); }
+
+.kz-btn--tool {
+  background: var(--kz-white);
+  color: var(--kz-text);
+  border-color: var(--kz-border);
+  font-size: 12px;
+  padding: 5px 10px;
+}
+.kz-btn--tool:hover:not(:disabled) { background: var(--kz-blue-lt); border-color: var(--kz-blue); color: var(--kz-blue); }
+.kz-btn--tool.kz-btn--active { background: var(--kz-blue); color: #fff; border-color: var(--kz-blue); }
+
+/* ── Studio: workspace row ─────────────────────────────────────── */
+.kitaboo-workspace {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── CENTER: canvas area ───────────────────────────────────────── */
+.kitaboo-canvas-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Toolbar ───────────────────────────────────────────────────── */
+.kz-toolbar {
+  display: flex;
+  align-items: center;
+  height: var(--kz-toolbar-h);
+  padding: 0 16px;
+  background: var(--kz-white);
+  border-bottom: 1px solid var(--kz-border);
+  flex-shrink: 0;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.kz-toolbar-pager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.kz-pager-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--kz-border);
+  background: var(--kz-white);
+  color: var(--kz-text);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.kz-pager-btn:hover:not(:disabled) { background: var(--kz-blue-lt); border-color: var(--kz-blue); color: var(--kz-blue); }
+.kz-pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.kz-pager-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kz-text);
+  white-space: nowrap;
+}
+.kz-pager-sep { color: var(--kz-muted); font-weight: 400; }
+
+.kz-toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--kz-border);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+.kz-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.kz-status-text {
+  font-size: 12px;
+  color: var(--kz-blue);
+  white-space: nowrap;
+}
+
+.kz-toolbar-settings {
+  display: flex;
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
 }
 
-.btn-back {
-  padding: 8px 15px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.page-indicator {
-  font-weight: 600;
-  color: #333;
-  margin: 0 15px;
-}
-
-.publish-btn-top {
-  padding: 10px 20px;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.prop-group {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.prop-group label {
-  font-size: 12px;
-  font-weight: bold;
-  color: #666;
-  text-transform: uppercase;
-}
-
-.prop-group input,
-.prop-group select,
-.prop-group textarea {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-.prop-group textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.prop-group input:read-only {
-  background-color: #f8f9fa;
-  color: #6c757d;
-}
-
-.kitaboo-sidebar h4 {
-  margin: 25px 0 10px 0;
-  color: #28a745;
-  font-size: 14px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 5px;
-}
-
-.empty-state {
+.kz-setting-label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
-  color: #999;
-  padding: 20px;
-  font-style: italic;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--kz-muted);
+  white-space: nowrap;
 }
 
-.publish-btn-top {
-  padding: 10px 20px;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
+.kz-select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--kz-border);
+  background: var(--kz-white);
+  font-size: 12px;
+  color: var(--kz-text);
   cursor: pointer;
-  transition: background 0.2s;
+  min-width: 120px;
+}
+.kz-select--disabled { background: #f9fafb; color: var(--kz-muted); cursor: not-allowed; }
+
+.kz-input {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--kz-border);
+  background: var(--kz-white);
+  font-size: 12px;
+  color: var(--kz-text);
+  min-width: 160px;
 }
 
-.publish-btn-top:hover {
-  background: #218838;
-}
+.kz-toolbar-end { margin-left: auto; }
 
-.publish-btn-top:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.kitaboo-workspace {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
+/* ── Canvas container ──────────────────────────────────────────── */
 .kitaboo-canvas-container {
   flex: 1;
   overflow: auto;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  /* top-align so content is not cut off at top; scroll for rest */
-  padding: 40px;
-  background: #525659;
+  padding: 24px;
+  background: var(--kz-bg);
   min-height: 0;
+  min-width: 0;
 }
 
+/* Fabric.js auto-wraps the canvas in .canvas-container — style it as a card */
+.kitaboo-canvas-container .canvas-container {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* ── RIGHT: zone properties sidebar ───────────────────────────── */
 .kitaboo-sidebar {
-  width: 300px;
-  min-width: 300px;
-  background: #fff;
-  border-left: 1px solid #ddd;
-  padding: 20px;
+  width: var(--kz-right-w);
+  min-width: var(--kz-right-w);
+  flex-shrink: 0;
+  background: var(--kz-white);
+  border-left: 1px solid var(--kz-border);
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
 }
 
+.kitaboo-sidebar h3 {
+  margin: 0;
+  padding: 14px 16px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--kz-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--kz-border);
+  flex-shrink: 0;
+}
+
+.kitaboo-sidebar h4 {
+  margin: 16px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--kz-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--kz-border);
+  padding-bottom: 5px;
+}
+
+/* ── Zone properties form ──────────────────────────────────────── */
 .tagging-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
+  padding: 12px 16px;
+  flex: 1;
 }
 
-.tagging-panel button {
-  padding: 10px;
-  background: #0078ff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+.prop-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
 }
 
-.tagging-panel button:hover {
-  background: #0056b3;
+.prop-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--kz-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.publish-btn {
-  margin-top: auto;
-  padding: 15px;
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
+.prop-group input,
+.prop-group select,
+.prop-group textarea {
+  padding: 7px 10px;
+  border: 1px solid var(--kz-border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--kz-text);
+  background: var(--kz-white);
+  transition: border-color 0.15s;
+}
+.prop-group input:focus,
+.prop-group select:focus,
+.prop-group textarea:focus {
+  outline: none;
+  border-color: var(--kz-blue);
 }
 
+.prop-group textarea {
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.prop-group input:read-only {
+  background: #f9fafb;
+  color: var(--kz-muted);
+}
+
+/* ── Empty state ───────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  color: var(--kz-muted);
+  padding: 24px 16px;
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* ── Loading screen ────────────────────────────────────────────── */
 .kitaboo-loading {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  font-size: 20px;
-  color: #666;
+  font-size: 16px;
+  color: var(--kz-muted);
   gap: 16px;
+  background: var(--kz-bg);
 }
 
 .kitaboo-loading-progress h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.25rem;
-  color: #212121;
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: var(--kz-text);
 }
 
 .kitaboo-loading-step {
-  margin: 0 0 12px 0;
-  font-size: 0.95rem;
-  color: #555;
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: var(--kz-muted);
 }
 
 .kitaboo-progress-bar-container {
   width: 320px;
   max-width: 90vw;
-  height: 12px;
-  background: #e0e0e0;
-  border-radius: 6px;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .kitaboo-progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #1976d2, #42a5f5);
-  border-radius: 6px;
+  background: linear-gradient(90deg, var(--kz-blue), #60a5fa);
+  border-radius: 4px;
   transition: width 0.3s ease;
 }
 
 .kitaboo-progress-percent {
   font-weight: 700;
-  font-size: 1.1rem;
-  color: #1976d2;
+  font-size: 1rem;
+  color: var(--kz-blue);
 }
 
 .kitaboo-loading-error {
@@ -242,11 +470,17 @@
 }
 
 .kitaboo-loading-error h3 {
-  margin: 0 0 8px 0;
-  color: #c62828;
+  margin: 0 0 8px;
+  color: #dc2626;
 }
 
 .kitaboo-loading-error p {
-  margin: 0 0 16px 0;
-  color: #666;
+  margin: 0 0 16px;
+  color: var(--kz-muted);
+}
+
+/* ── Ensure workspace fills remaining height ───────────────────── */
+.kitaboo-studio-body .kitaboo-workspace {
+  flex: 1;
+  min-height: 0;
 }

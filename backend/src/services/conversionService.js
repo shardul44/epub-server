@@ -2028,7 +2028,18 @@ ${xhtmlPages.map((p, i) => `    <li><a href="${p.xhtmlFileName}">Page ${p.pageNu
       }
 
       console.log(`[Job ${jobId}] Rendering PDF pages as images (fixed-layout)...`);
-      const pageImagesData = await PdfExtractionService.renderPagesAsImages(pdfFilePath, jobImagesDir);
+      let pageImagesData;
+      try {
+        pageImagesData = await PdfExtractionService.renderPagesAsImages(pdfFilePath, jobImagesDir);
+      } catch (renderError) {
+        const msg = `CONTENT CLEANUP failed: could not render PDF pages as images — ${renderError.message}`;
+        console.error(`[Job ${jobId}] ${msg}`);
+        await ConversionJobModel.update(jobId, {
+          status: 'FAILED',
+          errorMessage: msg
+        });
+        throw new Error(msg);
+      }
       console.log(`[Job ${jobId}] Rendered ${pageImagesData.images.length} page images`);
 
       // Add extracted images to pageImagesData for EPUB generation
@@ -6938,6 +6949,7 @@ ${bodyContent}
       progressPercentage: job.progress_percentage,
       epubFilePath: job.epub_file_path,
       errorMessage: job.error_message,
+      retryCount: job.retry_count ?? 0,
       confidenceScore: job.confidence_score,
       requiresReview: job.requires_review,
       reviewedBy: job.reviewed_by,

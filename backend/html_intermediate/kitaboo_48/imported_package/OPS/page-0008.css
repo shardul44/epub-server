@@ -1,0 +1,54 @@
+
+.t {
+	-webkit-transform-origin: top left;
+	-moz-transform-origin: top left;
+	-o-transform-origin: top left;
+	-ms-transform-origin: top left;
+	-webkit-transform: scale(0.25);
+	-moz-transform: scale(0.25);
+	-o-transform: scale(0.25);
+	-ms-transform: scale(0.25);
+	z-index: 2;
+	position: absolute;
+	white-space: pre;
+	overflow: visible;
+}
+
+
+#t1_9{left:94px;top:637px;letter-spacing:-5.3px;word-spacing:4.8px;}
+#t2_9{left:56px;top:680px;letter-spacing:-5.2px;}
+#t3_9{left:217px;top:680px;letter-spacing:-4.2px;word-spacing:3.2px;}
+#t4_9{left:56px;top:723px;letter-spacing:-5.2px;word-spacing:4.1px;}
+#t5_9{left:55px;top:46px;letter-spacing:-5.1px;word-spacing:4px;}
+#t6_9{left:40px;top:793px;}
+
+.s1_9{
+	FONT-SIZE: 134.4px;
+	FONT-FAMILY: HMAvenir-Regular_pk;
+	color: rgb(0,0,0);
+}
+
+.s2_9{
+	FONT-SIZE: 146.7px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+.s3_9{
+	FONT-SIZE: 73.3px;
+	FONT-FAMILY: HMAvenir-Bold_pp;
+	color: rgb(0,0,0);
+}
+
+
+
+@font-face {
+	font-family: HMAvenir-Bold_pp;
+	src: url("fonts/HMAvenir-Bold_pp.woff") format("woff");
+}
+
+@font-face {
+	font-family: HMAvenir-Regular_pk;
+	src: url("fonts/HMAvenir-Regular_pk.woff") format("woff");
+}
+

@@ -1,0 +1,826 @@
+{
+  "@type": "earl:report",
+  "@context": "http://daisy.github.io/ace/ace-report-1.0.jsonld",
+  "dct:title": "Ace Report",
+  "dct:description": "Report on automated accessibility checks for EPUB",
+  "dct:date": "5/5/2026, 4:39:02 pm",
+  "earl:assertedBy": {
+    "@type": "earl:software",
+    "doap:name": "DAISY Ace",
+    "doap:description": "DAISY Accessibility Checker for EPUB",
+    "doap:homepage": "http://daisy.github.io/ace",
+    "doap:created": "2017-07-01",
+    "doap:release": {
+      "doap:revision": "1.3.7"
+    }
+  },
+  "outlines": {
+    "toc": "<ol xmlns=\"http://www.w3.org/1999/xhtml\"></ol>",
+    "headings": "<ul></li></ul>",
+    "html": "<ol><li></li></ol>"
+  },
+  "data": {
+    "images": [
+      {
+        "src": "OEBPS/images/page_1.png",
+        "alt": "Page 1",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_1.png\" alt=\"Page 1\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_1.xhtml#epubcfi(/4%5Bpage1%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_2.png",
+        "alt": "Page 2",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_2.png\" alt=\"Page 2\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_2.xhtml#epubcfi(/4%5Bpage2%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_3.png",
+        "alt": "Page 3",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_3.png\" alt=\"Page 3\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_3.xhtml#epubcfi(/4%5Bpage3%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_4.png",
+        "alt": "Page 4",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_4.png\" alt=\"Page 4\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_4.xhtml#epubcfi(/4%5Bpage4%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_5.png",
+        "alt": "Page 5",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_5.png\" alt=\"Page 5\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_5.xhtml#epubcfi(/4%5Bpage5%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_6.png",
+        "alt": "Page 6",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_6.png\" alt=\"Page 6\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_6.xhtml#epubcfi(/4%5Bpage6%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_7.png",
+        "alt": "Page 7",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_7.png\" alt=\"Page 7\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_7.xhtml#epubcfi(/4%5Bpage7%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_8.png",
+        "alt": "Page 8",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_8.png\" alt=\"Page 8\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_8.xhtml#epubcfi(/4%5Bpage8%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_9.png",
+        "alt": "Page 9",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_9.png\" alt=\"Page 9\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_9.xhtml#epubcfi(/4%5Bpage9%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_10.png",
+        "alt": "Page 10",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_10.png\" alt=\"Page 10\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_10.xhtml#epubcfi(/4%5Bpage10%5D/2/2)"
+      },
+      {
+        "src": "OEBPS/images/page_11.png",
+        "alt": "Page 11",
+        "role": null,
+        "html": "<img xmlns=\"http://www.w3.org/1999/xhtml\" src=\"images/page_11.png\" alt=\"Page 11\" class=\"page-bg\" aria-hidden=\"true\" />",
+        "location": "page_11.xhtml#epubcfi(/4%5Bpage11%5D/2/2)"
+      }
+    ]
+  },
+  "properties": {
+    "hasManifestFallbacks": false,
+    "hasBindings": false,
+    "hasSVGContentDocuments": false,
+    "hasFormElements": false,
+    "hasMathML": false,
+    "hasPageBreaks": false
+  },
+  "earl:testSubject": {
+    "url": "..\\..\\uploads\\epub_accessibility\\f61a0665-d269-4d52-87a0-c9e7c709b976.epub",
+    "metadata": {
+      "dc:title": "Horses.pdf",
+      "dc:language": "en",
+      "dc:identifier": "urn:uuid:29-1777877568101",
+      "dc:publisher": "PDF to EPUB Converter",
+      "dcterms:modified": "2026-05-04T06:52:48.101Z",
+      "rendition:layout": "pre-paginated",
+      "rendition:orientation": "auto",
+      "rendition:spread": "none",
+      "rendition:viewport": "width=595.276,height=841.89",
+      "schema:accessibilityFeature": [
+        "textToSpeech",
+        "synchronizedAudioText",
+        "readingOrder",
+        "structuralNavigation"
+      ],
+      "schema:accessMode": [
+        "textual",
+        "auditory"
+      ],
+      "schema:accessibilityHazard": "none",
+      "schema:accessibilitySummary": "This EPUB contains accessible text content with synchronized audio narration suitable for text-to-speech and read-aloud functionality."
+    },
+    "links": {},
+    "epubVersion": "3.0"
+  },
+  "a11y-metadata": {
+    "missing": [
+      "schema:accessModeSufficient",
+      "a11y:certifiedBy",
+      "a11y:certifierCredential",
+      "a11y:certifierReport",
+      "dcterms:conformsTo"
+    ],
+    "empty": [],
+    "present": [
+      "schema:accessMode",
+      "schema:accessibilityFeature",
+      "schema:accessibilityHazard",
+      "schema:accessibilitySummary"
+    ]
+  },
+  "assertions": [
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "pass"
+      },
+      "assertions": [],
+      "earl:testSubject": {
+        "url": "/OEBPS\\nav.xhtml"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The language must be specified (xml:lang in OPF package)"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "epub-lang",
+            "dct:description": "Ensures the OPF XML language is provided",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/epub/language.html",
+              "dct:title": "Language",
+              "dct:description": "Add the missing OPF xml:lang attribute"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "Publications must declare the 'schema:accessModeSufficient' metadata"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "moderate",
+            "dct:title": "metadata-accessmodesufficient",
+            "dct:description": "Ensures a 'schema:accessModeSufficient' metadata is present",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Add a 'schema:accessModeSufficient' metadata property to the Package Document"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        },
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "'schema:accessibilityFeature' metadata must be set to one of the expected values"
+          },
+          "earl:assertedBy": "Ace",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "minor",
+            "dct:title": "metadata-accessibilityfeature-invalid",
+            "dct:description": "Value 'textToSpeech' is invalid for 'schema:accessibilityFeature' metadata",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/metadata/schema.org/index.html",
+              "dct:title": "Schema.org Accessibility Metadata",
+              "dct:description": "Use one of the metadata values defined by schema.org"
+            },
+            "rulesetTags": [
+              "EPUB"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "OEBPS\\content.opf",
+        "dct:title": "Horses.pdf"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_1.xhtml",
+        "dct:title": "Page 1"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_2.xhtml",
+        "dct:title": "Page 2"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_3.xhtml",
+        "dct:title": "Page 3"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_4.xhtml",
+        "dct:title": "Page 4"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_5.xhtml",
+        "dct:title": "Page 5"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_6.xhtml",
+        "dct:title": "Page 6"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_7.xhtml",
+        "dct:title": "Page 7"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_8.xhtml",
+        "dct:title": "Page 8"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_9.xhtml",
+        "dct:title": "Page 9"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_10.xhtml",
+        "dct:title": "Page 10"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "user-scalable=no on <meta> tag disables zooming on mobile devices",
+            "earl:pointer": {
+              "cfi": [
+                "/2/4"
+              ],
+              "css": [
+                "meta[name=\"viewport\"]"
+              ]
+            },
+            "html": "<meta xmlns=\"http://www.w3.org/1999/xhtml\" name=\"viewport\" content=\"width=2481px, height=3508px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\" />"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "critical",
+            "dct:title": "meta-viewport",
+            "dct:description": "Ensure <meta name=\"viewport\"> does not disable text scaling and zooming",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/meta.html",
+              "dct:title": "Meta",
+              "dct:description": "Zooming and scaling must not be disabled"
+            },
+            "rulesetTags": [
+              "cat.sensory-and-visual-cues",
+              "wcag2aa",
+              "wcag144",
+              "EN-301-549",
+              "EN-9.1.4.4",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "page_11.xhtml",
+        "dct:title": "Page 11"
+      }
+    },
+    {
+      "@type": "earl:assertion",
+      "earl:result": {
+        "earl:outcome": "fail"
+      },
+      "assertions": [
+        {
+          "@type": "earl:assertion",
+          "earl:result": {
+            "earl:outcome": "fail",
+            "dct:description": "The <html> element does not have a lang attribute",
+            "earl:pointer": {
+              "cfi": [
+                "/"
+              ],
+              "css": [
+                "html"
+              ]
+            },
+            "html": "<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+          },
+          "earl:assertedBy": "aXe",
+          "earl:mode": "automatic",
+          "earl:test": {
+            "earl:impact": "serious",
+            "dct:title": "html-has-lang",
+            "dct:description": "Ensure every HTML document has a lang attribute",
+            "help": {
+              "url": "http://kb.daisy.org/publishing/docs/html/lang.html",
+              "dct:title": "Language",
+              "dct:description": "<html> element must have a lang attribute"
+            },
+            "rulesetTags": [
+              "cat.language",
+              "wcag2a",
+              "wcag311",
+              "TTv5",
+              "TT11.a",
+              "EN-301-549",
+              "EN-9.3.1.1",
+              "ACT"
+            ]
+          }
+        }
+      ],
+      "earl:testSubject": {
+        "url": "nav.xhtml",
+        "dct:title": "Navigation"
+      }
+    }
+  ],
+  "earl:result": {
+    "earl:outcome": "fail"
+  }
+}

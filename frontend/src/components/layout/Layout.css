@@ -7,6 +7,54 @@
   background-color: #ffffff;
 }
 
+/* ── Org Admin layout (new premium sidebar, no top navbar) ── */
+.layout--org-admin {
+  height: 100vh;
+  display: flex;
+  background: transparent;
+  overflow: hidden;
+}
+
+.main-content--org-admin {
+  flex: 1;
+  height: 100vh;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+
+  /* default: expanded sidebar = 240px */
+  margin-left: var(--sb-width);
+  transition: margin-left var(--sb-transition, 0.18s ease);
+}
+
+/* collapsed sidebar = 64px */
+.layout--sb-collapsed .main-content--org-admin {
+  margin-left: var(--sb-width-collapsed);
+}
+
+/* ── 1024px: sidebar auto-collapses to icon-only ── */
+@media (max-width: 1024px) {
+  .main-content--org-admin {
+    margin-left: var(--sb-width-collapsed) !important;
+    padding: 0;
+  }
+}
+
+/* ── 768px: sidebar slides off-screen, content fills full width ── */
+@media (max-width: 768px) {
+  .main-content--org-admin {
+    margin-left: 0 !important;
+    padding: 0;
+    padding-top: 52px; /* room for the mobile hamburger button */
+  }
+}
+
 /* Full-screen layout (no sidebar/navbar) */
 .layout-fullscreen {
   background-color: #0d1117;
@@ -202,12 +250,12 @@
 /* Main Content */
 .main-content {
   flex: 1;
-  margin-left: 260px;
-  margin-top: 70px;
-  padding: 40px 48px;
+  margin-left: 240px;
+  margin-top: 0px;
+  padding: 0px 0px;
   background-color: #ffffff;
   min-height: calc(100vh - 70px);
-  width: calc(100% - 260px);
+  width: calc(100% - 235px);
   box-sizing: border-box;
   overflow-x: hidden;
 }

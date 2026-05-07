@@ -35,6 +35,24 @@ router.get('/license', async (req, res) => {
   }
 });
 
+// GET /org/plans — list all available plans (for upgrade modal)
+router.get('/plans', async (_req, res) => {
+  try {
+    const { PlanModel } = await import('../models/Plan.js');
+    const rows = await PlanModel.findAll();
+    const plans = rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description || '',
+      seatLimit: row.seat_limit != null ? Number(row.seat_limit) : null,
+      monthlyPageLimit: row.monthly_page_limit != null ? Number(row.monthly_page_limit) : null,
+    }));
+    return successResponse(res, plans);
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+});
+
 // POST /org/users — create member (or org_admin) in same org
 router.post('/users', async (req, res) => {
   try {
@@ -102,7 +120,34 @@ router.put('/users/:id', async (req, res) => {
   }
 });
 
-// DELETE /org/users/:id
+// PUT /org/users/:id/role — change a member's role
+router.put('/users/:id/role', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const target = await UserModel.findById(id);
+    if (!target) return notFoundResponse(res, 'User not found');
+    if (target.organization_id !== req.user.organizationId) {
+      return forbiddenResponse(res, 'Forbidden');
+    }
+    if (target.id === req.user.id) {
+      return badRequestResponse(res, 'Cannot change your own role');
+    }
+    if (target.role === ROLES.PLATFORM_ADMIN) {
+      return forbiddenResponse(res, 'Cannot modify this user');
+    }
+
+    const { role } = req.body || {};
+    const allowed = [ROLES.ORG_ADMIN, ROLES.MEMBER, 'editor', 'viewer'];
+    if (!role || !allowed.includes(role)) {
+      return badRequestResponse(res, `Invalid role. Allowed: ${allowed.join(', ')}`);
+    }
+
+    const updated = await UserService.updateUser(id, { role });
+    return successResponse(res, updated);
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+});
 router.delete('/users/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
