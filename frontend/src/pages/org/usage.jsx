@@ -1,6 +1,16 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import { useUsageQuery, usePlansQuery } from '../../hooks/queries/useUsageQuery';
+import useAppDispatch from '../../hooks/useAppDispatch';
+import useAppSelector from '../../hooks/useAppSelector';
+import {
+  selectShowUpgrade,
+  selectShowAddOns,
+  openUpgradeModal,
+  closeUpgradeModal,
+  openAddOnsModal,
+  closeAddOnsModal,
+} from '../../features/usage/usageSlice';
 import {
   Video,
   Mic,
@@ -306,57 +316,17 @@ function AddOnsModal({ onClose }) {
 
 /* ─── main component ──────────────────────────────────────────── */
 export default function Usage() {
-  const { user } = useAuth();
-  const [license, setLicense]           = useState(null);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState('');
+  const { user }   = useAuth();
+  const dispatch   = useAppDispatch();
 
-  // Modal state
-  const [showUpgrade, setShowUpgrade]   = useState(false);
-  const [showAddOns, setShowAddOns]     = useState(false);
-  const [plans, setPlans]               = useState([]);
-  const [plansLoading, setPlansLoading] = useState(false);
-  const [plansError, setPlansError]     = useState('');
+  // ── Redux UI state ────────────────────────────────────────────
+  const showUpgrade = useAppSelector(selectShowUpgrade);
+  const showAddOns  = useAppSelector(selectShowAddOns);
 
-  /* ── fetch license ── */
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await api.get('/org/license');
-        const data = res.data?.data ?? res.data;
-        if (!cancelled) setLicense(data);
-      } catch (e) {
-        if (!cancelled)
-          setError(e.response?.data?.error || e.message || 'Failed to load usage data');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [user?.organizationId]);
-
-  /* ── fetch plans (lazy — only when upgrade modal opens) ── */
-  const fetchPlans = useCallback(async () => {
-    if (plans.length > 0) return; // already loaded
-    setPlansLoading(true);
-    setPlansError('');
-    try {
-      const res = await api.get('/org/plans');
-      setPlans(res.data?.data ?? res.data ?? []);
-    } catch (e) {
-      setPlansError(e.response?.data?.error || e.message || 'Failed to load plans');
-    } finally {
-      setPlansLoading(false);
-    }
-  }, [plans.length]);
-
-  const openUpgrade = () => {
-    setShowUpgrade(true);
-    fetchPlans();
-  };
+  // ── React Query (server state) ────────────────────────────────
+  const { license, isLoading: loading, error } = useUsageQuery();
+  // Plans are fetched lazily — only when the upgrade modal is open
+  const { plans, isLoading: plansLoading, error: plansError } = usePlansQuery({ enabled: showUpgrade });
 
   /* ── derived values ── */
   const pagesUsed  = license?.usage?.used   ?? 0;
@@ -482,7 +452,7 @@ export default function Usage() {
                 <span className="usage-plan-banner__reset-date">{fmtDate(validUntil)}</span>
               </div>
             )}
-            <button className="usage-plan-banner__upgrade" onClick={openUpgrade}>
+            <button className="usage-plan-banner__upgrade" onClick={() => dispatch(openUpgradeModal())}>
               <ArrowUp size={14} />
               Upgrade Plan
             </button>
@@ -503,7 +473,7 @@ export default function Usage() {
                   <UsageCard key={card.label} {...card} />
                 ))}
               </div>
-              <button className="usage-addons-btn" onClick={() => setShowAddOns(true)}>
+              <button className="usage-addons-btn" onClick={() => dispatch(openAddOnsModal())}>
                 <ShoppingCart size={15} />
                 Buy Add-Ons
               </button>
@@ -529,13 +499,13 @@ export default function Usage() {
           plans={plans}
           loading={plansLoading}
           error={plansError}
-          onClose={() => setShowUpgrade(false)}
+          onClose={() => dispatch(closeUpgradeModal())}
         />
       )}
 
       {/* ── Add-Ons modal ── */}
       {showAddOns && (
-        <AddOnsModal onClose={() => setShowAddOns(false)} />
+        <AddOnsModal onClose={() => dispatch(closeAddOnsModal())} />
       )}
     </div>
   );

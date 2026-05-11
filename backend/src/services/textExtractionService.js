@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import pdfParse from 'pdf-parse';
-import { getPdfjsLib } from '../utils/pdfjsHelper.js';
+import { getPdfjsLib, buildPdfDocumentOptions } from '../utils/pdfjsHelper.js';
 import { OcrService } from './ocrService.js';
 
 /**
@@ -33,7 +33,7 @@ export class TextExtractionService {
     try {
       const pdfData = await fs.readFile(pdfFilePath);
       const pdfjsLib = await getPdfjsLib();
-      const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      const pdfDoc = await pdfjsLib.getDocument(buildPdfDocumentOptions(pdfData)).promise;
       const numPages = pdfDoc.numPages;
       
       const pages = [];

@@ -16,10 +16,25 @@ import {
   List,
   RefreshCw,
 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
-import api from '../../services/api';
-import { useAppBootstrap } from '../../hooks/queries/useAppBootstrap';
-import { queryKeys } from '../../lib/queryKeys';
+import { useMediaAssetsQuery } from '../../hooks/queries/useMediaAssetsQuery';
+import { useMediaActions } from '../../hooks/useMediaActions';
+import useAppDispatch from '../../hooks/useAppDispatch';
+import useAppSelector from '../../hooks/useAppSelector';
+import {
+  selectMLViewMode,
+  selectMLActiveTab,
+  selectMLSearch,
+  selectMLSort,
+  selectMLShowUpload,
+  selectMLUploadError,
+  setViewMode,
+  setActiveTab,
+  setSearch,
+  setSort,
+  toggleUpload,
+  setShowUpload,
+  clearUploadError,
+} from '../../features/mediaLibrary/mediaLibrarySlice';
 import ConfirmModal from '../../components/Loadingmodal';
 import './MediaLibrary.css';
 
@@ -468,29 +483,28 @@ const UploadZone = ({ onUpload, uploading }) => {
 
 /* ─── MediaLibrary page ───────────────────────────────────────── */
 const MediaLibrary = () => {
-  const queryClient = useQueryClient();
-  const { media: bootstrapMedia, isLoading, error: bootstrapError, invalidate } = useAppBootstrap();
+  const dispatch = useAppDispatch();
 
-  const [localAssets,  setLocalAssets]  = useState(null); // null = use bootstrap data
-  const [uploadError,  setUploadError]  = useState('');
-  const [activeTab,    setActiveTab]    = useState('All');
-  const [search,       setSearch]       = useState('');
-  const [sort,         setSort]         = useState('newest');
-  const [viewMode,     setViewMode]     = useState('grid');
-  const [preview,      setPreview]      = useState(null);
-  const [uploading,    setUploading]    = useState(false);
-  const [showUpload,   setShowUpload]   = useState(false);
-  const [deleteModal,  setDeleteModal]  = useState({ open: false, asset: null, loading: false });
+  // ── Redux UI state ────────────────────────────────────────────
+  const viewMode    = useAppSelector(selectMLViewMode);
+  const activeTab   = useAppSelector(selectMLActiveTab);
+  const search      = useAppSelector(selectMLSearch);
+  const sort        = useAppSelector(selectMLSort);
+  const showUpload  = useAppSelector(selectMLShowUpload);
+  const uploadError = useAppSelector(selectMLUploadError);
 
-  // Use locally-patched assets if available (after upload/delete), otherwise bootstrap data
-  const assets = localAssets ?? bootstrapMedia;
-  const error  = uploadError || bootstrapError;
+  // ── Local UI state (ephemeral — not worth persisting) ─────────
+  const [preview, setPreview]       = useState(null);
+  const [uploading, setUploading]   = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ open: false, asset: null, loading: false });
 
-  /* ── Refresh helper ── */
-  const refreshAssets = async () => {
-    setLocalAssets(null); // clear local override
-    await invalidate();   // re-fetch bootstrap (all consumers update)
-  };
+  // ── React Query (server state) ────────────────────────────────
+  const { assets, isLoading, error: fetchError, refresh } = useMediaAssetsQuery();
+
+  // ── Action hook (upload / delete / download) ──────────────────
+  const { handleUpload: runUpload, handleDelete: runDelete, handleDownload } = useMediaActions();
+
+  const error = uploadError || fetchError;
 
   /* ── Tab counts ── */
   const tabCounts = useMemo(() => {
@@ -532,28 +546,10 @@ const MediaLibrary = () => {
   /* ── Upload handler ── */
   const handleUpload = async (files) => {
     setUploading(true);
-    setUploadError('');
-    try {
-      for (const file of files) {
-        const formData = new FormData();
-        formData.append('file', file);
-        await api.post('/media/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-      }
-      setShowUpload(false);
-      await refreshAssets();
-    } catch (err) {
-      const serverMsg =
-        err?.response?.data?.error ||
-        err?.response?.data?.message ||
-        err?.message ||
-        'Upload failed. Please try again.';
-      console.error('[MediaLibrary] upload error:', err?.response?.status, serverMsg, err);
-      setUploadError(serverMsg);
-    } finally {
-      setUploading(false);
-    }
+    dispatch(clearUploadError());
+    await runUpload(files);
+    setUploading(false);
+    dispatch(setShowUpload(false));
   };
 
   /* ── Delete handler ── */
@@ -564,29 +560,8 @@ const MediaLibrary = () => {
   const confirmDelete = async () => {
     const { asset } = deleteModal;
     setDeleteModal((prev) => ({ ...prev, loading: true }));
-    try {
-      await api.delete(`/media/${asset.id}`);
-      // Optimistically remove from local state, then invalidate bootstrap cache
-      setLocalAssets((prev) => (prev ?? assets).filter((a) => a.id !== asset.id));
-      setDeleteModal({ open: false, asset: null, loading: false });
-      // Invalidate so next navigation gets fresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrap() });
-    } catch (err) {
-      setUploadError(err.message || 'Failed to delete asset');
-      setDeleteModal({ open: false, asset: null, loading: false });
-    }
-  };
-
-  /* ── Download handler ── */
-  const handleDownload = (asset) => {
-    const url = asset.url || asset.thumbnailUrl;
-    if (!url) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = asset.filename || asset.name || 'asset';
-    a.target = '_blank';
-    a.rel = 'noreferrer';
-    a.click();
+    await runDelete(asset);
+    setDeleteModal({ open: false, asset: null, loading: false });
   };
 
   /* ── Render ── */
@@ -609,7 +584,7 @@ const MediaLibrary = () => {
         </div>
         <button
           className="ml-upload-btn"
-          onClick={() => setShowUpload((v) => !v)}
+          onClick={() => dispatch(toggleUpload())}
           aria-label="Upload asset"
         >
           <Upload size={15} />
@@ -634,11 +609,11 @@ const MediaLibrary = () => {
             className="ml-search-input"
             placeholder="Search assets…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => dispatch(setSearch(e.target.value))}
             aria-label="Search assets"
           />
           {search && (
-            <button className="ml-search-clear" onClick={() => setSearch('')} aria-label="Clear search">
+            <button className="ml-search-clear" onClick={() => dispatch(setSearch(''))} aria-label="Clear search">
               <X size={13} />
             </button>
           )}
@@ -652,7 +627,7 @@ const MediaLibrary = () => {
               role="tab"
               aria-selected={activeTab === tab.key}
               className={`ml-tab${activeTab === tab.key ? ' ml-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => dispatch(setActiveTab(tab.key))}
             >
               {tab.icon && <span className="ml-tab-icon">{tab.icon}</span>}
               {tab.label}
@@ -668,7 +643,7 @@ const MediaLibrary = () => {
           <select
             className="ml-sort-select"
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => dispatch(setSort(e.target.value))}
             aria-label="Sort assets"
           >
             {SORT_OPTIONS.map((o) => (
@@ -679,7 +654,7 @@ const MediaLibrary = () => {
           <div className="ml-view-toggle" role="group" aria-label="View mode">
             <button
               className={`ml-view-btn${viewMode === 'grid' ? ' ml-view-btn--active' : ''}`}
-              onClick={() => setViewMode('grid')}
+              onClick={() => dispatch(setViewMode('grid'))}
               aria-label="Grid view"
               aria-pressed={viewMode === 'grid'}
             >
@@ -687,7 +662,7 @@ const MediaLibrary = () => {
             </button>
             <button
               className={`ml-view-btn${viewMode === 'list' ? ' ml-view-btn--active' : ''}`}
-              onClick={() => setViewMode('list')}
+              onClick={() => dispatch(setViewMode('list'))}
               aria-label="List view"
               aria-pressed={viewMode === 'list'}
             >
@@ -697,7 +672,7 @@ const MediaLibrary = () => {
 
           <button
             className="ml-refresh-btn"
-            onClick={refreshAssets}
+            onClick={refresh}
             aria-label="Refresh"
             title="Refresh"
           >
@@ -710,7 +685,7 @@ const MediaLibrary = () => {
       {error && (
         <div className="ml-error" role="alert">
           {error}
-          <button className="ml-error-close" onClick={() => setUploadError('')} aria-label="Dismiss">×</button>
+          <button className="ml-error-close" onClick={() => dispatch(clearUploadError())} aria-label="Dismiss">×</button>
         </div>
       )}
 
@@ -734,7 +709,7 @@ const MediaLibrary = () => {
             {!search && activeTab === 'All' && (
               <button
                 className="ml-empty-cta"
-                onClick={() => setShowUpload(true)}
+                onClick={() => dispatch(setShowUpload(true))}
               >
                 <Upload size={15} /> Upload your first asset
               </button>

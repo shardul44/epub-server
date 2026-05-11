@@ -1,26 +1,32 @@
-/* Sync Studio - Professional Waveform Timeline UI */
+/* Sync Studio — light theme (scoped tokens; avoids changing global :root) */
 
-/* Root Variables */
-:root {
-  --studio-bg: #0d1117;
-  --studio-surface: #161b22;
-  --studio-border: #30363d;
-  --studio-text: #c9d1d9;
-  --studio-text-muted: #8b949e;
-  --studio-accent: #4A7B54;
-  --studio-accent-hover: #5a9b64;
-  --studio-highlight: #ffd43b;
-  --studio-word: rgba(255, 212, 59, 0.3);
-  --studio-sentence: rgba(74, 123, 84, 0.4);
-  --studio-danger: #f85149;
-  --studio-success: #56d364;
+.sync-studio,
+.sync-studio-loading {
+  --studio-bg: #f7f7f2;
+  --studio-surface: #ffffff;
+  --studio-border: #e5e7eb;
+  --studio-text: #111827;
+  --studio-text-muted: #6b7280;
+  --studio-accent: #2563eb;
+  --studio-accent-hover: #1d4ed8;
+  --studio-highlight: #fbbf24;
+  --studio-word: rgba(251, 191, 36, 0.35);
+  --studio-sentence: rgba(37, 99, 235, 0.2);
+  --studio-danger: #dc2626;
+  --studio-success: #16a34a;
 }
 
 /* Container */
 .sync-studio {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  box-sizing: border-box;
   background: var(--studio-bg);
   color: var(--studio-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
@@ -33,7 +39,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   background: var(--studio-bg);
   color: var(--studio-text);
 }
@@ -51,30 +59,54 @@
   to { transform: rotate(360deg); }
 }
 
-/* Header */
+/* Header — sticky within the studio column so playback / highlight scroll does not scroll it away */
 .studio-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 10px;
+  column-gap: 16px;
   padding: 12px 20px;
   background: var(--studio-surface);
   border-bottom: 1px solid var(--studio-border);
   flex-shrink: 0;
+  min-height: 56px;
+  height: auto;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-sizing: border-box;
+}
+
+.sync-studio .studio-header--tools-only {
+  justify-content: flex-end;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  min-width: 0;
+  flex: 1 1 200px;
+}
+
+.sync-studio > .studio-header .header-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 12px;
+  min-width: 0;
+  flex: 1 1 180px;
 }
 
 .header-left h1 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
-  background: linear-gradient(135deg, #4A7B54, #ffd43b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0f172a;
 }
 
 .btn-back {
@@ -94,18 +126,19 @@
 }
 
 .job-badge {
-  padding: 4px 8px;
-  background: var(--studio-accent);
-  color: white;
-  border-radius: 4px;
+  padding: 4px 10px;
+  background: #eff6ff;
+  color: var(--studio-accent);
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .btn-save {
   padding: 10px 20px;
   background: var(--studio-accent);
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -127,15 +160,19 @@
 .save-success-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .save-success-message {
-  color: var(--studio-success);
+  color: #15803d;
   font-size: 13px;
   font-weight: 500;
   padding: 8px 12px;
-  background: rgba(86, 211, 100, 0.1);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
   border-radius: 6px;
 }
 
@@ -186,28 +223,31 @@
 /* Error Banner */
 .error-banner {
   padding: 12px 20px;
-  background: rgba(248, 81, 73, 0.15);
-  border-bottom: 1px solid var(--studio-danger);
-  color: var(--studio-danger);
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  color: #b91c1c;
   font-size: 13px;
 }
 
 /* Success Banner */
 .success-banner {
   padding: 12px 20px;
-  background: rgba(86, 211, 100, 0.15);
-  border-bottom: 1px solid var(--studio-success);
-  color: var(--studio-success);
+  background: #f0fdf4;
+  border-bottom: 1px solid #bbf7d0;
+  color: #15803d;
   font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-/* Main Layout */
-.studio-layout {
+/* Main three-panel row (scoped name — avoids clashing with layouts/StudioLayout.css .studio-layout) */
+.sync-studio-panels {
   display: flex;
   flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
   overflow: hidden;
   position: relative;
 }
@@ -276,15 +316,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  row-gap: 10px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--studio-border);
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .panel-header h3 {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
+  min-width: 0;
 }
 
 .panel-header select {
@@ -434,32 +479,36 @@
   overflow-wrap: break-word;
 }
 
-/* Main Panel */
+/* Main Panel — center column must shrink inside flex row so waveform fills width */
 .main-panel {
   display: flex;
   flex-direction: column;
   background: var(--studio-bg);
   overflow: hidden;
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
+  width: 0;
 }
 
 /* Audio Controls */
 .audio-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 12px 20px;
   background: var(--studio-surface);
   border-bottom: 1px solid var(--studio-border);
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 12px 16px;
+  min-width: 0;
 }
 
 .control-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  min-width: 0;
 }
 
 .upload-btn {
@@ -552,7 +601,9 @@
 .playback-controls {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+  min-width: 0;
 }
 
 .playback-controls button {
@@ -648,38 +699,60 @@
 .zoom-control {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 12px;
   color: var(--studio-text-muted);
+  min-width: 0;
+  flex: 1 1 140px;
 }
 
 .zoom-control input[type="range"] {
   width: 100px;
+  min-width: 60px;
+  max-width: 100%;
+  flex: 1 1 80px;
   accent-color: var(--studio-accent);
 }
 
-/* Waveform */
-.waveform-container {
+/*
+ * Waveform — scoped to reflowable Sync Studio only.
+ * FXL Sync Studio also uses .waveform-container on a div inside <main class="waveform-panel">;
+ * unprefixed rules here used to win/lose unpredictably if both page CSS chunks loaded in one session.
+ */
+.sync-studio .waveform-container {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   min-height: 250px;
+  min-width: 0;
+  width: 100%;
   background: var(--studio-surface);
   border-bottom: 1px solid var(--studio-border);
   position: relative;
   overflow: hidden;
 }
 
-.timeline {
+.sync-studio .timeline {
   height: 30px;
+  width: 100%;
+  flex-shrink: 0;
   background: var(--studio-bg);
   border-bottom: 1px solid var(--studio-border);
 }
 
-.waveform {
+.sync-studio .waveform {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
   height: 180px;
-  padding: 10px 20px;
+  padding: 10px 12px;
+  box-sizing: border-box;
 }
 
-.waveform-placeholder {
+.sync-studio .waveform-placeholder {
   position: absolute;
   inset: 0;
   display: flex;
@@ -751,7 +824,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 12px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .auto-sync-header h3 {
@@ -880,9 +956,13 @@
 
 .auto-sync-hint {
   margin: 12px 0 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--studio-text-muted);
-  font-style: italic;
+  font-style: normal;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 /* Recording Section */
@@ -908,14 +988,18 @@
 .recording-section > .recording-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 12px 16px;
   width: 100%;
 }
 
 .recording-controls {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  min-width: 0;
 }
 
 .btn-record {
@@ -1138,6 +1222,8 @@
   font-size: 0.75em;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
+  justify-self: end;
 }
 
 .sync-item {
@@ -1166,10 +1252,12 @@
 }
 
 .sync-item-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  gap: 8px 10px;
   margin-bottom: 6px;
+  min-width: 0;
 }
 
 .sync-id {
@@ -1177,12 +1265,32 @@
   font-size: 11px;
   color: var(--studio-accent);
   font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sync-time {
   font-family: 'SF Mono', monospace;
   font-size: 11px;
   color: var(--studio-text-muted);
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.badge-unsynced {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: none;
+  white-space: nowrap;
+  justify-self: end;
 }
 
 .sync-text {
@@ -1275,7 +1383,7 @@
 }
 
 @media (max-width: 900px) {
-  .studio-layout {
+  .sync-studio-panels {
     flex-direction: column;
   }
 
@@ -1290,7 +1398,9 @@
     max-width: 100% !important;
     border: none;
     border-bottom: 1px solid var(--studio-border);
-    height: 250px;
+    min-height: 220px;
+    height: auto;
+    max-height: min(40vh, 360px);
   }
   
   .xhtml-viewer {
@@ -1301,6 +1411,8 @@
   
   .main-panel {
     flex: 1;
+    width: 100%;
+    min-width: 0;
   }
 
   .audio-controls {
@@ -1316,33 +1428,41 @@
   }
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
+/* Scrollbar — scoped to Sync Studio so we do not restyle the whole app */
+.sync-studio ::-webkit-scrollbar,
+.sync-studio-loading ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
+.sync-studio ::-webkit-scrollbar-track,
+.sync-studio-loading ::-webkit-scrollbar-track {
   background: var(--studio-bg);
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--studio-border);
+.sync-studio ::-webkit-scrollbar-thumb,
+.sync-studio-loading ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--studio-text-muted);
+.sync-studio ::-webkit-scrollbar-thumb:hover,
+.sync-studio-loading ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Audio Script Modal */
 .audio-script-modal-overlay {
+  --studio-surface: #ffffff;
+  --studio-bg: #f7f7f2;
+  --studio-border: #e5e7eb;
+  --studio-text: #111827;
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(15, 23, 42, 0.45);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -1361,16 +1481,17 @@
 }
 
 .audio-script-modal {
-  background: #1a1a1a;
+  background: var(--studio-surface);
   border-radius: 8px;
   width: 90%;
   max-width: 900px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  border: 1px solid #444;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--studio-border);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.12);
   animation: slideUp 0.3s ease-out;
+  color: var(--studio-text);
 }
 
 @keyframes slideUp {
@@ -1394,15 +1515,15 @@
 }
 
 .audio-script-modal > div:first-of-type::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--studio-bg);
 }
 
 .audio-script-modal > div:first-of-type::-webkit-scrollbar-thumb {
-  background: #444;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 .audio-script-modal > div:first-of-type::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #94a3b8;
 }
 

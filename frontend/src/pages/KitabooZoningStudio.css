@@ -24,31 +24,21 @@
 .kitaboo-studio {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  flex: 1;
+  height: 100%;
   background: var(--kz-bg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow: hidden;
 }
 
-/* Org admin: sidebar sits in a row next to the body */
-.kitaboo-studio--with-sidebar {
-  flex-direction: row;
-  overflow: hidden;
-}
-
-/* Body column (everything right of the sidebar) */
+/* Body column — fills the main-content--org-admin container */
 .kitaboo-studio-body {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
-}
-
-.kitaboo-studio-body--with-sidebar,
-.kitaboo-studio-body--sb-collapsed {
-  margin-left: 0; /* sidebar is in the flex row */
 }
 
 /* ── Top header bar ────────────────────────────────────────────── */
@@ -77,6 +67,11 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  margin-top: 14px;
+}
+
+.ife-selector-header-bar--actions-only {
+  justify-content: flex-end;
 }
 
 .ife-selector-back-btn {
@@ -129,10 +124,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 13px;
+  padding: 12px 13px;
   border-radius: var(--kz-radius);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
@@ -180,6 +175,98 @@
   overflow: hidden;
 }
 
+/* ── LEFT: pages sidebar ───────────────────────────────────────── */
+.kitaboo-pages-sidebar {
+  width: 250px;
+  min-width: 190px;
+  flex-shrink: 0;
+  background: var(--kz-white);
+  border-right: 1px solid var(--kz-border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kitaboo-pages-sidebar h3 {
+  margin: 0;
+  padding: 12px 10px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--kz-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--kz-border);
+}
+
+.kitaboo-pages-list {
+  overflow-y: auto;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.kitaboo-page-thumb {
+  width: 100%;
+  border: 1px solid var(--kz-border);
+  border-radius: 8px;
+  background: #f9fafb;
+  padding: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.kitaboo-page-thumb:hover {
+  border-color: var(--kz-blue);
+  background: var(--kz-blue-lt);
+}
+
+.kitaboo-page-thumb--active {
+  border-color: var(--kz-blue);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+  background: var(--kz-blue-lt);
+}
+
+.kitaboo-page-thumb-image-wrap {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kitaboo-page-thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.kitaboo-page-thumb-placeholder {
+  font-size: 11px;
+  color: var(--kz-muted);
+  padding: 8px;
+  text-align: center;
+}
+
+.kitaboo-page-thumb-meta {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kitaboo-page-thumb-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--kz-text);
+}
+
 /* ── CENTER: canvas area ───────────────────────────────────────── */
 .kitaboo-canvas-area {
   display: flex;
@@ -207,6 +294,12 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.kz-toolbar-pager--sidebar {
+  padding: 8px;
+  border-top: 1px solid var(--kz-border);
+  justify-content: center;
 }
 
 .kz-pager-btn {
@@ -247,6 +340,29 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.kz-toolbar-quick-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.kz-toolbar-zoom-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--kz-border);
+  border-radius: 6px;
+  background: var(--kz-white);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--kz-text);
+  white-space: nowrap;
 }
 
 .kz-status-text {
@@ -294,6 +410,51 @@
 }
 
 .kz-toolbar-end { margin-left: auto; }
+
+.kz-canvas-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  justify-content: end;
+  
+}
+
+.kz-canvas-control-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fafaf9;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.kz-canvas-control-btn:hover {
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.kz-canvas-control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kz-canvas-control-btn--active {
+  border-color: var(--kz-blue);
+  color: var(--kz-blue);
+  background: var(--kz-blue-lt);
+}
+
+.kz-canvas-zoom-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1;
+}
 
 /* ── Canvas container ──────────────────────────────────────────── */
 .kitaboo-canvas-container {
@@ -361,6 +522,131 @@
   flex: 1;
 }
 
+.tagging-panel--zones-list {
+  padding: 0;
+}
+
+.zone-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.zone-list-item {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--kz-border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.zone-list-item:hover {
+  background: #f8fafc;
+}
+
+.zone-list-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.zone-list-icon--text {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
+.zone-list-icon--image {
+  background: #dbeafe;
+  color: #2563eb;
+  border: 1px solid #93c5fd;
+}
+
+.zone-list-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.zone-list-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.zone-list-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.zone-continue-btn {
+  margin: 10px 12px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.zone-continue-btn:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.zone-continue-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Remove zone button row — sits at the top of the panel when a zone is selected */
+.tagging-panel .prop-group:has(.zone-remove-btn) {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.zone-remove-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #dc3545;
+  background: #dc3545;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+.zone-remove-btn:hover {
+  background: #b02a37;
+  border-color: #b02a37;
+}
+
+.zone-remove-btn:active {
+  background: #921f2d;
+}
+
 .prop-group {
   display: flex;
   flex-direction: column;
@@ -424,7 +710,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  flex: 1;
+  height: 100%;
   font-size: 16px;
   color: var(--kz-muted);
   gap: 16px;

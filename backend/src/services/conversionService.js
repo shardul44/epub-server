@@ -4745,7 +4745,7 @@ ${xhtmlFiles.map(p => `    <li><a href="${p.xhtmlFileName}">Page ${p.pageNumber}
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=${safeRenderedWidth}px, height=${safeRenderedHeight}px, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=${safeRenderedWidth}, height=${safeRenderedHeight}, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Page ${pageNumber}</title>`;
 
     // CSS for exact PDF layout recreation (fixed layout, pixel perfect)

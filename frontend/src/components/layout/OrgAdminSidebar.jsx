@@ -21,6 +21,8 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useAppDispatch } from '../../store/hooks';
+import { logout as logoutAction } from '../../features/auth/authSlice';
 import { hasFeature } from '../../utils/features';
 import { useAppBootstrap } from '../../hooks/queries/useAppBootstrap';
 import './OrgAdminSidebar.css';
@@ -161,7 +163,9 @@ const UserFooter = ({ user, onLogout, collapsed, backendStatus }) => (
 
 const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   const location = useLocation();
-  const { user, setUser } = useAuth();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -195,14 +199,31 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    window.location.href = '/login';
+    // Dispatch the centralised logout action — clears Redux auth state
+    // AND removes the persisted token in one place.
+    dispatch(logoutAction());
+    // SPA redirect; no full page reload.
+    navigate('/login', { replace: true });
   };
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
+  };
+
+  /** True when user is anywhere in the conversion workflow (jobs, editors, sync studios, download). */
+  const isConversionsWorkflowSection = () => {
+    const p = location.pathname;
+    return (
+      p.startsWith('/conversions') ||
+      p.startsWith('/audio-sync/') ||
+      p.startsWith('/sync-studio') ||
+      p.startsWith('/fxl-sync-studio') ||
+      p.startsWith('/kitaboo-studio') ||
+      p.startsWith('/fxl-studio') ||
+      p.startsWith('/image-editor') ||
+      p.startsWith('/epub-image-editor')
+    );
   };
 
   const toggleCollapse = () => setCollapsed((c) => !c);
@@ -295,7 +316,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                   label="Conversions"
                   badge={conversionCount}
                   collapsed={collapsed}
-                  isActive={isActive('/conversions')}
+                  isActive={isConversionsWorkflowSection()}
                   navigateTo="/conversions"
                 >
                   <SubItem
@@ -314,7 +335,13 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                   <SubItem
                     to="/conversions/audio-sync"
                     label="Audio Sync Studio"
-                    isActive={isActive('/conversions/audio-sync')}
+                    isActive={
+                      isActive('/conversions/audio-sync') ||
+                      isActive('/audio-sync/fxl') ||
+                      isActive('/audio-sync/reflow') ||
+                      isActive('/sync-studio') ||
+                      isActive('/fxl-sync-studio')
+                    }
                   />
                   <SubItem
                     to="/conversions/download"

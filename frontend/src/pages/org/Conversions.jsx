@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { mediaUrl } from '../../utils/mediaUrl';
 import { useJobPolling } from '../../hooks/useJobPolling';
+import ThumbnailImage from '../../components/ThumbnailImage';
 import './Conversions.css';
 
 /* ─── Constants ───────────────────────────────────────────────── */
@@ -158,12 +159,11 @@ const JobCard = ({ job, onFocus, onDelete, onStop, onRetry, onImageEditor, navig
 
       {/* thumbnail */}
       <div className="cv-card-thumb">
-        <img
-          src={mediaUrl(`/api/pdfs/${job.pdfDocumentId ?? job.pdfId}/thumbnail`)}
+        <ThumbnailImage
+          pdfId={job.pdfDocumentId ?? job.pdfId}
           alt="PDF preview"
-          onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+          fallback={<div className="cv-card-thumb-fallback"><FileText size={24} /></div>}
         />
-        <div className="cv-card-thumb-fallback"><FileText size={24} /></div>
       </div>
 
       {/* info */}

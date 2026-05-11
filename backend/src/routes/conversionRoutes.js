@@ -37,15 +37,13 @@ const epubImportUpload = multer({
 });
 
 // GET /api/conversions - Get all conversions (?scope=own = only jobs for PDFs this user created)
-router.get('/', httpCache(TTL.SHORT), async (req, res) => {
+// IMPORTANT: this endpoint powers the UI polling that shows IN_PROGRESS jobs.
+// Do NOT cache it aggressively (server-side or via HTTP headers), otherwise the
+// frontend keeps seeing stale job states until the cache TTL expires.
+router.get('/', noCache, async (req, res) => {
   try {
     const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
-    const userId  = req.user?.id ?? 'anon';
-    const orgId   = req.user?.organizationId ?? 'none';
-    const scopeKey = req.query.scope === 'own' ? 'own' : 'org';
-    const cacheKey = `conversions:all:${orgId}:${userId}:${scopeKey}`;
-
-    const jobs = await cacheWrap(cacheKey, () => ConversionService.getAllConversions(req.user, scope), TTL.SHORT);
+    const jobs = await ConversionService.getAllConversions(req.user, scope);
     return successResponse(res, jobs);
   } catch (error) {
     return errorResponse(res, error.message, 500);

@@ -524,3 +524,67 @@
   outline: 2px solid #dc2626;
   outline-offset: 2px;
 }
+
+/* ── Active card (pulsing border while job is running) ─────────── */
+.cardActive {
+  border-color: #93c5fd;
+  animation: cardPulse 2s ease-in-out infinite;
+}
+
+@keyframes cardPulse {
+  0%, 100% { border-color: #93c5fd; }
+  50%       { border-color: #3b82f6; }
+}
+
+/* ── Failed card ───────────────────────────────────────────────── */
+.cardFailed {
+  border-color: #fca5a5;
+}
+
+/* ── Progress bar ──────────────────────────────────────────────── */
+.progressTrack {
+  height: 3px;
+  background: #f1f5f9;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+  transition: width 0.4s ease;
+}
+
+/* ── Spinner inside badge ──────────────────────────────────────── */
+.spinner {
+  width: 11px;
+  height: 11px;
+  margin-right: 4px;
+  vertical-align: middle;
+  animation: spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Step label (shown while active) ──────────────────────────── */
+.stepLabel {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+  text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Error message (shown when failed) ────────────────────────── */
+.errorMsg {
+  font-size: 11px;
+  color: #dc2626;
+  margin-top: 3px;
+  line-height: 1.4;
+  word-break: break-word;
+}

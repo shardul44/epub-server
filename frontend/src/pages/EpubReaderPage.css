@@ -1,101 +1,185 @@
-.epub-reader-page {
+/* ═══════════════════════════════════════════════════════════════
+   EpubReaderPage — matches FXL Sync Studio header/layout style
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Root ──────────────────────────────────────────────────────── */
+.erp-root {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 100%;
-  background: #1a1a1e;
+  height: 100%;
+  min-height: 100vh;
+  background: #f9fafb;
   overflow: hidden;
 }
 
-.epub-reader-page-header {
+/* ── Header ────────────────────────────────────────────────────── */
+.erp-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
-  padding: 10px 16px;
-  border-bottom: 1px solid #333;
-  background: #252528;
+  height: 70px;
+  padding: 0 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-.epub-reader-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #e8e8ec;
-  background: #2d2d32;
-  border: 1px solid #444;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.epub-reader-back:hover {
-  border-color: #58a6ff;
-  color: #fff;
-}
-
-.epub-reader-page-title {
+.erp-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
-  justify-content: center;
+  gap: 12px;
   min-width: 0;
+  flex: 1;
 }
 
-.epub-reader-badge {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: #3d4a5c;
-  color: #c9d1d9;
+.erp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.epub-reader-job {
+/* ── Back button ───────────────────────────────────────────────── */
+.erp-btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
   font-size: 13px;
-  color: #8b949e;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 500;
+  color: #6b7280;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.erp-btn-back:hover {
+  background: #f9fafb;
+  color: #111827;
+  border-color: #d1d5db;
+}
+
+/* ── Title ─────────────────────────────────────────────────────── */
+.erp-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
   white-space: nowrap;
 }
 
-.epub-reader-newtab {
+.erp-title-icon {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+/* ── Job badge ─────────────────────────────────────────────────── */
+.erp-job-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Type badge ────────────────────────────────────────────────── */
+.erp-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.erp-type-badge--fxl {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.erp-type-badge--reflow {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+/* ── New tab button ────────────────────────────────────────────── */
+.erp-btn-newtab {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   font-size: 13px;
-  color: #e8e8ec;
-  background: transparent;
-  border: 1px solid #555;
-  border-radius: 8px;
+  font-weight: 500;
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.epub-reader-newtab:hover {
-  border-color: #58a6ff;
-  color: #fff;
+.erp-btn-newtab:hover {
+  background: #f9fafb;
+  color: #111827;
+  border-color: #d1d5db;
 }
 
-.epub-reader-page-main {
+/* ── Body / reader area ────────────────────────────────────────── */
+.erp-body {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 12px 12px;
+  overflow: hidden;
+  background: #f3f4f6;
+  padding: 16px;
 }
 
-.epub-reader-page-main .sync-studio-epub-root {
-  border-top: none;
-  border-radius: 0 0 8px 8px;
+/* Ensure the epub reader component fills the available space */
+.erp-body .sync-studio-epub-root {
+  flex: 1;
+  min-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
 }
 
-.epub-reader-page-main .sync-studio-epub-stage {
+.erp-body .sync-studio-epub-stage {
   min-height: 400px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .erp-header {
+    height: auto;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .erp-title {
+    font-size: 14px;
+  }
+
+  .erp-body {
+    padding: 8px;
+  }
 }

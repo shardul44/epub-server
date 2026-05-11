@@ -54,5 +54,11 @@ function extractStylesAndBodyInner(doc) {
     }
   }
 
-  return styles + bodyHtml;
+  return stripPxFromNumericHtmlAttrs(styles + bodyHtml);
+}
+
+/** SVG / legacy markup often uses width="2481px"; React warns and some engines mishandle it. */
+function stripPxFromNumericHtmlAttrs(html) {
+  if (!html || typeof html !== 'string') return html;
+  return html.replace(/\b(width|height)\s*=\s*["'](\d+)\s*px["']/gi, '$1="$2"');
 }

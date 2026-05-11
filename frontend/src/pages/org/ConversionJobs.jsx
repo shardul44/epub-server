@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, memo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { conversionApi, apiClient } from '../../api';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import {
@@ -13,6 +13,19 @@ import {
   Mic2,
 } from 'lucide-react';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
+import { useConversionActions, resolveJobType, isFixedLayout } from '../../hooks/useConversionActions';
+import useAppDispatch from '../../hooks/useAppDispatch';
+import useAppSelector from '../../hooks/useAppSelector';
+import {
+  selectFocusedJobId,
+  selectViewMode,
+  selectStatusFilter,
+  selectActionError,
+  setFocusedJobId,
+  setViewMode,
+  setStatusFilter,
+  clearActionError,
+} from '../../features/conversions/conversionsSlice';
 import JobCard, { JobGrid } from '../../components/JobCard';
 import ConfirmModal from '../../components/Loadingmodal';
 import './ConversionJobs.css';
@@ -31,14 +44,6 @@ const STATUS_CLASS = {
 
 const fmtDate = (d) => d ? new Date(d).toLocaleString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
 const fmtStep = (s) => s ? String(s).replace(/STEP_\d+_/, '').replace(/_/g, ' ') : '';
-
-/** Normalize API job type for routing (REFLOW vs FXL). */
-const resolveJobType = (job) => {
-  const t = job?.jobType ?? job?.type;
-  if (t === 'FXL') return 'FXL';
-  if (t === 'REFLOW' || t === 'REFLOWABLE') return 'REFLOW';
-  return typeof t === 'string' ? t : null;
-};
 
 /* ─── FocusedJobBanner ────────────────────────────────────────── */
 const PANEL_STEPS = [
@@ -61,6 +66,7 @@ const PANEL_STEPS = [
     name: 'Audio Sync Studio',
     desc: 'Add narration, sync audio to text, and create an immersive read.',
     cta: 'Audio Sync Studio',
+    // Resolved dynamically in handleFocusNavigate based on job type
     path: '/conversions/audio-sync',
   },
 ];
@@ -124,7 +130,7 @@ const FocusedJobBanner = memo(({ job, onDismiss, onNavigate }) => {
                   className="cj-panel-cta cj-panel-cta--primary"
                   onClick={() => onNavigate(ps.path, job)}
                 >
-                  {resolveJobType(job) === 'FXL' ? 'Open FXL Studio' : 'Open Image Editor'} →
+                  {isFixedLayout(job) ? 'Open with Zones →' : 'Open Editor →'}
                 </button>
               )}
               {isLocked && (
@@ -145,7 +151,7 @@ FocusedJobBanner.displayName = 'FocusedJobBanner';
 const JobRow = memo(({ job, onDelete, onStop, onRetry, onOpenEditor }) => {
   const jobId      = job.id ?? job.jobId;
   const pct        = job.progressPercentage ?? 0;
-  const isFxl      = resolveJobType(job) === 'FXL';
+  const isFxl      = isFixedLayout(job);
   const retryCount = job.retryCount ?? 0;
   const canRetry   = retryCount < MAX_RETRIES;
 
@@ -192,7 +198,7 @@ const JobRow = memo(({ job, onDelete, onStop, onRetry, onOpenEditor }) => {
               onClick={() => onOpenEditor(job)}
             >
               <Image size={12} />
-              {isFxl ? 'Open FXL Studio' : 'Open Image Editor'}
+              {isFxl ? 'Open with Zones →' : 'Open Editor →'}
             </button>
           )}
           {job.status === 'IN_PROGRESS' && !isFxl && (
@@ -221,113 +227,71 @@ JobRow.displayName = 'JobRow';
 /* ─── Main page ───────────────────────────────────────────────── */
 const ConversionJobs = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useAppDispatch();
 
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [viewMode, setViewMode]         = useState('card');
-  const [focusedJob, setFocusedJob]     = useState(null);
-  const [actionError, setActionError]   = useState('');
-  const [deleteModal, setDeleteModal]   = useState({ open: false, job: null, loading: false });
+  // ── Redux UI state ────────────────────────────────────────────
+  const focusedJobId   = useAppSelector(selectFocusedJobId);
+  const viewMode       = useAppSelector(selectViewMode);
+  const statusFilter   = useAppSelector(selectStatusFilter);
+  const actionError    = useAppSelector(selectActionError);
 
-  // ── React Query (replaces manual polling hook) ────────────────
+  // ── Local UI state (ephemeral — not worth persisting) ─────────
+  const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
+
+  // ── React Query (server state) ────────────────────────────────
   const { jobs, isLoading: loading, error: pollError, refresh } = useConversionsQuery({ statusFilter });
 
-  /* auto-focus first completed job */
+  // If another page redirects here (e.g. editor opened while job is still running),
+  // focus that job and switch filter to show the converting job.
   useEffect(() => {
-    setFocusedJob(prev => {
-      if (prev) return prev;
-      return jobs.find(j => j.status === 'COMPLETED') ?? null;
-    });
-  }, [jobs]);
+    const focusJobId = location.state?.focusJobId;
+    if (!focusJobId) return;
 
-  /* ── Stable action callbacks — prevent child re-renders ── */
+    dispatch(setFocusedJobId(String(focusJobId)));
+    // Make sure the converting job is visible
+    dispatch(setStatusFilter('IN_PROGRESS'));
+
+    // Clear navigation state to avoid re-trigger on refresh/back
+    navigate(location.pathname, { replace: true, state: null });
+  }, [dispatch, location.pathname, location.state, navigate]);
+
+  // ── Action hook (delete / stop / retry / navigate) ────────────
+  const {
+    prepareDelete,
+    confirmDelete: runConfirmDelete,
+    handleStop,
+    handleRetry,
+    handleOpenEditor,
+    handleFocusNavigate,
+  } = useConversionActions();
+
+  // Derive the focused job object from the Redux-stored ID
+  const focusedJob = focusedJobId
+    ? jobs.find(j => String(j.id ?? j.jobId) === String(focusedJobId)) ?? null
+    : null;
+
+  /* auto-focus first completed job (only if nothing is focused yet) */
+  useEffect(() => {
+    if (focusedJobId) return;
+    const first = jobs.find(j => j.status === 'COMPLETED');
+    if (first) dispatch(setFocusedJobId(String(first.id ?? first.jobId)));
+  }, [jobs, focusedJobId, dispatch]);
+
+  /* ── Delete flow ── */
   const handleDelete = useCallback((job) => {
+    prepareDelete(job);
     setDeleteModal({ open: true, job, loading: false });
-  }, []);
-
-  // Use a ref so confirmDelete always reads the latest deleteModal
-  // without needing it as a dependency (which causes stale closure issues).
-  const deleteModalRef = useRef(null);
-  deleteModalRef.current = deleteModal;
+  }, [prepareDelete]);
 
   const confirmDelete = useCallback(async () => {
-    const { job } = deleteModalRef.current;
-    if (!job) return;
-    const jobId = job.id ?? job.jobId;
-    setDeleteModal((prev) => ({ ...prev, loading: true }));
-    try {
-      setActionError('');
-      if (job.jobType === 'FXL') {
-        try {
-          await apiClient.delete(`/kitaboo/jobs/${jobId}`);
-        } catch (err) {
-          if (err.response?.status === 404) {
-            console.warn('ConversionJobs: FXL delete returned 404; treating as already removed.', jobId);
-          } else {
-            throw err;
-          }
-        }
-      } else {
-        await conversionApi.deleteConversionJob(jobId);
-      }
-      setFocusedJob(prev => prev && (prev.id ?? prev.jobId) === jobId ? null : prev);
-      setDeleteModal({ open: false, job: null, loading: false });
-      refresh();
-    } catch (err) {
-      setActionError(err.message || 'Failed to delete job');
-      setDeleteModal({ open: false, job: null, loading: false });
-    }
-  }, [refresh]);
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+    await runConfirmDelete();
+    dispatch(setFocusedJobId(null));
+    setDeleteModal({ open: false, job: null, loading: false });
+  }, [runConfirmDelete, dispatch]);
 
-  const handleStop = useCallback(async (jobId) => {
-    try {
-      setActionError('');
-      await conversionApi.stopConversion(jobId);
-      refresh();
-    } catch (err) { setActionError(err.message || 'Failed to stop'); }
-  }, [refresh]);
-
-  const handleRetry = useCallback(async (jobId) => {
-    const job = jobs.find(j => String(j.id ?? j.jobId) === String(jobId));
-    const jobType = resolveJobType(job);
-    if (jobType === 'FXL') {
-      // FXL jobs don't have a retry endpoint — navigate to PDFs to start a new conversion
-      setTimeout(() => navigate('/pdfs'), 0);
-      return;
-    }
-    try {
-      setActionError('');
-      await conversionApi.retryConversion(jobId);
-      refresh();
-    } catch (err) { setActionError(err.message || 'Failed to retry'); }
-  }, [jobs, refresh, navigate]);
-
-  const handleOpenEditor = useCallback((job) => {
-    if (!job) {
-      console.warn('ConversionJobs: no job selected for editor');
-      return;
-    }
-    const jobId = job.id ?? job.jobId;
-    const jobType = resolveJobType(job);
-    if (!['REFLOW', 'FXL'].includes(jobType)) {
-      console.error('ConversionJobs: unsupported job type for editor', jobType, job);
-      return;
-    }
-    console.log('ConversionJobs: opening editor', { jobId, jobType });
-    // Defer navigation out of the current React event/render cycle to avoid
-    // "Cannot update a component while rendering a different component" errors.
-    const path = jobType === 'REFLOW' ? `/image-editor/${jobId}` : `/fxl-studio/${jobId}`;
-    setTimeout(() => navigate(path), 0);
-  }, [navigate]);
-
-  const handleFocusNavigate = useCallback((path, job) => {
-    if (path === '/conversions/fxl-editor') {
-      handleOpenEditor(job);
-      return;
-    }
-    setTimeout(() => navigate(path, { state: { jobId: job.id ?? job.jobId } }), 0);
-  }, [navigate, handleOpenEditor]);
-
-  const handleStepClick = useCallback((step) => setTimeout(() => navigate(step.path), 0), [navigate]);
+  const handleStepClick = useCallback((step) => navigate(step.path), [navigate]);
 
   /* ── derived counts ── */
   const completedCount = jobs.filter(j => j.status === 'COMPLETED').length;
@@ -361,7 +325,7 @@ const ConversionJobs = () => {
           <select
             className="cj-select"
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={e => dispatch(setStatusFilter(e.target.value))}
             aria-label="Filter by status"
           >
             <option value="all">All statuses</option>
@@ -374,7 +338,7 @@ const ConversionJobs = () => {
           <div className="cj-view-toggle" role="group" aria-label="View mode">
             <button
               className={`cj-view-btn ${viewMode === 'card' ? 'cj-view-btn--on' : ''}`}
-              onClick={() => setViewMode('card')}
+              onClick={() => dispatch(setViewMode('card'))}
               title="Card view"
               aria-pressed={viewMode === 'card'}
             >
@@ -382,7 +346,7 @@ const ConversionJobs = () => {
             </button>
             <button
               className={`cj-view-btn ${viewMode === 'list' ? 'cj-view-btn--on' : ''}`}
-              onClick={() => setViewMode('list')}
+              onClick={() => dispatch(setViewMode('list'))}
               title="List view"
               aria-pressed={viewMode === 'list'}
             >
@@ -393,7 +357,12 @@ const ConversionJobs = () => {
       </header>
 
       {/* ── Workflow stepper (shared component) ── */}
-      <WorkflowStepper activeStep={0} onStepClick={handleStepClick} variant="cj" />
+      <WorkflowStepper
+        activeStep={0}
+        jobId={focusedJob ? String(focusedJob.id ?? focusedJob.jobId) : null}
+        job={focusedJob}
+        onStepClick={handleStepClick}
+      />
 
       {/* ── Page body ── */}
       <div className="cj-body">
@@ -402,7 +371,7 @@ const ConversionJobs = () => {
         {displayError && (
           <div className="cj-alert cj-alert--error">
             {displayError}
-            <button className="cj-alert-close" onClick={() => setActionError('')}><X size={14} /></button>
+            <button className="cj-alert-close" onClick={() => dispatch(clearActionError())}><X size={14} /></button>
           </div>
         )}
         {runningCount > 0 && (
@@ -415,7 +384,7 @@ const ConversionJobs = () => {
         {/* ── Focused job banner ── */}
         <FocusedJobBanner
           job={focusedJob}
-          onDismiss={() => setFocusedJob(null)}
+          onDismiss={() => dispatch(setFocusedJobId(null))}
           onNavigate={handleFocusNavigate}
         />
 
@@ -441,7 +410,7 @@ const ConversionJobs = () => {
                 key={`${job.jobType ?? 'REFLOW'}-${job.id ?? job.jobId}`}
                 job={job}
                 isSelected={focusedJob && (focusedJob.id ?? focusedJob.jobId) === (job.id ?? job.jobId)}
-                onSelect={setFocusedJob}
+                onSelect={(j) => dispatch(setFocusedJobId(String(j.id ?? j.jobId)))}
                 onDelete={handleDelete}
                 onStop={handleStop}
                 onRetry={handleRetry}

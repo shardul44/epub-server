@@ -1,6 +1,31 @@
 import api from './api';
 import { withAuthImageQuery } from '../utils/authImageUrl';
 
+/**
+ * Turn a path from GET /audio-sync/sync-studio/:jobId (e.g. `/api/audio-sync/job/12/audio/section/0`)
+ * into an absolute URL WaveSurfer/fetch can load. Matches dev (no `/api` on server) vs prod proxy.
+ */
+export function resolveAudioSyncStreamUrl(relOrAbsUrl) {
+  if (relOrAbsUrl == null || relOrAbsUrl === '') return null;
+  const base = api.defaults.baseURL || '';
+  const baseHasApiPrefix = /\/api\/?$/.test(base);
+  const backendOrigin = base.replace(/\/api\/?$/, '');
+  let resolvedUrl = String(relOrAbsUrl).trim();
+  if (/^https?:\/\//i.test(resolvedUrl)) {
+    return withAuthImageQuery(resolvedUrl);
+  }
+  if (resolvedUrl.startsWith('/api/')) {
+    resolvedUrl = baseHasApiPrefix
+      ? `${backendOrigin}${resolvedUrl}`
+      : `${backendOrigin}${resolvedUrl.slice(4)}`;
+  } else if (resolvedUrl.startsWith('/')) {
+    resolvedUrl = `${backendOrigin}${resolvedUrl}`;
+  } else {
+    resolvedUrl = `${backendOrigin}/${resolvedUrl}`;
+  }
+  return withAuthImageQuery(resolvedUrl);
+}
+
 export const audioSyncService = {
   getAudioSyncsByPdf: (pdfId) =>
     api.get(`/audio-sync/pdf/${pdfId}`).then(res => res.data.data),
@@ -94,8 +119,10 @@ export const audioSyncService = {
   getSyncStudio: (jobId) =>
     api.get(`/audio-sync/sync-studio/${jobId}`).then(res => res.data.data ?? res.data),
 
+  resolveAudioSyncStreamUrl,
+
   getJobAudioUrl: (jobId) =>
-    withAuthImageQuery(`${api.defaults.baseURL.replace(/\/?$/, '')}/audio-sync/job/${jobId}/audio`),
+    resolveAudioSyncStreamUrl(`/api/audio-sync/job/${jobId}/audio`),
 
   alignSyncStudio: (jobId, options = {}) => {
     const body = {
@@ -142,9 +169,7 @@ export const audioSyncService = {
 
   // Get URL to stream per-section audio
   getSectionAudioUrl: (jobId, sectionIndex) =>
-    withAuthImageQuery(
-      `${api.defaults.baseURL.replace(/\/?$/, '')}/audio-sync/job/${jobId}/audio/section/${sectionIndex}`
-    ),
+    resolveAudioSyncStreamUrl(`/api/audio-sync/job/${jobId}/audio/section/${sectionIndex}`),
 
   // Generate TTS audio for a specific section only
   generateSectionAudio: (pdfId, jobId, sectionIndex, voice, textBlocks, granularity = 'sentence', speakingRate) =>

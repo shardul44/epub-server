@@ -1,12 +1,43 @@
 
 import argparse
 import re
-import fitz  # PyMuPDF
-import cv2   # OpenCV
-import numpy as np
-from pathlib import Path
+import sys
 import json
 import os
+from pathlib import Path
+
+# ── Structured error output helper ──────────────────────────────────────────
+def _fatal(message, code="PYTHON_ERROR", details=None):
+    """Print a structured JSON error to stderr and exit with code 1."""
+    payload = {"success": False, "error": {"code": code, "message": message}}
+    if details:
+        payload["error"]["details"] = details
+    print(json.dumps(payload), file=sys.stderr)
+    sys.exit(1)
+
+# ── Required: PyMuPDF ────────────────────────────────────────────────────────
+try:
+    import fitz  # PyMuPDF
+except ImportError:
+    _fatal(
+        "PyMuPDF is not installed. Run: pip install PyMuPDF",
+        code="MISSING_DEPENDENCY",
+        details={"package": "PyMuPDF", "import_name": "fitz"}
+    )
+
+# ── Optional: OpenCV + NumPy (only needed for cleanup/image-processing modes) ─
+_CV2_AVAILABLE = False
+cv2 = None
+np = None
+try:
+    import cv2 as _cv2
+    import numpy as _np
+    cv2 = _cv2
+    np = _np
+    _CV2_AVAILABLE = True
+except ImportError:
+    # cv2 is only required for --mode cleanup. render/extract/extract-images work without it.
+    pass
 
 # Line grouping: max y-distance (points) to treat two spans as same baseline. Scale with font size for tight/loose PDFs.
 LINE_THRESHOLD_FACTOR = 0.3   # fraction of font size
@@ -19,25 +50,33 @@ def _line_threshold_for_font(font_size):
         font_size = 12
     return max(LINE_THRESHOLD_MIN_PT, min(float(font_size) * LINE_THRESHOLD_FACTOR, LINE_THRESHOLD_MAX_PT))
 
-def render_pages(pdf_path, output_dir, dpi=300):
+def render_pages(pdf_path, output_dir, dpi=150):
     """
     Phase 1: Render PDF pages to images.
+    Default DPI is 150 — good balance of quality vs. speed/file-size.
+    Use 300 only when pixel-perfect accuracy is required.
     """
-    doc = fitz.open(pdf_path)
+    try:
+        doc = fitz.open(pdf_path)
+    except Exception as e:
+        _fatal(f"Cannot open PDF: {e}", code="PDF_OPEN_ERROR", details={"path": pdf_path})
+
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
+
     rendered_files = []
     zoom = dpi / 72  # 72 points per inch is standard PDF resolution
     mat = fitz.Matrix(zoom, zoom)
-    
+
     for page_num, page in enumerate(doc):
-        # Render page to pixmap
-        pix = page.get_pixmap(matrix=mat, alpha=False)
-        output_file = Path(output_dir) / f"page_{page_num + 1}.png"
-        pix.save(str(output_file))
-        rendered_files.append(str(output_file))
-        print(f"Rendered page {page_num + 1} to {output_file}")
-        
+        try:
+            pix = page.get_pixmap(matrix=mat, alpha=False)
+            output_file = Path(output_dir) / f"page_{page_num + 1}.png"
+            pix.save(str(output_file))
+            rendered_files.append(str(output_file))
+            print(f"Rendered page {page_num + 1} to {output_file}", flush=True)
+        except Exception as e:
+            print(f"Warning: failed to render page {page_num + 1}: {e}", file=sys.stderr, flush=True)
+
     return rendered_files
 
 def extract_fonts(pdf_path, output_dir):
@@ -742,7 +781,10 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
 def get_dominant_color(img, x0, y0, x1, y1):
     """
     Sample pixels VERY close to the bbox to find the local background.
+    Requires OpenCV (cv2). Returns white if cv2 is unavailable.
     """
+    if not _CV2_AVAILABLE:
+        return (255, 255, 255)
     h, w = img.shape[:2]
     samples = []
     # Tight 10px border to avoid hitting distant banners/graphics
@@ -872,7 +914,15 @@ def cleanup_images(image_dir, coords_json, output_dir=None, cleanup_threshold=10
     Remove only coords.json text boxes. Page 1 (cover) is never cleaned — original
     kept intact, text overlaid in FXL. Other pages: wide banners use gradient copy,
     small regions use inpaint.
+    Requires OpenCV (cv2). Skips cleanup gracefully if cv2 is unavailable.
     """
+    if not _CV2_AVAILABLE:
+        print(
+            "Warning: OpenCV (cv2) is not installed — image cleanup skipped. "
+            "Install with: pip install opencv-python-headless",
+            file=sys.stderr, flush=True
+        )
+        return
     if not output_dir:
         output_dir = image_dir
     Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -986,7 +1036,7 @@ def main():
     parser.add_argument("--pdf", required=True, help="Path to PDF file")
     parser.add_argument("--output-dir", required=True, help="Output directory")
     parser.add_argument("--mode", choices=["render", "extract", "cleanup", "extract-images", "all"], default="all")
-    parser.add_argument("--dpi", type=int, default=300, help="DPI for rendering")
+    parser.add_argument("--dpi", type=int, default=150, help="DPI for rendering (default: 150)")
     parser.add_argument("--coords-json", help="Path to JSON file for coordinates (required for cleanup)")
     parser.add_argument("--extraction-level", choices=["sentence", "word", "glyph"], default="sentence",
                         help="Coordinate extraction level: sentence (end at .?!), word, or glyph (one item per character)")
@@ -994,42 +1044,67 @@ def main():
                         help="Color difference threshold for text mask; lower = tighter mask (default 10)")
     parser.add_argument("--cleanup-dilate", type=int, default=5,
                         help="Dilation kernel size for contour bubble; larger = more expansion (default 5)")
-    
+
     args = parser.parse_args()
-    
-    pdf_path = args.pdf
-    output_dir = args.output_dir
-    
-    if args.mode in ["render", "all"]:
-        print("Starting Render Phase...")
-        render_pages(pdf_path, output_dir, args.dpi)
-        
-    if args.mode in ["extract", "all"]:
-        print("Starting Extraction Phase...")
-        json_path = args.coords_json or str(Path(output_dir) / "coords.json")
-        font_mapping = extract_fonts(pdf_path, output_dir)
-        level = getattr(args, "extraction_level", "sentence") or "sentence"
-        extract_coords(pdf_path, json_path, extraction_level=level, font_list=font_mapping)
-        # If running 'all', pass this json to next step
-        args.coords_json = json_path
-        
-    if args.mode in ["cleanup", "all"]:
-        print("Starting Cleanup Phase...")
-        if not args.coords_json:
-            args.coords_json = str(Path(output_dir) / "coords.json")
-            if not Path(args.coords_json).exists():
-                print("Error: Coordinates JSON not found. Run extract first.")
-                return
-        cleanup_images(
-            output_dir,
-            args.coords_json,
-            cleanup_threshold=getattr(args, "cleanup_threshold", 10),
-            cleanup_dilate=getattr(args, "cleanup_dilate", 5),
+
+    # Validate cleanup mode requires cv2
+    if args.mode in ["cleanup", "all"] and not _CV2_AVAILABLE:
+        print(
+            "Warning: OpenCV (cv2) not installed — cleanup step will be skipped. "
+            "To enable: pip install opencv-python-headless",
+            file=sys.stderr, flush=True
         )
 
-    if args.mode in ["extract-images"]:
-        print("Starting Embedded Images Extraction Phase...")
-        extract_embedded_images(pdf_path, output_dir)
+    pdf_path = args.pdf
 
+    # Validate PDF exists
+    if not Path(pdf_path).exists():
+        _fatal(f"PDF file not found: {pdf_path}", code="FILE_NOT_FOUND", details={"path": pdf_path})
+
+    output_dir = args.output_dir
+
+    try:
+        if args.mode in ["render", "all"]:
+            print("Starting Render Phase...", flush=True)
+            render_pages(pdf_path, output_dir, args.dpi)
+
+        if args.mode in ["extract", "all"]:
+            print("Starting Extraction Phase...", flush=True)
+            json_path = args.coords_json or str(Path(output_dir) / "coords.json")
+            font_mapping = extract_fonts(pdf_path, output_dir)
+            level = getattr(args, "extraction_level", "sentence") or "sentence"
+            extract_coords(pdf_path, json_path, extraction_level=level, font_list=font_mapping)
+            # If running 'all', pass this json to next step
+            args.coords_json = json_path
+
+        if args.mode in ["cleanup", "all"]:
+            print("Starting Cleanup Phase...", flush=True)
+            if not args.coords_json:
+                args.coords_json = str(Path(output_dir) / "coords.json")
+                if not Path(args.coords_json).exists():
+                    print("Warning: Coordinates JSON not found. Skipping cleanup.", file=sys.stderr, flush=True)
+                else:
+                    cleanup_images(
+                        output_dir,
+                        args.coords_json,
+                        cleanup_threshold=getattr(args, "cleanup_threshold", 10),
+                        cleanup_dilate=getattr(args, "cleanup_dilate", 5),
+                    )
+            else:
+                cleanup_images(
+                    output_dir,
+                    args.coords_json,
+                    cleanup_threshold=getattr(args, "cleanup_threshold", 10),
+                    cleanup_dilate=getattr(args, "cleanup_dilate", 5),
+                )
+
+        if args.mode in ["extract-images"]:
+            print("Starting Embedded Images Extraction Phase...", flush=True)
+            extract_embedded_images(pdf_path, output_dir)
+
+    except SystemExit:
+        raise
+    except Exception as e:
+        _fatal(str(e), code="PROCESSING_ERROR", details={"mode": args.mode, "pdf": pdf_path})
 if __name__ == "__main__":
     main()

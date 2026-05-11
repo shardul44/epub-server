@@ -33,6 +33,9 @@ const GrapesJSCanvas = ({
   const initializationStartedRef = useRef(false); // Prevent multiple initializations
   const initialContentLoadedRef = useRef(false); // Track if initial content has been loaded
   const pendingXhtmlUpdateRef = useRef(null); // Track pending XHTML update to apply once editor is ready
+  const initRunIdRef = useRef(0); // Invalidate stale init callbacks (StrictMode safe)
+  const xhtmlRef = useRef(xhtml);
+  xhtmlRef.current = xhtml;
 
   // Keep ref updated when callback changes
   useEffect(() => {
@@ -41,6 +44,21 @@ const GrapesJSCanvas = ({
 
   // Initialize GrapesJS editor
   useEffect(() => {
+    // Guard against stale async callbacks from a previous init (React StrictMode init/cleanup/init)
+    const runId = ++initRunIdRef.current;
+    const timeoutIds = [];
+    const safeTimeout = (fn, ms) => {
+      const id = setTimeout(() => {
+        if (initRunIdRef.current !== runId) return;
+        fn();
+      }, ms);
+      timeoutIds.push(id);
+      return id;
+    };
+
+    // StrictMode runs effect cleanup then re-runs the effect; cleanup sets isMountedRef to false.
+    // Reset here so loadContent and other paths work on the "real" mount.
+    isMountedRef.current = true;
     if (!containerRef.current) return;
     
     // Prevent multiple initializations - use multiple guards
@@ -121,7 +139,7 @@ const GrapesJSCanvas = ({
     });
     
     // Wait for editor to be fully initialized before setting up event handlers
-    setTimeout(() => {
+    safeTimeout(() => {
       if (!isMountedRef.current || !grapesEditor) return;
       
       try {
@@ -154,19 +172,26 @@ const GrapesJSCanvas = ({
     }, 100);
 
     // Load content into GrapesJS - called after canvas:mount
+    // Returns true only when content was applied (so callers can set contentLoaded).
     const loadContent = () => {
-      if (!isMountedRef.current || !grapesEditor || !xhtml) {
-        console.warn('[GrapesJSCanvas] Cannot load content - missing requirements');
-        return;
+      const xhtmlNow = xhtmlRef.current;
+      if (initRunIdRef.current !== runId || !isMountedRef.current || !grapesEditor || !xhtmlNow) {
+        console.warn('[GrapesJSCanvas] Cannot load content - missing requirements', {
+          runIdValid: initRunIdRef.current === runId,
+          mounted: isMountedRef.current,
+          hasEditor: !!grapesEditor,
+          hasXhtml: !!xhtmlNow,
+        });
+        return false;
       }
       
       try {
         console.log('[GrapesJSCanvas] Canvas mounted, setting initial content');
-        console.log('[GrapesJSCanvas] XHTML length:', xhtml.length);
+        console.log('[GrapesJSCanvas] XHTML length:', xhtmlNow.length);
         
         // Parse XHTML to extract body content (GrapesJS setComponents expects body HTML, not full document)
         const parser = new DOMParser();
-        const doc = parser.parseFromString(xhtml, 'text/html');
+        const doc = parser.parseFromString(xhtmlNow, 'text/html');
         
         // Extract body content
         let bodyContent = '';
@@ -184,7 +209,7 @@ const GrapesJSCanvas = ({
         
         if (!bodyContent) {
           console.error('[GrapesJSCanvas] No body content extracted from XHTML!');
-          return;
+          return false;
         }
         
         // Set flag to prevent initial load from triggering events
@@ -270,7 +295,7 @@ const GrapesJSCanvas = ({
         grapesEditor.refresh();
         
         // Verify content was set (after a delay to allow processing)
-        setTimeout(() => {
+        safeTimeout(() => {
           const verifyHtml = grapesEditor.getHtml();
           const verifyCss = grapesEditor.getCss();
           console.log('[GrapesJSCanvas] Verification - HTML length:', verifyHtml.length, 'CSS length:', verifyCss.length);
@@ -281,19 +306,21 @@ const GrapesJSCanvas = ({
         }, 200);
         
         // Initialize last known value
-        lastXhtmlRef.current = xhtml;
+        lastXhtmlRef.current = xhtmlNow;
         initialContentLoadedRef.current = true; // Mark initial load as complete
         
         // Reset flag after initialization
-        setTimeout(() => {
+        safeTimeout(() => {
           if (isMountedRef.current) {
             isUpdatingFromExternalRef.current = false;
           }
         }, 300);
         
+        return true;
       } catch (e) {
         console.error('[GrapesJSCanvas] Error loading content:', e);
         console.error('[GrapesJSCanvas] Error stack:', e.stack);
+        return false;
       }
     };
     
@@ -302,38 +329,43 @@ const GrapesJSCanvas = ({
     let contentLoaded = false;
     
     const tryLoadContent = () => {
+      const xhtmlNow = xhtmlRef.current;
       console.log('[GrapesJSCanvas] tryLoadContent called', {
         isMounted: isMountedRef.current,
         contentLoaded,
-        hasXhtml: !!xhtml,
-        xhtmlLength: xhtml?.length || 0
+        hasXhtml: !!xhtmlNow,
+        xhtmlLength: xhtmlNow?.length || 0
       });
       
-      // Don't check isMounted here - React Strict Mode can cause false negatives
-      // The useEffect will handle loading when both editor and xhtml are ready
+      if (initRunIdRef.current !== runId) {
+        return;
+      }
       if (contentLoaded) {
         console.warn('[GrapesJSCanvas] Content already loaded, skipping');
         return;
       }
       
-      if (!xhtml) {
+      if (!xhtmlNow) {
         console.warn('[GrapesJSCanvas] No xhtml available yet, skipping');
         return;
       }
       
-      // Editor is already initialized, don't set state again to avoid loops
-      // setEditor is already called below, don't call it again here
+      if (loadContent()) {
+        contentLoaded = true;
+      }
     };
     
     grapesEditor.on('canvas:mount', () => {
+      if (initRunIdRef.current !== runId) return;
       console.log('[GrapesJSCanvas] canvas:mount event fired');
       tryLoadContent();
     });
     
     // Also listen for canvas:frame:load (iframe is ready)
     grapesEditor.on('canvas:frame:load', () => {
+      if (initRunIdRef.current !== runId) return;
       console.log('[GrapesJSCanvas] canvas:frame:load event fired');
-      setTimeout(() => {
+      safeTimeout(() => {
         if (!contentLoaded) {
           tryLoadContent();
         }
@@ -342,8 +374,9 @@ const GrapesJSCanvas = ({
     
     // Fallback: Also listen for load event (in case canvas:mount doesn't fire)
     grapesEditor.on('load', () => {
+      if (initRunIdRef.current !== runId) return;
       console.log('[GrapesJSCanvas] Editor load event fired');
-      setTimeout(() => {
+      safeTimeout(() => {
         if (!contentLoaded) {
           tryLoadContent();
         }
@@ -351,7 +384,7 @@ const GrapesJSCanvas = ({
     });
     
     // Additional fallback: Check if iframe is ready after a delay
-    setTimeout(() => {
+    safeTimeout(() => {
       if (isMountedRef.current && !contentLoaded) {
         console.log('[GrapesJSCanvas] Fallback timeout - checking iframe');
         const canvas = grapesEditor.Canvas;
@@ -753,6 +786,12 @@ const GrapesJSCanvas = ({
 
     return () => {
       isMountedRef.current = false; // Stop all pending callbacks
+
+      // Invalidate any pending callbacks from this init run
+      if (initRunIdRef.current === runId) {
+        initRunIdRef.current += 1;
+      }
+      timeoutIds.forEach((id) => clearTimeout(id));
       
       // Clear initialization flags
       initializationStartedRef.current = false;

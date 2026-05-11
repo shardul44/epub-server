@@ -1,19 +1,25 @@
-/* FXL Sync Studio — same look as Sync Studio for reflowable */
+/* FXL Sync Studio — light theme */
 :root {
-  --studio-bg: #0d1117;
-  --studio-surface: #161b22;
-  --studio-border: #30363d;
-  --studio-text: #c9d1d9;
-  --studio-text-muted: #8b949e;
-  --studio-accent: #4A7B54;
-  --studio-accent-hover: #5a9b64;
-  --studio-success: #56d364;
+  --studio-bg: #f7f7f2;
+  --studio-surface: #ffffff;
+  --studio-border: #e5e7eb;
+  --studio-text: #111827;
+  --studio-text-muted: #6b7280;
+  --studio-accent: #2563eb;
+  --studio-accent-hover: #1d4ed8;
+  --studio-success: #22c55e;
 }
 
 .fxl-sync-studio {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  box-sizing: border-box;
   background: var(--studio-bg);
   color: var(--studio-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
@@ -25,7 +31,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   background: var(--studio-bg);
   color: var(--studio-text);
 }
@@ -41,67 +49,94 @@
   }
 }
 
+.fxl-sync-studio .studio-header--tools-only {
+  justify-content: flex-end;
+}
+
 .fxl-sync-studio .studio-header {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 20px;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 12px 20px 10px;
   background: var(--studio-surface);
-  border-bottom: 1px solid var(--studio-border);
+  border-bottom: none;
   flex-shrink: 0;
+  min-height: 0;
+  height: 70px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .fxl-sync-studio .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 10px 16px;
+  min-width: 0;
+  width: 100%;
+
 }
 
 .fxl-sync-studio .header-left h1 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
-  background: linear-gradient(135deg, #4A7B54, #ffd43b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--studio-text);
+  min-width: 0;
 }
 
 .fxl-sync-studio .btn-back {
   padding: 8px 12px;
-  background: transparent;
+  background: var(--studio-surface);
   border: 1px solid var(--studio-border);
-  color: var(--studio-text);
+  color: var(--studio-text-muted);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .fxl-sync-studio .btn-back:hover {
-  background: var(--studio-surface);
+  background: #f9fafb;
+  color: var(--studio-text);
   border-color: var(--studio-accent);
 }
 
 .fxl-sync-studio .job-badge {
-  padding: 4px 8px;
-  background: var(--studio-accent);
-  color: white;
-  border-radius: 4px;
+  padding: 4px 10px;
+  background: #eff6ff;
+  color: var(--studio-accent);
+  border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
+  border: 1px solid #bfdbfe;
 }
 
-.fxl-sync-studio .header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.fxl-sync-studio .studio-content-header {
+  margin-bottom: 0 !important;
+    padding: 10px 18px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: flex-start;
+    justify-content:center !important;
+    gap: 12px;
 }
 
 .fxl-sync-studio .no-audio-hint {
   font-size: 13px;
   color: var(--studio-text-muted);
+  flex: 1 1 100%;
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .fxl-sync-studio .btn-align {
@@ -115,10 +150,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: border-color 0.15s;
 }
 
 .fxl-sync-studio .btn-align:hover:not(:disabled) {
   border-color: var(--studio-accent);
+  color: var(--studio-accent);
 }
 
 .fxl-sync-studio .btn-save {
@@ -132,6 +169,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: background 0.15s;
 }
 
 .fxl-sync-studio .btn-save:hover:not(:disabled) {
@@ -149,11 +187,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .fxl-sync-studio .btn-clear:hover:not(:disabled) {
-  border-color: #f85149;
-  color: #f85149;
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .fxl-sync-studio .btn-clear:disabled {
@@ -164,9 +203,42 @@
 .fxl-sync-studio .manual-sync-group {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding-left: 12px;
   border-left: 1px solid var(--studio-border);
+  min-width: 0;
+}
+
+.fxl-sync-studio .header-left .btn-download-epub {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.fxl-sync-studio .btn-download-epub {
+  padding: 8px 14px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.fxl-sync-studio .btn-download-epub:hover:not(:disabled) {
+  background: #d1fae5;
+  border-color: #34d399;
+  color: #065f46;
+}
+
+.fxl-sync-studio .btn-download-epub:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .fxl-sync-studio .manual-sync-label {
@@ -185,10 +257,12 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  transition: border-color 0.15s;
 }
 
 .fxl-sync-studio .btn-manual:hover:not(:disabled) {
   border-color: var(--studio-accent);
+  color: var(--studio-accent);
 }
 
 .fxl-sync-studio .btn-manual:disabled {
@@ -202,13 +276,14 @@
 }
 
 .fxl-sync-studio .error-banner {
-  background: #f85149;
-  color: #fff;
+  background: #fee2e2;
+  color: #dc2626;
   padding: 10px 20px;
   font-size: 14px;
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  border-bottom: 1px solid #fecaca;
 }
 
 .fxl-sync-studio .error-banner svg {
@@ -217,25 +292,34 @@
 }
 
 .fxl-sync-studio .success-banner {
-  background: var(--studio-success);
-  color: #0d1117;
+  background: #f0fdf4;
+  color: #15803d;
   padding: 10px 20px;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
+  border-bottom: 1px solid #bbf7d0;
 }
 
 .fxl-sync-studio .studio-layout {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr) minmax(200px, 320px);
+  grid-template-rows: minmax(0, 1fr);
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  align-items: stretch;
 }
 
 .fxl-sync-studio .viewer-panel.left-panel {
-  width: 280px;
-  min-width: 280px;
+  grid-column: 1;
+  min-width: 0;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   background: var(--studio-surface);
   border-right: 1px solid var(--studio-border);
   display: flex;
@@ -259,6 +343,9 @@
 .fxl-sync-studio .fxl-left-panel-header {
   justify-content: space-between;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  row-gap: 6px;
 }
 
 .fxl-sync-studio .fxl-left-panel-header h3 {
@@ -288,11 +375,12 @@
   background: var(--studio-bg);
   color: var(--studio-text);
   cursor: pointer;
+  transition: border-color 0.15s;
 }
 
 .fxl-sync-studio .fxl-reader-toggle:hover {
-  border-color: var(--studio-accent, #58a6ff);
-  color: #fff;
+  border-color: var(--studio-accent);
+  color: var(--studio-accent);
 }
 
 .fxl-sync-studio .fxl-reader-newtab {
@@ -306,9 +394,11 @@
   border-bottom: 1px solid var(--studio-border);
   font-size: 13px;
   font-weight: 600;
+  color: var(--studio-text);
   display: flex;
   align-items: center;
   gap: 6px;
+  background: var(--studio-surface);
 }
 
 .fxl-sync-studio .zones-header {
@@ -318,6 +408,7 @@
 .fxl-sync-studio .page-selector {
   padding: 12px;
   border-bottom: 1px solid var(--studio-border);
+  background: var(--studio-surface);
 }
 
 .fxl-sync-studio .page-selector label {
@@ -340,11 +431,12 @@
   font-size: 13px;
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23c9d1d9%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: right 10px top 50%;
   background-size: 10px auto;
   padding-right: 30px;
+  transition: border-color 0.15s;
 }
 
 .fxl-sync-studio .page-select-dropdown:hover {
@@ -361,60 +453,97 @@
   margin: 0;
   padding: 8px 12px;
   overflow-y: auto;
+  background: var(--studio-surface);
 }
 
 .fxl-sync-studio .zone-item {
-  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   border-bottom: 1px solid var(--studio-border);
   font-size: 12px;
   cursor: pointer;
   border-radius: 4px;
   padding: 8px 10px;
   margin-bottom: 2px;
+  transition: background 0.12s;
+  min-width: 0;
 }
 
 .fxl-sync-studio .zone-item:hover {
-  background: rgba(74, 123, 84, 0.12);
+  background: #eff6ff;
 }
 
 .fxl-sync-studio .zone-item.selected {
-  background: rgba(74, 123, 84, 0.25);
-  border: 1px solid var(--studio-accent);
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
 }
 
 .fxl-sync-studio .zone-id {
   display: block;
   color: var(--studio-accent);
   font-family: monospace;
+  flex-shrink: 0;
+  line-height: 1.3;
 }
 
 .fxl-sync-studio .zone-text {
   color: var(--studio-text);
   opacity: 0.92;
+  width: 100%;
+  min-width: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
+/* Center column <main>; name is historical — layout is not from reflowable SyncStudio.css (waveform rules there are under .sync-studio only). */
 .fxl-sync-studio .waveform-panel {
-  flex: 1;
+  grid-column: 2;
   display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   padding: 12px;
   justify-content: flex-start;
-  background: var(--studio-surface);
+  align-items: stretch;
+  row-gap: 10px;
+  overflow: hidden;
+  background: var(--studio-bg);
 }
 
 .fxl-sync-studio .waveform-panel-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  column-gap: 12px;
+  row-gap: 10px;
+  flex-shrink: 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fxl-sync-studio .waveform-panel-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--studio-text);
+  min-width: 0;
+  line-height: 1.35;
 }
 
 .fxl-sync-studio .waveform-toolbar {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  justify-content: flex-end;
+  gap: 12px 16px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .fxl-sync-studio .playback-controls {
@@ -433,6 +562,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s;
 }
 
 .fxl-sync-studio .btn-playback:hover:not(:disabled) {
@@ -451,7 +581,7 @@
   font-variant-numeric: tabular-nums;
   min-width: 4.5em;
   font-size: 0.95rem;
-  color: var(--studio-fg-muted, #aaa);
+  color: var(--studio-text-muted);
 }
 
 .fxl-sync-studio .zoom-controls {
@@ -470,6 +600,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: border-color 0.15s;
 }
 
 .fxl-sync-studio .btn-zoom:hover:not(:disabled) {
@@ -488,26 +619,52 @@
   text-align: center;
 }
 
-.fxl-sync-studio .waveform-container {
+/* Stacks waveform (WaveSurfer may inject timeline sibling) + hint panel without overlap */
+.fxl-sync-studio .waveform-panel-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 0;
+  min-width: 0;
   width: 100%;
-  flex: 0 0 auto;
-  min-height: 140px;
-  margin-top: 8px;
-  position: relative;
+  gap: 10px;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* Fills remaining column height with a labeled panel so the center is not an empty black void under the waveform */
+.fxl-sync-studio .waveform-container {
+  width: 100%;
+  max-width: 100%;
+  flex: 0 0 auto;
+  /* WaveSurfer height 120 + timeline plugin ~24 */
+  min-height: 152px;
+  min-width: 0;
+  position: relative;
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+/* Fills remaining column height with a labeled panel */
 .fxl-sync-studio .fxl-timeline-placeholder {
-  flex: 1;
-  min-height: 120px;
-  margin-top: 10px;
+  flex: 1 1 auto;
+  min-height: 72px;
+  min-width: 0;
   padding: 16px 18px;
   border-radius: 8px;
   border: 1px dashed var(--studio-border);
-  background: rgba(13, 17, 23, 0.45);
+  background: #f9fafb;
   color: var(--studio-text-muted);
   font-size: 12px;
   line-height: 1.55;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 .fxl-sync-studio .fxl-timeline-placeholder-title {
@@ -526,7 +683,7 @@
   font-weight: 600;
 }
 
-/* Ensure WaveSurfer regions are draggable and resizable (container has pointer-events: none; regions need to receive events) */
+/* WaveSurfer region pointer events */
 .fxl-sync-studio [part*="region"] {
   pointer-events: auto !important;
   cursor: grab !important;
@@ -540,15 +697,26 @@
   cursor: ew-resize !important;
 }
 
-.fxl-sync-studio .no-audio {
-  padding: 40px;
+.fxl-sync-studio .waveform-panel-body .no-audio {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
   text-align: center;
   color: var(--studio-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
 
 .fxl-sync-studio .right-panel {
-  width: 320px;
-  min-width: 320px;
+  grid-column: 3;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
   background: var(--studio-surface);
   border-left: 1px solid var(--studio-border);
   display: flex;
@@ -556,9 +724,18 @@
   overflow: hidden;
 }
 
+.fxl-sync-studio .right-panel > .panel-header {
+  flex-shrink: 0;
+}
+
 .fxl-sync-studio .segment-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   padding: 8px;
+  overflow-x: hidden;
   overflow-y: auto;
+  background: var(--studio-surface);
 }
 
 .fxl-sync-studio .no-segments {
@@ -568,16 +745,17 @@
 }
 
 .fxl-sync-studio .segment-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  gap: 8px;
+  gap: 8px 10px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--studio-border);
   font-size: 12px;
+  min-width: 0;
 }
 
 .fxl-sync-studio .segment-id {
-  flex: 1;
   min-width: 0;
   font-family: monospace;
   color: var(--studio-accent);
@@ -589,6 +767,116 @@
 .fxl-sync-studio .segment-time {
   color: var(--studio-text-muted);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .fxl-sync-studio .studio-header {
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .fxl-sync-studio .header-left {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+
+  .fxl-sync-studio .studio-content-header {
+    gap: 8px 10px;
+    padding: 0 14px 10px;
+  }
+
+  .fxl-sync-studio .manual-sync-group {
+    flex: 1 1 100%;
+    padding-left: 0;
+    padding-top: 8px;
+    margin-top: 4px;
+    border-left: none;
+    border-top: 1px solid var(--studio-border);
+    justify-content: flex-start;
+  }
+
+  .fxl-sync-studio .studio-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(180px, 32vh) minmax(220px, 38vh) minmax(160px, 28vh);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .fxl-sync-studio .viewer-panel.left-panel {
+    grid-column: 1;
+    border-right: none;
+    border-bottom: 1px solid var(--studio-border);
+    max-height: 36vh;
+  }
+
+  .fxl-sync-studio .waveform-panel {
+    grid-column: 1;
+    min-height: 200px;
+    max-height: 42vh;
+  }
+
+  .fxl-sync-studio .waveform-panel-header {
+    grid-template-columns: 1fr;
+  }
+
+  .fxl-sync-studio .waveform-toolbar {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .fxl-sync-studio .right-panel {
+    grid-column: 1;
+    border-left: none;
+    border-top: 1px solid var(--studio-border);
+    max-height: 34vh;
+  }
+}
+
+@media (max-width: 640px) {
+  .fxl-sync-studio .btn-back {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .fxl-sync-studio .header-left h1 {
+    font-size: 16px;
+  }
+
+  .fxl-sync-studio .header-left {
+    align-items: flex-start;
+  }
+
+  .fxl-sync-studio .job-badge {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .fxl-sync-studio .segment-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+  }
+
+  .fxl-sync-studio .segment-id {
+    grid-column: 1 / -1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .fxl-sync-studio .segment-time {
+    grid-column: 1;
+    white-space: normal;
+  }
+
+  .fxl-sync-studio .btn-play-segment {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
 }
 
 .fxl-sync-studio .btn-play-segment {
@@ -598,25 +886,28 @@
   color: var(--studio-text);
   border-radius: 4px;
   cursor: pointer;
+  transition: border-color 0.15s;
 }
 
 .fxl-sync-studio .btn-play-segment:hover {
   border-color: var(--studio-accent);
+  color: var(--studio-accent);
 }
 
 .fxl-sync-studio .btn-manual-config {
-  background: rgba(74, 123, 84, 0.2);
-  border-color: var(--studio-accent);
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: var(--studio-accent);
 }
 
 .fxl-sync-studio .btn-manual-config:hover:not(:disabled) {
-  background: rgba(74, 123, 84, 0.3);
+  background: #dbeafe;
 }
 
 .manual-config-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -632,31 +923,13 @@
   width: 90%;
   max-height: 85vh;
   overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
 .manual-config-modal h3 {
   margin: 0 0 12px 0;
   font-size: 18px;
-}
-
-.manual-config-mode {
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.manual-config-mode-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-size: 13px;
   color: var(--studio-text);
-}
-
-.manual-config-mode-option input[type="radio"] {
-  cursor: pointer;
 }
 
 .per-page-uploaded {
@@ -664,7 +937,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: var(--studio-success);
+  color: #15803d;
 }
 
 .per-page-uploaded svg {
@@ -678,12 +951,13 @@
 }
 
 .per-page-replace-label .per-page-upload-btn {
-  background: var(--studio-bg-elevated, #444);
+  background: #e5e7eb;
+  color: var(--studio-text);
   font-size: 11px;
 }
 
 .per-page-replace-label:hover .per-page-upload-btn {
-  background: var(--studio-fg-muted, #666);
+  background: #d1d5db;
 }
 
 .per-page-upload-label {
@@ -708,6 +982,7 @@
   background: var(--studio-accent);
   color: white;
   border-radius: 6px;
+  transition: background 0.15s;
 }
 
 .per-page-upload-label:hover .per-page-upload-btn {
@@ -718,12 +993,6 @@
   font-size: 13px;
   color: var(--studio-text-muted);
   margin: 0 0 12px 0;
-}
-
-.manual-config-audio {
-  font-size: 13px;
-  color: var(--studio-accent);
-  margin: 0 0 16px 0;
 }
 
 .manual-config-table-wrap {
@@ -747,6 +1016,7 @@
 .manual-config-table th {
   font-weight: 600;
   color: var(--studio-text-muted);
+  background: #f9fafb;
 }
 
 .manual-config-table input[type="number"] {
@@ -796,12 +1066,18 @@
   background: transparent;
   border: 1px solid var(--studio-border);
   color: var(--studio-text);
+  transition: background 0.15s;
+}
+
+.manual-config-actions button:first-child:hover {
+  background: #f9fafb;
 }
 
 .manual-config-actions button:last-child {
   background: var(--studio-accent);
   border: none;
   color: white;
+  transition: background 0.15s;
 }
 
 .manual-config-actions button:last-child:hover:not(:disabled) {

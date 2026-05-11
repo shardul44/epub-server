@@ -34,4 +34,23 @@ export const queryKeys = {
     org:  () => ['dashboard', 'org'],
     user: () => ['dashboard', 'user'],
   },
+
+  // ── Org Team (members + activities) ───────────────────────────
+  orgTeam: {
+    all:        () => ['org-team'],
+    members:    () => ['org-team', 'members'],
+    activities: () => ['org-team', 'activities'],
+  },
+
+  // ── Usage / License ───────────────────────────────────────────
+  usage: {
+    license: () => ['usage', 'license'],
+    plans:   () => ['usage', 'plans'],
+  },
+
+  // ── Media Assets ──────────────────────────────────────────────
+  media: {
+    all:  () => ['media'],
+    list: () => ['media', 'list'],
+  },
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { conversionService } from '../services/conversionService';
 import EpubImageEditor from '../components/EpubImageEditor';
 import {
@@ -15,11 +15,13 @@ import {
   Sparkles,
 } from 'lucide-react';
 import './EpubImageEditorPage.css';
+import WorkflowStudioChrome from '../components/WorkflowStudioChrome';
 
 const ic = { strokeWidth: 2, 'aria-hidden': true };
 
 const EpubImageEditorPage = () => {
   const { jobId } = useParams();
+  const navigate = useNavigate();
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -75,7 +77,12 @@ const EpubImageEditorPage = () => {
       }
 
       if (job.status !== 'COMPLETED') {
-        setError(`Job is ${job.status} — please wait for conversion to complete before editing.`);
+        // Instead of blocking this page, route the user back to Conversion Jobs
+        // and focus the converting job so they can watch progress.
+        navigate('/conversions', {
+          replace: true,
+          state: { focusJobId: String(job.id ?? job.jobId ?? jobId), status: job.status },
+        });
         return;
       }
 
@@ -163,10 +170,8 @@ const EpubImageEditorPage = () => {
     } catch (err) {
       console.error('Regeneration error (proceeding anyway):', err);
     } finally {
-      // Use full-page navigation — React Router's navigate() does not reliably unmount
-      // the heavy EpubImageEditor component, leaving the old UI visible even after the
-      // URL changes. window.location.href forces a clean load of Sync Studio.
-      window.location.href = `/sync-studio/${jobId}`;
+      setRegenerating(false);
+      navigate(`/sync-studio/${jobId}`);
     }
   };
 
@@ -204,7 +209,7 @@ const EpubImageEditorPage = () => {
         <button
           type="button"
           className="eiep-btn-inline"
-          onClick={() => { window.location.href = '/conversions'; }}
+          onClick={() => navigate('/conversions')}
         >
           <ArrowLeft size={18} {...ic} />
           Back to Conversions
@@ -222,7 +227,7 @@ const EpubImageEditorPage = () => {
           <button
             type="button"
             className="eiep-btn-inline"
-            onClick={() => { window.location.href = '/conversions'; }}
+            onClick={() => navigate('/conversions')}
           >
             <ArrowLeft size={18} {...ic} />
             Back to Conversions
@@ -232,8 +237,20 @@ const EpubImageEditorPage = () => {
     );
   }
 
+  const jid = parseInt(jobId, 10);
+  const workflowJob = { id: jid, jobId: jid, jobType: 'REFLOW' };
+
   return (
     <div className="eiep-root">
+      <WorkflowStudioChrome
+        activeStep={1}
+        jobId={jid}
+        job={workflowJob}
+        topTitle="EPUB Image Editor"
+        headingTitle="Image Editor & FXL Studio"
+        headingSub="Reflow: pick a page, edit XHTML, then continue to Audio Sync Studio."
+        backTo="/conversions/fxl-editor"
+      />
 
       {/* ── Toast notification ── */}
       {saveToast && (
@@ -262,11 +279,9 @@ const EpubImageEditorPage = () => {
         </div>
       )}
 
-      {/* ── Top bar ── */}
+      {/* ── Editor toolbar (title / job chip are in WorkflowStudioChrome) ── */}
       <header className="eiep-topbar">
         <div className="eiep-topbar-left">
-          <h1 className="eiep-topbar-title">EPUB Image Editor</h1>
-          <span className="eiep-job-chip">Job #{jobId}</span>
           <label className="eiep-page-label">
             Page
             <select
@@ -366,13 +381,6 @@ const EpubImageEditorPage = () => {
             </button>
           )}
 
-          <button
-            type="button"
-            className="eiep-btn eiep-btn--ghost"
-            onClick={() => { window.location.href = '/conversions'; }}
-          >
-            <ArrowLeft size={15} {...ic} /> Back to Conversions
-          </button>
         </div>
       </header>
 

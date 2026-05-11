@@ -13,6 +13,7 @@ import { createWriteStream } from 'fs';
 import { execSync } from 'child_process';
 import crypto from 'crypto';
 import ttf2woff2 from 'ttf2woff2';
+import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 import { EpubGenerator } from '../utils/epubGenerator.js';
 import { sanitizeZoneText } from '../utils/zoneTextSanitizer.js';
@@ -455,9 +456,11 @@ export class KitabooFxlService {
     await fs.mkdir(renderedDir, { recursive: true });
 
     // Phase 1: Render
-    report(10, 'Phase 1: High-Fidelity Rendering (300 DPI)...');
-    // Use 300 DPI as requested for high quality
-    const renderResult = await PdfExtractionService.renderPagesHighFidelity(pdfPath, renderedDir, 300);
+    report(10, 'Phase 1: High-Fidelity Rendering (150 DPI)...');
+    // 150 DPI is the default — good quality with 2× faster rendering vs 300 DPI.
+    // Override via RENDER_DPI env var if higher quality is needed (e.g. RENDER_DPI=300).
+    const renderDpi = parseInt(process.env.RENDER_DPI || '150', 10);
+    const renderResult = await PdfExtractionService.renderPagesHighFidelity(pdfPath, renderedDir, renderDpi);
 
     // Phase 2a: Coordinate Extraction (PyMuPDF) — always glyph level for exact positions
     report(40, 'Phase 2: Extracting Coordinates (glyph)...');
@@ -3358,8 +3361,8 @@ Return ONLY the JSON array.
     let actualAudioDuration = 0;
     try {
       const out = execSync(
-        `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${singleBookAudioPath}"`,
-        { encoding: 'utf8', timeout: 5000 }
+        `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${singleBookAudioPath}"`,
+        { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
       ).trim();
       actualAudioDuration = parseFloat(out) || 0;
       console.log(`[KitabooFXL] Actual audio duration: ${actualAudioDuration.toFixed(2)}s`);
@@ -3633,8 +3636,8 @@ Return ONLY the JSON array.
       if (pageAlignment.length === 0) {
         try {
           const out = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${pageAudioPath}"`,
-            { encoding: 'utf8', timeout: 5000 }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${pageAudioPath}"`,
+            { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
           ).trim();
           const duration = Math.max(parseFloat(out) || 0, 1);
           const n = segmentsForAlign.length;
@@ -3655,8 +3658,8 @@ Return ONLY the JSON array.
         let audioDurationSec = 0;
         try {
           const out = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${pageAudioPath}"`,
-            { encoding: 'utf8', timeout: 5000 }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${pageAudioPath}"`,
+            { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
           ).trim();
           audioDurationSec = parseFloat(out) || 0;
         } catch (_) { }
@@ -4184,8 +4187,8 @@ Return ONLY the JSON array.
         for (const pwz of pagesWithHumanAudio) {
           try {
             const d = parseFloat(execSync(
-              `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${pwz.humanAudioPath}"`,
-              { encoding: 'utf8' }
+              `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${pwz.humanAudioPath}"`,
+              { encoding: 'utf8', env: getAugmentedEnv() }
             ).trim());
             durations.push(d);
           } catch (_) { }
@@ -4563,8 +4566,8 @@ Return ONLY the JSON array.
           let audioDurationSec = 0;
           try {
             audioDurationSec = parseFloat(execSync(
-              `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${humanAudioPath}"`,
-              { encoding: 'utf8' }
+              `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${humanAudioPath}"`,
+              { encoding: 'utf8', env: getAugmentedEnv() }
             ).trim());
           } catch (_) { }
           const FULL_BOOK_AUDIO_THRESHOLD_SEC = 90;
@@ -4630,8 +4633,8 @@ Return ONLY the JSON array.
                 let audioDurationSec = 0;
                 try {
                   audioDurationSec = parseFloat(execSync(
-                    `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${humanAudioPath}"`,
-                    { encoding: 'utf8' }
+                    `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${humanAudioPath}"`,
+                    { encoding: 'utf8', env: getAugmentedEnv() }
                   ).trim());
                 } catch (_) { }
                 if (audioDurationSec > 120 && textZones.length <= 8) {

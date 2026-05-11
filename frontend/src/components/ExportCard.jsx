@@ -7,7 +7,7 @@ import {
   Eye,
   AlertTriangle,
 } from 'lucide-react';
-import { mediaUrl } from '../utils/mediaUrl';
+import ThumbnailImage from './ThumbnailImage';
 import styles from './ExportCard.module.css';
 
 /* ─── Status config ───────────────────────────────────────────── */
@@ -72,23 +72,23 @@ const fmtTimeShort = (d) => {
   return `${h12}:${String(m).padStart(2, '0')}`;
 };
 
-/* ─── Thumbnail decorative lines (mimics text/content lines) ─── */
-const ThumbnailLines = () => (
-  <div className={styles.thumbLines} aria-hidden="true">
-    {/* upper faint lines */}
-    <div className={styles.thumbLinesTop}>
-      {[60, 45, 52].map((w, i) => (
-        <div key={i} className={styles.thumbLineLight} style={{ width: `${w}%` }} />
-      ))}
-    </div>
-    {/* lower prominent lines */}
-    <div className={styles.thumbLinesBottom}>
-      {[85, 70, 78, 62, 74].map((w, i) => (
-        <div key={i} className={styles.thumbLine} style={{ width: `${w}%` }} />
-      ))}
-    </div>
-  </div>
+/* ─── Spinner for active jobs ─────────────────────────────────── */
+const Spinner = () => (
+  <svg className={styles.spinner} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" strokeOpacity="0.25" />
+    <path d="M12 3a9 9 0 0 1 9 9" />
+  </svg>
 );
+
+/* ─── Progress bar ────────────────────────────────────────────── */
+const ProgressBar = ({ pct, status }) => {
+  const color = status === 'FAILED' ? '#ef4444' : status === 'COMPLETED' ? '#22c55e' : '#3b82f6';
+  return (
+    <div className={styles.progressTrack} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <div className={styles.progressFill} style={{ width: `${pct}%`, background: color }} />
+    </div>
+  );
+};
 
 /* ─── Dot menu ────────────────────────────────────────────────── */
 const MENU_WIDTH  = 160;
@@ -223,7 +223,6 @@ const DeleteConfirmModal = ({ jobId, onConfirm, onCancel }) =>
 
 /* ─── ExportCard ──────────────────────────────────────────────── */
 const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration }) => {
-  const [thumbLoaded,    setThumbLoaded]    = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDeleteClick = () => setShowDeleteModal(true);
@@ -236,10 +235,14 @@ const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration })
   const statusCfg   = STATUS_CONFIG[statusKey] ?? STATUS_CONFIG.PENDING;
   const gradient    = pickGradient(jobId);
   const canDownload = statusKey === 'COMPLETED' || statusKey === 'Completed';
+  const isActive    = statusKey === 'IN_PROGRESS' || statusKey === 'PENDING' || statusKey === 'Rendering' || statusKey === 'Queued';
+  const isFailed    = statusKey === 'FAILED' || statusKey === 'Failed' || statusKey === 'CANCELLED';
+  const progress    = job.progressPercentage ?? 0;
+  const currentStep = job.currentStep
+    ? String(job.currentStep).replace(/STEP_\d+_/, '').replace(/_/g, ' ').toLowerCase()
+    : null;
 
-  // Use the page/1/thumbnail endpoint — serves real PNG if available, SVG placeholder otherwise
   const pdfId     = job.pdfDocumentId ?? job.pdfId;
-  const thumbSrc  = pdfId ? mediaUrl(`/api/pdfs/${pdfId}/page/1/thumbnail`) : null;
 
   const title     = job.pdfFilename?.replace(/\.pdf$/i, '') || `Job #${jobId}`;
   const typeLabel = isFxl ? 'FXL EPUB' : 'Reflow EPUB';
@@ -256,35 +259,39 @@ const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration })
 
   return (
     <div
-      className={styles.card}
+      className={`${styles.card}${isActive ? ` ${styles.cardActive}` : ''}${isFailed ? ` ${styles.cardFailed}` : ''}`}
       onClick={() => onClick?.(job)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.(job)}
       aria-label={`Export: ${title}`}
+      aria-busy={isActive}
     >
-      {/* ── Thumbnail: dot grid + optional tint + lines, or cover image ── */}
-      <div className={`${styles.thumb}${thumbLoaded ? ` ${styles.thumbHasImage}` : ''}`}>
-        {!thumbLoaded && (
+      {/* ── Thumbnail ── */}
+      <div className={styles.thumb}>
+        {!pdfId && (
           <div className={styles.thumbTint} style={{ background: gradient }} aria-hidden />
         )}
-        {thumbSrc && (
-          <img
-            src={thumbSrc}
-            alt=""
-            className={styles.thumbImg}
-            onLoad={() => setThumbLoaded(true)}
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
-          />
-        )}
-        {!thumbLoaded && <ThumbnailLines />}
+        <ThumbnailImage
+          pdfId={pdfId}
+          className={styles.thumbImg}
+          fallback={
+            <div className={styles.thumbTint} style={{ background: gradient }} aria-hidden />
+          }
+        />
         {/* Status badge — top left */}
-        <span className={`${styles.badge} ${statusCfg.cls}`}>{statusCfg.label}</span>
+        <span className={`${styles.badge} ${statusCfg.cls}`}>
+          {isActive && <Spinner />}
+          {statusCfg.label}
+        </span>
         {/* Duration — bottom right */}
         {timeThumb && <span className={styles.duration}>{timeThumb}</span>}
       </div>
+
+      {/* ── Progress bar (shown for active and failed jobs) ── */}
+      {(isActive || isFailed || progress > 0) && (
+        <ProgressBar pct={progress} status={statusKey} />
+      )}
 
       {/* ── Body ── */}
       <div className={styles.body}>
@@ -305,8 +312,24 @@ const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration })
           {pages && <><span className={styles.metaDot}>·</span><span className={styles.metaText}>{pages}</span></>}
         </div>
 
+        {/* Active: show current step */}
+        {isActive && currentStep && (
+          <div className={styles.stepLabel}>
+            {currentStep}… {progress > 0 ? `${progress}%` : ''}
+          </div>
+        )}
+
+        {/* Failed: show error message */}
+        {isFailed && job.errorMessage && (
+          <div className={styles.errorMsg} title={job.errorMessage}>
+            {job.errorMessage.length > 80
+              ? job.errorMessage.slice(0, 80) + '…'
+              : job.errorMessage}
+          </div>
+        )}
+
         {/* Apr 3 · 35 MB */}
-        {(dateLine || size) && (
+        {!isActive && (dateLine || size) && (
           <div className={styles.metaRow}>
             {dateLine && <span className={styles.metaText}>{dateLine}</span>}
             {dateLine && size && <span className={styles.metaDot}>·</span>}

@@ -1,11 +1,21 @@
 import { useEffect, useState, useMemo, useCallback, memo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { conversionApi, kitabooApi } from '../../api';
-import { useConversions } from '../../hooks/useConversions';
+import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
+import useAppDispatch from '../../hooks/useAppDispatch';
+import useAppSelector from '../../hooks/useAppSelector';
+import {
+  selectDESelectedJobId,
+  selectDEError,
+  setSelectedJobId,
+  setError,
+  clearError,
+} from '../../features/downloadEpub/downloadEpubSlice';
+import { useWorkflowNavigation } from '../../hooks/useWorkflowNavigation';
 import WorkflowStepper from '../../components/WorkflowStepper';
-import { mediaUrl } from '../../utils/mediaUrl';
 import { loadStoredJobThumb } from '../../utils/jobCardThumb';
 import { buildEpubReaderPath } from '../../utils/epubReaderUrl';
+import ThumbnailImage from '../../components/ThumbnailImage';
 import {
   Download,
   ArrowLeft,
@@ -39,30 +49,28 @@ const fmtSize = (bytes) => {
   return `${bytes} B`;
 };
 
-/** Card thumbnail — same optional cover as Conversion Jobs, else PDF placeholder thumbnail. */
+/** Card thumbnail — custom cover if set, otherwise real PDF page-1 thumbnail. */
 const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ jobId, pdfId }) {
-  const [hideImg, setHideImg] = useState(false);
   const customSrc = useMemo(() => loadStoredJobThumb(jobId), [jobId]);
-  useEffect(() => {
-    setHideImg(false);
-  }, [jobId, customSrc, pdfId]);
 
-  const isCustom = Boolean(customSrc);
-  const apiSrc = pdfId != null ? mediaUrl(`/api/pdfs/${pdfId}/thumbnail`) : '';
-  const src = customSrc || apiSrc;
-  const showFallback = !src || hideImg;
+  if (customSrc) {
+    return (
+      <div className="de-ready-pdf-thumb de-ready-pdf-thumb--custom">
+        <img src={customSrc} alt="" />
+      </div>
+    );
+  }
 
   return (
-    <div className={`de-ready-pdf-thumb${isCustom ? ' de-ready-pdf-thumb--custom' : ''}`}>
-      {src && !hideImg ? (
-        <img src={src} alt="" onError={() => setHideImg(true)} />
-      ) : null}
-      <div
-        className={`de-ready-pdf-thumb-fallback${showFallback ? ' de-ready-pdf-thumb-fallback--visible' : ''}`}
-        aria-hidden
-      >
-        <FileText size={36} />
-      </div>
+    <div className="de-ready-pdf-thumb">
+      <ThumbnailImage
+        pdfId={pdfId}
+        fallback={
+          <div className="de-ready-pdf-thumb-fallback de-ready-pdf-thumb-fallback--visible" aria-hidden>
+            <FileText size={36} />
+          </div>
+        }
+      />
     </div>
   );
 });
@@ -71,33 +79,52 @@ const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ jobId, pdfId }) {
 const DownloadEpub = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const preselectedJobId = location.state?.jobId;
+  const params   = useParams();
+  const dispatch = useAppDispatch();
+  const { goToAudioSync } = useWorkflowNavigation();
 
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [error, setError]             = useState('');
-  const [downloading, setDownloading] = useState(false);
+  // jobId priority: URL param → navigation state → Redux state
+  const urlJobId         = params?.jobId;
+  const stateJobId       = location.state?.jobId;
+  const preselectedJobId = urlJobId ?? stateJobId;
+
+  // ── Redux UI state ────────────────────────────────────────────
+  const selectedJobId = useAppSelector(selectDESelectedJobId);
+  const error         = useAppSelector(selectDEError);
+
+  // ── Local UI state (ephemeral) ────────────────────────────────
+  const [downloading, setDownloading]         = useState(false);
   const [quickDownloadId, setQuickDownloadId] = useState(null);
+  const [downloadStatus, setDownloadStatus]   = useState('');
 
-  // ── Single shared fetch — no duplicate API calls ──
-  const { jobs, loading, error: fetchError } = useConversions();
+  // ── React Query (server state — COMPLETED jobs only) ──────────
+  const { jobs, isLoading: loading, error: fetchError } = useConversionsQuery({
+    statusFilter: 'COMPLETED',
+  });
 
-  // Propagate fetch error
+  // Propagate fetch error into Redux
   useEffect(() => {
-    if (fetchError) setError(fetchError);
-  }, [fetchError]);
+    if (fetchError) dispatch(setError(fetchError));
+  }, [fetchError, dispatch]);
 
   // Auto-select once jobs are loaded
   useEffect(() => {
     if (loading || jobs.length === 0) return;
-    if (preselectedJobId) {
-      const found = jobs.find(j => String(j.id ?? j.jobId) === String(preselectedJobId));
-      setSelectedJob(found ?? jobs[0] ?? null);
-    } else {
-      setSelectedJob(prev => prev ?? jobs[0] ?? null);
+    const targetId = preselectedJobId ?? selectedJobId;
+    if (targetId) {
+      const found = jobs.find(j => String(j.id ?? j.jobId) === String(targetId));
+      const resolved = found ?? jobs[0] ?? null;
+      if (resolved) dispatch(setSelectedJobId(String(resolved.id ?? resolved.jobId)));
+    } else if (!selectedJobId) {
+      const first = jobs[0];
+      if (first) dispatch(setSelectedJobId(String(first.id ?? first.jobId)));
     }
-  }, [loading, jobs, preselectedJobId]);
+  }, [loading, jobs, preselectedJobId, selectedJobId, dispatch]);
 
-  const [downloadStatus, setDownloadStatus] = useState('');
+  // Derive the selected job object from the Redux-stored ID
+  const selectedJob = selectedJobId
+    ? jobs.find(j => String(j.id ?? j.jobId) === String(selectedJobId)) ?? null
+    : null;
 
   /* ── Download ── */
   const handleDownload = useCallback(async () => {
@@ -112,16 +139,16 @@ const DownloadEpub = () => {
         await conversionApi.downloadEpub(jid);
       }
     } catch (err) {
-      setError(err.message || 'Failed to download EPUB');
+      dispatch(setError(err.message || 'Failed to download EPUB'));
     } finally {
       setDownloading(false);
       setDownloadStatus('');
     }
-  }, [selectedJob]);
+  }, [selectedJob, dispatch]);
 
   const handleQuickDownload = useCallback(async (jid) => {
     if (jid == null) return;
-    setError('');
+    dispatch(clearError());
     setQuickDownloadId(jid);
     try {
       const job = jobs.find(j => String(j.id ?? j.jobId) === String(jid));
@@ -131,11 +158,11 @@ const DownloadEpub = () => {
         await conversionApi.downloadEpub(jid);
       }
     } catch (err) {
-      setError(err.message || 'Failed to download EPUB');
+      dispatch(setError(err.message || 'Failed to download EPUB'));
     } finally {
       setQuickDownloadId(null);
     }
-  }, [jobs]);
+  }, [jobs, dispatch]);
 
   const handleStepClick = useCallback((step) => navigate(step.path), [navigate]);
 
@@ -171,7 +198,13 @@ const DownloadEpub = () => {
         <div className="de-topbar-left">
           <button
             className="de-back-btn"
-            onClick={() => navigate('/conversions/audio-sync', { state: { jobId } })}
+            onClick={() => {
+              if (job) {
+                goToAudioSync(job);
+              } else {
+                navigate('/conversions/audio-sync');
+              }
+            }}
           >
             <ArrowLeft size={15} /> Audio Sync
           </button>
@@ -181,13 +214,13 @@ const DownloadEpub = () => {
       </div>
 
       {/* ── Stepper ── */}
-      <WorkflowStepper activeStep={3} jobId={jobId} onStepClick={handleStepClick} variant="de" />
+      <WorkflowStepper activeStep={3} jobId={jobId} job={job} onStepClick={handleStepClick} />
 
       {/* ── Error ── */}
       {error && (
         <div className="de-error-bar">
           {error}
-          <button onClick={() => setError('')} className="de-error-close">✕</button>
+          <button onClick={() => dispatch(clearError())} className="de-error-close">✕</button>
         </div>
       )}
 
@@ -324,11 +357,11 @@ const DownloadEpub = () => {
                         className="de-ready-pdf-card-hit"
                         role="button"
                         tabIndex={0}
-                        onClick={() => setSelectedJob(j)}
+                        onClick={() => dispatch(setSelectedJobId(String(j.id ?? j.jobId)))}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            setSelectedJob(j);
+                            dispatch(setSelectedJobId(String(j.id ?? j.jobId)));
                           }
                         }}
                       >

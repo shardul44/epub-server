@@ -5,13 +5,13 @@
  * The same return shape is preserved so all existing consumers work unchanged.
  *
  * @param {{ autoFetch?: boolean, scope?: 'own'|'org' }} [options]
- * @returns {{ pdfs, loading, error, refetch }}
+ * @returns {{ pdfs, loading, error, refetch, addPdf, removePdf }}
  */
 
 import { usePdfsQuery } from './queries/usePdfsQuery';
 
 function usePdfs({ autoFetch = true, scope = 'org' } = {}) {
-  const { pdfs, isLoading, error, refetch } = usePdfsQuery({
+  const { pdfs, isLoading, error, refetch, addPdf, removePdf } = usePdfsQuery({
     scope,
     enabled: autoFetch,
   });
@@ -21,6 +21,8 @@ function usePdfs({ autoFetch = true, scope = 'org' } = {}) {
     loading: isLoading,
     error,
     refetch,
+    addPdf,
+    removePdf,
   };
 }
 

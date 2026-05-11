@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { audioSyncService } from '../services/audioSyncService';
 import { conversionService } from '../services/conversionService';
+import { useWorkflowNavigation } from '../hooks/useWorkflowNavigation';
 import api from '../services/api';
 import { withAuthImageQuery } from '../utils/authImageUrl';
 import { xhtmlFragmentForDivViewer } from '../utils/xhtmlViewerFragment';
@@ -301,6 +302,7 @@ function collectHeuristicWildEpubBlocks(doc, sectionId, effectivePageNumber, exi
 const SyncStudio = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const { goToDownload } = useWorkflowNavigation();
 
   // Refs
   const waveformRef = useRef(null);
@@ -443,7 +445,6 @@ const SyncStudio = () => {
   const [aeneasAvailable, setAeneasAvailable] = useState(null);
   const [autoSyncProgress, setAutoSyncProgress] = useState(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [downloading, setDownloading] = useState(false);
 
   const appendQueryParams = useCallback((url, params = {}) => {
     if (!url) return url;
@@ -476,18 +477,14 @@ const SyncStudio = () => {
     })
   );
 
-  // In per-section mode, track the set of element IDs that belong to the currently-active section.
-  // This is used to filter waveform regions and sync data so segments from other sections don't bleed
-  // onto the current section's waveform (each per-section audio file has its own independent timeline).
-  const currentSectionElementIds = useMemo(() => {
-    if (!perSectionMode) return null; // null = no filtering
-    const ids = new Set(
-      parsedElements
-        .filter(el => el.sectionIndex === currentSectionIndex)
-        .map(el => el.id)
-    );
-    return ids;
-  }, [perSectionMode, currentSectionIndex, parsedElements]);
+  // IDs present in the current section's XHTML — always used to filter waveform regions so playback
+  // does not highlight / time regions for blocks that are not in the visible document (e.g. block_5_*
+  // in DB while the viewer shows block_1_* for section 0). Per-section audio still uses one timeline per file.
+  const currentSectionElementIds = useMemo(() => new Set(
+    parsedElements
+      .filter(el => el.sectionIndex === currentSectionIndex)
+      .map(el => el.id)
+  ), [parsedElements, currentSectionIndex]);
 
   // Sync sortedIds with syncData/page changes while preserving manual order
   useEffect(() => {
@@ -1070,50 +1067,68 @@ const SyncStudio = () => {
       return;
     }
 
+    const root = viewerRef.current;
+
+    const findById = (id) => {
+      if (!id) return null;
+      let node = root.querySelector(`#${CSS.escape(id)}`);
+      if (!node) node = root.querySelector(`#${id}`);
+      if (!node) node = root.querySelector(`[id="${id}"]`);
+      if (!node) {
+        for (const elem of root.querySelectorAll('[id]')) {
+          if (elem.id === id || elem.id.toLowerCase() === String(id).toLowerCase()) {
+            node = elem;
+            break;
+          }
+        }
+      }
+      return node;
+    };
+
     // Remove previous highlights
-    const highlighted = viewerRef.current.querySelectorAll('.studio-highlight');
-    highlighted.forEach(el => el.classList.remove('studio-highlight'));
+    root.querySelectorAll('.studio-highlight').forEach(h => h.classList.remove('studio-highlight'));
 
     // Add new highlight
     if (elementId) {
       if (String(elementId).startsWith(INJECTED_SYNC_ID_PREFIX)) {
         return;
       }
-      // Try multiple selector strategies
-      let el = viewerRef.current.querySelector(`#${CSS.escape(elementId)}`);
 
-      // If not found, try without escaping (in case elementId already has special chars)
-      if (!el) {
-        el = viewerRef.current.querySelector(`#${elementId}`);
-      }
+      let el = findById(elementId);
 
-      // If still not found, try searching by attribute
+      // DB / alignment may use a different page index in `block_<page>_<idx>` than the EPUB section's XHTML.
       if (!el) {
-        el = viewerRef.current.querySelector(`[id="${elementId}"]`);
-      }
-
-      // If still not found, try searching all elements with that ID (case-insensitive)
-      if (!el) {
-        const allElements = viewerRef.current.querySelectorAll('[id]');
-        for (const elem of allElements) {
-          if (elem.id === elementId || elem.id.toLowerCase() === elementId.toLowerCase()) {
-            el = elem;
-            break;
-          }
+        const bm = String(elementId).match(/^block_(\d+)_(\d+)$/i);
+        if (bm && currentPageNumber != null) {
+          const altId = `block_${currentPageNumber}_${bm[2]}`;
+          if (altId !== elementId) el = findById(altId);
         }
       }
 
       if (el) {
         el.classList.add('studio-highlight');
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const scroller = root;
+        const elRect = el.getBoundingClientRect();
+        const parRect = scroller.getBoundingClientRect();
+        const relTop = elRect.top - parRect.top + scroller.scrollTop;
+        const nextTop =
+          relTop - scroller.clientHeight / 2 + Math.min(elRect.height, scroller.clientHeight) / 2;
+        scroller.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
         console.log(`[Highlight] ✓ Highlighted element: ${elementId}`);
       } else {
-        console.warn(`[Highlight] ✗ Element not found: ${elementId}. Available IDs:`,
-          Array.from(viewerRef.current.querySelectorAll('[id]')).slice(0, 10).map(e => e.id)
-        );
+        const seen = new Set();
+        const avail = [];
+        for (const e of root.querySelectorAll('[id]')) {
+          if (!seen.has(e.id)) {
+            seen.add(e.id);
+            avail.push(e.id);
+          }
+          if (avail.length >= 12) break;
+        }
+        console.warn(`[Highlight] ✗ Element not found: ${elementId}. Sample IDs:`, avail);
       }
     }
-  }, []);
+  }, [currentPageNumber]);
 
   /**
    * Create a region on the waveform
@@ -1383,12 +1398,16 @@ const SyncStudio = () => {
       // No audio for this page/section — reset state and tear down any existing instance
       setIsReady(false);
       if (wavesurferRef.current) {
+        waveSurferDestroyingRef.current = true;
         try {
           wavesurferRef.current.destroy();
         } catch (err) {
           console.warn('[SyncStudio] Error destroying WaveSurfer (no audio):', err?.message);
         }
         wavesurferRef.current = null;
+        queueMicrotask(() => {
+          waveSurferDestroyingRef.current = false;
+        });
       }
       return;
     }
@@ -1398,12 +1417,17 @@ const SyncStudio = () => {
 
     // Destroy existing instance
     if (wavesurferRef.current) {
+      waveSurferDestroyingRef.current = true;
       try {
         wavesurferRef.current.destroy();
       } catch (err) {
         // Ignore errors during cleanup
         console.warn('[SyncStudio] Error destroying WaveSurfer:', err.message);
       }
+      wavesurferRef.current = null;
+      queueMicrotask(() => {
+        waveSurferDestroyingRef.current = false;
+      });
     }
 
     // Create regions plugin
@@ -1412,9 +1436,9 @@ const SyncStudio = () => {
     // Create wavesurfer instance
     wavesurferRef.current = WaveSurfer.create({
       container: waveformRef.current,
-      waveColor: '#4a5568',
-      progressColor: '#4A7B54',
-      cursorColor: '#ffd43b',
+      waveColor: '#64748b',
+      progressColor: '#2563eb',
+      cursorColor: '#ca8a04',
       cursorWidth: 2,
       height: 180,
       barWidth: 2,
@@ -1430,14 +1454,34 @@ const SyncStudio = () => {
           secondaryLabelInterval: 1,
           style: {
             fontSize: '11px',
-            color: '#888'
+            color: '#64748b'
           }
         })
       ]
     });
 
-    // Load audio
-    wavesurferRef.current.load(audioUrl);
+    // Load audio (v7 may return a promise; ignore AbortError during teardown)
+    try {
+      const loadRet = wavesurferRef.current.load(audioUrl);
+      if (loadRet && typeof loadRet.catch === 'function') {
+        loadRet.catch((err) => {
+          const msg = String(err?.message || err || '');
+          const isAbort =
+            err?.name === 'AbortError' ||
+            /signal is aborted|aborted without reason|aborted/i.test(msg);
+          if (isAbort && waveSurferDestroyingRef.current) return;
+          if (isAbort) return;
+          console.error('[WaveSurfer] load() rejected:', err);
+          setIsReady(false);
+        });
+      }
+    } catch (err) {
+      const msg = String(err?.message || err || '');
+      if (!/abort/i.test(msg)) {
+        console.error('[WaveSurfer] load() threw:', err);
+        setIsReady(false);
+      }
+    }
 
     // Apply playback speed
     if (wavesurferRef.current.getMediaElement) {
@@ -1498,12 +1542,11 @@ const SyncStudio = () => {
     wavesurferRef.current.on('error', (error) => {
       const msg = String(error?.message || error || '');
       const isAbort =
-        error?.name === 'AbortError' || /signal is aborted/i.test(msg) || /aborted/i.test(msg);
+        error?.name === 'AbortError' ||
+        /signal is aborted|aborted without reason|aborted/i.test(msg);
 
-      // Expected when cleanup destroys the current instance while an async load is in-flight.
-      if (waveSurferDestroyingRef.current && isAbort) {
-        return;
-      }
+      // Destroy/teardown often aborts in-flight fetch/decode — not actionable.
+      if (isAbort) return;
 
       console.error('[WaveSurfer] Error:', error);
       setIsReady(false);
@@ -1792,7 +1835,9 @@ const SyncStudio = () => {
           console.warn('[SyncStudio] Error during WaveSurfer cleanup:', err?.message);
         }
         wavesurferRef.current = null;
-        waveSurferDestroyingRef.current = false;
+        queueMicrotask(() => {
+          waveSurferDestroyingRef.current = false;
+        });
       }
     };
   }, [audioUrl, handleRegionUpdate, handleRegionDrag, highlightElement]);
@@ -2032,6 +2077,13 @@ const SyncStudio = () => {
         setLoading(true);
         setError('');
 
+        const numericJobId = parseInt(String(jobId), 10);
+        if (!jobId || Number.isNaN(numericJobId)) {
+          setError('Invalid job ID in the URL.');
+          setLoading(false);
+          return;
+        }
+
         // Load voices
         const voicesData = await audioSyncService.getAvailableVoices();
         setVoices(voicesData);
@@ -2130,7 +2182,7 @@ const SyncStudio = () => {
           console.log('[SyncStudio] 🔍 readingOrder in payload:', syncStudioPayload?.readingOrder);
           
           if (syncStudioPayload?.audioUrl) {
-            setAudioUrl(audioSyncService.getJobAudioUrl(jobId));
+            setAudioUrl(audioSyncService.resolveAudioSyncStreamUrl(syncStudioPayload.audioUrl));
             setDuration(Number(syncStudioPayload.audioDuration) || 0);
             setAudioSource(syncStudioPayload.audioSource ?? null);
           }
@@ -2175,9 +2227,14 @@ const SyncStudio = () => {
             });
             setPerSectionAudioFiles(normalized);
             setPerSectionMode(true);
+            const curSectionAudio = normalized[currentSectionIndex];
+            if (curSectionAudio?.url) {
+              setAudioUrl(curSectionAudio.url);
+              setAudioSource(curSectionAudio.source || 'uploaded');
+            }
             console.log('[SyncStudio] Loaded per-section audio URLs:', normalized);
-          } else {
-            // Check individually which sections have audio (graceful background check)
+          } else if (!syncStudioPayload) {
+            // Legacy only: Sync Studio GET was not used — probe once per section (HEAD may 404; avoid when API already returned perSectionAudioUrls).
             const detected = {};
             await Promise.all(processedSections.map(async (_, idx) => {
               try {
@@ -2186,20 +2243,18 @@ const SyncStudio = () => {
                 if (resp.ok) {
                   detected[idx] = { url, fileName: `section_audio_${idx}`, source: 'uploaded' };
                 }
-              } catch (_) { }
+              } catch (_) { /* missing file or unsupported HEAD */ }
             }));
             if (Object.keys(detected).length > 0) {
               setPerSectionAudioFiles(detected);
               setPerSectionMode(true);
               console.log(`[SyncStudio] Auto-detected ${Object.keys(detected).length} per-section audio files`);
-              // Switch waveform to current section's audio, or clear if this section has none
               const currentSectionAudio = detected[currentSectionIndex];
               if (currentSectionAudio?.url) {
                 setAudioUrl(currentSectionAudio.url);
                 setAudioSource(currentSectionAudio.source || 'uploaded');
                 console.log(`[SyncStudio] Per-section mode: switched waveform to section ${currentSectionIndex} audio`);
               } else {
-                // Current section has no per-section audio — clear waveform
                 setAudioUrl(null);
                 setAudioSource(null);
                 setDuration(0);
@@ -2211,6 +2266,7 @@ const SyncStudio = () => {
               }
             }
           }
+          // When syncStudioPayload exists with empty perSectionAudioUrls, server already resolved files — no HEAD probes (avoids 404 noise).
           
           // Load per-page reading orders from backend
           if (syncStudioPayload?.readingOrderByPage && typeof syncStudioPayload.readingOrderByPage === 'object') {
@@ -2648,8 +2704,8 @@ const SyncStudio = () => {
         // Skip if status is SKIPPED or if timestamps are invalid
         if (data.status === 'SKIPPED') return false;
         if (!(data.start >= 0 && data.end > data.start)) return false;
-        // In per-section mode, only draw regions for the current section to avoid overlap
-        if (currentSectionElementIds !== null) {
+        // Only draw regions for blocks that exist in the current section's XHTML (avoids block_5_* on block_1_* page).
+        if (currentSectionElementIds.size > 0) {
           const id = data.id || key;
           return currentSectionElementIds.has(id);
         }
@@ -2691,8 +2747,7 @@ const SyncStudio = () => {
         .filter(([key, data]) => {
           if (data.status === 'SKIPPED') return false;
           if (!(data.start >= 0 && data.end > data.start)) return false;
-          // In per-section mode, only draw word regions for the current section
-          if (currentSectionElementIds !== null) {
+          if (currentSectionElementIds.size > 0) {
             const parentId = data.parentId || (key.includes('_w') ? key.replace(/_w\d+$/, '') : key);
             return currentSectionElementIds.has(parentId) || currentSectionElementIds.has(data.id || key);
           }
@@ -3094,7 +3149,7 @@ const SyncStudio = () => {
           try {
             const syncStudioData = await audioSyncService.getSyncStudio(parseInt(jobId));
             if (syncStudioData?.audioUrl && syncStudioData?.audioSource === 'uploaded') {
-              setAudioUrl(audioSyncService.getJobAudioUrl(jobId));
+              setAudioUrl(audioSyncService.resolveAudioSyncStreamUrl(syncStudioData.audioUrl));
               setAudioSource('uploaded');
               console.log('[Tap-to-Sync] Switched to uploaded audio');
             } else if (syncStudioData?.audioSource === 'tts') {
@@ -5308,41 +5363,6 @@ const SyncStudio = () => {
   };
 
   /**
-   * Download EPUB file
-   */
-  const handleDownloadEpub = async () => {
-    try {
-      setDownloading(true);
-      setError('');
-      setSuccess('');
-
-      const numericJobId = parseInt(jobId);
-      const downloadRes = await api.get(`/conversions/${numericJobId}/download`, { responseType: 'blob', timeout: 600000 });
-      const epubBlob = downloadRes.data;
-
-      const epubFileName = `converted_${numericJobId}.epub`;
-
-      const url = URL.createObjectURL(epubBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = epubFileName;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      setSuccess('Reflowable EPUB downloaded successfully!');
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError('Failed to download EPUB: ' + err.message);
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  /**
    * Format time display (guards against NaN/invalid values)
    * Displays as: "0:01.52" (MM:SS.ms format)
    */
@@ -5463,8 +5483,14 @@ const SyncStudio = () => {
       }
       setIsReady(false);
       if (wavesurferRef.current) {
-        wavesurferRef.current.destroy();
+        waveSurferDestroyingRef.current = true;
+        try {
+          wavesurferRef.current.destroy();
+        } catch (_) { /* noop */ }
         wavesurferRef.current = null;
+        queueMicrotask(() => {
+          waveSurferDestroyingRef.current = false;
+        });
       }
     }
   };
@@ -5617,12 +5643,21 @@ const SyncStudio = () => {
                 Saved successfully!
               </span>
               <button
-                onClick={handleDownloadEpub}
+                type="button"
+                onClick={() =>
+                  goToDownload({
+                    id: jobId,
+                    jobId,
+                    jobType: 'REFLOW',
+                    pdfDocumentId: pdfId,
+                    pdfId,
+                  })
+                }
                 className="btn-download"
-                disabled={downloading}
+                title="Open Download EPUB for this job"
               >
                 <Download size={18} />
-                {downloading ? 'Downloading...' : 'Download EPUB'}
+                Download EPUB
               </button>
               <button
                 onClick={() => setSaveSuccess(false)}
@@ -5637,7 +5672,7 @@ const SyncStudio = () => {
               {loading ? 'Saving...' : (
                 <>
                   <Save size={18} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                  Save & Export
+                  Save Sync Studio
                 </>
               )}
             </button>
@@ -5650,11 +5685,11 @@ const SyncStudio = () => {
       {saveSuccess && !error && !success && (
         <div className="success-banner">
           <Check size={18} />
-          <span>Sync data saved successfully! EPUB has been regenerated with your settings. Click "Download EPUB" in the header to get your file.</span>
+          <span>Sync data saved successfully! EPUB has been regenerated with your settings. Use the Download EPUB button in the header to open the download page for this job.</span>
         </div>
       )}
 
-      <div className="studio-layout" ref={resizeContainerRef}>
+      <div className="sync-studio-panels" ref={resizeContainerRef}>
         {/* Left Panel: XHTML Viewer */}
         <aside
           className="viewer-panel"
@@ -5867,7 +5902,7 @@ const SyncStudio = () => {
               </span>
               {perSectionMode && (
                 <span
-                  style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', background: '#1a2e3b', color: '#5ab4f7', border: '1px solid #2a5278', marginLeft: '4px' }}
+                  style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '0.78rem', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', marginLeft: '4px' }}
                   title="Per-section audio mode: each EPUB section uses its own audio file"
                 >
                   Per-section {perSectionAudioFiles[currentSectionIndex] ? `(${perSectionAudioFiles[currentSectionIndex].source === 'tts' ? 'TTS' : 'Upload'})` : '(no audio)'}

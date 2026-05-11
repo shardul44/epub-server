@@ -61,7 +61,8 @@ api.interceptors.response.use(
       console.warn('Forbidden (403):', msg);
       window.dispatchEvent(new CustomEvent('app-forbidden', { detail: { message: msg } }));
     } else if (error.response?.status === 404) {
-      console.error('API endpoint not found:', error.config?.url);
+      // 404s are often expected (e.g. deleted jobs, missing resources) — log at warn level only
+      console.warn('API resource not found:', error.config?.url);
     } else if (error.response?.status >= 500) {
       console.error('Server error:', error.response?.status, error.response?.data);
     } else if (!error.response) {

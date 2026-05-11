@@ -3,12 +3,9 @@ import api from './api';
 export const pdfService = {
   /** @param {{ scope?: 'own' }} [params] - scope=own: only PDFs uploaded by the current user (dashboard) */
   getAllPdfs: (params = {}) => api.get('/pdfs', { params }).then(res => {
-    console.log('PDF API response:', res.data);
-    return res.data.data || [];
-  }).catch(error => {
-    console.error('Error fetching PDFs:', error);
-    // Return empty array instead of throwing
-    return [];
+    const data = res.data?.data;
+    console.log('[pdfService] GET /pdfs response — count:', Array.isArray(data) ? data.length : 'non-array', data);
+    return Array.isArray(data) ? data : [];
   }),
   
   getPdfById: (id) => api.get(`/pdfs/${id}`).then(res => res.data.data),

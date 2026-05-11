@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { pdfService } from '../services/pdfService';
+import { queryKeys } from '../lib/queryKeys';
 import usePdfs from '../hooks/usePdfs';
 import ConfirmModal from '../components/Loadingmodal';
 import {
@@ -173,6 +175,7 @@ const EmptyState = ({ filtered }) => (
 ───────────────────────────────────────────── */
 const PdfList = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('grid');
@@ -186,12 +189,17 @@ const PdfList = () => {
   const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null, loading: false });
 
   // ── Single source of truth for PDFs — no duplicate API calls ──
-  const { pdfs, loading, error: fetchError, refetch: loadPdfs } = usePdfs();
+  const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf } = usePdfs();
 
   const highlightIdRaw = searchParams.get('highlight');
   const highlightId = highlightIdRaw != null && highlightIdRaw !== '' ? parseInt(highlightIdRaw, 10) : null;
   const highlightName = searchParams.get('name') || '';
   const rowRefs = useRef({});
+
+  // NOTE: No manual refetch on ?highlight — usePdfsQuery has staleTime:0 which
+  // guarantees a fresh GET /pdfs on every mount. A second loadPdfs() call here
+  // would race against the automatic mount fetch and could overwrite fresh data
+  // with a stale response.
 
   // Merge fetch error into local error state for display
   useEffect(() => {
@@ -228,20 +236,35 @@ const PdfList = () => {
   const confirmDelete = async () => {
     const { pdfId } = deleteModalRef.current;
     if (!pdfId) return;
+
     setDeleteModal((prev) => ({ ...prev, loading: true }));
     try {
       setError('');
+
+      console.log('[PdfList] DELETE /api/pdfs/' + pdfId);
       await pdfService.deletePdf(pdfId);
-      // Success — close modal then refresh
+      console.log('[PdfList] API delete success — pdfId:', pdfId);
+
+      // Close modal first
       setDeleteModal({ open: false, pdfId: null, loading: false });
-      loadPdfs();
+
+      // Optimistically remove from cache → card disappears instantly.
+      // removePdf also queues a delayed background refetch to confirm.
+      removePdf(pdfId);
+
+      // Purge the thumbnail from localStorage so it doesn't reappear
+      // if the same PDF ID is reused in the future.
+      try { localStorage.removeItem(`pdf-thumb-card-${pdfId}`); } catch (_) { /* ignore */ }
+
+      console.log('[PdfList] state updated — card removed, component re-rendered');
     } catch (err) {
-      // deletePdf already re-throws as a plain Error with .message set
       const msg = err.message || 'Failed to delete PDF.';
+      console.error('[PdfList] delete failed:', msg);
       setDeleteModal({ open: false, pdfId: null, loading: false });
       setError(msg);
       setTimeout(() => setError(''), 6000);
-      loadPdfs(); // still refresh so list stays in sync
+      // Refetch to restore correct server state on error
+      loadPdfs();
     }
   };
 
@@ -368,6 +391,12 @@ const PdfList = () => {
                 onHifi={handleHifi}
                 onDelete={handleDelete}
                 onPreview={handlePreview}
+                onFileNotFound={() => {
+                  // File is gone from disk — silently remove the orphaned card
+                  // without a confirm modal (there's nothing to delete on disk).
+                  try { localStorage.removeItem(`pdf-thumb-card-${pdf.id}`); } catch (_) { /* ignore */ }
+                  removePdf(pdf.id);
+                }}
               />
             );
           })}
@@ -546,6 +575,33 @@ const PdfList = () => {
                     const data = await kitabooService.startHighFidelity(targetPdf.id, opts);
                     const id = data?.jobId || data?.data?.jobId;
                     if (id) {
+                      // Optimistically insert the new FXL job into the shared
+                      // conversions cache so the card appears instantly on
+                      // /conversions without waiting for the next poll cycle.
+                      queryClient.setQueryData(queryKeys.conversions.list(), (prev = []) => {
+                        const optimisticJob = {
+                          id,
+                          jobId: id,
+                          jobType: 'FXL',
+                          status: 'PENDING',
+                          pdfDocumentId: targetPdf.id,
+                          pdfId: targetPdf.id,
+                          filename: targetPdf.originalFileName || targetPdf.name || '',
+                          createdAt: new Date().toISOString(),
+                          updatedAt: new Date().toISOString(),
+                          progress: 0,
+                        };
+                        // Avoid duplicates if the cache already has this job
+                        const filtered = Array.isArray(prev)
+                          ? prev.filter((j) => (j.id ?? j.jobId) !== id)
+                          : [];
+                        return [optimisticJob, ...filtered];
+                      });
+
+                      // Invalidate so the next background fetch replaces the
+                      // optimistic entry with real server data.
+                      queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
+
                       setHifiModalPdf(null);
                       navigate('/conversions');
                     } else {

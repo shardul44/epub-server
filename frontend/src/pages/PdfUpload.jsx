@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAppDispatch from '../hooks/useAppDispatch';
 import useAppSelector from '../hooks/useAppSelector';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../lib/queryKeys';
 import { UploadLoadingModal } from '../components/Loadingmodal';
 import {
   uploadPdf as uploadPdfThunk,
@@ -12,7 +14,9 @@ import {
   setUploadProgress,
   resetUpload,
 } from '../features/epub/epubSlice';
-import { fetchPdfs } from '../features/pdfs/pdfsSlice';
+import { setWorkflow } from '../features/conversionWorkflow/conversionWorkflowSlice';
+import { conversionService } from '../services/conversionService';
+import { kitabooService } from '../services/kitabooService';
 import {
   Upload,
   FileText,
@@ -77,6 +81,7 @@ const PdfUpload = () => {
   const fileInputRef                = useRef(null);
   const navigate                    = useNavigate();
   const dispatch                    = useAppDispatch();
+  const queryClient                 = useQueryClient();
   const tickerRef                   = useRef(null);
 
   // Redux upload state
@@ -95,36 +100,96 @@ const PdfUpload = () => {
     uploadStatus === 'failed'    ? 'error'   :
     'uploading';
 
-  // Navigate after successful upload — refresh PDF list first (Redux cache skips refetch otherwise).
+  // After successful upload: start conversion and navigate to the correct editor.
   useEffect(() => {
     if (uploadStatus !== 'succeeded' || !lastDoc) return undefined;
 
-    let cancelled = false;
-    (async () => {
-      try {
-        await dispatch(fetchPdfs({ force: true })).unwrap();
-      } catch {
-        // Best-effort; PdfList can still refetch on ?highlight=
-      }
-      if (cancelled) return;
-      await new Promise((r) => setTimeout(r, 600));
-      if (cancelled) return;
-      dispatch(resetUpload());
-      const newId = lastDoc?.id;
-      const name = lastDoc?.originalFileName || file?.name || '';
-      if (newId != null) {
-        const q = new URLSearchParams({ highlight: String(newId) });
-        if (name) q.set('name', name.slice(0, 200));
-        navigate(`/pdfs?${q.toString()}`);
-      } else {
-        navigate('/pdfs');
-      }
-    })();
+    // Capture values immediately — resetUpload() will clear lastDoc
+    const newPdf     = lastDoc;
+    const newId      = newPdf?.id;
+    const isFxl      = layoutType === 'FIXED_LAYOUT';
+    const convType   = isFxl ? 'FXL' : 'REFLOW';
 
-    return () => {
-      cancelled = true;
-    };
-  }, [uploadStatus, lastDoc, navigate, dispatch, file?.name]);
+    console.log('[PdfUpload] Upload success — pdfId:', newId, 'layoutType:', layoutType);
+
+    // Seed the PDF cache so PdfList shows it immediately
+    queryClient.setQueryData(queryKeys.pdfs.list(), (prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      if (list.some((p) => p.id === newPdf.id)) return list;
+      return [newPdf, ...list];
+    });
+
+    // Start conversion and navigate to the correct editor
+    const timer = setTimeout(async () => {
+      try {
+        let jobId = null;
+
+        if (isFxl) {
+          // FXL: start High-Fidelity conversion
+          const data = await kitabooService.startHighFidelity(newId, { zoneLevel: 'word' });
+          jobId = data?.jobId ?? data?.data?.jobId ?? data?.id;
+        } else {
+          // Reflow: start standard conversion
+          const data = await conversionService.startConversion(newId);
+          jobId = data?.jobId ?? data?.id ?? data?.conversionJobId;
+        }
+
+        console.log('[PdfUpload] Conversion started — jobId:', jobId);
+
+        // Invalidate conversions cache so the new job appears immediately
+        queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
+
+        if (jobId) {
+          // Store workflow state as single source of truth
+          dispatch(setWorkflow({
+            pdfId:          newId,
+            jobId,
+            conversionType: convType,
+            layoutType,
+          }));
+
+          // Optimistically insert the new job into the conversions cache
+          queryClient.setQueryData(queryKeys.conversions.list(), (prev = []) => {
+            const optimistic = {
+              id:            jobId,
+              jobId,
+              jobType:       convType,
+              status:        'PENDING',
+              pdfDocumentId: newId,
+              pdfId:         newId,
+              pdfFilename:   newPdf.originalFileName || '',
+              layoutType,
+              createdAt:     new Date().toISOString(),
+              updatedAt:     new Date().toISOString(),
+              progressPercentage: 0,
+            };
+            const existing = Array.isArray(prev) ? prev.filter(j => (j.id ?? j.jobId) !== jobId) : [];
+            return [optimistic, ...existing];
+          });
+
+          dispatch(resetUpload());
+
+          // Navigate to the correct editor
+          const editorRoute = isFxl
+            ? `/conversions/fxl-editor/${jobId}`
+            : `/conversions/image-editor/${jobId}`;
+          navigate(editorRoute);
+        } else {
+          // No jobId returned — fall back to conversions list
+          dispatch(resetUpload());
+          navigate('/conversions');
+        }
+      } catch (err) {
+        console.error('[PdfUpload] Failed to start conversion:', err);
+        // Conversion start failed — go to conversions page so user can retry
+        dispatch(resetUpload());
+        navigate('/conversions');
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadStatus, lastDoc]);
 
   /* ── file helpers ── */
   const validateAndSet = (f) => {
@@ -182,7 +247,16 @@ const PdfUpload = () => {
     }, 300);
 
     try {
-      await dispatch(uploadPdfThunk({ file, layoutType })).unwrap();
+      const result = await dispatch(uploadPdfThunk({ file, layoutType })).unwrap();
+      // Kick off thumbnail generation in the background so it's ready when the user
+      // navigates to the PDF list. Fire-and-forget — don't block the upload flow.
+      if (result?.id) {
+        const token = localStorage.getItem('token');
+        const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+        fetch(`${base}/pdfs/${result.id}/thumbnail`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }).catch(() => {/* ignore — thumbnail will be generated on first view */});
+      }
     } catch {
       // error is already in Redux state via uploadError
     } finally {

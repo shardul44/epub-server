@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { conversionService } from '../../services/conversionService';
 import useAppDispatch from '../../hooks/useAppDispatch';
@@ -152,7 +152,6 @@ const ThroughputChart = ({ data, today }) => {
 
 const OrgDashboard = () => {
   const { user } = useAuth();
-  const navigate = useNavigate(); // eslint-disable-line no-unused-vars
   const dispatch = useAppDispatch();
 
   const {

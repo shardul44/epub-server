@@ -1,10 +1,10 @@
 /**
- * Typed dispatch hook — use this everywhere instead of plain useDispatch.
- * Gives you full type inference for async thunks.
+ * Legacy entry point — re-exports the typed dispatch from store/hooks.
+ * Existing imports from `hooks/useAppDispatch` continue to work.
+ * New code should prefer:
+ *   import { useAppDispatch } from '@/store/hooks';
  */
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '../store/hooks';
 
-/** @returns {import('@reduxjs/toolkit').ThunkDispatch} */
-const useAppDispatch = () => useDispatch();
-
+export { useAppDispatch };
 export default useAppDispatch;

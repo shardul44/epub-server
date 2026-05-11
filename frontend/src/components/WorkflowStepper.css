@@ -1,0 +1,192 @@
+/**
+ * WorkflowStepper — self-contained layout/styles (imported by WorkflowStepper.jsx).
+ * Avoids pages accidentally rendering an unstyled stepper when they omit page CSS.
+ */
+
+.wf-stepper {
+  --wf-blue: #2563eb;
+  --wf-blue-lt: #eff6ff;
+  --wf-green: #22c55e;
+  --wf-green-lt: #f0fdf4;
+  --wf-border: #e5e7eb;
+  --wf-bg: #ffffff;
+  --wf-text: #111827;
+  --wf-muted: #6b7280;
+
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  background: var(--wf-bg);
+  border-bottom: 1px solid var(--wf-border);
+  overflow: hidden;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.wf-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 13px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-right: 1px solid var(--wf-border);
+  border-bottom: 2px solid transparent;
+  margin: 0;
+  font: inherit;
+  transition: background 0.15s;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.wf-step:last-of-type {
+  border-right: none;
+}
+
+.wf-step:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.wf-step--active {
+  background: var(--wf-blue-lt);
+  border-bottom-color: var(--wf-blue);
+}
+
+.wf-step--done {
+  background: var(--wf-green-lt);
+}
+
+.wf-step--locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wf-step-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #e5e7eb;
+  color: var(--wf-muted);
+  transition: background 0.15s, color 0.15s;
+}
+
+.wf-step--active .wf-step-circle {
+  background: var(--wf-blue);
+  color: #fff;
+}
+
+.wf-step--done .wf-step-circle {
+  background: var(--wf-green);
+  color: #fff;
+}
+
+.wf-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.wf-step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wf-text);
+  line-height: 1.25;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wf-step--active .wf-step-label {
+  color: var(--wf-blue);
+}
+
+.wf-step--done .wf-step-label {
+  color: #15803d;
+}
+
+.wf-step-sub {
+  font-size: 11px;
+  color: var(--wf-muted);
+  line-height: 1.3;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wf-step-arrow {
+  color: #d1d5db;
+  flex-shrink: 0;
+}
+
+.wf-job-chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  margin-right: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--wf-blue-lt);
+  color: var(--wf-blue);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #bfdbfe;
+  white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+  .wf-stepper {
+    flex-wrap: wrap;
+  }
+
+  .wf-step {
+    flex: 1 1 45%;
+    border-bottom: 1px solid var(--wf-border);
+  }
+
+  .wf-job-chip {
+    margin: 8px 12px 8px auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .wf-stepper {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .wf-step {
+    flex: none;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--wf-border);
+  }
+
+  .wf-step--active {
+    border-bottom: 2px solid var(--wf-blue);
+  }
+
+  .wf-step-arrow {
+    display: none;
+  }
+
+  .wf-job-chip {
+    margin: 0 12px 10px auto;
+  }
+}

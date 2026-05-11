@@ -8,24 +8,11 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import fse from 'fs-extra';
+import { getPdfjsLib, buildPdfDocumentOptions } from '../utils/pdfjsHelper.js';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-/**
- * Get pdfjs-dist library configured for Node.js
- */
-async function getPdfjsLib() {
-  // Import pdfjs-dist legacy build (works better in Node.js)
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
-
-  // For Node.js, we don't need to set workerSrc - it will work without it
-  // The worker is only needed for browser environments
-  // Just return the library as-is
-
-  return pdfjsLib;
-}
 
 /**
  * pdf-poppler has been removed from this project due to Linux compatibility issues.
@@ -51,12 +38,7 @@ export class PdfExtractionService {
       const dataBuffer = await fs.readFile(pdfFilePath);
       // Convert Node.js Buffer to Uint8Array (required by pdfjs-dist)
       const uint8Array = new Uint8Array(dataBuffer);
-      const loadingTask = pdfjsLib.getDocument({
-        data: uint8Array,
-        verbosity: 0,
-        // Suppress font warnings
-        standardFontDataUrl: undefined
-      });
+      const loadingTask = pdfjsLib.getDocument(buildPdfDocumentOptions(uint8Array));
 
       const pdfDoc = await loadingTask.promise;
 
@@ -179,7 +161,8 @@ export class PdfExtractionService {
   }
 
   /**
-   * execute Python script for high-fidelity PDF processing
+   * execute Python script for high-fidelity PDF processing.
+   * Parses structured JSON errors from stderr for better diagnostics.
    */
   static async runPythonProcessor(args) {
     const pythonScript = path.resolve(__dirname, '../../scripts/pdf_processor.py');
@@ -199,34 +182,84 @@ export class PdfExtractionService {
     const cmd = `"${pythonCmd}" "${pythonScript}" ${args.join(' ')}`;
     console.log(`[PdfExtractionService] Running High-Fidelity processor: ${cmd}`);
 
+    const _parseStructuredError = (stderr) => {
+      // Python script may emit a JSON error object on stderr
+      if (!stderr) return null;
+      const lines = stderr.trim().split('\n');
+      for (const line of lines) {
+        try {
+          const parsed = JSON.parse(line.trim());
+          if (parsed && parsed.error) return parsed.error;
+        } catch (_) { /* not JSON */ }
+      }
+      return null;
+    };
+
+    const _buildError = (rawError, stderr) => {
+      const structured = _parseStructuredError(stderr);
+      if (structured) {
+        const msg = structured.message || rawError.message;
+        const code = structured.code || 'PYTHON_ERROR';
+        const err = new Error(`[${code}] ${msg}`);
+        err.code = code;
+        err.pythonDetails = structured.details || null;
+        return err;
+      }
+      // Check for common missing-module pattern
+      const missingModule = (stderr || '').match(/ModuleNotFoundError: No module named '([^']+)'/);
+      if (missingModule) {
+        const moduleName = missingModule[1];
+        const packageMap = { cv2: 'opencv-python-headless', numpy: 'numpy', fitz: 'PyMuPDF', PIL: 'Pillow' };
+        const pkg = packageMap[moduleName] || moduleName;
+        const err = new Error(
+          `[MISSING_DEPENDENCY] Python module '${moduleName}' is not installed. ` +
+          `Fix: activate your venv and run: pip install ${pkg}`
+        );
+        err.code = 'MISSING_DEPENDENCY';
+        err.missingModule = moduleName;
+        err.installCommand = `pip install ${pkg}`;
+        return err;
+      }
+      return rawError;
+    };
+
     try {
       const { stdout, stderr } = await execAsync(cmd);
-      if (stderr) console.warn(`[PdfExtractionService] Python stderr: ${stderr}`);
+      if (stderr) {
+        // Warnings from Python (non-fatal) — log but don't throw
+        console.warn(`[PdfExtractionService] Python stderr: ${stderr}`);
+      }
       return stdout;
     } catch (error) {
+      const stderr = error.stderr || '';
+
       // Linux images sometimes only expose "python" and not "python3"
       if (!isWindows && !hasVenvPython && pythonCmd === 'python3') {
         try {
           pythonCmd = 'python';
           const retryCmd = `"${pythonCmd}" "${pythonScript}" ${args.join(' ')}`;
-          console.log(`[PdfExtractionService] Retrying High-Fidelity processor with python: ${retryCmd}`);
-          const { stdout, stderr } = await execAsync(retryCmd);
-          if (stderr) console.warn(`[PdfExtractionService] Python stderr: ${stderr}`);
+          console.log(`[PdfExtractionService] Retrying with python: ${retryCmd}`);
+          const { stdout, stderr: retryStderr } = await execAsync(retryCmd);
+          if (retryStderr) console.warn(`[PdfExtractionService] Python stderr: ${retryStderr}`);
           return stdout;
         } catch (retryError) {
-          console.error(`[PdfExtractionService] Python execution retry failed: ${retryError.message}`);
-          throw retryError;
+          const enriched = _buildError(retryError, retryError.stderr || '');
+          console.error(`[PdfExtractionService] Python execution retry failed: ${enriched.message}`);
+          throw enriched;
         }
       }
-      console.error(`[PdfExtractionService] Python execution failed: ${error.message}`);
-      throw error;
+
+      const enriched = _buildError(error, stderr);
+      console.error(`[PdfExtractionService] Python execution failed: ${enriched.message}`);
+      throw enriched;
     }
   }
 
   /**
    * Phase 1 (New): Render pages using PyMuPDF (faster and better quality than Poppler/Puppeteer)
+   * Default DPI reduced to 150 for performance. Use 300 only for pixel-perfect output.
    */
-  static async renderPagesHighFidelity(pdfFilePath, outputDir, dpi = 300) {
+  static async renderPagesHighFidelity(pdfFilePath, outputDir, dpi = 150) {
     try {
       await fs.mkdir(outputDir, { recursive: true });
       await this.runPythonProcessor([
@@ -336,7 +369,7 @@ export class PdfExtractionService {
       const pdfjsLib = await getPdfjsLib();
       const dataBuffer = await fs.readFile(pdfFilePath);
       const uint8Array = new Uint8Array(dataBuffer);
-      const pdfDoc = await pdfjsLib.getDocument({ data: uint8Array, verbosity: 0, standardFontDataUrl: undefined }).promise;
+      const pdfDoc = await pdfjsLib.getDocument(buildPdfDocumentOptions(uint8Array)).promise;
       const totalPages = pdfDoc.numPages;
       if (!totalPages || totalPages === 0) throw new Error('PDF has no pages');
 
@@ -718,22 +751,15 @@ export class PdfExtractionService {
       // Get page dimensions using pdfjs-dist (just for dimensions, not rendering)
       const pdfjsLib = await getPdfjsLib();
       const uint8Array = new Uint8Array(pdfData);
-      let pdfDoc = await pdfjsLib.getDocument({
-        data: uint8Array,
-        verbosity: 0,
-        // Suppress font warnings - not needed for our use case
-        standardFontDataUrl: undefined,
-        // Additional options to help with problematic PDFs
-        stopAtErrors: false, // Continue processing even if there are errors
-        maxImageSize: 1024 * 1024 * 10, // 10MB max image size
-        isEvalSupported: false, // Disable eval for security
-        useSystemFonts: false, // Don't use system fonts
-        disableFontFace: false, // Allow font face loading
-        // Try to handle corrupted or non-standard PDFs
-        disableAutoFetch: false, // Allow auto-fetching of resources
-        disableStream: false, // Allow streaming
-        disableRange: false // Allow range requests
-      }).promise;
+      let pdfDoc = await pdfjsLib.getDocument(buildPdfDocumentOptions(uint8Array, {
+        stopAtErrors: false,
+        maxImageSize: 1024 * 1024 * 10,
+        isEvalSupported: false,
+        disableFontFace: false,
+        disableAutoFetch: false,
+        disableStream: false,
+        disableRange: false,
+      })).promise;
 
       let maxWidth = 0;
       let maxHeight = 0;
@@ -806,8 +832,8 @@ export class PdfExtractionService {
             // Handle page 1 (index 0) which might fail
             let pdfPage = null;
             let viewport = null;
-            // pdfjs getPage expects 1-based page numbers
-            let actualPageIndex = pageNum; // 1-based index for pdfjs
+            // pdfjs getPage uses 0-based page index
+            let actualPageIndex = pageNum - 1;
             let retryCount = 0;
             const maxRetries = 3;
 
@@ -834,19 +860,15 @@ export class PdfExtractionService {
                       // Re-read PDF and create new document instance
                       const freshPdfData = await fs.readFile(pdfFilePath);
                       const freshUint8Array = new Uint8Array(freshPdfData);
-                      const freshPdfDoc = await pdfjsLib.getDocument({
-                        data: freshUint8Array,
-                        verbosity: 0,
-                        standardFontDataUrl: undefined,
+                      const freshPdfDoc = await pdfjsLib.getDocument(buildPdfDocumentOptions(freshUint8Array, {
                         stopAtErrors: false,
                         maxImageSize: 1024 * 1024 * 10,
                         isEvalSupported: false,
-                        useSystemFonts: false,
                         disableFontFace: false,
                         disableAutoFetch: false,
                         disableStream: false,
-                        disableRange: false
-                      }).promise;
+                        disableRange: false,
+                      })).promise;
                       pdfPage = await freshPdfDoc.getPage(actualPageIndex);
                       viewport = pdfPage.getViewport({ scale: 1.0 });
                       // Update pdfDoc reference for future use
@@ -1030,8 +1052,7 @@ export class PdfExtractionService {
     (async function() {
         const pdfData = atob('${pdfBase64}');
                 const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-                const pageIndex = ${pageNum}; // pdfjs getPage is 1-based
-                const page = await pdf.getPage(pageIndex);
+                const page = await pdf.getPage(${pageNum - 1});
         
         const viewport = page.getViewport({ scale: ${scale} });
         const canvas = document.getElementById('pdf-canvas');

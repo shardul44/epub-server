@@ -1,0 +1,15 @@
+.studio-layout {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.studio-layout__main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}

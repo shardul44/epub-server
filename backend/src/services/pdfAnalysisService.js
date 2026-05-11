@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import pdfParse from 'pdf-parse';
-import { getPdfjsLib } from '../utils/pdfjsHelper.js';
+import { getPdfjsLib, buildPdfDocumentOptions } from '../utils/pdfjsHelper.js';
 
 /**
  * PDF Analysis Service
@@ -24,7 +24,7 @@ export class PdfAnalysisService {
       
       // Method 2: Use pdfjs-dist to check for text operators
       const pdfjsLib = await getPdfjsLib();
-      const pdfDoc = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      const pdfDoc = await pdfjsLib.getDocument(buildPdfDocumentOptions(pdfData)).promise;
       
       let textOperatorCount = 0;
       let imageOperatorCount = 0;

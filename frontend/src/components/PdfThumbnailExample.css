@@ -1,0 +1,240 @@
+/* ═══════════════════════════════════════════════════════════════
+   PdfThumbnailExample — demo component styles
+═══════════════════════════════════════════════════════════════ */
+
+.pdf-thumb-example {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Header ── */
+.pte-header {
+  margin-bottom: 24px;
+}
+
+.pte-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 6px;
+}
+
+.pte-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* ── Upload zone ── */
+.pte-upload-zone {
+  position: relative;
+  border: 2px dashed #d0d0d0;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  background: #fafafa;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 32px;
+  cursor: pointer;
+}
+
+.pte-upload-zone:hover,
+.pte-upload-zone--active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.pte-upload-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.pte-upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.pte-upload-icon {
+  color: #2563eb;
+  opacity: 0.8;
+}
+
+.pte-upload-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.pte-upload-hint {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ── Grid ── */
+.pte-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+/* ── Card ── */
+.pte-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.pte-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.pte-card-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.pte-card:hover .pte-card-remove {
+  opacity: 1;
+}
+
+.pte-card-thumb {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  overflow: hidden;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pte-card-thumb .pdf-thumb {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0;
+  border: none;
+}
+
+.pte-card-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.pte-card-info {
+  padding: 10px 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.pte-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pte-card-meta {
+  font-size: 11px;
+  color: #888;
+  margin: 0;
+}
+
+/* ── Empty state ── */
+.pte-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: #9ca3af;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.pte-empty-icon {
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+
+.pte-empty-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0;
+}
+
+.pte-empty-hint {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Features list ── */
+.pte-features {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px 24px;
+}
+
+.pte-features-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pte-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 6px;
+}
+
+.pte-features-list li {
+  font-size: 13px;
+  color: #4b5563;
+  padding: 2px 0;
+}

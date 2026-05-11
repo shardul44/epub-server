@@ -11,6 +11,8 @@
 *.7z
 
 # OS / editor
+# Windows: "nul" is reserved; Git cannot index frontend/nul.css if recreated by mistake
+frontend/nul.css
 .DS_Store
 Thumbs.db
 *.swp
@@ -26,3 +28,16 @@ npm-debug.log*
 .env
 .env.local
 .env.*.local
+backend/.env
+
+
+
+
+# frontend build
+frontend/dist/
+# backend outputs
+backend/epub_output/
+backend/html_intermediate/
+backend/temp/
+backend/uploads/
+

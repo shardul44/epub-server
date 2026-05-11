@@ -1,11 +1,12 @@
 import React from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ExternalLink, BookOpen } from 'lucide-react';
 import SyncStudioEpubReader from '../components/SyncStudioEpubReader';
 import './EpubReaderPage.css';
 
 /**
  * Full-page EPUB player (epub.js). Opened from Sync Studio or FXL Sync Studio.
+ * Renders inside the main Layout (with sidebar) — header matches FXL Sync Studio style.
  */
 export default function EpubReaderPage() {
   const { jobId } = useParams();
@@ -19,28 +20,45 @@ export default function EpubReaderPage() {
   const anchorId = searchParams.get('anchorId') || undefined;
 
   const backPath = source === 'kitaboo' ? `/fxl-sync-studio/${jobId}` : `/sync-studio/${jobId}`;
+  const backLabel = source === 'kitaboo' ? 'Back to Zoning Studio' : 'Back to Sync Studio';
 
   const openInNewTab = () => {
     window.open(window.location.href, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <div className="epub-reader-page">
-      <header className="epub-reader-page-header">
-        <button type="button" className="epub-reader-back" onClick={() => navigate(backPath)}>
-          <ChevronLeft size={20} />
-          {source === 'kitaboo' ? 'Back to FXL Sync Studio' : 'Back to Sync Studio'}
-        </button>
-        <div className="epub-reader-page-title">
-          <span className="epub-reader-badge">{source === 'kitaboo' ? 'FXL' : 'Reflowable'}</span>
-          <span className="epub-reader-job">Job {jobId}</span>
+    <div className="erp-root">
+      {/* ── Header — matches FXL Sync Studio style ── */}
+      <header className="erp-header">
+        <div className="erp-header-left">
+          <button type="button" className="erp-btn-back" onClick={() => navigate(backPath)}>
+            <ChevronLeft size={18} />
+            {backLabel}
+          </button>
+          <h1 className="erp-title">
+            <BookOpen size={18} className="erp-title-icon" />
+            EPUB Reader
+          </h1>
+          <span className="erp-job-badge">Job #{jobId}</span>
+          <span className={`erp-type-badge erp-type-badge--${source === 'kitaboo' ? 'fxl' : 'reflow'}`}>
+            {source === 'kitaboo' ? 'FXL' : 'Reflowable'}
+          </span>
         </div>
-        <button type="button" className="epub-reader-newtab" onClick={openInNewTab} title="Open this reader in a new browser tab">
-          <ExternalLink size={18} />
-          New tab
-        </button>
+        <div className="erp-header-right">
+          <button
+            type="button"
+            className="erp-btn-newtab"
+            onClick={openInNewTab}
+            title="Open this reader in a new browser tab"
+          >
+            <ExternalLink size={16} />
+            Open in new tab
+          </button>
+        </div>
       </header>
-      <main className="epub-reader-page-main">
+
+      {/* ── Main reader area ── */}
+      <div className="erp-body">
         <SyncStudioEpubReader
           jobId={jobId}
           spineHref={spine}
@@ -48,7 +66,7 @@ export default function EpubReaderPage() {
           epubSource={source}
           fixedLayout={fixedLayout}
         />
-      </main>
+      </div>
     </div>
   );
 }

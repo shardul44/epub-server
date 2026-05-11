@@ -33,6 +33,16 @@
   transition: margin-left var(--sb-transition, 0.18s ease);
 }
 
+/* When a studio page (kitaboo-studio, eiep-root, erp-root) is the direct child,
+   disable the outer scroll so the studio manages its own scroll areas */
+.main-content--org-admin:has(> .kitaboo-studio),
+.main-content--org-admin:has(> .eiep-root),
+.main-content--org-admin:has(> .erp-root),
+.main-content--org-admin:has(> .sync-studio),
+.main-content--org-admin:has(> .fxl-sync-studio) {
+  overflow: hidden;
+}
+
 /* collapsed sidebar = 64px */
 .layout--sb-collapsed .main-content--org-admin {
   margin-left: var(--sb-width-collapsed);
@@ -66,6 +76,27 @@
   width: 100% !important;
   min-height: 100vh;
   background-color: #0d1117;
+}
+
+/* FXL / studio full-screen layout — uses org-admin sizing but no outer sidebar */
+.layout-studio {
+  height: 100vh;
+  display: flex;
+  background: transparent;
+  overflow: hidden;
+}
+
+.main-content-studio {
+  flex: 1;
+  height: 100vh;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Navbar Styles - Top Bar */
@@ -263,6 +294,19 @@
 .main-content > * {
   width: 100%;
   max-width: 100%;
+}
+
+/* Default (non–org-admin) layout: job studios fill the content column under navbar */
+.main-content:has(> .sync-studio),
+.main-content:has(> .fxl-sync-studio),
+.main-content:has(> .kitaboo-studio),
+.main-content:has(> .eiep-root) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: calc(100vh - 70px);
+  overflow: hidden;
+  padding: 0;
 }
 
 /* Responsive Design */

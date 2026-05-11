@@ -1,3 +1,18 @@
+/**
+ * ErrorBoundary — global fallback UI for React render errors.
+ *
+ * Improvements over the previous version:
+ *   - Uses `import.meta.env.DEV` (Vite) instead of `process.env.NODE_ENV`
+ *     which is `undefined` in the browser bundle.
+ *   - Adds a non-destructive "Try again" button that resets the boundary
+ *     state without losing SPA history.
+ *   - Adds a "Go home" button that resets and navigates to "/".
+ *   - Auto-resets when the route pathname changes (via `resetKey` prop) so
+ *     a single render error doesn't permanently brick navigation.
+ *
+ * This is still a class component because that's the only way to expose
+ * `componentDidCatch` / `getDerivedStateFromError` in React 18.
+ */
 import React from 'react';
 
 class ErrorBoundary extends React.Component {
@@ -7,77 +22,124 @@ class ErrorBoundary extends React.Component {
   }
 
   static getDerivedStateFromError(error) {
-    // Update state so the next render will show the fallback UI
-    return { hasError: true };
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log the error details
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    this.setState({
-      error: error,
-      errorInfo: errorInfo
-    });
+    console.error('[ErrorBoundary] caught render error:', error, errorInfo);
+    this.setState({ error, errorInfo });
   }
+
+  componentDidUpdate(prevProps) {
+    // Auto-reset when the parent passes a new `resetKey` (e.g. pathname).
+    // Without this, a single render bug locks the entire app on a fallback
+    // screen until the user manually refreshes.
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.reset();
+    }
+  }
+
+  reset = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
+
+  goHome = () => {
+    this.reset();
+    if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
+  };
 
   render() {
-    if (this.state.hasError) {
-      // Render fallback UI
-      return (
-        <div style={{
-          padding: '20px',
-          margin: '20px',
-          border: '1px solid #ff6b6b',
-          borderRadius: '8px',
-          backgroundColor: '#fff5f5',
-          textAlign: 'center'
-        }}>
-          <h2 style={{ color: '#d63031', marginBottom: '16px' }}>
-            Something went wrong
-          </h2>
-          <p style={{ color: '#636e72', marginBottom: '16px' }}>
-            An unexpected error occurred. Please try refreshing the page.
-          </p>
+    if (!this.state.hasError) return this.props.children;
+
+    const isDev = !!import.meta.env?.DEV;
+
+    return (
+      <div
+        role="alert"
+        style={{
+          padding: 24,
+          margin: 24,
+          border: '1px solid #fecaca',
+          borderRadius: 12,
+          background: '#fff5f5',
+          maxWidth: 720,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif',
+        }}
+      >
+        <h2 style={{ color: '#b91c1c', marginTop: 0, marginBottom: 8 }}>
+          Something went wrong
+        </h2>
+        <p style={{ color: '#475569', marginTop: 0 }}>
+          An unexpected error occurred while rendering this page. You can try
+          again, go back to the dashboard, or refresh the browser.
+        </p>
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
           <button
-            onClick={() => window.location.reload()}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#0984e3',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '16px'
-            }}
+            type="button"
+            onClick={this.reset}
+            style={btnStyle('#2563eb')}
           >
-            Refresh Page
+            Try again
           </button>
-
-          {process.env.NODE_ENV === 'development' && (
-            <details style={{ marginTop: '20px', textAlign: 'left' }}>
-              <summary style={{ cursor: 'pointer', color: '#d63031' }}>
-                Error Details (Development Only)
-              </summary>
-              <pre style={{
-                backgroundColor: '#f8f9fa',
-                padding: '10px',
-                borderRadius: '4px',
-                overflow: 'auto',
-                fontSize: '12px',
-                marginTop: '10px'
-              }}>
-                {this.state.error && this.state.error.toString()}
-                <br />
-                {this.state.errorInfo && this.state.errorInfo.componentStack}
-              </pre>
-            </details>
-          )}
+          <button
+            type="button"
+            onClick={this.goHome}
+            style={btnStyle('#0f766e')}
+          >
+            Go to dashboard
+          </button>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            style={btnStyle('#475569')}
+          >
+            Refresh page
+          </button>
         </div>
-      );
-    }
 
-    return this.props.children;
+        {isDev && this.state.error && (
+          <details style={{ marginTop: 20, textAlign: 'left' }}>
+            <summary style={{ cursor: 'pointer', color: '#b91c1c' }}>
+              Error details (development only)
+            </summary>
+            <pre
+              style={{
+                background: '#f8fafc',
+                padding: 12,
+                borderRadius: 6,
+                overflow: 'auto',
+                fontSize: 12,
+                marginTop: 8,
+                color: '#0f172a',
+              }}
+            >
+              {String(this.state.error)}
+              {'\n'}
+              {this.state.errorInfo?.componentStack}
+            </pre>
+          </details>
+        )}
+      </div>
+    );
   }
+}
+
+function btnStyle(bg) {
+  return {
+    padding: '8px 16px',
+    background: bg,
+    color: '#fff',
+    border: 0,
+    borderRadius: 6,
+    cursor: 'pointer',
+    fontSize: 14,
+    fontWeight: 500,
+  };
 }
 
 export default ErrorBoundary;

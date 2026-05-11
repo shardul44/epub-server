@@ -3,10 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import * as fabric from 'fabric';
 import api, { API_BASE_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import OrgAdminSidebar from '../components/layout/OrgAdminSidebar';
+import { useWorkflowNavigation } from '../hooks/useWorkflowNavigation';
 import {
-  ArrowLeft,
-  BookOpen,
   LayoutGrid,
   Film,
   FolderOpen,
@@ -15,13 +13,20 @@ import {
   RefreshCw,
   FileText,
   LogOut,
+  ZoomOut,
+  ZoomIn,
+  Maximize2,
+  Eye,
 } from 'lucide-react';
 import './KitabooZoningStudio.css';
+import WorkflowStudioChrome from '../components/WorkflowStudioChrome';
 
 const KitabooZoningStudio = () => {
+  const READING_ORDER_LABEL_SIZE = 40;
   const { jobId: routeJobId } = useParams();
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
+  const { goToDownload } = useWorkflowNavigation();
   const isOrgAdmin = user?.role === 'org_admin';
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const canvasRef = useRef(null);
@@ -43,6 +48,7 @@ const KitabooZoningStudio = () => {
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
   const [loadError, setLoadError] = useState(null);
+  const [jobDeleted, setJobDeleted] = useState(false); // true when 404 confirms job no longer exists
   const [retryKey, setRetryKey] = useState(0);
   const [zonePropsVersion, setZonePropsVersion] = useState(0); // bump to force Zone Properties panel to re-render after edits
   const [exporting, setExporting] = useState(false);
@@ -59,6 +65,9 @@ const KitabooZoningStudio = () => {
   const [uploadingCleanPage, setUploadingCleanPage] = useState(false);
   const [polygonDrawingMode, setPolygonDrawingMode] = useState(false);
   const [polygonPoints, setPolygonPoints] = useState([]);
+  const [activeQuickTool, setActiveQuickTool] = useState(null);
+  const [zoomRatio, setZoomRatio] = useState(1); // 1 = fit-to-view (100%)
+  const [previewMode, setPreviewMode] = useState(false); // hide overlays when true
   const [useAbsoluteHtml, setUseAbsoluteHtml] = useState(false); // pdf2htmlEX-style text layer (no SVG)
   const [bodyFontFamily, setBodyFontFamily] = useState(''); // Optional override font for all FXL pages
   const polygonPreviewRef = useRef(null); // Fabric group showing points + lines while drawing
@@ -68,6 +77,8 @@ const KitabooZoningStudio = () => {
   const skipCanvasReinitUntil = useRef(0);
   const canvasInitScheduled = useRef(false);
   const canvasContainerRef = useRef(null); // scroll reset on page change
+  const fitScaleRef = useRef(1);
+  const zoomRatioRef = useRef(1);
 
   // Derive backend origin from API_BASE_URL (e.g., http://localhost:8081)
   const backendOrigin = API_BASE_URL.replace('/api', '');
@@ -100,12 +111,16 @@ const KitabooZoningStudio = () => {
           setLoading(false);
         }
       } catch (e) {
+        if (cancelled) return;
         if (e.response?.status === 404) {
           if (pollTimerRef.current) clearInterval(pollTimerRef.current);
           pollTimerRef.current = null;
-          setLoadError('Job not found');
+          setJobDeleted(true);
           setLoading(false);
+          // Auto-redirect after a short delay so the user sees the message
+          setTimeout(() => { if (!cancelled) navigate('/conversions'); }, 2500);
         }
+        // Other errors (network, 5xx): keep polling — transient failures shouldn't abort
       }
     };
 
@@ -113,11 +128,14 @@ const KitabooZoningStudio = () => {
       if (processingStarted.current || !routeJobId) return;
       processingStarted.current = true;
       setLoadError(null);
+      setJobDeleted(false);
       setProgressPercentage(0);
       setCurrentStep('Checking...');
 
       try {
         setLoading(true);
+
+        // Fast path: check if data is already ready (avoids a second round-trip)
         const readyRes = await api.get(`/kitaboo/ready/${routeJobId}`).catch(() => null);
         const readyData = readyRes?.data?.data ?? readyRes?.data;
         if (readyData?.ready && Array.isArray(readyData.pages) && readyData.pages.length > 0) {
@@ -129,31 +147,44 @@ const KitabooZoningStudio = () => {
           return;
         }
 
-        const jobRes = await api.get(`/kitaboo/job/${routeJobId}`).catch((e) => (e.response?.status === 404 ? null : Promise.reject(e)));
-        if (jobRes) {
-          const jobData = jobRes.data?.data ?? jobRes.data;
-          if (jobData.status === 'COMPLETED' && Array.isArray(jobData.pages) && jobData.pages.length > 0) {
-            setPages(jobData.pages);
-            setJobId(jobData.jobId);
-            const level = jobData.zoneLevel || jobData.extractionLevel;
-            if (level === 'word' || level === 'sentence') setSyncLevel(level);
+        // Fetch job status — treat 404 as "deleted", re-throw everything else
+        let jobRes;
+        try {
+          jobRes = await api.get(`/kitaboo/job/${routeJobId}`);
+        } catch (e) {
+          if (e.response?.status === 404) {
+            setJobDeleted(true);
             setLoading(false);
+            setTimeout(() => { if (!cancelled) navigate('/conversions'); }, 2500);
             return;
           }
-          if (jobData.status === 'IN_PROGRESS' || jobData.status === 'PENDING') {
-            setProgressPercentage(jobData.progressPercentage ?? 0);
-            setCurrentStep(jobData.currentStep ?? 'In progress...');
-            pollTimerRef.current = setInterval(pollJobStatus, 1500);
-            return;
-          }
-          if (jobData.status === 'FAILED') {
-            setLoadError(jobData.error || 'Conversion failed');
-            setLoading(false);
-            return;
-          }
+          throw e; // re-throw 5xx / network errors
         }
 
-        setLoadError('Job not found');
+        const jobData = jobRes.data?.data ?? jobRes.data;
+
+        if (jobData.status === 'COMPLETED' && Array.isArray(jobData.pages) && jobData.pages.length > 0) {
+          setPages(jobData.pages);
+          setJobId(jobData.jobId);
+          const level = jobData.zoneLevel || jobData.extractionLevel;
+          if (level === 'word' || level === 'sentence') setSyncLevel(level);
+          setLoading(false);
+          return;
+        }
+        if (jobData.status === 'IN_PROGRESS' || jobData.status === 'PENDING') {
+          setProgressPercentage(jobData.progressPercentage ?? 0);
+          setCurrentStep(jobData.currentStep ?? 'In progress...');
+          pollTimerRef.current = setInterval(pollJobStatus, 1500);
+          return;
+        }
+        if (jobData.status === 'FAILED') {
+          setLoadError(jobData.error || 'Conversion failed');
+          setLoading(false);
+          return;
+        }
+
+        // Unexpected state
+        setLoadError('Job is in an unexpected state. Please go back and try again.');
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -284,6 +315,75 @@ const KitabooZoningStudio = () => {
       setCurrentPage(prev => Math.max(0, prev - 1));
     }
   };
+
+  const handlePageSelect = (pageIndex) => {
+    if (pageIndex === currentPage) return;
+    saveCurrentPageToState();
+    setCurrentPage(pageIndex);
+  };
+
+  useEffect(() => {
+    zoomRatioRef.current = zoomRatio;
+  }, [zoomRatio]);
+
+  const applyCanvasScale = useCallback((nextZoomRatio) => {
+    if (!fabricCanvas) return;
+    const img = fabricCanvas.backgroundImage;
+    const scrollEl = canvasContainerRef.current;
+    if (!img || !scrollEl) return;
+    const clampedRatio = Math.max(0.25, Math.min(4, nextZoomRatio));
+    const effectiveScale = fitScaleRef.current * clampedRatio;
+    fabricCanvas.setZoom(effectiveScale);
+    fabricCanvas.setDimensions({
+      width: Math.round(img.width * effectiveScale),
+      height: Math.round(img.height * effectiveScale),
+    });
+    fabricCanvas.renderAll();
+    setZoomRatio(clampedRatio);
+  }, [fabricCanvas]);
+
+  const handleZoomIn = useCallback(() => {
+    applyCanvasScale(zoomRatioRef.current + 0.1);
+  }, [applyCanvasScale]);
+
+  const handleZoomOut = useCallback(() => {
+    applyCanvasScale(zoomRatioRef.current - 0.1);
+  }, [applyCanvasScale]);
+
+  const handleFitToView = useCallback(() => {
+    applyCanvasScale(1);
+  }, [applyCanvasScale]);
+
+  const handleTogglePreviewMode = useCallback(() => {
+    setPreviewMode((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    const groups = fabricCanvas.getObjects().filter(obj => obj.type === 'group');
+    groups.forEach((obj) => obj.set('visible', !previewMode));
+    if (previewMode) {
+      fabricCanvas.discardActiveObject();
+      setSelectedZone(null);
+      setSelectedObjects([]);
+    }
+    fabricCanvas.renderAll();
+  }, [fabricCanvas, previewMode]);
+
+  const focusZoneById = useCallback((zoneId) => {
+    if (!fabricCanvas || !zoneId) return;
+    const groups = fabricCanvas.getObjects().filter(obj => obj.type === 'group');
+    const target = groups.find((group) => {
+      const data = group.get('data') || group.data || {};
+      return data.id === zoneId;
+    });
+    if (!target) return;
+    fabricCanvas.discardActiveObject();
+    fabricCanvas.setActiveObject(target);
+    setSelectedZone(target);
+    setSelectedObjects([target]);
+    fabricCanvas.renderAll();
+  }, [fabricCanvas]);
 
   /** When 2+ zones are selected, show one combined highlight (one block); text positions stay as in PDF. */
   const updateMultiSelectHighlight = (canvas, sel) => {
@@ -424,11 +524,14 @@ const KitabooZoningStudio = () => {
             const padding = 48; // 24px each side
             const availW = scrollEl.clientWidth  - padding;
             const availH = scrollEl.clientHeight - padding;
-            const scale  = Math.min(availW / img.width, availH / img.height, 1);
-            canvas.setZoom(scale);
+            const fitScale = Math.min(availW / img.width, availH / img.height, 1);
+            fitScaleRef.current = fitScale;
+            const initialRatio = zoomRatioRef.current;
+            const effectiveScale = fitScale * initialRatio;
+            canvas.setZoom(effectiveScale);
             canvas.setDimensions({
-              width:  Math.round(img.width  * scale),
-              height: Math.round(img.height * scale),
+              width:  Math.round(img.width  * effectiveScale),
+              height: Math.round(img.height * effectiveScale),
             });
             canvas.renderAll();
           });
@@ -442,7 +545,7 @@ const KitabooZoningStudio = () => {
           const text = new fabric.IText(rOrder.toString(), {
             left: 5,
             top: 5,
-            fontSize: 16,
+            fontSize: READING_ORDER_LABEL_SIZE,
             fill: '#fff',
             backgroundColor: '#0078ff',
             selectable: false,
@@ -513,6 +616,7 @@ const KitabooZoningStudio = () => {
           const group = new fabric.Group([shape, text], {
             left: groupLeft,
             top: groupTop,
+            visible: !previewMode,
             id: zone.id,
             originX: 'left',
             originY: 'top',
@@ -627,7 +731,7 @@ const KitabooZoningStudio = () => {
     setZonePropsVersion(v => v + 1);
   };
 
-  const handleSave = async () => {
+  const savePageZones = async ({ showSuccessAlert = true } = {}) => {
     try {
       if (!fabricCanvas) return;
       setSaving(true);
@@ -715,13 +819,27 @@ const KitabooZoningStudio = () => {
         return newPages;
       });
 
-      alert('Page zones saved successfully!');
+      if (showSuccessAlert) {
+        alert('Page zones saved successfully!');
+      }
+      return true;
     } catch (err) {
       console.error('Failed to save zones:', err);
       alert('Error saving zones: ' + (err.response?.data?.message || err.message));
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    await savePageZones({ showSuccessAlert: true });
+  };
+
+  const handleSaveAndGoToSyncStudio = async () => {
+    const saved = await savePageZones({ showSuccessAlert: false });
+    if (!saved) return;
+    navigate(`/fxl-sync-studio/${jobId}`);
   };
 
   const publishEpub = async () => {
@@ -731,37 +849,15 @@ const KitabooZoningStudio = () => {
         ? { languageCode: ttsLanguageCode, name: ttsVoice.name, ssmlGender: ttsVoice.gender }
         : undefined;
       console.log(`[Publish] Triggering export with Sync Level: ${syncLevel}, Voice: ${ttsVoice?.name ?? 'default'}`);
-      const response = await api.post(`/kitaboo/publish/${jobId}`, {
+      await api.post(`/kitaboo/publish/${jobId}`, {
         syncLevel: syncLevel || 'word',
         voice: voicePayload,
         ...(useAbsoluteHtml ? { renderMode: 'absolute-html' } : {}),
         ...(bodyFontFamily && bodyFontFamily.trim() ? { bodyFontFamily: bodyFontFamily.trim() } : {})
       });
-      const data = response.data?.data ?? response.data;
-      const epubPath = data?.epubPath ?? `kitaboo_fxl_${jobId}.epub`;
-      const usedSyncLevel = (data?.syncLevel || syncLevel || 'word').toUpperCase();
-      const downloadUrl = data?.downloadUrl ?? `/api/kitaboo/download/${jobId}`;
-      const baseUrl = api.defaults.baseURL ?? '';
-      const pathOnly = downloadUrl.startsWith('/api') ? downloadUrl.slice(4) : downloadUrl.replace(/^\//, '');
-      const fullDownloadUrl = downloadUrl.startsWith('http') ? downloadUrl : `${baseUrl.replace(/\/$/, '')}/${pathOnly.replace(/^\//, '')}`;
-      const blobRes = await api.get(fullDownloadUrl, { responseType: 'blob' });
-      if (blobRes.status < 200 || blobRes.status >= 300) throw new Error(blobRes.status === 404 ? 'EPUB file not found' : `Download failed (${blobRes.status})`);
-      const blob = blobRes.data;
 
-      const downloadName = epubPath?.endsWith('.epub') ? epubPath : `${epubPath || `kitaboo_fxl_${jobId}`}.epub`;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = downloadName;
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      skipCanvasReinitUntil.current = Date.now() + 1500;
-      alert(`FXL EPUB published (${usedSyncLevel} sync${useAbsoluteHtml ? ', absolute HTML text layer' : ''}). Download started: ${downloadName}`);
-      navigate('/');
+      // Navigate to Download EPUB page with this job pre-selected
+      goToDownload({ id: jobId, jobType: 'FXL' });
     } catch (err) {
       console.error('Publish failed:', err);
       alert('Failed to publish EPUB');
@@ -1202,7 +1298,7 @@ const KitabooZoningStudio = () => {
       transparentCorners: false
     });
     const text = new fabric.IText(readingOrder.toString(), {
-      left: 5, top: 5, fontSize: 16, fill: '#fff', backgroundColor: '#0078ff', selectable: false
+      left: 5, top: 5, fontSize: READING_ORDER_LABEL_SIZE, fill: '#fff', backgroundColor: '#0078ff', selectable: false
     });
     const mergedGroup = new fabric.Group([shape, text], {
       left: mergedX,
@@ -1262,7 +1358,7 @@ const KitabooZoningStudio = () => {
       transparentCorners: false
     });
     const text = new fabric.IText(nextOrder.toString(), {
-      left: 5, top: 5, fontSize: 16, fill: '#fff', backgroundColor: '#0078ff', selectable: false
+      left: 5, top: 5, fontSize: READING_ORDER_LABEL_SIZE, fill: '#fff', backgroundColor: '#0078ff', selectable: false
     });
     const w = Math.max(1, Math.max(...pts.map(p => p[0])) - minX);
     const h = Math.max(1, Math.max(...pts.map(p => p[1])) - minY);
@@ -1325,7 +1421,7 @@ const KitabooZoningStudio = () => {
     const text = new fabric.IText(nextOrder.toString(), {
       left: 5,
       top: 5,
-      fontSize: 16,
+      fontSize: READING_ORDER_LABEL_SIZE,
       fill: '#fff',
       backgroundColor: '#0078ff',
       selectable: false
@@ -1464,11 +1560,8 @@ const KitabooZoningStudio = () => {
 
   if (loading) {
     return (
-      <div className={`kitaboo-studio${isOrgAdmin ? ' kitaboo-studio--with-sidebar' : ''}`}>
-        {isOrgAdmin && (
-          <OrgAdminSidebar onCollapse={setSidebarCollapsed} />
-        )}
-        <div className={`kitaboo-studio-body${isOrgAdmin ? (sidebarCollapsed ? ' kitaboo-studio-body--sb-collapsed' : ' kitaboo-studio-body--with-sidebar') : ''}`}>
+      <div className="kitaboo-studio">
+        <div className="kitaboo-studio-body">
           <div className="kitaboo-loading kitaboo-loading-progress">
             <h3>Converting PDF to FXL (WebP)</h3>
             <p className="kitaboo-loading-step">{currentStep || 'Starting...'}</p>
@@ -1485,13 +1578,24 @@ const KitabooZoningStudio = () => {
     );
   }
 
+  if (jobDeleted) {
+    return (
+      <div className="kitaboo-studio">
+        <div className="kitaboo-studio-body">
+          <div className="kitaboo-loading kitaboo-loading-error">
+            <h3>Job no longer exists</h3>
+            <p>This conversion job was deleted. Redirecting you back to Conversions…</p>
+            <button className="btn-back" onClick={() => navigate('/conversions')}>← Back to Conversions</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loadError) {
     return (
-      <div className={`kitaboo-studio${isOrgAdmin ? ' kitaboo-studio--with-sidebar' : ''}`}>
-        {isOrgAdmin && (
-          <OrgAdminSidebar onCollapse={setSidebarCollapsed} />
-        )}
-        <div className={`kitaboo-studio-body${isOrgAdmin ? (sidebarCollapsed ? ' kitaboo-studio-body--sb-collapsed' : ' kitaboo-studio-body--with-sidebar') : ''}`}>
+      <div className="kitaboo-studio">
+        <div className="kitaboo-studio-body">
           <div className="kitaboo-loading kitaboo-loading-error">
             <h3>Conversion failed</h3>
             <p>{loadError}</p>
@@ -1503,59 +1607,126 @@ const KitabooZoningStudio = () => {
     );
   }
 
+  const workflowJob = jobId
+    ? { id: jobId, jobId, jobType: 'FXL' }
+    : null;
+  const zonesForSidebar = (pages[currentPage]?.zones || [])
+    .slice()
+    .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
+
   return (
-    <div className={`kitaboo-studio${isOrgAdmin ? ' kitaboo-studio--with-sidebar' : ''}`}>
-      {/* ── Org Admin Sidebar ── */}
-      {isOrgAdmin && (
-        <OrgAdminSidebar onCollapse={setSidebarCollapsed} />
-      )}
-
-      <div className={`kitaboo-studio-body${isOrgAdmin ? (sidebarCollapsed ? ' kitaboo-studio-body--sb-collapsed' : ' kitaboo-studio-body--with-sidebar') : ''}`}>
-
-        {/* ── Top Header ── */}
-        <header className="ife-selector-header-bar">
-          <div className="kz-topbar-left">
-            <button
-              type="button"
-              className="ife-selector-back-btn"
-              onClick={() => navigate('/conversions')}
-              title="Back to Conversions"
-            >
-              <ArrowLeft size={16} />
-              <span>Back</span>
-            </button>
-            <div className="ife-selector-header-title">
-              <BookOpen size={18} />
-              <span>FXL Zoning Studio</span>
-              {jobId && <span className="ife-selector-job-badge">Job #{jobId}</span>}
+    <div className="kitaboo-studio">
+      {workflowJob ? (
+        <WorkflowStudioChrome
+          activeStep={1}
+          jobId={jobId}
+          job={workflowJob}
+          topTitle="FXL Zoning Studio"
+          headingTitle="Image Editor & FXL Studio"
+          headingSub="Zone pages and prepare your fixed-layout EPUB before audio sync."
+          backTo="/conversions/fxl-editor"
+          rightActions={(
+            <div className="kz-topbar-right">
+              <button
+                className="kz-btn kz-btn--primary"
+                onClick={handleSaveAndGoToSyncStudio}
+                disabled={saving || !jobId}
+                title="Save current page and continue to Sync Studio"
+              >
+                {saving ? 'Saving…' : 'Save & Next: Sync Studio'}
+              </button>
+              <button className="kz-btn kz-btn--save" onClick={handleSave} disabled={saving}>
+                {saving ? 'Saving…' : 'Save Page'}
+              </button>
             </div>
-          </div>
-          <div className="kz-topbar-right">
-            <button className="kz-btn kz-btn--ghost" onClick={() => navigate(`/fxl-sync-studio/${jobId}`)} title="Audio sync studio">
-              Sync Studio
-            </button>
-            <button className="kz-btn kz-btn--primary" onClick={publishEpub} disabled={exporting}>
-              {exporting ? 'Exporting…' : 'Export FXL EPUB 3'}
-            </button>
-            <button className="kz-btn kz-btn--save" onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving…' : 'Save Page'}
-            </button>
-          </div>
-        </header>
+          )}
+        />
+      ) : null}
 
+      <div className="kitaboo-studio-body">
         {/* ── Studio: canvas + right panel ── */}
         <div className="kitaboo-workspace">
+          {/* ── LEFT: all pages list ── */}
+          <aside className="kitaboo-pages-sidebar">
+            <h3>Pages</h3>
+            <div className="kitaboo-pages-list">
+              {pages.map((page, idx) => {
+                const isActive = idx === currentPage;
+                const thumbSrc = page?.imagePath ? `${backendOrigin}${page.imagePath}` : '';
+                return (
+                  <button
+                    key={page?.pageNumber ?? idx}
+                    type="button"
+                    className={`kitaboo-page-thumb${isActive ? ' kitaboo-page-thumb--active' : ''}`}
+                    onClick={() => handlePageSelect(idx)}
+                    title={`Go to page ${idx + 1}`}
+                  >
+                    <div className="kitaboo-page-thumb-image-wrap">
+                      {thumbSrc ? (
+                        <img
+                          src={thumbSrc}
+                          alt={`Page ${idx + 1}`}
+                          className="kitaboo-page-thumb-image"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="kitaboo-page-thumb-placeholder">Page {idx + 1}</div>
+                      )}
+                    </div>
+                    <div className="kitaboo-page-thumb-meta">
+                      <span className="kitaboo-page-thumb-label">p.{idx + 1}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="kz-toolbar-pager kz-toolbar-pager--sidebar">
+              <button className="kz-pager-btn" onClick={() => handlePageChange('prev')} disabled={currentPage === 0}>‹</button>
+              <span className="kz-pager-label">Page {currentPage + 1} <span className="kz-pager-sep">/ {pages.length}</span></span>
+              <button className="kz-pager-btn" onClick={() => handlePageChange('next')} disabled={currentPage === pages.length - 1}>›</button>
+            </div>
+          </aside>
 
           {/* ── CENTER: canvas area ── */}
           <main className="kitaboo-canvas-area">
 
             {/* ── Toolbar ── */}
             <div className="kz-toolbar">
-              {/* Page navigation */}
-              <div className="kz-toolbar-pager">
-                <button className="kz-pager-btn" onClick={() => handlePageChange('prev')} disabled={currentPage === 0}>‹</button>
-                <span className="kz-pager-label">Page {currentPage + 1} <span className="kz-pager-sep">/ {pages.length}</span></span>
-                <button className="kz-pager-btn" onClick={() => handlePageChange('next')} disabled={currentPage === pages.length - 1}>›</button>
+              {/* Quick tools */}
+              <div className="kz-toolbar-quick-tools">
+                <button
+                  type="button"
+                  className={`kz-btn kz-btn--tool${activeQuickTool === 'zone' ? ' kz-btn--active' : ''}`}
+                  title="Zone tool"
+                  onClick={() => setActiveQuickTool(prev => (prev === 'zone' ? null : 'zone'))}
+                >
+                  Zone
+                </button>
+                <button
+                  type="button"
+                  className={`kz-btn kz-btn--tool${activeQuickTool === 'image' ? ' kz-btn--active' : ''}`}
+                  title="Image tool"
+                  onClick={() => setActiveQuickTool(prev => (prev === 'image' ? null : 'image'))}
+                >
+                  Image
+                </button>
+                <button
+                  type="button"
+                  className={`kz-btn kz-btn--tool${activeQuickTool === 'ocr' ? ' kz-btn--active' : ''}`}
+                  title="OCR tool"
+                  onClick={() => setActiveQuickTool(prev => (prev === 'ocr' ? null : 'ocr'))}
+                >
+                  OCR
+                </button>
+                <button
+                  type="button"
+                  className={`kz-btn kz-btn--tool${activeQuickTool === 'autofix' ? ' kz-btn--active' : ''}`}
+                  title="Auto-fix tool"
+                  onClick={() => setActiveQuickTool(prev => (prev === 'autofix' ? null : 'autofix'))}
+                >
+                  Auto-fix
+                </button>
+               
               </div>
 
               {/* Divider */}
@@ -1595,9 +1766,9 @@ const KitabooZoningStudio = () => {
               </div>
 
               {/* Divider */}
-              <div className="kz-toolbar-divider" />
+              {/* <div className="kz-toolbar-divider" /> */}
 
-              {/* Settings */}
+              {/* Settings
               <div className="kz-toolbar-settings">
                 <label className="kz-setting-label">
                   <span>TTS Voice</span>
@@ -1609,10 +1780,10 @@ const KitabooZoningStudio = () => {
                       const v = ttsVoices.find(x => x.name === name);
                       if (v) {
                         setTtsVoice({ name: v.name, gender: v.gender, description: v.description });
-                        if (jobId) { try { localStorage.setItem(`kitaboo_ttsVoice_${jobId}`, JSON.stringify({ name: v.name, gender: v.gender })); } catch (err) { /* ignore */ } }
+                        if (jobId) { try { localStorage.setItem(`kitaboo_ttsVoice_${jobId}`, JSON.stringify({ name: v.name, gender: v.gender })); } catch (err) { ignore }
                       } else {
                         setTtsVoice(null);
-                        if (jobId) { try { localStorage.removeItem(`kitaboo_ttsVoice_${jobId}`); } catch (err) { /* ignore */ } }
+                        if (jobId) { try { localStorage.removeItem(`kitaboo_ttsVoice_${jobId}`); } catch (err) { ignore }
                       }
                     }}
                     title="Voice used for read-aloud when exporting FXL EPUB"
@@ -1641,8 +1812,31 @@ const KitabooZoningStudio = () => {
                   </select>
                 </label>
               </div>
+              */}
 
               {/* Upload clean page — right-aligned */}
+              <div className="kz-canvas-controls" aria-label="Canvas view controls">
+                <button type="button" className="kz-canvas-control-btn" title="Zoom out" onClick={handleZoomOut} disabled={!fabricCanvas}>
+                  <ZoomOut size={14} />
+                </button>
+                <span className="kz-canvas-zoom-value">{Math.round(zoomRatio * 100)}%</span>
+                <button type="button" className="kz-canvas-control-btn" title="Zoom in" onClick={handleZoomIn} disabled={!fabricCanvas}>
+                  <ZoomIn size={14} />
+                </button>
+                <button type="button" className="kz-canvas-control-btn" title="Fit to screen" onClick={handleFitToView} disabled={!fabricCanvas}>
+                  <Maximize2 size={14} />
+                </button>
+                <button
+                  type="button"
+                  className={`kz-canvas-control-btn${previewMode ? ' kz-canvas-control-btn--active' : ''}`}
+                  title="Preview (hide/show zones)"
+                  onClick={handleTogglePreviewMode}
+                  disabled={!fabricCanvas}
+                >
+                  <Eye size={14} />
+                </button>
+              </div>
+
               <input ref={cleanPageInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleCleanPageUpload} />
               <button
                 type="button"
@@ -1663,6 +1857,49 @@ const KitabooZoningStudio = () => {
 
           {/* ── RIGHT: zone properties panel ── */}
           <aside className="kitaboo-sidebar">
+          {activeQuickTool === 'zone' ? (
+            <>
+              <h3>Zones on this page</h3>
+              <div className="tagging-panel tagging-panel--zones-list">
+                <div className="zone-list">
+                  {zonesForSidebar.length === 0 ? (
+                    <div className="empty-state">
+                      <p>No zones found on this page.</p>
+                    </div>
+                  ) : zonesForSidebar.map((zone, idx) => {
+                    const type = zone?.type || 'text';
+                    const title = (zone?.content || '').trim() || `${type} zone`;
+                    return (
+                      <button
+                        key={zone?.id || `zone-${idx}`}
+                        type="button"
+                        className="zone-list-item"
+                        onClick={() => focusZoneById(zone?.id)}
+                        title={`Select ${title}`}
+                      >
+                        <span className={`zone-list-icon zone-list-icon--${type === 'image' ? 'image' : 'text'}`}>
+                          {type === 'image' ? 'I' : 'Z'}
+                        </span>
+                        <span className="zone-list-text">
+                          <span className="zone-list-title">{title}</span>
+                          <span className="zone-list-sub">{type} · page {currentPage + 1}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="zone-continue-btn"
+                  onClick={handleSaveAndGoToSyncStudio}
+                  disabled={saving || !jobId}
+                >
+                  {saving ? 'Saving…' : 'Continue to Audio Sync'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
           <h3>Zone Properties</h3>
           {selectedZone ? (
             <div className="tagging-panel">
@@ -1672,23 +1909,24 @@ const KitabooZoningStudio = () => {
                 </p>
               )}
               {syncLevel === 'word' && selectedObjects.length === 1 && (
-                <div className="word-level-tip" style={{ fontSize: '12px', color: '#81d4fa', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px', marginBottom: '12px' }}>
+                <div className="word-level-tip" style={{ fontSize: '12px', color: '#000000ff', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px', marginBottom: '12px' }}>
                   <strong>Word-level:</strong> Zones match the level chosen at Convert. Edit <em>Text Content (OCR)</em> below if needed.
                 </div>
               )}
               {syncLevel === 'sentence' && selectedObjects.length === 1 && (
-                <div className="sentence-level-tip" style={{ fontSize: '12px', color: '#81d4fa', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px', marginBottom: '12px' }}>
+                <div className="sentence-level-tip" style={{ fontSize: '12px', color: '#000000ff', background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '6px', marginBottom: '12px' }}>
                   <strong>Sentence-level:</strong> Zones match the level chosen at Convert. Edit <em>Text Content (OCR)</em> below if needed. Click a box on the canvas to select it.
                 </div>
               )}
-              <div className="prop-group" style={{ display: 'none', flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div className="prop-group" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <button
                   type="button"
+                  className="zone-remove-btn"
                   onClick={deleteSelectedZones}
-                  style={{ padding: '6px 12px', borderRadius: '4px', border: '1px solid #dc3545', background: '#dc3545', color: '#fff', fontWeight: 500, cursor: 'pointer', fontSize: '13px' }}
-                  title="Delete selected zone(s)"
+                  title="Remove selected zone(s) from the canvas"
                 >
-                  Delete zone
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  Remove zone{selectedObjects.length > 1 ? `s (${selectedObjects.length})` : ''}
                 </button>
               </div>
               <div className="prop-group">
@@ -1844,6 +2082,8 @@ const KitabooZoningStudio = () => {
             <div className="empty-state">
               <p>Select a zone on the canvas to configure properties and enrichments.</p>
             </div>
+          )}
+            </>
           )}
         </aside>
         </div>

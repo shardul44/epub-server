@@ -3,6 +3,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { createRequire } from 'module';
+import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const require = createRequire(import.meta.url);
 let gTTS = null;
@@ -229,8 +230,8 @@ export class TtsService {
   static getMp3DurationSec(filePath) {
     try {
       const out = execSync(
-        `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`,
-        { encoding: 'utf8' }
+        `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`,
+        { encoding: 'utf8', env: getAugmentedEnv() }
       );
       const sec = parseFloat(out.trim());
       return Number.isFinite(sec) && sec > 0 ? sec : null;

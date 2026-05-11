@@ -14,6 +14,7 @@ import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
 import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
 import { httpCache } from '../middlewares/httpCache.js';
+import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('kitaboo.import'));
@@ -1063,7 +1064,7 @@ router.get('/sync-studio/:jobId', async (req, res) => {
         audioUrl = `/api/kitaboo/sync-studio/${jobId}/audio`;
         try {
           const audioPath = path.join(humanAudioDir, found);
-          const out = execSync(`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`, { encoding: 'utf8', timeout: 5000 }).trim();
+          const out = execSync(`"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`, { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }).trim();
           audioDuration = parseFloat(out) || 0;
         } catch (_) { }
       }
@@ -1088,8 +1089,8 @@ router.get('/sync-studio/:jobId', async (req, res) => {
           if (ext) {
             const audioPath = path.join(humanAudioDir, `page_${first}${ext}`);
             const out = execSync(
-              `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
-              { encoding: 'utf8', timeout: 5000 }
+              `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+              { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
             ).trim();
             audioDuration = parseFloat(out) || 0;
           }

@@ -1,0 +1,25 @@
+{
+  "documentId": 82,
+  "chapters": [
+    {
+      "title": "Chapter 1",
+      "startPage": 1,
+      "endPage": 2,
+      "pageType": "cover"
+    },
+    {
+      "title": "Chapter 2",
+      "startPage": 2,
+      "endPage": 5,
+      "pageType": "regular"
+    },
+    {
+      "title": "Chapter 3",
+      "startPage": 6,
+      "endPage": 12,
+      "pageType": "regular"
+    }
+  ],
+  "createdAt": "2026-05-08T09:58:54.653Z",
+  "updatedAt": "2026-05-08T09:58:54.653Z"
+}

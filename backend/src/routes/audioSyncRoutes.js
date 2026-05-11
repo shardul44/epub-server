@@ -14,6 +14,7 @@ import { GeminiService } from '../services/geminiService.js';
 import { sanitizeZoneText } from '../utils/zoneTextSanitizer.js';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
+import { ffmpegBin, ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('sync_studio'));
@@ -27,8 +28,8 @@ async function extractAudioSegment(sourcePath, startSec, durationSec, outPath) {
   const safeSrc = sourcePath.replace(/"/g, '\\"');
   const safeOut = outPath.replace(/"/g, '\\"');
   execSync(
-    `ffmpeg -y -i "${safeSrc}" -ss ${start} -t ${duration} -acodec pcm_s16le -ar 16000 -ac 1 "${safeOut}"`,
-    { stdio: 'pipe', timeout: 60000 }
+    `"${ffmpegBin}" -y -i "${safeSrc}" -ss ${start} -t ${duration} -acodec pcm_s16le -ar 16000 -ac 1 "${safeOut}"`,
+    { stdio: 'pipe', timeout: 60000, env: getAugmentedEnv() }
   );
 }
 
@@ -240,8 +241,8 @@ router.get('/sync-studio/:jobId', async (req, res) => {
         try {
           const { execSync } = await import('child_process');
           const out = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${firstPath}"`,
-            { encoding: 'utf8', timeout: 5000 }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${firstPath}"`,
+            { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
           );
           audioDuration = parseFloat(out.trim()) || 0;
         } catch (_) { }
@@ -251,8 +252,8 @@ router.get('/sync-studio/:jobId', async (req, res) => {
       try {
         const { execSync } = await import('child_process');
         const out = execSync(
-          `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
-          { encoding: 'utf8', timeout: 5000 }
+          `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+          { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
         );
         audioDuration = parseFloat(out.trim()) || 0;
       } catch (_) { }
@@ -264,8 +265,8 @@ router.get('/sync-studio/:jobId', async (req, res) => {
         try {
           const { execSync } = await import('child_process');
           const out = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${firstPath}"`,
-            { encoding: 'utf8', timeout: 5000 }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${firstPath}"`,
+            { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
           );
           audioDuration = parseFloat(out.trim()) || 0;
         } catch (_) { }
@@ -458,6 +459,23 @@ async function resolveJobSectionAudioPath(jobId, sectionIndex) {
   return null;
 }
 
+/** Combined job audio, or first available per-section file (for PUT save when there is no global MP3). */
+async function resolveAnyJobAudioPathForSyncSave(jobId) {
+  const combined = await resolveJobAudioPath(jobId);
+  if (combined) return combined;
+  let sections = [];
+  try {
+    sections = await EpubService.getEpubSections(jobId);
+  } catch (_) {
+    return null;
+  }
+  for (let si = 0; si < (sections?.length || 0); si++) {
+    const p = await resolveJobSectionAudioPath(jobId, si);
+    if (p) return p;
+  }
+  return null;
+}
+
 // GET /api/audio-sync/job/:jobId/audio/section/:sectionIndex - Stream per-section audio
 router.get('/job/:jobId/audio/section/:sectionIndex', async (req, res) => {
   try {
@@ -554,8 +572,8 @@ router.post('/sync-studio/:jobId/align', async (req, res) => {
         try {
           const { execSync } = await import('child_process');
           const out = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${resolvedAudioPath}"`,
-            { encoding: 'utf8' }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${resolvedAudioPath}"`,
+            { encoding: 'utf8' , env: getAugmentedEnv() }
           );
           audioDuration = parseFloat(out.trim()) || 300;
         } catch (_) { }
@@ -639,7 +657,7 @@ router.post('/sync-studio/:jobId/align', async (req, res) => {
               const safeSrc = dedicatedAudioPath.replace(/"/g, '\\"');
               const safeOut = convertedPath.replace(/"/g, '\\"');
               const { execSync: execSyncInner } = await import('child_process');
-              execSyncInner(`ffmpeg -y -i "${safeSrc}" -acodec pcm_s16le -ar 16000 -ac 1 "${safeOut}"`, { stdio: 'pipe', timeout: 60000 });
+              execSyncInner(`"${ffmpegBin}" -y -i "${safeSrc}" -acodec pcm_s16le -ar 16000 -ac 1 "${safeOut}"`, { stdio: 'pipe', timeout: 60000, env: getAugmentedEnv() });
             } catch (convertErr) {
               console.warn(`[SyncStudio align] Per-section mode: failed to convert section ${idx} audio:`, convertErr.message);
               continue;
@@ -794,7 +812,7 @@ router.post('/sync-studio/:jobId/align', async (req, res) => {
             const safeSrc = dedicatedAudioPath.replace(/"/g, '\\"');
             const safeOut = convertedPath.replace(/"/g, '\\"');
             const { execSync: execSyncInner } = await import('child_process');
-            execSyncInner(`ffmpeg -y -i "${safeSrc}" -acodec pcm_s16le -ar 16000 -ac 1 "${safeOut}"`, { stdio: 'pipe', timeout: 60000 });
+            execSyncInner(`"${ffmpegBin}" -y -i "${safeSrc}" -acodec pcm_s16le -ar 16000 -ac 1 "${safeOut}"`, { stdio: 'pipe', timeout: 60000, env: getAugmentedEnv() });
           } catch (convertErr) {
             console.warn(`[SyncStudio align] Per-section auto-align: failed to convert section ${idx} audio:`, convertErr.message);
             continue;
@@ -938,8 +956,8 @@ router.post('/sync-studio/:jobId/align', async (req, res) => {
       try {
         const { execSync } = await import('child_process');
         const out = execSync(
-          `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${resolvedAudioPath}"`,
-          { encoding: 'utf8' }
+          `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${resolvedAudioPath}"`,
+          { encoding: 'utf8', env: getAugmentedEnv() }
         );
         audioDuration = parseFloat(out.trim()) || 300;
       } catch (_) { }
@@ -1123,7 +1141,7 @@ router.put('/sync-studio/:jobId', async (req, res) => {
     // If no existing syncs or path is null, resolve audio path (same as Run Alignment)
     // This ensures Manual Tap-to-Sync works even if user didn't run alignment first
     if (!firstAudioPath) {
-      const resolvedPath = await resolveJobAudioPath(jobId);
+      const resolvedPath = await resolveAnyJobAudioPathForSyncSave(jobId);
       if (resolvedPath) {
         const normalizedPath = path.relative(getUploadDir(), resolvedPath).replace(/\\/g, '/');
         firstAudioPath = normalizedPath.startsWith('audio')
@@ -1909,8 +1927,8 @@ router.post('/auto-sync', async (req, res) => {
     try {
       const { execSync } = await import('child_process');
       const ffprobeOutput = execSync(
-        `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${resolvedAudioPath}"`,
-        { encoding: 'utf8' }
+        `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${resolvedAudioPath}"`,
+        { encoding: 'utf8', env: getAugmentedEnv() }
       );
       audioDuration = parseFloat(ffprobeOutput.trim()) || 300;
       console.log(`[AutoSync] Audio duration: ${audioDuration}s`);
@@ -2263,7 +2281,8 @@ router.post('/magic-align', async (req, res) => {
     try {
       // Use ffprobe to get audio duration
       const { stdout } = await execAsync(
-        `ffprobe -i "${resolvedAudioPath}" -show_entries format=duration -v quiet -of csv="p=0"`
+        `"${ffprobeBin}" -i "${resolvedAudioPath}" -show_entries format=duration -v quiet -of csv="p=0"`,
+        { env: getAugmentedEnv() }
       );
       audioDuration = parseFloat(stdout.trim()) || 0;
       console.log(`[MagicAlign] Audio duration: ${audioDuration.toFixed(2)}s`);

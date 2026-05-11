@@ -53,6 +53,16 @@ router.get('/plans', async (_req, res) => {
   }
 });
 
+// GET /org/users — list all members in the same org
+router.get('/users', async (req, res) => {
+  try {
+    const members = await UserModel.findByOrganizationId(req.user.organizationId);
+    return successResponse(res, members);
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+});
+
 // POST /org/users — create member (or org_admin) in same org
 router.post('/users', async (req, res) => {
   try {

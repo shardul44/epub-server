@@ -17,8 +17,177 @@ import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
 import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
 import { httpCache } from '../middlewares/httpCache.js';
+import { getOrGenerateThumbnail, invalidateThumbnail } from '../services/thumbnailService.js';
 
 const router = express.Router();
+
+/* ══════════════════════════════════════════════════════════════
+   THUMBNAIL SUB-ROUTER
+   Uses a separate router instance so router.param('id', ...) on
+   the main router does NOT fire for these routes.
+   Auth only — no feature gate, no tenant access check.
+══════════════════════════════════════════════════════════════ */
+const thumbRouter = express.Router();
+
+// GET /pdfs/:id/page/:pageNumber/thumbnail
+thumbRouter.get('/:id/page/:pageNumber/thumbnail', authenticate, async (req, res) => {
+  try {
+    const pdfId      = parseInt(req.params.id);
+    const pageNumber = parseInt(req.params.pageNumber);
+
+    if (isNaN(pdfId) || isNaN(pageNumber) || pageNumber < 1) {
+      return res.status(400).json({ error: 'Invalid PDF ID or page number' });
+    }
+
+    const { getHtmlIntermediateDir } = await import('../config/fileStorage.js');
+    const htmlIntermediateDir = getHtmlIntermediateDir();
+
+    const { ConversionJobModel } = await import('../models/ConversionJob.js');
+    const jobs = await ConversionJobModel.findByPdfDocumentId(pdfId);
+    const job  = jobs.find(j => j.status === 'COMPLETED') ?? jobs[0];
+
+    if (job) {
+      const jobId = job.id;
+      const pngDir  = path.join(htmlIntermediateDir, `job_${jobId}_png`);
+      const pngFile = path.join(pngDir, `page_${pageNumber}.png`);
+
+      try {
+        await fs.access(pngFile);
+        res.setHeader('Content-Type', 'image/png');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        return res.sendFile(path.resolve(pngFile));
+      } catch {
+        const altFile = path.join(htmlIntermediateDir, `job_${jobId}`, `page_${pageNumber}.png`);
+        try {
+          await fs.access(altFile);
+          res.setHeader('Content-Type', 'image/png');
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          return res.sendFile(path.resolve(altFile));
+        } catch {
+          // fall through to SVG placeholder
+        }
+      }
+    }
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="560" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="560" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="2" rx="4"/>
+  <text x="200" y="260" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#9ca3af">Page ${pageNumber}</text>
+  <text x="200" y="285" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#d1d5db">No preview available</text>
+</svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.send(svg);
+  } catch (error) {
+    console.error(`[page thumbnail] PDF ${req.params.id} page ${req.params.pageNumber}:`, error.message);
+    return res.status(500).json({ error: 'Failed to serve page thumbnail' });
+  }
+});
+
+// GET /pdfs/:id/thumbnail — serves real page-1 PNG, generated on demand and cached to disk
+thumbRouter.get('/:id/thumbnail', authenticate, async (req, res) => {
+  try {
+    const pdfId = parseInt(req.params.id);
+    if (isNaN(pdfId)) return res.status(400).json({ error: 'Invalid PDF ID' });
+
+    // 1. Disk cache (fastest path)
+    const { getThumbnailDir } = await import('../config/fileStorage.js');
+    const cachedPath = path.join(getThumbnailDir(), `pdf-${pdfId}.png`);
+    try {
+      await fs.access(cachedPath);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.sendFile(path.resolve(cachedPath));
+    } catch { /* not cached yet */ }
+
+    // 2. page_1.png from a completed conversion job
+    const { getHtmlIntermediateDir } = await import('../config/fileStorage.js');
+    const htmlIntermediateDir = getHtmlIntermediateDir();
+    const { ConversionJobModel } = await import('../models/ConversionJob.js');
+    const jobs = await ConversionJobModel.findByPdfDocumentId(pdfId);
+    const completedJob = jobs.find(j => j.status === 'COMPLETED') ?? jobs[0];
+
+    if (completedJob) {
+      const jobId = completedJob.id;
+      for (const candidate of [
+        path.join(htmlIntermediateDir, `job_${jobId}_png`, 'page_1.png'),
+        path.join(htmlIntermediateDir, `job_${jobId}`, 'page_1.png'),
+      ]) {
+        try {
+          await fs.access(candidate);
+          await fs.copyFile(candidate, cachedPath).catch(() => {});
+          res.setHeader('Content-Type', 'image/png');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          return res.sendFile(path.resolve(candidate));
+        } catch { /* try next */ }
+      }
+    }
+
+    // 3. Generate from the original PDF file using pdfjs-dist + canvas
+    try {
+      const pdf = await PdfService.getPdfDocument(pdfId);
+      if (pdf) {
+        const { getUploadDir } = await import('../config/fileStorage.js');
+        const uploadDir = getUploadDir();
+        const filePath = path.isAbsolute(pdf.fileName ?? '')
+          ? pdf.fileName
+          : path.join(uploadDir, pdf.fileName ?? '');
+
+        const thumbPath = await getOrGenerateThumbnail(pdfId, filePath);
+        if (thumbPath) {
+          res.setHeader('Content-Type', 'image/png');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
+          return res.sendFile(path.resolve(thumbPath));
+        }
+      }
+    } catch (genErr) {
+      console.warn(`[thumbnail] Generation failed for PDF ${pdfId}:`, genErr.message);
+    }
+
+    // 4. SVG fallback — never 404
+    let fileName = `PDF-${pdfId}`;
+    try {
+      const pdf = await PdfService.getPdfDocument(pdfId);
+      if (pdf?.originalFileName) {
+        const safe = pdf.originalFileName
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+        fileName = safe.length > 30 ? safe.substring(0, 30) + '...' : safe;
+      }
+    } catch (_) { /* ignore */ }
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="560" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="560" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" rx="6"/>
+  <rect x="40" y="60" width="320" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="40" y="76" width="240" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="40" y="92" width="280" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="40" y="120" width="320" height="200" fill="#f1f5f9" rx="4"/>
+  <rect x="40" y="336" width="320" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="40" y="352" width="200" height="4" fill="#e2e8f0" rx="2"/>
+  <rect x="40" y="368" width="260" height="4" fill="#e2e8f0" rx="2"/>
+  <text x="200" y="230" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#94a3b8">${fileName}</text>
+</svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.send(svg);
+  } catch (error) {
+    console.error(`[thumbnail] PDF ${req.params.id}:`, error.message);
+    const fallbackSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="560" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="560" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5" rx="6"/>
+  <text x="200" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="13" fill="#94a3b8">No preview</text>
+</svg>`;
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.status(200).send(fallbackSvg);
+  }
+});
+
+// Mount the thumbnail sub-router BEFORE the main router's param/feature middleware
+router.use('/', thumbRouter);
+
+/* ── All other PDF routes require conversion.basic feature ─── */
 router.use(authenticate, requireFeature('conversion.basic'));
 
 router.param('id', paramPdfTenantAccess);
@@ -248,143 +417,6 @@ router.get('/:id/download', async (req, res) => {
   }
 });
 
-// GET /api/pdfs/:id/page/:pageNumber/thumbnail - Serve actual page PNG from conversion output
-router.get('/:id/page/:pageNumber/thumbnail', async (req, res) => {
-  try {
-    const pdfId      = parseInt(req.params.id);
-    const pageNumber = parseInt(req.params.pageNumber);
-
-    if (isNaN(pdfId) || isNaN(pageNumber) || pageNumber < 1) {
-      return res.status(400).json({ error: 'Invalid PDF ID or page number' });
-    }
-
-    const { getHtmlIntermediateDir } = await import('../config/fileStorage.js');
-    const htmlIntermediateDir = getHtmlIntermediateDir();
-
-    // Find the most recent conversion job for this PDF
-    const { ConversionJobModel } = await import('../models/ConversionJob.js');
-    const jobs = await ConversionJobModel.findByPdfDocumentId(pdfId);
-    const job  = jobs.find(j => j.status === 'COMPLETED') ?? jobs[0];
-
-    if (job) {
-      const jobId = job.id;
-
-      // Try job-specific PNG folder first: html_intermediate/job_{id}_png/page_{N}.png
-      const pngDir  = path.join(htmlIntermediateDir, `job_${jobId}_png`);
-      const pngFile = path.join(pngDir, `page_${pageNumber}.png`);
-
-      try {
-        await fs.access(pngFile);
-        res.setHeader('Content-Type', 'image/png');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        return res.sendFile(path.resolve(pngFile));
-      } catch {
-        // Try flat job folder: html_intermediate/job_{id}/page_{N}.png
-        const altFile = path.join(htmlIntermediateDir, `job_${jobId}`, `page_${pageNumber}.png`);
-        try {
-          await fs.access(altFile);
-          res.setHeader('Content-Type', 'image/png');
-          res.setHeader('Cache-Control', 'public, max-age=3600');
-          return res.sendFile(path.resolve(altFile));
-        } catch {
-          // PNG not found — fall through to SVG placeholder
-        }
-      }
-    }
-
-    // Fallback: return an SVG placeholder so the browser never gets a 404
-    const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="560" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="560" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="2" rx="4"/>
-  <text x="200" y="260" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#9ca3af">Page ${pageNumber}</text>
-  <text x="200" y="285" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#d1d5db">No preview available</text>
-</svg>`;
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=300');
-    return res.send(svg);
-
-  } catch (error) {
-    console.error(`[page thumbnail] PDF ${req.params.id} page ${req.params.pageNumber}:`, error.message);
-    return res.status(500).json({ error: 'Failed to serve page thumbnail' });
-  }
-});
-
-// GET /api/pdfs/:id/thumbnail - Get PDF thumbnail (first page preview)
-router.get('/:id/thumbnail', async (req, res) => {
-  try {
-    const pdfId = parseInt(req.params.id);
-    
-    // Validate PDF ID
-    if (isNaN(pdfId)) {
-      throw new Error('Invalid PDF ID');
-    }
-
-    let pdf = null;
-    let fileName = `PDF-${pdfId}`;
-    
-    try {
-      pdf = await PdfService.getPdfDocument(pdfId);
-      if (pdf && pdf.originalFileName) {
-        // Truncate long filenames and escape for SVG
-        const safeFileName = pdf.originalFileName
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-        fileName = safeFileName.length > 30 
-          ? safeFileName.substring(0, 30) + '...' 
-          : safeFileName;
-      }
-    } catch (dbError) {
-      // If PDF not found in database, still return a default thumbnail
-      console.warn(`PDF ${pdfId} not found, returning default thumbnail:`, dbError.message);
-    }
-    
-    // Create a simple SVG placeholder representing a PDF document
-    // This always returns a valid image, even if PDF doesn't exist
-    const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="600" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#e3f2fd;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#bbdefb;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="400" height="600" fill="#ffffff" stroke="#e0e0e0" stroke-width="2" rx="4"/>
-  <rect x="20" y="20" width="360" height="80" fill="url(#grad1)" rx="2"/>
-  <rect x="20" y="120" width="360" height="20" fill="#f5f5f5" rx="2"/>
-  <rect x="20" y="160" width="280" height="20" fill="#f5f5f5" rx="2"/>
-  <rect x="20" y="200" width="320" height="20" fill="#f5f5f5" rx="2"/>
-  <rect x="20" y="240" width="240" height="20" fill="#f5f5f5" rx="2"/>
-  <rect x="20" y="280" width="360" height="300" fill="#fafafa" stroke="#e0e0e0" stroke-width="1" rx="2"/>
-  <text x="200" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#1976d2">PDF</text>
-  <text x="200" y="75" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#1976d2">Document Preview</text>
-  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#757575">${fileName}</text>
-  <text x="200" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#999">ID: ${pdfId}</text>
-</svg>`;
-    
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
-    return res.send(svg);
-  } catch (error) {
-    // Always return a valid default thumbnail, even on unexpected errors
-    console.error(`Error generating thumbnail for PDF ${req.params.id}:`, error.message);
-    const pdfId = req.params.id || '?';
-    const defaultSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="600" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="600" fill="#f5f5f5" stroke="#e0e0e0" stroke-width="2" rx="4"/>
-  <circle cx="200" cy="250" r="40" fill="#e0e0e0"/>
-  <path d="M 180 240 L 200 260 L 220 240" stroke="#999" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#999">No Preview</text>
-  <text x="200" y="345" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#bbb">Available</text>
-</svg>`;
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.setHeader('Cache-Control', 'public, max-age=300'); // Shorter cache for error thumbnails
-    return res.status(200).send(defaultSvg); // Return 200 with error placeholder instead of 500
-  }
-});
-
 // GET /api/pdfs/:id/audio - Download audio file
 router.get('/:id/audio', async (req, res) => {
   try {
@@ -450,6 +482,8 @@ router.delete('/:id', async (req, res) => {
     
     // Invalidate all PDF list caches
     cacheDelByPrefix('pdfs:');
+    // Remove cached thumbnail
+    invalidateThumbnail(id).catch(() => {});
     
     console.log('✓ Successfully processed deletion request for PDF id:', id);
     return res.status(204).send();

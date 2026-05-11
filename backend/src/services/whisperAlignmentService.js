@@ -22,6 +22,7 @@ import { execSync } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -824,8 +825,8 @@ class WhisperAlignmentService {
       if (!(audioDuration > 0)) {
         try {
           const out = execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
-            { encoding: 'utf8', timeout: 5000 }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+            { encoding: 'utf8', timeout: 5000, env: getAugmentedEnv() }
           ).trim();
           audioDuration = parseFloat(out) || 0;
         } catch (_) {
@@ -927,8 +928,8 @@ class WhisperAlignmentService {
       
       try {
         const audioDurationStr = execSync(
-          `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
-          { encoding: 'utf8', timeout: 10000 }
+          `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+          { encoding: 'utf8', timeout: 10000, env: getAugmentedEnv() }
         ).trim();
         const audioDuration = parseFloat(audioDurationStr);
         

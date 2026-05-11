@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useCallback } from 'react';
+import { useMemo, useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   RefreshCw, Users, ShieldCheck, CheckCircle, Mail, Search, Pencil,
@@ -6,8 +6,27 @@ import {
   FilePlus, Download, Upload, Settings, ClipboardList, Lock, AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAppBootstrap } from '../../hooks/queries/useAppBootstrap';
+import { useOrgTeamQuery } from '../../hooks/queries/useOrgTeamQuery';
+import { useOrgActivitiesQuery } from '../../hooks/queries/useOrgActivitiesQuery';
+import { useUsageQuery } from '../../hooks/queries/useUsageQuery';
+import { useOrgTeamActions } from '../../hooks/useOrgTeamActions';
 import { orgTeamService } from '../../services/orgTeamService';
+import useAppDispatch from '../../hooks/useAppDispatch';
+import useAppSelector from '../../hooks/useAppSelector';
+import {
+  selectOTSearch,
+  selectOTRoleFilter,
+  selectOTActiveModal,
+  selectOTEditingMemberId,
+  selectOTError,
+  setSearch,
+  setRoleFilter,
+  openModal,
+  closeModal,
+  openEditModal,
+  setError as setOTError,
+  clearError as clearOTError,
+} from '../../features/orgTeam/orgTeamSlice';
 import ConfirmModal from '../../components/Loadingmodal';
 import './OrgTeam.css';
 
@@ -730,29 +749,31 @@ export default function OrgTeam() {
   const { user, refreshUser } = useAuth();
   const { toasts, push: toast, dismiss: dismissToast } = useToast();
 
-  // ── Bootstrap data (shared cache — no duplicate requests) ──────
-  const {
-    users:      bootstrapUsers,
-    license:    bootstrapLicense,
-    activities: bootstrapActivities,
-    isLoading:  loading,
-    error:      bootstrapError,
-    invalidate: invalidateBootstrap,
-  } = useAppBootstrap();
+  const dispatch = useAppDispatch();
 
-  const [error, setError]       = useState('');
-  const [search, setSearch]     = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  // ── Redux UI state ────────────────────────────────────────────
+  const search      = useAppSelector(selectOTSearch);
+  const roleFilter  = useAppSelector(selectOTRoleFilter);
+  const activeModal = useAppSelector(selectOTActiveModal);
+  const editingMemberId = useAppSelector(selectOTEditingMemberId);
+  const reduxError  = useAppSelector(selectOTError);
+
+  // ── React Query (server state) ────────────────────────────────
+  const { members, isLoading: loading, error: fetchError, refresh } = useOrgTeamQuery();
+  const { license: licenseData } = useUsageQuery();
+  // Activities are fetched lazily — only when audit modal is open
+  const { activities: allActivities } = useOrgActivitiesQuery({ enabled: activeModal === 'auditLog' });
+  const activities = (allActivities || []).slice(0, 5); // sidebar shows last 5
+
+  const displayError = reduxError || fetchError || '';
+
+  const load = useCallback(async () => {
+    dispatch(clearOTError());
+    await refresh();
+  }, [dispatch, refresh]);
+
   const [busyId, setBusyId]     = useState(null);
   const [creating, setCreating] = useState(false);
-
-  // Derive members and sidebar data from bootstrap
-  const members     = bootstrapUsers;
-  const licenseData = bootstrapLicense;
-  const activities  = bootstrapActivities.slice(0, 5); // sidebar shows last 5
-
-  // Combine bootstrap error with local mutation errors
-  const displayError = error || bootstrapError || '';
 
   // Invite form
   const [name, setName]           = useState('');
@@ -762,13 +783,8 @@ export default function OrgTeam() {
   const [role, setRole]           = useState('member');
   const [showPassword, setShowPwd] = useState(false);
 
-  // Modal state
-  const [editTarget, setEditTarget]     = useState(null);
-  const [showBulk, setShowBulk]         = useState(false);
-  const [showAudit, setShowAudit]       = useState(false);
-  const [showSSO, setShowSSO]           = useState(false);
-  const [showPerms, setShowPerms]       = useState(false);
-  const [removeModal, setRemoveModal]   = useState({ open: false, member: null, loading: false });
+  // Remove confirmation modal (local — not a "feature" modal)
+  const [removeModal, setRemoveModal] = useState({ open: false, member: null, loading: false });
 
   const canEdit = useMemo(() => user?.role === 'org_admin', [user]);
 
@@ -777,12 +793,6 @@ export default function OrgTeam() {
   const activeMembers = members.filter((m) => m.status === 'active' || !m.status).length;
   const editors       = members.filter((m) => m.role === 'editor').length;
   const viewers       = members.filter((m) => m.role === 'viewer').length;
-
-  // Refresh: invalidate the shared bootstrap cache — all consumers update
-  const load = useCallback(async () => {
-    setError('');
-    await invalidateBootstrap();
-  }, [invalidateBootstrap]);
 
   // Form-level validation error (shown inline near the button)
   const [formError, setFormError] = useState('');
@@ -817,7 +827,7 @@ export default function OrgTeam() {
       setName(''); setEmail(''); setPassword(''); setPhone(''); setRole('member'); setShowPwd(false);
       setCreateSuccess(`User "${name.trim()}" created successfully.`);
       setTimeout(() => setCreateSuccess(''), 4000);
-      await invalidateBootstrap();
+      await refresh();
       await refreshUser();
     } catch (e) {
       setFormError(e.response?.data?.error || e.message || 'Failed to create user');
@@ -834,16 +844,16 @@ export default function OrgTeam() {
     const { member } = removeModal;
     setRemoveModal((prev) => ({ ...prev, loading: true }));
     setBusyId(member.id);
-    setError('');
+    dispatch(clearOTError());
     try {
       await orgTeamService.deleteUser(member.id);
       setRemoveModal({ open: false, member: null, loading: false });
       toast(`${member.name || member.email} has been removed.`, 'success');
-      await invalidateBootstrap();
+      await refresh();
     } catch (e) {
       const msg = e.response?.data?.error || e.message || 'Failed to remove user';
       setRemoveModal({ open: false, member: null, loading: false });
-      setError(msg);
+      dispatch(setOTError(msg));
       toast(msg, 'error');
     } finally {
       setBusyId(null);
@@ -852,15 +862,15 @@ export default function OrgTeam() {
 
   async function changeRole(member, newRole) {
     setBusyId(member.id);
-    setError('');
+    dispatch(clearOTError());
     try {
       await orgTeamService.changeRole(member.id, newRole);
       const roleLabel = newRole.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
       toast(`${member.name || member.email} is now ${roleLabel}.`, 'success');
-      await invalidateBootstrap();
+      await refresh();
     } catch (e) {
       const msg = e.response?.data?.error || e.message || 'Failed to update role';
-      setError(msg);
+      dispatch(setOTError(msg));
       toast(msg, 'error');
     } finally {
       setBusyId(null);
@@ -869,7 +879,7 @@ export default function OrgTeam() {
 
   async function resendInvite(member) {
     setBusyId(member.id);
-    setError('');
+    dispatch(clearOTError());
     try {
       await orgTeamService.updateUser(member.id, { resendInvite: true });
       toast(`Invite re-sent to ${member.email}.`, 'info');
@@ -918,7 +928,7 @@ export default function OrgTeam() {
       {displayError && (
         <div className="ot-error">
           <span>{displayError}</span>
-          <button className="ot-error-close" onClick={() => setError('')}><X size={14} /></button>
+          <button className="ot-error-close" onClick={() => dispatch(clearOTError())}><X size={14} /></button>
         </div>
       )}
 
@@ -948,7 +958,7 @@ export default function OrgTeam() {
                     <div className="ot-card-subtitle">Create credentials and grant access</div>
                   </div>
                 </div>
-                <button className="ot-link-btn" type="button" onClick={() => setShowBulk(true)}>
+                <button className="ot-link-btn" type="button" onClick={() => dispatch(openModal('bulkInvite'))}>
                   <Upload size={13} /> Bulk invite
                 </button>
               </div>
@@ -1069,9 +1079,9 @@ export default function OrgTeam() {
               <div className="ot-table-header-actions">
                 <div className="ot-search-wrap">
                   <Search className="ot-search-icon" size={14} />
-                  <input className="ot-search" placeholder="Search by name or email" value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <input className="ot-search" placeholder="Search by name or email" value={search} onChange={(e) => dispatch(setSearch(e.target.value))} />
                 </div>
-                <select className="ot-role-filter" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+                <select className="ot-role-filter" value={roleFilter} onChange={(e) => dispatch(setRoleFilter(e.target.value))}>
                   <option value="all">All roles</option>
                   <option value="org_admin">Org Admin</option>
                   <option value="editor">Editor</option>
@@ -1138,7 +1148,7 @@ export default function OrgTeam() {
                           <div className="ot-row-actions">
                             {canEdit && (
                               <RowMenu member={m} currentUserId={user?.id}
-                                onEdit={(mem) => setEditTarget(mem)}
+                                onEdit={(mem) => dispatch(openEditModal(mem.id))}
                                 onDelete={remove}
                                 onChangeRole={changeRole}
                                 onResendInvite={resendInvite}
@@ -1207,7 +1217,7 @@ export default function OrgTeam() {
                 <Sparkles size={17} className="ot-activity-spark" />
                 <span className="ot-sidebar-title">Recent activity</span>
               </div>
-              <button className="ot-view-all-btn-inline" onClick={() => setShowAudit(true)}>View all</button>
+              <button className="ot-view-all-btn-inline" onClick={() => dispatch(openModal('auditLog'))}>View all</button>
             </div>
             {loading ? (
               <div className="ot-activity-skeleton">
@@ -1256,10 +1266,10 @@ export default function OrgTeam() {
             </div>
             <div className="ot-qa-grid">
               {[
-                { Icon: Mail,        iconBg: '#eff6ff', iconColor: '#3b82f6', label: 'Bulk invite',  desc: 'Upload CSV',      onClick: () => setShowBulk(true) },
-                { Icon: ShieldCheck, iconBg: '#fff7ed', iconColor: '#f97316', label: 'Audit log',    desc: 'Last 30 days',    onClick: () => setShowAudit(true) },
-                { Icon: Key,         iconBg: '#f0fdf4', iconColor: '#10b981', label: 'SSO setup',    desc: 'SAML / OIDC',     onClick: () => setShowSSO(true) },
-                { Icon: Users,       iconBg: '#f5f3ff', iconColor: '#8b5cf6', label: 'Permissions',  desc: 'Configure',       onClick: () => setShowPerms(true) },
+                { Icon: Mail,        iconBg: '#eff6ff', iconColor: '#3b82f6', label: 'Bulk invite',  desc: 'Upload CSV',      onClick: () => dispatch(openModal('bulkInvite')) },
+                { Icon: ShieldCheck, iconBg: '#fff7ed', iconColor: '#f97316', label: 'Audit log',    desc: 'Last 30 days',    onClick: () => dispatch(openModal('auditLog')) },
+                { Icon: Key,         iconBg: '#f0fdf4', iconColor: '#10b981', label: 'SSO setup',    desc: 'SAML / OIDC',     onClick: () => dispatch(openModal('sso')) },
+                { Icon: Users,       iconBg: '#f5f3ff', iconColor: '#8b5cf6', label: 'Permissions',  desc: 'Configure',       onClick: () => dispatch(openModal('permissions')) },
               ].map(({ Icon, iconBg, iconColor, label, desc, onClick }) => (
                 <button key={label} className="ot-qa-item" onClick={onClick} type="button">
                   <div className="ot-qa-icon" style={{ background: iconBg }}><Icon size={20} style={{ color: iconColor }} /></div>
@@ -1274,20 +1284,22 @@ export default function OrgTeam() {
       </div>
 
       {/* ── Modals ── */}
-      {editTarget && (
+      {activeModal === 'editUser' && editingMemberId && (
         <EditUserModal
-          member={editTarget}
-          onClose={() => setEditTarget(null)}
+          member={members.find(m => m.id === editingMemberId) || {}}
+          onClose={() => dispatch(closeModal())}
           onSaved={() => {
-            toast(`${editTarget.name || editTarget.email} updated successfully.`, 'success');
+            const mem = members.find(m => m.id === editingMemberId);
+            toast(`${mem?.name || mem?.email || 'User'} updated successfully.`, 'success');
             load();
+            dispatch(closeModal());
           }}
         />
       )}
-      {showBulk  && <BulkInviteModal  onClose={() => setShowBulk(false)}  onDone={load} />}
-      {showAudit && <AuditLogModal    onClose={() => setShowAudit(false)} />}
-      {showSSO   && <SSOModal         onClose={() => setShowSSO(false)} />}
-      {showPerms && <PermissionsModal onClose={() => setShowPerms(false)} />}
+      {activeModal === 'bulkInvite' && <BulkInviteModal  onClose={() => dispatch(closeModal())}  onDone={load} />}
+      {activeModal === 'auditLog'   && <AuditLogModal    onClose={() => dispatch(closeModal())} />}
+      {activeModal === 'sso'        && <SSOModal         onClose={() => dispatch(closeModal())} />}
+      {activeModal === 'permissions' && <PermissionsModal onClose={() => dispatch(closeModal())} />}
 
       {/* ── Remove member confirmation modal ── */}
       <ConfirmModal

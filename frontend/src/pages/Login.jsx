@@ -1,27 +1,51 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import {
+  loginUser,
+  clearAuthError,
+  selectAuthError,
+  selectAuthLoading,
+  selectIsAuthenticated,
+} from '../features/auth/authSlice';
+import { showToast } from '../slices/uiSlice';
 import './Login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [toast, setToast] = useState({ open: false, message: '' });
-  const toastTimerRef = useRef(null);
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const location = useLocation();
+  const dispatch = useAppDispatch();
 
-  // Prevent timer leakage across remounts (doesn't affect navigation, just UI robustness).
-  React.useEffect(() => {
+  const authError      = useAppSelector(selectAuthError);
+  const isLoading      = useAppSelector(selectAuthLoading);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+
+  const [email, setEmail]               = useState('');
+  const [password, setPassword]         = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError]     = useState('');
+  const [toast, setToast]               = useState({ open: false, message: '' });
+  const toastTimerRef                   = useRef(null);
+
+  // Clean up any leftover error from a previous session when the form mounts.
+  useEffect(() => {
+    if (authError) dispatch(clearAuthError());
     return () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const showToast = (message) => {
+  // Once Redux confirms the user is authenticated, redirect.
+  // `replace: true` so the back button doesn't return to /login.
+  // We honor the redirect path the guard captured (location.state.from).
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const target = location.state?.from?.pathname ?? '/';
+    navigate(target, { replace: true });
+  }, [isAuthenticated, navigate, location.state]);
+
+  const showInlineToast = (message) => {
     setToast({ open: true, message });
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = window.setTimeout(() => {
@@ -31,48 +55,41 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setLocalError('');
 
-    try {
-      if (!email || !password) {
-        setError('Please enter email and password');
-        return;
-      }
+    if (!email || !password) {
+      setLocalError('Please enter email and password');
+      return;
+    }
 
-      const response = await api.post('/auth/login', { email, password });
-      const payload = response.data?.data ?? response.data;
-      const token = payload?.token;
+    const result = await dispatch(loginUser({ email, password }));
 
-      if (!token) throw new Error('Login failed: missing token from server response.');
+    if (loginUser.fulfilled.match(result)) {
+      // Redirect happens via the useEffect above as soon as
+      // selectIsAuthenticated flips to true.
+      dispatch(showToast({ type: 'success', message: 'Welcome back!' }));
+      return;
+    }
 
-      localStorage.setItem('token', token);
-      if (payload?.user) setUser(payload.user);
-      else {
-        const me = await api.get('/auth/me');
-        setUser(me.data?.data ?? me.data);
-      }
-      navigate('/');
-    } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Login failed';
-      setError(msg);
-
-      // If password is incorrect, backend returns 401 with "Invalid email or password".
-      // Trigger a toast for better UX.
-      const status = err.response?.status;
-      const lower = String(msg).toLowerCase();
-      if (status === 401 || lower.includes('invalid email or password') || lower.includes('invalid')) {
-        showToast('Invalid email or password. Please try again.');
-      }
+    // Rejected — surface the error inline AND via toast for invalid creds.
+    const message = result.payload || 'Login failed';
+    const lower   = String(message).toLowerCase();
+    if (lower.includes('invalid')) {
+      showInlineToast('Invalid email or password. Please try again.');
     }
   };
+
+  const displayedError = localError || authError;
 
   return (
     <div className="login-container">
       {toast.open && <div className="auth-toast">{toast.message}</div>}
       <div className="login-card">
         <h2>Log in</h2>
-        <p className="login-subtitle">Access your PDFs, conversions, and accessibility tools securely.</p>
-        {error && <div className="auth-error">{error}</div>}
+        <p className="login-subtitle">
+          Access your PDFs, conversions, and accessibility tools securely.
+        </p>
+        {displayedError && <div className="auth-error">{displayedError}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
@@ -81,7 +98,9 @@ const Login = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              autoComplete="email"
               required
+              disabled={isLoading}
             />
           </div>
           <div className="form-group">
@@ -92,27 +111,39 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 required
+                disabled={isLoading}
               />
               <button
                 type="button"
                 className="pw-toggle-btn"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                disabled={isLoading}
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
           </div>
           <div className="auth-actions">
-            <button type="submit" className="auth-btn auth-btn-primary">
-            Login
+            <button
+              type="submit"
+              className="auth-btn auth-btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in…' : 'Login'}
             </button>
           </div>
         </form>
         <div className="auth-footer">
           <span>Don't have an account?</span>
-          <button type="button" className="auth-link-button" onClick={() => navigate('/register')}>
+          <button
+            type="button"
+            className="auth-link-button"
+            onClick={() => navigate('/register')}
+            disabled={isLoading}
+          >
             Create one
           </button>
         </div>
@@ -122,14 +153,3 @@ const Login = () => {
 };
 
 export default Login;
-
-
-
-
-
-
-
-
-
-
-

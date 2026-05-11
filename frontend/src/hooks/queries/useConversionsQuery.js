@@ -31,19 +31,24 @@ function hasActiveJobs(jobs) {
 
 /* ─── Merge + deduplicate reflow and FXL jobs ─────────────────── */
 function mergeJobs(reflowJobs, fxlJobs) {
-  const reflow = (Array.isArray(reflowJobs) ? reflowJobs : []).map(j => ({
-    ...j,
-    jobType: j.jobType ?? 'REFLOW',
-  }));
-  const fxl = (Array.isArray(fxlJobs) ? fxlJobs : []).map(j => ({
-    ...j,
-    jobType: 'FXL',
-    pdfDocumentId: j.pdfDocumentId ?? j.pdfId,
-  }));
+  const reflow = (Array.isArray(reflowJobs) ? reflowJobs : [])
+    .filter(Boolean)
+    .map(j => ({
+      ...j,
+      jobType: j.jobType ?? 'REFLOW',
+    }));
+  const fxl = (Array.isArray(fxlJobs) ? fxlJobs : [])
+    .filter(Boolean)
+    .map(j => ({
+      ...j,
+      jobType: 'FXL',
+      pdfDocumentId: j.pdfDocumentId ?? j.pdfId,
+    }));
 
   // Deduplicate by composite key
   const seen = new Set();
   const merged = [...reflow, ...fxl].filter(j => {
+    if (!j) return false;
     const key = `${j.jobType}-${j.id ?? j.jobId}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -60,8 +65,8 @@ function mergeJobs(reflowJobs, fxlJobs) {
   return merged;
 }
 
-/* ─── The single fetch function ───────────────────────────────── */
-async function fetchAllJobs() {
+/* ─── The single fetch function (exported for cache prefetch in OrgAdminLayout) ─ */
+export async function fetchAllJobs() {
   const [reflowRes, fxlRes] = await Promise.all([
     api.get('/conversions').then(r => r.data?.data ?? r.data ?? []).catch(() => []),
     api.get('/kitaboo/jobs').then(r => r.data?.data ?? r.data ?? []).catch(() => []),
@@ -77,15 +82,17 @@ export function useConversionsQuery({ statusFilter = 'all', enabled = true } = {
     queryKey: queryKeys.conversions.list(),   // ← always the same key
     queryFn:  fetchAllJobs,
     enabled,
-    staleTime:            2 * 60 * 1000,      // 2 min
-    refetchOnWindowFocus: false,
-    refetchOnReconnect:   false,
+    staleTime:            0,                  // always refetch on mount so new jobs appear immediately
+    gcTime:               10 * 60 * 1000,     // keep cache for 10 min
+    refetchOnWindowFocus: true,               // pick up changes when user returns to tab
+    refetchOnReconnect:   true,
     refetchOnMount:       true,
-    // Poll every 5 s only while active jobs exist; stop when all terminal
+    // Poll every 3 s while active jobs exist; stop when all terminal
     refetchInterval: (q) => {
       const jobs = q.state.data;
-      return hasActiveJobs(jobs) ? 5000 : false;
+      return hasActiveJobs(jobs) ? 3000 : false;
     },
+    refetchIntervalInBackground: true,        // keep polling even when tab is not focused
   });
 
   const allJobs = query.data ?? [];

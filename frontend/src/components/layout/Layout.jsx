@@ -29,12 +29,39 @@ const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const queryClient = useQueryClient();
 
-  // Sidebar badges — read from the shared React Query cache (no extra fetch)
-  const sidebarPdfCount        = 0; // PDFs badge not critical; skip extra fetch
-  const sidebarConversionCount = (() => {
-    const cached = queryClient.getQueryData(queryKeys.conversions.list());
-    return Array.isArray(cached) ? cached.length : 0;
-  })();
+  // Sidebar badges — subscribe to cache reactively without triggering a fetch
+  const [sidebarPdfCount, setSidebarPdfCount] = useState(() => {
+    const d = queryClient.getQueryData(queryKeys.pdfs.list());
+    return Array.isArray(d) ? d.length : 0;
+  });
+  const [sidebarConversionCount, setSidebarConversionCount] = useState(() => {
+    const d = queryClient.getQueryData(queryKeys.conversions.list());
+    return Array.isArray(d) ? d.length : 0;
+  });
+
+  useEffect(() => {
+    const pdfKey        = JSON.stringify(queryKeys.pdfs.list());
+    const conversionKey = JSON.stringify(queryKeys.conversions.list());
+
+    const unsub = queryClient.getQueryCache().subscribe((event) => {
+      const key = JSON.stringify(event?.query?.queryKey);
+      // Defer setState out of any ongoing render cycle to avoid
+      // "Cannot update a component while rendering a different component"
+      if (key === pdfKey) {
+        queueMicrotask(() => {
+          const d = queryClient.getQueryData(queryKeys.pdfs.list());
+          setSidebarPdfCount(Array.isArray(d) ? d.length : 0);
+        });
+      }
+      if (key === conversionKey) {
+        queueMicrotask(() => {
+          const d = queryClient.getQueryData(queryKeys.conversions.list());
+          setSidebarConversionCount(Array.isArray(d) ? d.length : 0);
+        });
+      }
+    });
+    return unsub;
+  }, [queryClient]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!user) void refreshUser();
@@ -42,13 +69,6 @@ const Layout = () => {
 
   const isPlatformAdmin = user?.role === 'platform_admin';
   const isOrgAdmin      = user?.role === 'org_admin';
-
-  const hideFullScreenPage =
-    location.pathname.startsWith('/sync-studio') ||
-    location.pathname.startsWith('/reader/epub') ||
-    location.pathname.startsWith('/epub-image-editor') ||
-    location.pathname.startsWith('/kitaboo-studio') ||
-    location.pathname.startsWith('/fxl-sync-studio');
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -64,16 +84,6 @@ const Layout = () => {
   const handleSidebarCollapse = useCallback((collapsed) => {
     setSidebarCollapsed(collapsed);
   }, []);
-
-  if (hideFullScreenPage) {
-    return (
-      <div className="layout layout-fullscreen">
-        <main className="main-content main-content-fullscreen">
-          <Outlet />
-        </main>
-      </div>
-    );
-  }
 
   const showConversion   = !isPlatformAdmin && hasFeature(user, 'conversion.basic');
   const showEpubTools    = !isPlatformAdmin && hasFeature(user, 'epub_tools');

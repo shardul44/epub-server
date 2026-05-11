@@ -13,6 +13,7 @@ import {
   Calculator,
   Check,
   ChevronLeft,
+  Download,
   ExternalLink,
   FileText,
   Loader2,
@@ -25,13 +26,14 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-
-const fxlIc = { strokeWidth: 2, 'aria-hidden': true };
 import api, { API_BASE_URL } from '../services/api';
 import { withAuthImageQuery } from '../utils/authImageUrl';
 import { buildEpubReaderPath } from '../utils/epubReaderUrl';
 import { getPageNumFromZoneId, buildZoneIdToPageMap } from '../utils/kitabooZonePageId';
+import { useWorkflowNavigation } from '../hooks/useWorkflowNavigation';
 import './FxlSyncStudio.css';
+
+const fxlIc = { strokeWidth: 2, 'aria-hidden': true };
 
 const backendOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
 const apiBaseEndsWithApi = /\/api\/?$/.test(API_BASE_URL);
@@ -52,6 +54,7 @@ const resolveBackendUrl = (url) => {
 export default function FxlSyncStudio() {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const { goToDownload } = useWorkflowNavigation();
   const waveformRef = useRef(null);
   const wavesurferRef = useRef(null);
   const regionsPluginRef = useRef(null);
@@ -74,8 +77,7 @@ export default function FxlSyncStudio() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [showManualConfig, setShowManualConfig] = useState(false);
-  const [manualConfig, setManualConfig] = useState({ skipPages: [], pageBoundaries: {} });
-  const [boundaryMode, setBoundaryMode] = useState('timing'); // 'timing' | 'perPage'
+  const [manualConfig, setManualConfig] = useState({ skipPages: [] });
   const [perPageFiles, setPerPageFiles] = useState({}); // { pageNumber: File }
   const [pagesWithPerPageAudio, setPagesWithPerPageAudio] = useState([]); // page numbers that already have page_N.mp3
   const [uploadingPerPage, setUploadingPerPage] = useState(false);
@@ -127,6 +129,12 @@ export default function FxlSyncStudio() {
   const loadSyncStudioData = useCallback(async () => {
     setLoading(true);
     setError('');
+    const numericJobId = parseInt(String(jobId), 10);
+    if (jobId == null || jobId === '' || Number.isNaN(numericJobId)) {
+      setError('Invalid job ID in the URL.');
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.get(`/kitaboo/sync-studio/${jobId}`, {
         params: { _t: Date.now() },
@@ -322,10 +330,6 @@ export default function FxlSyncStudio() {
         body.skipPages = config.skipPages || [];
         if (config.usePerPageAudio) {
           body.usePerPageAudio = true;
-        } else if (Array.isArray(config.pageBoundaries) && config.pageBoundaries.length > 0) {
-          body.pageBoundaries = config.pageBoundaries
-            .filter(b => b.page != null && !config.skipPages.includes(b.page) && Number(b.start) >= 0)
-            .map(b => ({ page: Number(b.page), start: Number(b.start), end: Number(b.end) || audioDuration }));
         }
       }
       const res = await api.post(`/kitaboo/sync-studio/${jobId}/align`, body, { timeout: 600000 });
@@ -367,17 +371,7 @@ export default function FxlSyncStudio() {
   };
 
   const openManualConfig = async () => {
-    const pageBoundaries = {};
-    pages.forEach((p, i) => {
-      const pageNum = p.pageNumber;
-      const pageSegs = segments.filter(s => getPageNumFromZoneId(s.id, zoneIdToPageMap) === pageNum);
-      let start = pageSegs.length ? Math.min(...pageSegs.map(s => Number(s.startTime) || 0)) : null;
-      let end = pageSegs.length ? Math.max(...pageSegs.map(s => Number(s.endTime) || 0)) : null;
-      if (start == null) start = i === 0 ? 0 : '';
-      if (end == null) end = (i === pages.length - 1 && audioDuration > 0) ? audioDuration : '';
-      pageBoundaries[pageNum] = { start, end };
-    });
-    setManualConfig({ skipPages: [], pageBoundaries });
+    setManualConfig({ skipPages: [] });
     setPerPageFiles({});
     setShowManualConfig(true);
     try {
@@ -403,11 +397,18 @@ export default function FxlSyncStudio() {
       await api.put(`/kitaboo/sync-studio/${jobId}`, { segments: normalized });
       setSaveSuccess(true);
       setSuccess('Alignment saved. Re-export FXL EPUB in Zoning Studio to apply.');
+      return true;
     } catch (e) {
       setError(e.response?.data?.error || e.response?.data?.message || e.message || 'Save failed');
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveAndGoToDownload = async () => {
+    const ok = await handleSave();
+    if (ok) goToDownload({ id: jobId, jobType: 'FXL' });
   };
 
   const handleClearAll = async () => {
@@ -564,50 +565,63 @@ export default function FxlSyncStudio() {
           </button>
           <h1>FXL Sync Studio</h1>
           <span className="job-badge">Job #{jobId}</span>
-        </div>
-        <div className="header-right">
-          {!effectiveAudioUrl && (
-            <span className="no-audio-hint">Upload narration.mp3 in Zoning Studio (one file for all pages) or use Configure page boundaries → MP3 per page.</span>
-          )}
           <button
             type="button"
-            onClick={() => handleRunAlignment(false)}
-            disabled={!audioUrl || aligning}
-            className="btn-align"
-            title="Run automatic alignment (requires single narration file)"
-            style={{ display: 'none' }}
+            className="btn-download-epub"
+            onClick={handleSaveAndGoToDownload}
+            disabled={saving || !segments.length}
+            title="Save alignment, then open Download EPUB for this job"
           >
-            {aligning ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Calculator size={18} {...fxlIc} />}
-            {aligning ? 'Aligning...' : 'Run alignment (auto)'}
+            {saving ? (
+              <><Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> Saving…</>
+            ) : (
+              <><Download size={18} {...fxlIc} /> Save & Download EPUB</>
+            )}
           </button>
-          <button
-            type="button"
-            onClick={openManualConfig}
-            disabled={!pages.length}
-            className="btn-align btn-manual-config"
-            title="Configure page boundaries or upload MP3 per page"
-          >
-            Configure page boundaries
-          </button>
-          <button type="button" onClick={handleSave} disabled={saving || !segments.length} className="btn-save">
-            {saving ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Save size={18} {...fxlIc} />}
-            {saving ? 'Saving...' : 'Save alignment'}
-          </button>
-          <button type="button" onClick={handleClearAll} disabled={saving || !segments.length} className="btn-clear" title="Clear all alignment data">
-            <Trash2 size={18} {...fxlIc} /> Clear all data
-          </button>
-          <div className="manual-sync-group">
-            <span className="manual-sync-label"><MousePointerClick size={18} {...fxlIc} /> Manual sync</span>
-            <button type="button" onClick={setStartAtPlayhead} disabled={!effectiveAudioUrl || !selectedZoneId} className="btn-manual" title="Set selected zone start to current playhead">
-              Set start
-            </button>
-            <button type="button" onClick={setEndAtPlayhead} disabled={!effectiveAudioUrl || !selectedZoneId} className="btn-manual" title="Set selected zone end to current playhead">
-              Set end
-            </button>
-            <span className="manual-sync-hint">or Space ×2</span>
-          </div>
         </div>
       </header>
+      <div className="studio-content-header">
+        {/* {!effectiveAudioUrl && (
+          <span className="no-audio-hint">Upload narration.mp3 in Zoning Studio (one file for all pages) or use Configure page boundaries → MP3 per page.</span>
+        )} */}
+        <button
+          type="button"
+          onClick={() => handleRunAlignment(false)}
+          disabled={!audioUrl || aligning}
+          className="btn-align"
+          title="Run automatic alignment (requires single narration file)"
+          style={{ display: 'none' }}
+        >
+          {aligning ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Calculator size={18} {...fxlIc} />}
+          {aligning ? 'Aligning...' : 'Run alignment (auto)'}
+        </button>
+        <button
+          type="button"
+          onClick={openManualConfig}
+          disabled={!pages.length}
+          className="btn-align btn-manual-config"
+          title="Configure page boundaries or upload MP3 per page"
+        >
+          Configure page boundaries
+        </button>
+        <button type="button" onClick={handleSave} disabled={saving || !segments.length} className="btn-save">
+          {saving ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Save size={18} {...fxlIc} />}
+          {saving ? 'Saving...' : 'Save alignment'}
+        </button>
+        <button type="button" onClick={handleClearAll} disabled={saving || !segments.length} className="btn-clear" title="Clear all alignment data">
+          <Trash2 size={18} {...fxlIc} /> Clear all data
+        </button>
+        <div className="manual-sync-group">
+          <span className="manual-sync-label"><MousePointerClick size={18} {...fxlIc} /> Manual sync</span>
+          <button type="button" onClick={setStartAtPlayhead} disabled={!effectiveAudioUrl || !selectedZoneId} className="btn-manual" title="Set selected zone start to current playhead">
+            Set start
+          </button>
+          <button type="button" onClick={setEndAtPlayhead} disabled={!effectiveAudioUrl || !selectedZoneId} className="btn-manual" title="Set selected zone end to current playhead">
+            Set end
+          </button>
+          <span className="manual-sync-hint">or Space ×2</span>
+        </div>
+      </div>
 
       {error && (
         <div className="error-banner" role="alert">
@@ -707,7 +721,7 @@ export default function FxlSyncStudio() {
 
         <main className="waveform-panel">
           <div className="waveform-panel-header">
-            <span className="panel-header">Timeline</span>
+            <span className="waveform-panel-title">Timeline</span>
             <div className="waveform-toolbar">
               <div className="playback-controls">
                 <button type="button" onClick={() => wavesurferRef.current?.play()} disabled={!effectiveAudioUrl || !isReady || isPlaying} className="btn-playback" title="Play">
@@ -731,19 +745,21 @@ export default function FxlSyncStudio() {
               </div>
             </div>
           </div>
-          {effectiveAudioUrl ? (
-            <>
-              <div ref={waveformRef} className="waveform-container" />
-              <div className="fxl-timeline-placeholder">
-                <p className="fxl-timeline-placeholder-title">Audio timeline</p>
-                <p className="fxl-timeline-placeholder-text">
-                  The waveform stays above. This area is not a broken preview — FXL Sync Studio focuses on timing here. To see the full fixed-layout page while you work, open <strong>Reader</strong> (top left) or use the <strong>Open in new tab</strong> button beside it.
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="no-audio">Upload narration.mp3 in Zoning Studio or use Configure page boundaries → MP3 per page to see waveform.</div>
-          )}
+          <div className="waveform-panel-body">
+            {effectiveAudioUrl ? (
+              <>
+                <div ref={waveformRef} className="waveform-container" />
+                <div className="fxl-timeline-placeholder">
+                  <p className="fxl-timeline-placeholder-title">Audio timeline</p>
+                  <p className="fxl-timeline-placeholder-text">
+                    The waveform stays above. This area is not a broken preview — FXL Sync Studio focuses on timing here. To see the full fixed-layout page while you work, open <strong>Reader</strong> (top left) or use the <strong>Open in new tab</strong> button beside it.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="no-audio">Upload narration.mp3 in Zoning Studio or use Configure page boundaries → MP3 per page to see waveform.</div>
+            )}
+          </div>
         </main>
 
         <aside className="right-panel">
@@ -782,52 +798,16 @@ export default function FxlSyncStudio() {
         <div className="manual-config-overlay" onClick={() => setShowManualConfig(false)}>
           <div className="manual-config-modal" onClick={e => e.stopPropagation()}>
             <h3>Manual Page Boundaries</h3>
-            <div className="manual-config-mode">
-              <label className="manual-config-mode-option">
-                <input
-                  type="radio"
-                  name="boundaryMode"
-                  checked={boundaryMode === 'timing'}
-                  onChange={() => setBoundaryMode('timing')}
-                />
-                <span>Single audio + page timings (enter start/end seconds per page)</span>
-              </label>
-              <label className="manual-config-mode-option">
-                <input
-                  type="radio"
-                  name="boundaryMode"
-                  checked={boundaryMode === 'perPage'}
-                  onChange={() => setBoundaryMode('perPage')}
-                />
-                <span>MP3 per page (upload one audio file per page)</span>
-              </label>
-            </div>
-            {boundaryMode === 'timing' && (
-              <>
-                <p className="manual-config-hint">
-                  Specify which pages to skip and start/end times (seconds) for each page. Auto-sync will run per page within the given clip.
-                </p>
-                <p className="manual-config-audio">Audio duration: {audioDuration.toFixed(1)}s</p>
-              </>
-            )}
-            {boundaryMode === 'perPage' && (
-              <p className="manual-config-hint">
-                Upload an MP3 (or WAV/M4A) for each page. Pages with a file will be aligned individually. Skip pages that have no narration.
-              </p>
-            )}
+            <p className="manual-config-hint">
+              Upload an MP3 (or WAV/M4A) for each page. Pages with a file will be aligned individually. Skip pages that have no narration.
+            </p>
             <div className="manual-config-table-wrap">
               <table className="manual-config-table">
                 <thead>
                   <tr>
                     <th>Page</th>
                     <th>Skip</th>
-                    {boundaryMode === 'timing' && (
-                      <>
-                        <th>Start (s)</th>
-                        <th>End (s)</th>
-                      </>
-                    )}
-                    {boundaryMode === 'perPage' && <th>MP3 file</th>}
+                    <th>MP3 file</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -849,72 +829,14 @@ export default function FxlSyncStudio() {
                           }}
                         />
                       </td>
-                      {boundaryMode === 'timing' && (
-                        <>
-                          <td>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="0"
-                              value={manualConfig.pageBoundaries?.[p.pageNumber]?.start ?? ''}
-                              onChange={e => setManualConfig(prev => ({
-                                ...prev,
-                                pageBoundaries: {
-                                  ...(prev.pageBoundaries || {}),
-                                  [p.pageNumber]: {
-                                    ...(prev.pageBoundaries?.[p.pageNumber] || {}),
-                                    start: e.target.value
-                                  }
-                                }
-                              }))}
-                              disabled={(manualConfig.skipPages || []).includes(p.pageNumber)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder={p.pageNumber === pages[pages.length - 1]?.pageNumber ? audioDuration.toFixed(1) : 'next start'}
-                              value={manualConfig.pageBoundaries?.[p.pageNumber]?.end ?? ''}
-                              onChange={e => setManualConfig(prev => ({
-                                ...prev,
-                                pageBoundaries: {
-                                  ...(prev.pageBoundaries || {}),
-                                  [p.pageNumber]: {
-                                    ...(prev.pageBoundaries?.[p.pageNumber] || {}),
-                                    end: e.target.value
-                                  }
-                                }
-                              }))}
-                              disabled={(manualConfig.skipPages || []).includes(p.pageNumber)}
-                            />
-                          </td>
-                        </>
-                      )}
-                      {boundaryMode === 'perPage' && (
-                        <td>
-                          {pagesWithPerPageAudio.includes(p.pageNumber) && !perPageFiles[p.pageNumber] ? (
-                            <span className="per-page-uploaded-cell">
-                              <span className="per-page-uploaded">
-                                <Check size={14} strokeWidth={2.5} aria-hidden />
-                                Uploaded
-                              </span>
-                              <label className="per-page-upload-label per-page-replace-label">
-                                <input
-                                  type="file"
-                                  accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4"
-                                  onChange={e => {
-                                    const file = e.target.files?.[0];
-                                    setPerPageFiles(prev => (file ? { ...prev, [p.pageNumber]: file } : { ...prev, [p.pageNumber]: undefined }));
-                                  }}
-                                />
-                                <span className="per-page-upload-btn">Replace</span>
-                              </label>
+                      <td>
+                        {pagesWithPerPageAudio.includes(p.pageNumber) && !perPageFiles[p.pageNumber] ? (
+                          <span className="per-page-uploaded-cell">
+                            <span className="per-page-uploaded">
+                              <Check size={14} strokeWidth={2.5} aria-hidden />
+                              Uploaded
                             </span>
-                          ) : (
-                            <label className="per-page-upload-label">
+                            <label className="per-page-upload-label per-page-replace-label">
                               <input
                                 type="file"
                                 accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4"
@@ -923,13 +845,25 @@ export default function FxlSyncStudio() {
                                   setPerPageFiles(prev => (file ? { ...prev, [p.pageNumber]: file } : { ...prev, [p.pageNumber]: undefined }));
                                 }}
                               />
-                              <span className="per-page-upload-btn">
-                                {perPageFiles[p.pageNumber] ? perPageFiles[p.pageNumber].name : 'Choose file'}
-                              </span>
+                              <span className="per-page-upload-btn">Replace</span>
                             </label>
-                          )}
-                        </td>
-                      )}
+                          </span>
+                        ) : (
+                          <label className="per-page-upload-label">
+                            <input
+                              type="file"
+                              accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                setPerPageFiles(prev => (file ? { ...prev, [p.pageNumber]: file } : { ...prev, [p.pageNumber]: undefined }));
+                              }}
+                            />
+                            <span className="per-page-upload-btn">
+                              {perPageFiles[p.pageNumber] ? perPageFiles[p.pageNumber].name : 'Choose file'}
+                            </span>
+                          </label>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -937,66 +871,29 @@ export default function FxlSyncStudio() {
             </div>
             <div className="manual-config-actions">
               <button type="button" onClick={() => setShowManualConfig(false)}>Cancel</button>
-              {boundaryMode === 'timing' && (
-                <button
-                  type="button"
-                  className="btn-align"
-                  disabled={aligning}
-                  onClick={() => {
-                    const included = pages.filter(p => !(manualConfig.skipPages || []).includes(p.pageNumber));
-                    const lastPageNum = pages[pages.length - 1]?.pageNumber;
-                    const pageBoundaries = included.map((p, i) => {
-                      const b = manualConfig.pageBoundaries?.[p.pageNumber] || {};
-                      const start = Number(b.start);
-                      let end = Number(b.end);
-                      if (!end || end <= start) {
-                        end = i < included.length - 1
-                          ? Number(manualConfig.pageBoundaries?.[included[i + 1]?.pageNumber]?.start) || start + 1
-                          : audioDuration || start + 10;
-                      }
-                      return { page: p.pageNumber, start: isNaN(start) ? 0 : start, end };
-                    }).filter(b => b.start >= 0 && b.end > b.start);
-                    handleRunAlignment(true, { skipPages: manualConfig.skipPages || [], pageBoundaries });
-                  }}
-                >
-                  {aligning ? (
-                    <>
-                      <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
-                      Aligning…
-                    </>
-                  ) : (
-                    <>
-                      <Calculator size={18} {...fxlIc} />
-                      Run alignment with these boundaries
-                    </>
-                  )}
-                </button>
-              )}
-              {boundaryMode === 'perPage' && (
-                <button
-                  type="button"
-                  className="btn-align"
-                  disabled={aligning || uploadingPerPage || (pagesWithPerPageAudio.length === 0 && !Object.values(perPageFiles).some(f => f instanceof File))}
-                  onClick={handlePerPageUploadAndAlign}
-                >
-                  {uploadingPerPage ? (
-                    <>
-                      <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
-                      Uploading…
-                    </>
-                  ) : aligning ? (
-                    <>
-                      <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
-                      Aligning…
-                    </>
-                  ) : (
-                    <>
-                      <Upload size={18} {...fxlIc} />
-                      Upload & run alignment
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn-align"
+                disabled={aligning || uploadingPerPage || (pagesWithPerPageAudio.length === 0 && !Object.values(perPageFiles).some(f => f instanceof File))}
+                onClick={handlePerPageUploadAndAlign}
+              >
+                {uploadingPerPage ? (
+                  <>
+                    <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+                    Uploading…
+                  </>
+                ) : aligning ? (
+                  <>
+                    <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+                    Aligning…
+                  </>
+                ) : (
+                  <>
+                    <Upload size={18} {...fxlIc} />
+                    Upload & run alignment
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

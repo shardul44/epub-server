@@ -1,14 +1,10 @@
 /**
- * Typed selector hook — use this everywhere instead of plain useSelector.
- * Centralises the selector pattern and makes future TypeScript migration trivial.
+ * Legacy entry point — re-exports the typed selector from store/hooks.
+ * Existing imports from `hooks/useAppSelector` continue to work.
+ * New code should prefer:
+ *   import { useAppSelector } from '@/store/hooks';
  */
-import { useSelector } from 'react-redux';
+import { useAppSelector } from '../store/hooks';
 
-/**
- * @template T
- * @param {(state: import('../store/store').default) => T} selector
- * @returns {T}
- */
-const useAppSelector = (selector) => useSelector(selector);
-
+export { useAppSelector };
 export default useAppSelector;

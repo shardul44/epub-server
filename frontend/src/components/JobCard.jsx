@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import styles from './JobCard.module.css';
 import { loadStoredJobThumb, saveStoredJobThumb } from '../utils/jobCardThumb';
+import { isFixedLayout } from '../hooks/useConversionActions';
 
 /** Resize to JPEG data URL for localStorage; keeps payload small. */
 const fileToResizedDataUrl = (file, maxWidth = 320, quality = 0.78) =>
@@ -92,7 +93,7 @@ const JobCard = ({
 }) => {
   const jobId      = job.id ?? job.jobId;
   const pct        = job.progressPercentage ?? 0;
-  const isFxl      = (job.jobType ?? job.type) === 'FXL';
+  const isFxl      = isFixedLayout(job);
   const retryCount = job.retryCount ?? 0;
   const canRetry   = retryCount < MAX_RETRIES;
 
@@ -268,7 +269,7 @@ const JobCard = ({
             onClick={(e) => { e.stopPropagation(); onOpenEditor?.(job); }}
           >
             <Image size={14} />
-            {isFxl ? 'Open FXL Studio' : 'Open Image Editor'}
+            {isFxl ? 'Open with Zones →' : 'Open Editor →'}
           </button>
         )}
         {job.status === 'IN_PROGRESS' && !isFxl && (

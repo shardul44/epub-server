@@ -17,7 +17,7 @@ export class EntitlementService {
   static async getFeatureKeysForUser(userRow) {
     if (!userRow) return [];
     if (userRow.role === ROLES.PLATFORM_ADMIN) {
-      return [];
+      return ['*']; // Platform admin has all features
     }
     const orgId = userRow.organization_id;
     if (!orgId) return [];

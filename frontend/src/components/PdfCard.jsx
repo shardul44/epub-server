@@ -11,8 +11,11 @@ import {
   MoreVertical,
   BookOpen,
 } from 'lucide-react';
-import api from '../services/api';
+import PdfThumbnail from './PdfThumbnail';
 import './PdfCard.css';
+
+// In-memory guard to prevent repeated thumbnail fetches for deleted/missing PDFs.
+const missingThumbnailPdfIds = new Set();
 
 /* ─────────────────────────────────────────────
    Shared helpers (exported so PdfList can reuse)
@@ -25,48 +28,69 @@ export const formatFileSize = (bytes) => {
 };
 
 export const cardGradients = [
-  'linear-gradient(135deg, #f6d365 0%, #e8a020 100%)',   // amber
-  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',   // pink-red
-  'linear-gradient(135deg, #4facfe 0%, #00c6fb 100%)',   // sky blue
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',   // green-teal
-  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',   // purple-pink
-  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',   // peach-purple
-  'linear-gradient(135deg, #6a85b6 0%, #bac8e0 100%)',   // steel blue
-  'linear-gradient(135deg, #fd7043 0%, #ff8a65 100%)',   // deep orange
+  'linear-gradient(135deg, #f6d365 0%, #e8a020 100%)',
+  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+  'linear-gradient(135deg, #4facfe 0%, #00c6fb 100%)',
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+  'linear-gradient(135deg, #6a85b6 0%, #bac8e0 100%)',
+  'linear-gradient(135deg, #fd7043 0%, #ff8a65 100%)',
 ];
 
 export const getGradient = (id) => cardGradients[(id || 0) % cardGradients.length];
 
 /* ─────────────────────────────────────────────
-   useThumbnail — loads the first-page PNG for a PDF.
-   Falls back to the gradient if the image fails or
-   hasn't loaded yet.
+   CardThumbnail — client-side PDF first-page preview
+   Uses pdfjs-dist to render the thumbnail entirely
+   in the browser. Falls back to gradient background
+   if the PDF URL is unavailable or rendering fails.
 ───────────────────────────────────────────── */
-const useThumbnail = (pdfId) => {
-  const [src, setSrc]       = useState(null);   // null = loading
-  const [failed, setFailed] = useState(false);
+const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
+  const notFoundHandledRef = useRef(false);
 
-  useEffect(() => {
-    if (!pdfId) return;
-    setSrc(null);
-    setFailed(false);
+  // Build a stable cache key from the PDF id so we don't re-render on every mount
+  const cacheKey = pdfId ? `pdf-thumb-card-${pdfId}` : null;
 
-    // Build the URL with the auth token as a query param (same pattern used
-    // elsewhere in the app for image endpoints that require auth).
-    const base  = (api.defaults.baseURL || '').replace(/\/$/, '');
-    const token = localStorage.getItem('token');
-    const url   = `${base}/pdfs/${pdfId}/page/1/thumbnail${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  // If this PDF already failed with 404 in this session, skip requesting again.
+  if (pdfId && missingThumbnailPdfIds.has(pdfId)) return null;
 
-    const img = new Image();
-    img.onload  = () => setSrc(url);
-    img.onerror = () => setFailed(true);
-    img.src = url;
+  // Use the /view endpoint — served inline with auth token in query param
+  const token = localStorage.getItem('token');
+  const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+  const pdfUrl = pdfId
+    ? `${base}/pdfs/${pdfId}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`
+    : null;
 
-    return () => { img.onload = null; img.onerror = null; };
-  }, [pdfId]);
+  if (!pdfUrl) return null;
 
-  return { src, failed, loading: !src && !failed };
-};
+  const handleError = (err) => {
+    // 404 means the file is gone from disk — remove the card entirely
+    if (err?.httpStatus === 404 || err?.message?.includes('404')) {
+      if (pdfId) missingThumbnailPdfIds.add(pdfId);
+      // Purge the stale thumbnail cache entry so it can't resurface
+      if (cacheKey) { try { localStorage.removeItem(cacheKey); } catch (_) { /* ignore */ } }
+      // Ensure callback fires once for this card instance.
+      if (!notFoundHandledRef.current) {
+        notFoundHandledRef.current = true;
+        onFileNotFound?.();
+      }
+    }
+  };
+
+  return (
+    <PdfThumbnail
+      url={pdfUrl}
+      width={400}
+      height={560}
+      scale={1.5}
+      cacheKey={cacheKey}
+      className="pdc-thumb-img"
+      alt=""
+      onError={handleError}
+    />
+  );
+});
 
 /* ─────────────────────────────────────────────
    Three-dot dropdown menu
@@ -162,13 +186,9 @@ MoreMenu.displayName = 'MoreMenu';
 /* ─────────────────────────────────────────────
    PdfCard
 ───────────────────────────────────────────── */
-const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload }) => {
+const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload, onFileNotFound }) => {
   const isFixed  = pdf.layoutType === 'FIXED_LAYOUT';
   const gradient = getGradient(pdf.id);
-  const { src: thumbSrc, failed: thumbFailed, loading: thumbLoading } = useThumbnail(pdf.id);
-
-  // Use real thumbnail when available; fall back to gradient
-  const hasThumbnail = thumbSrc && !thumbFailed;
 
   const handlePrimaryAction = useCallback(() => {
     if (isFixed) onHifi && onHifi(pdf);
@@ -186,16 +206,16 @@ const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload 
 
       {/* ── Book-style card ── */}
       <div
-        className={`pdc-book${hasThumbnail ? ' pdc-book--thumb' : ''}${thumbLoading ? ' pdc-book--loading' : ''}`}
-        style={hasThumbnail
-          ? { backgroundImage: `url(${thumbSrc})` }
-          : { background: gradient }
-        }
+        className="pdc-book"
+        style={{ background: gradient }}
         onClick={handlePrimaryAction}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && handlePrimaryAction()}
       >
+        {/* First-page thumbnail — absolutely fills the card, fades in when loaded */}
+        <CardThumbnail pdfId={pdf.id} onFileNotFound={onFileNotFound} />
+
         {/* Left spine shadow */}
         <div className="pdc-spine-left" aria-hidden="true" />
         {/* Right page highlight */}
@@ -211,7 +231,7 @@ const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload 
           </span>
         </div>
 
-        {/* Center content */}
+        {/* Center content — hidden when thumbnail is showing */}
         <div className="pdc-body">
           <div className="pdc-center-icon">
             <BookOpen size={28} aria-hidden="true" />

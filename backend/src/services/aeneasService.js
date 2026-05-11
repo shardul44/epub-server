@@ -59,31 +59,92 @@
  * Dependencies: Aeneas (pip install aeneas), eSpeak NG, FFmpeg.
  */
 
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 import { v4 as uuidv4 } from 'uuid';
 import { JSDOM } from 'jsdom';
 import { fileURLToPath } from 'url';
+import { ffmpegBin, ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const isWin = os.platform() === 'win32';
+
+/**
+ * Find a Python interpreter that can run `python -m aeneas.tools.execute_task`.
+ * Prefer explicit env, then common venv locations (repo root / backend / cwd).
+ */
+function resolvePythonForAeneas() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    return '/home/kodeit/public_html/epub-app/aeneas_env/bin/python';
+  }
+
+  const envExplicit = process.env.AENEAS_PYTHON || process.env.PYTHON_PATH;
+  if (envExplicit) {
+    const resolved = path.resolve(envExplicit);
+    if (existsSync(resolved)) return resolved;
+    console.warn(`[AeneasService] AENEAS_PYTHON / PYTHON_PATH set but not found: ${resolved}`);
+  }
+
+  const servicesDir = __dirname;
+  const backendDir = path.join(servicesDir, '..', '..');
+  const repoRoot = path.join(servicesDir, '..', '..', '..');
+  const cwd = process.cwd();
+
+  const winExe = ['python.exe', 'python3.exe'];
+  const unixExe = ['python3', 'python'];
+
+  const candidates = [];
+  const addWinVenv = (root) => {
+    for (const name of winExe) {
+      candidates.push(path.join(root, 'venv', 'Scripts', name));
+      candidates.push(path.join(root, '.venv', 'Scripts', name));
+    }
+  };
+  const addUnixVenv = (root) => {
+    for (const name of unixExe) {
+      candidates.push(path.join(root, 'venv', 'bin', name));
+      candidates.push(path.join(root, '.venv', 'bin', name));
+    }
+  };
+
+  if (isWin) {
+    addWinVenv(repoRoot);
+    addWinVenv(backendDir);
+    addWinVenv(cwd);
+    addWinVenv(path.join(cwd, '..'));
+  } else {
+    addUnixVenv(repoRoot);
+    addUnixVenv(backendDir);
+    addUnixVenv(cwd);
+    addUnixVenv(path.join(cwd, '..'));
+  }
+
+  for (const p of candidates) {
+    const abs = path.resolve(p);
+    if (existsSync(abs)) {
+      console.log(`[AeneasService] Using Python for Aeneas: ${abs}`);
+      return abs;
+    }
+  }
+
+  console.warn(
+    '[AeneasService] No venv Python found under repo/backend/cwd. ' +
+      'Falling back to "python" on PATH (install aeneas there, or set AENEAS_PYTHON to python.exe). ' +
+      `Searched from services dir: ${servicesDir}`,
+  );
+  return isWin ? 'python' : 'python3';
+}
+
 class AeneasService {
   constructor() {
     this.tempDir = path.join(__dirname, '../../temp/aeneas');
-    
-    // 🔥 Environment-aware Python path
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    if (isProduction) {
-      // Production: Linux server with venv
-      this.pythonCmd = '/home/kodeit/public_html/epub-app/aeneas_env/bin/python';
-    } else {
-      // Development: Windows - use 'python' from PATH (assumes Python 3.9+ installed)
-      this.pythonCmd = 'python';
-    }
-    
+    this.pythonCmd = resolvePythonForAeneas();
     this.ensureTempDir();
   }
 
@@ -196,11 +257,10 @@ class AeneasService {
   }
 
   /**
-   * Get the Python command (direct venv path - no detection needed)
+   * Python executable for Aeneas (resolved once in constructor via resolvePythonForAeneas).
    */
   async getPythonCommand() {
-    // 🔥 PERMANENT FIX: Always use venv python (set in constructor)
-    console.log(`[AeneasService] Using venv Python: ${this.pythonCmd}`);
+    console.log(`[AeneasService] Using Python: ${this.pythonCmd}`);
     return this.pythonCmd;
   }
 
@@ -472,84 +532,112 @@ class AeneasService {
     }
     const config = configParts.join('|');
 
-    // Build the command
-    const cmd = `${pythonCmd} -m aeneas.tools.execute_task "${audioPath}" "${textPath}" "${config}" "${outputPath}"`;
-
-    console.log(`[AeneasService] Executing: ${cmd}`);
+    const logCmd = `${pythonCmd} -m aeneas.tools.execute_task "${audioPath}" "${textPath}" "${config}" "${outputPath}"`;
+    console.log(`[AeneasService] Executing (spawn): ${logCmd}`);
 
     return new Promise((resolve, reject) => {
       const startTime = Date.now();
-
-      // Set UTF-8 encoding and espeak-ng PATH for Aeneas (Windows fix)
-      const espeakPath = 'C:\\Program Files\\eSpeak NG';
-      const currentPath = process.env.PATH || process.env.Path || '';
-      
-      const execOptions = { 
-        maxBuffer: 50 * 1024 * 1024,
-        env: { 
-          ...process.env, 
-          PATH: `${espeakPath};${currentPath}`,
-          Path: `${espeakPath};${currentPath}`,
-          PYTHONIOENCODING: 'UTF-8',
-          PYTHONUTF8: '1'
-        }
+      let settled = false;
+      const finish = (fn) => {
+        if (settled) return;
+        settled = true;
+        fn();
       };
 
-      exec(cmd, execOptions, async (error, stdout, stderr) => {
+      // spawn + argv avoids cmd.exe on Windows (fixes bogus "The system cannot find the path specified"
+      // from shell quoting / PATH mangling). ffmpeg + eSpeak dirs come from getAugmentedEnv().
+      const child = spawn(
+        pythonCmd,
+        ['-m', 'aeneas.tools.execute_task', audioPath, textPath, config, outputPath],
+        {
+          env: getAugmentedEnv({
+            PYTHONIOENCODING: 'UTF-8',
+            PYTHONUTF8: '1',
+          }),
+          windowsHide: true,
+        },
+      );
+
+      let stdout = '';
+      let stderr = '';
+      child.stdout.setEncoding('utf8');
+      child.stderr.setEncoding('utf8');
+      child.stdout.on('data', (chunk) => { stdout += chunk; });
+      child.stderr.on('data', (chunk) => { stderr += chunk; });
+
+      child.on('error', (err) => {
+        console.error('[AeneasService] Failed to start Python/Aeneas:', err.message);
+        finish(() => {
+          let msg = `Aeneas alignment failed: ${err.message}`;
+          if (err.code === 'ENOENT') {
+            msg +=
+              '\n\nPython was not found. Create a venv at the repo root (`python -m venv venv`), ' +
+              'pip install aeneas, or set AENEAS_PYTHON to the full path of python.exe that has aeneas.';
+          }
+          reject(new Error(msg));
+        });
+      });
+
+      child.on('close', (code) => {
         const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
-        console.log(`[AeneasService] Alignment completed in ${elapsed}s`);
+        finish(() => {
+          void (async () => {
+            try {
+            console.log(`[AeneasService] Alignment subprocess finished in ${elapsed}s (exit ${code})`);
 
-        if (stderr) {
-          // ISSUE #4 FIX: Log stderr but don't fail on warnings
-          const stderrLower = stderr.toLowerCase();
-          if (stderrLower.includes('error') || stderrLower.includes('failed')) {
-            console.error('[AeneasService] stderr (error):', stderr);
-          } else {
-            console.log('[AeneasService] stderr (info):', stderr);
-          }
-        }
+            if (stderr) {
+              const stderrLower = stderr.toLowerCase();
+              if (stderrLower.includes('error') || stderrLower.includes('failed')) {
+                console.error('[AeneasService] stderr (error):', stderr);
+              } else {
+                console.log('[AeneasService] stderr (info):', stderr);
+              }
+            }
 
-        if (error) {
-          // ISSUE #4 FIX: Better error messages with actionable guidance
-          console.error('[AeneasService] Aeneas execution failed:', error.message);
-          console.error('[AeneasService] stderr:', stderr);
-          
-          // Check for common issues
-          let errorMessage = `Aeneas alignment failed: ${stderr || error.message}`;
-          
-          if (stderr && stderr.includes('espeak')) {
-            errorMessage += '\n\nPossible fix: Ensure eSpeak NG is installed at C:\\Program Files\\eSpeak NG';
-          } else if (stderr && stderr.includes('ffmpeg')) {
-            errorMessage += '\n\nPossible fix: Ensure FFmpeg is installed and in PATH';
-          } else if (stderr && stderr.includes('python')) {
-            errorMessage += '\n\nPossible fix: Ensure Python 3.9+ is installed and aeneas is installed (pip install aeneas)';
-          }
-          
-          return reject(new Error(errorMessage));
-        }
+            if (code !== 0) {
+              console.error('[AeneasService] Aeneas execution failed (non-zero exit)');
+              let errorMessage = `Aeneas alignment failed: ${stderr || stdout || `exit code ${code}`}`;
+              if (/cannot find the path specified|file not found|not recognized/i.test(stderr || '')) {
+                errorMessage +=
+                  '\n\nOn Windows: install eSpeak NG and FFmpeg, or set FFMPEG_PATH / ESPEAK_PATH. ' +
+                  'See backend/scripts/setup-aeneas.md — Aeneas invokes espeak-ng and ffmpeg from PATH.';
+              } else if (stderr && stderr.includes('espeak')) {
+                errorMessage +=
+                  '\n\nPossible fix: Install eSpeak NG (https://github.com/espeak-ng/espeak-ng/releases) ' +
+                  'or set ESPEAK_PATH to the folder containing espeak-ng.exe.';
+              } else if (stderr && stderr.includes('ffmpeg')) {
+                errorMessage += '\n\nPossible fix: Set FFMPEG_PATH to the folder containing ffmpeg.exe.';
+              }
+              reject(new Error(errorMessage));
+              return;
+            }
 
-        try {
-          const resultContent = await fs.readFile(outputPath, 'utf8');
-          const result = JSON.parse(resultContent);
-          const fragments = result.fragments || [];
-          
-          // CRITICAL DEBUG: Save Aeneas output for inspection
-          const debugOutputPath = outputPath.replace('.json', '_debug.json');
-          await fs.writeFile(debugOutputPath, JSON.stringify({
-            totalFragments: fragments.length,
-            fragments: fragments.slice(0, 10).map(f => ({
-              begin: f.begin,
-              end: f.end,
-              lines: f.lines,
-              id: f.id
-            }))
-          }, null, 2), 'utf8');
-          console.log(`[AeneasService] Saved debug output to: ${debugOutputPath}`);
-          
-          resolve(fragments);
-        } catch (parseErr) {
-          reject(new Error(`Failed to parse Aeneas output: ${parseErr.message}`));
-        }
+            try {
+              const resultContent = await fs.readFile(outputPath, 'utf8');
+              const result = JSON.parse(resultContent);
+              const fragments = result.fragments || [];
+
+              const debugOutputPath = outputPath.replace('.json', '_debug.json');
+              await fs.writeFile(debugOutputPath, JSON.stringify({
+                totalFragments: fragments.length,
+                fragments: fragments.slice(0, 10).map(f => ({
+                  begin: f.begin,
+                  end: f.end,
+                  lines: f.lines,
+                  id: f.id
+                }))
+              }, null, 2), 'utf8');
+              console.log(`[AeneasService] Saved debug output to: ${debugOutputPath}`);
+
+              resolve(fragments);
+            } catch (parseErr) {
+              reject(new Error(`Failed to parse Aeneas output: ${parseErr.message}`));
+            }
+            } catch (e) {
+              reject(e instanceof Error ? e : new Error(String(e)));
+            }
+          })();
+        });
       });
     });
   }
@@ -1014,11 +1102,11 @@ class AeneasService {
   async normalizeAudio(inputPath, outputPath) {
     return new Promise((resolve, reject) => {
       // CBR WAV: PCM 16-bit, mono, 16kHz — ensures player has precise duration per segment
-      const cmd = `ffmpeg -i "${inputPath}" -codec:a pcm_s16le -ac 1 -ar 16000 -y "${outputPath}"`;
+      const cmd = `"${ffmpegBin}" -i "${inputPath}" -codec:a pcm_s16le -ac 1 -ar 16000 -y "${outputPath}"`;
       
       console.log(`[AeneasService] Normalizing audio: ${inputPath} -> ${outputPath}`);
       
-      exec(cmd, { maxBuffer: 50 * 1024 * 1024 }, (error, stdout, stderr) => {
+      exec(cmd, { maxBuffer: 50 * 1024 * 1024, env: getAugmentedEnv() }, (error, stdout, stderr) => {
         if (error) {
           console.error('[AeneasService] Audio normalization failed:', error.message);
           // If normalization fails, use original file (better than crashing)
@@ -1076,13 +1164,13 @@ class AeneasService {
         try {
           const { execSync } = await import('child_process');
           const originalDuration = parseFloat(execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
-            { encoding: 'utf8' }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${audioPath}"`,
+            { encoding: 'utf8', env: getAugmentedEnv() }
           ).trim());
           
           const normalizedDuration = parseFloat(execSync(
-            `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${processedAudioPath}"`,
-            { encoding: 'utf8' }
+            `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${processedAudioPath}"`,
+            { encoding: 'utf8', env: getAugmentedEnv() }
           ).trim());
           
           const durationDiff = Math.abs(originalDuration - normalizedDuration);
@@ -1467,8 +1555,8 @@ class AeneasService {
     try {
       const { execSync } = await import('child_process');
       const out = execSync(
-        `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${processedAudioPath}"`,
-        { encoding: 'utf8' }
+        `"${ffprobeBin}" -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${processedAudioPath}"`,
+        { encoding: 'utf8', env: getAugmentedEnv() }
       ).trim();
       audioDuration = parseFloat(out);
     } catch (_) {}
@@ -1796,9 +1884,9 @@ class AeneasService {
     return new Promise((resolve, reject) => {
       // Use ffmpeg's silencedetect filter
       // ffmpeg -i audio.mp3 -af silencedetect=noise=-40dB:duration=0.05 -f null -
-      const cmd = `ffmpeg -i "${audioPath}" -af silencedetect=noise=${threshold}dB:duration=${minDuration} -f null - 2>&1`;
+      const cmd = `"${ffmpegBin}" -i "${audioPath}" -af silencedetect=noise=${threshold}dB:duration=${minDuration} -f null - 2>&1`;
       
-      exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: 120000 }, (error, stdout, stderr) => {
+      exec(cmd, { maxBuffer: 10 * 1024 * 1024, timeout: 120000, env: getAugmentedEnv() }, (error, stdout, stderr) => {
         if (error && !stderr.includes('silence_start') && !stderr.includes('silence_end')) {
           console.warn('[AeneasService] FFmpeg silence detection warning:', error.message);
         }

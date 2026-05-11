@@ -19,6 +19,7 @@ export const ensureDirectories = async () => {
     await fs.mkdir(epubOutputDir, { recursive: true });
     await fs.mkdir(htmlIntermediateDir, { recursive: true });
     await fs.mkdir(ttsOutputDir, { recursive: true });
+    await fs.mkdir(path.join(rootDir, 'uploads/thumbnails'), { recursive: true });
   } catch (error) {
     console.error('Error creating directories:', error);
   }
@@ -38,6 +39,10 @@ export const getHtmlIntermediateDir = () => {
 
 export const getTtsOutputDir = () => {
   return path.join(rootDir, process.env.TTS_OUTPUT_DIR || 'uploads/tts_audio');
+};
+
+export const getThumbnailDir = () => {
+  return path.join(rootDir, 'uploads/thumbnails');
 };
 
 
