@@ -1,13 +1,14 @@
 import express from 'express';
 import { authenticate, requireRole } from '../middlewares/auth.js';
 import { ROLES } from '../constants/roles.js';
+import pool from '../config/database.js';
 import { OrganizationModel } from '../models/Organization.js';
 import { PlanModel } from '../models/Plan.js';
 import { FeatureCatalogModel } from '../models/FeatureCatalog.js';
 import { OrganizationSubscriptionModel } from '../models/OrganizationSubscription.js';
 import { UserModel } from '../models/User.js';
 import { UserService } from '../services/userService.js';
-import { validateUserDTO } from '../utils/validation.js';
+import { validateUserDTO, validateUserUpdateDTO } from '../utils/validation.js';
 import {
   successResponse,
   errorResponse,
@@ -398,6 +399,184 @@ router.post('/organizations/:id/users', async (req, res) => {
       organizationId: orgId
     });
     return successResponse(res, UserService.convertToDTO(await UserModel.findById(user.id)), 201);
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+// --- Platform user directory (all tenants) ---
+router.get('/users', async (_req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      `SELECT u.id, u.name, u.email, u.role, u.organization_id, u.status, u.last_active,
+              u.created_at, u.updated_at,
+              o.name AS organization_name,
+              pl.name AS plan_name
+       FROM users u
+       LEFT JOIN organizations o ON o.id = u.organization_id
+       LEFT JOIN organization_subscriptions sub ON sub.organization_id = u.organization_id
+       LEFT JOIN plans pl ON pl.id = sub.plan_id
+       ORDER BY u.name ASC, u.id ASC`
+    );
+    const data = rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      role: r.role,
+      organizationId: r.organization_id,
+      organizationName: r.organization_name || null,
+      planName: r.plan_name || null,
+      status: r.status || 'active',
+      lastActive: r.last_active || r.updated_at,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at
+    }));
+    return successResponse(res, data);
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.post('/users', async (req, res) => {
+  try {
+    const validation = validateUserDTO(req.body);
+    if (!validation.isValid) {
+      return badRequestResponse(res, validation.errors.join(', '));
+    }
+
+    const { name, password, phoneNumber, role = ROLES.MEMBER } = req.body;
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    let organizationId = req.body.organizationId;
+    if (organizationId === '' || organizationId === undefined) organizationId = null;
+    else organizationId = parseInt(organizationId, 10);
+
+    if (![ROLES.MEMBER, ROLES.ORG_ADMIN, ROLES.PLATFORM_ADMIN].includes(role)) {
+      return badRequestResponse(res, 'Invalid role');
+    }
+
+    if (role === ROLES.PLATFORM_ADMIN) {
+      organizationId = null;
+    } else {
+      if (!organizationId || Number.isNaN(organizationId)) {
+        return badRequestResponse(res, 'organizationId is required for this role');
+      }
+      const org = await OrganizationModel.findById(organizationId);
+      if (!org) return badRequestResponse(res, 'Organization not found');
+      if (role === ROLES.MEMBER || role === ROLES.ORG_ADMIN) {
+        try {
+          await UserService.assertMemberSeatsAvailable(organizationId);
+        } catch (err) {
+          if (err.code === 'SEAT_LIMIT') return forbiddenResponse(res, err.message);
+          throw err;
+        }
+      }
+    }
+
+    if (await UserModel.existsByEmail(email)) {
+      return badRequestResponse(res, 'Email already exists');
+    }
+
+    const user = await UserModel.create({
+      name: String(name).trim(),
+      email,
+      password,
+      phoneNumber,
+      role,
+      organizationId
+    });
+    return successResponse(res, UserService.convertToDTO(await UserModel.findById(user.id)), 201);
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.put('/users/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const target = await UserModel.findById(id);
+    if (!target) return notFoundResponse(res, 'User not found');
+
+    const body = { ...req.body };
+    const validation = validateUserUpdateDTO(body);
+    if (!validation.isValid) {
+      return badRequestResponse(res, validation.errors.join(', '));
+    }
+
+    const patch = {};
+    if (body.name !== undefined) patch.name = String(body.name).trim();
+    if (body.email !== undefined) patch.email = String(body.email).trim().toLowerCase();
+    if (body.password) patch.password = body.password;
+    if (body.phoneNumber !== undefined) patch.phoneNumber = body.phoneNumber;
+
+    if (body.role !== undefined) {
+      if (![ROLES.MEMBER, ROLES.ORG_ADMIN, ROLES.PLATFORM_ADMIN].includes(body.role)) {
+        return badRequestResponse(res, 'Invalid role');
+      }
+      patch.role = body.role;
+    }
+    if (body.organizationId !== undefined) {
+      if (body.organizationId === '' || body.organizationId === null) {
+        patch.organizationId = null;
+      } else {
+        const oid = parseInt(body.organizationId, 10);
+        if (Number.isNaN(oid)) return badRequestResponse(res, 'Invalid organizationId');
+        const org = await OrganizationModel.findById(oid);
+        if (!org) return badRequestResponse(res, 'Organization not found');
+        patch.organizationId = oid;
+      }
+    }
+
+    const nextRole = patch.role !== undefined ? patch.role : target.role;
+    let nextOrg = patch.organizationId !== undefined ? patch.organizationId : target.organization_id;
+    if (nextRole === ROLES.PLATFORM_ADMIN) {
+      patch.organizationId = null;
+      nextOrg = null;
+    } else if (nextOrg == null) {
+      return badRequestResponse(res, 'organizationId is required for this role');
+    }
+
+    if (
+      (patch.role === ROLES.MEMBER || patch.role === ROLES.ORG_ADMIN || patch.organizationId !== undefined) &&
+      (nextRole === ROLES.MEMBER || nextRole === ROLES.ORG_ADMIN)
+    ) {
+      const orgIdForSeat = patch.organizationId !== undefined ? patch.organizationId : target.organization_id;
+      const wasSeat = UserService.consumesOrgSeat(target.role, target.organization_id);
+      const willSeat = UserService.consumesOrgSeat(nextRole, orgIdForSeat);
+      if (willSeat && (!wasSeat || orgIdForSeat !== target.organization_id)) {
+        try {
+          await UserService.assertMemberSeatsAvailable(orgIdForSeat);
+        } catch (err) {
+          if (err.code === 'SEAT_LIMIT') return forbiddenResponse(res, err.message);
+          throw err;
+        }
+      }
+    }
+
+    const user = await UserService.updateUser(id, patch);
+    return successResponse(res, user);
+  } catch (e) {
+    if (e.message?.includes('not found')) return notFoundResponse(res, e.message);
+    if (e.message?.includes('already exists')) return badRequestResponse(res, e.message);
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.patch('/users/:id/status', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
+    const { status } = req.body || {};
+    const allowed = ['active', 'suspended', 'pending_verification'];
+    if (!allowed.includes(status)) {
+      return badRequestResponse(res, `status must be one of: ${allowed.join(', ')}`);
+    }
+    if (req.user.id === id && status === 'suspended') {
+      return badRequestResponse(res, 'Cannot suspend your own account');
+    }
+    const target = await UserModel.findById(id);
+    if (!target) return notFoundResponse(res, 'User not found');
+    await UserModel.update(id, { status });
+    return successResponse(res, UserService.convertToDTO(await UserModel.findById(id)));
   } catch (e) {
     return errorResponse(res, e.message, 500);
   }

@@ -12,6 +12,12 @@ export const adminService = {
   createOrgUser: (orgId, body) =>
     api.post(`/admin/organizations/${orgId}/users`, body).then((r) => r.data.data),
 
+  getAllUsers: () => api.get('/admin/users').then((r) => r.data.data),
+  createUser: (body) => api.post('/admin/users', body).then((r) => r.data.data),
+  updateUser: (id, body) => api.put(`/admin/users/${id}`, body).then((r) => r.data.data),
+  updateUserStatus: (id, status) =>
+    api.patch(`/admin/users/${id}/status`, { status }).then((r) => r.data.data),
+
   getPlans: () => api.get('/admin/plans').then((r) => r.data.data),
   getPlan: (id) => api.get(`/admin/plans/${id}`).then((r) => r.data.data),
   createPlan: (body) => api.post('/admin/plans', body).then((r) => r.data.data),

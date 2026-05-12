@@ -3,14 +3,190 @@
    All sidebar-link / sidebar-icon / active styles come from Layout.css.
    ─────────────────────────────────────────────────────────────────────────── */
 
+/*
+ * Platform admin mounts this component under `.layout--org-admin` with
+ * `<aside class="sidebar">`. Layout.css `.sidebar` assumes a 70px top navbar
+ * and 260px width; main-content--org-admin uses --sb-width (240px) and full
+ * viewport height — override so the rail lines up with the main column.
+ */
+.layout--org-admin aside.sidebar {
+  top: 0;
+  bottom: 0;
+  min-height: 100vh;
+  height: 100vh;
+  width: var(--sb-width);
+  box-sizing: border-box;
+  z-index: 200;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar {
+  width: var(--sb-width-collapsed);
+}
+
+/* Icon-only rail (collapsed Redux, or narrow viewport) */
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-section-label,
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-label,
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-badge,
+.layout--org-admin.layout--sb-collapsed aside.sidebar .navbar-brand-text,
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-user-info,
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-logout > span {
+  display: none !important;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-brand {
+  justify-content: center;
+  padding: 16px 8px;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .sidebar-link {
+  justify-content: center;
+  gap: 0;
+  padding: 12px 8px;
+  border-left: none;
+  border-right: 3px solid transparent;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .sidebar-link.active {
+  border-left: none;
+  border-right-color: #1976d2;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-user {
+  justify-content: center;
+  padding: 8px;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-footer {
+  padding: 12px 8px;
+  align-items: center;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-logout {
+  justify-content: center;
+  padding: 10px;
+}
+
+/* Same icon rail when viewport matches org-admin main (64px gutter), unless mobile drawer is open */
+@media (max-width: 1024px) {
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) {
+    width: var(--sb-width-collapsed);
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-section-label,
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-label,
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-badge,
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .navbar-brand-text,
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-user-info,
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-logout > span {
+    display: none !important;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-brand {
+    justify-content: center;
+    padding: 16px 8px;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .sidebar-link {
+    justify-content: center;
+    gap: 0;
+    padding: 12px 8px;
+    border-left: none;
+    border-right: 3px solid transparent;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .sidebar-link.active {
+    border-left: none;
+    border-right-color: #1976d2;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-user {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-footer {
+    padding: 12px 8px;
+    align-items: center;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-logout {
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
 /* ── Brand block inside the sidebar ── */
 .admin-sidebar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 24px 16px;
+  padding: 10px 24px 16px;
   border-bottom: 1px solid #e0e0e0;
   text-decoration: none;
+}
+
+.admin-sidebar-brand-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.admin-sidebar-brand .navbar-brand-title {
+  color: #111827;
+  font-weight: 700;
+}
+
+.admin-sidebar-brand-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #9ca3af !important;
+}
+
+/* Label + optional count badge (overrides generic .sidebar-link span flex) */
+.admin-sidebar-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.sidebar-link .admin-sidebar-badge {
+  flex: 0 0 auto;
+}
+
+.admin-sidebar-badge {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-sidebar-badge--mint {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.admin-sidebar-badge--blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.admin-sidebar-badge--amber {
+  background: #ffedd5;
+  color: #c2410c;
 }
 
 /* ── Section labels (Administration / Monitoring) ── */
@@ -136,5 +312,65 @@
   .sidebar--mobile-open {
     transform: translateX(0) !important;
     z-index: 1000;
+  }
+
+  /*
+   * Layout.css collapses all `.sidebar` nav rows to icon-only at 768px.
+   * Platform admin uses the classic `.sidebar` — keep full labels + badges in the drawer.
+   */
+  /* aside.sidebar only exists on platform admin (OrgAdmin uses .sb-root). */
+  .layout--org-admin aside.sidebar {
+    width: min(280px, 86vw);
+    top: 0;
+    bottom: 0;
+    padding-top: 52px;
+    box-sizing: border-box;
+  }
+
+  .layout--org-admin aside.sidebar .sidebar-link {
+    justify-content: flex-start;
+    padding: 12px 20px;
+    border-left: 3px solid transparent;
+    border-right: none;
+  }
+
+  .layout--org-admin aside.sidebar .sidebar-link.active {
+    border-left-color: #1976d2;
+    border-right: none;
+  }
+
+  .layout--org-admin aside.sidebar .sidebar-link .admin-sidebar-label,
+  .layout--org-admin aside.sidebar .sidebar-link .admin-sidebar-badge {
+    display: inline-flex !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-section-label {
+    display: block !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .navbar-brand-text {
+    display: flex !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-user-info {
+    display: flex !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-logout > span {
+    display: inline !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-brand {
+    justify-content: flex-start;
+    padding: 20px 24px 16px;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-footer {
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-logout {
+    justify-content: center;
   }
 }

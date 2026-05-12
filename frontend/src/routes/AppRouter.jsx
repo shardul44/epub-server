@@ -66,6 +66,9 @@ const Exports                 = lazy(() => import('../pages/Exports'));
 const EpubReaderPage          = lazy(() => import('../pages/EpubReaderPage'));
 const AdminOrganizations      = lazy(() => import('../pages/admin/AdminOrganizations'));
 const AdminPlans              = lazy(() => import('../pages/admin/AdminPlans'));
+const UsersManagement         = lazy(() => import('../pages/admin/UsersManagement'));
+const AdminStubPage           = lazy(() => import('../pages/admin/AdminStubPage'));
+const PlatformAnalytics       = lazy(() => import('../pages/admin/PlatformAnalytics'));
 const OrgTeam                 = lazy(() => import('../pages/org/OrgTeam'));
 const MediaLibrary            = lazy(() => import('../pages/org/MediaLibrary'));
 const Usage                   = lazy(() => import('../pages/org/usage'));
@@ -74,6 +77,7 @@ const InteractiveEditor       = lazy(() => import('../pages/interactive/Interact
 const InteractiveEditorEnhanced = lazy(() => import('../pages/interactive/InteractiveEditorEnhanced'));
 const InteractiveReader       = lazy(() => import('../pages/interactive/InteractiveReader'));
 const Activity                = lazy(() => import('../pages/Activity'));
+const ActivityPage            = lazy(() => import('../pages/admin/ActivityPage'));
 const ApiDebugger             = lazy(() => import('../components/ApiDebugger'));
 
 /* ─── Helper: wrap a lazy element in a local Suspense fallback ── */
@@ -159,6 +163,11 @@ export default function AppRouter() {
           <Route path="org/usage"         element={lazyEl(Usage)} />
           <Route path="activity"          element={lazyEl(Activity)} />
 
+          <Route
+            path="admin/activity"
+            element={<RequirePlatformAdmin>{lazyEl(ActivityPage)}</RequirePlatformAdmin>}
+          />
+
           {/* Platform-admin gated */}
           <Route
             path="admin/organizations"
@@ -167,6 +176,30 @@ export default function AppRouter() {
           <Route
             path="admin/plans"
             element={<RequirePlatformAdmin>{lazyEl(AdminPlans)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/analytics"
+            element={<RequirePlatformAdmin>{lazyEl(PlatformAnalytics)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/users"
+            element={<RequirePlatformAdmin>{lazyEl(UsersManagement)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/settings"
+            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/billing"
+            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/security"
+            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/system-logs"
+            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
           />
 
           {/* Org-admin gated */}

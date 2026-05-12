@@ -7,9 +7,11 @@
 import { useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from '../components/AdminSidebar';
+import PlatformAdminHeader from './PlatformAdminHeader';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { selectSidebarCollapsed, setSidebarCollapsed } from '../slices/uiSlice';
 import '../components/layout/Layout.css';
+import './PlatformAdminLayout.css';
 
 export default function PlatformAdminLayout() {
   const dispatch  = useAppDispatch();
@@ -23,8 +25,11 @@ export default function PlatformAdminLayout() {
   return (
     <div className={`layout layout--org-admin${collapsed ? ' layout--sb-collapsed' : ''}`}>
       <AdminSidebar onCollapse={handleSidebarCollapse} />
-      <main className="main-content main-content--org-admin">
-        <Outlet />
+      <main className="main-content main-content--org-admin main-content--platform-admin">
+        <PlatformAdminHeader />
+        <div className="platform-admin-scroll">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

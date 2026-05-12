@@ -7,20 +7,23 @@
   --act-text: #111827;
   --act-muted: #6b7280;
   --act-border: #e5e7eb;
-  --act-bg: #f7f7f2;;
+  --act-bg: #f7f7f2;
   --act-card: #ffffff;
   --act-radius: 12px;
   --act-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   --act-shadow-hover: 0 4px 14px rgba(37, 99, 235, 0.08);
   min-height: 100%;
+  width: 100%;
   background: var(--act-bg);
-  padding: 24px 30px 40px ;
+  padding: 28px 32px 40px;
   box-sizing: border-box;
 }
 
 .act-inner {
-  max-width: 100px;
+  max-width: 100%;
+  width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .act-loading {
@@ -445,4 +448,10 @@
 .act-page-num--active:hover {
   background: #1d4ed8;
   color: #fff;
+}
+
+@media (max-width: 768px) {
+  .act-root {
+    padding: 16px;
+  }
 }

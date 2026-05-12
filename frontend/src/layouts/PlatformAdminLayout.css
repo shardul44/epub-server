@@ -1,0 +1,33 @@
+/*
+ * Platform admin: main column is header + scrollable outlet.
+ * Preserves full-height studio behavior (same idea as Layout.css :has rules).
+ */
+.main-content.main-content--org-admin.main-content--platform-admin {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.main-content--platform-admin .platform-admin-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.main-content--platform-admin:has(.platform-admin-scroll > .sync-studio),
+.main-content--platform-admin:has(.platform-admin-scroll > .fxl-sync-studio),
+.main-content--platform-admin:has(.platform-admin-scroll > .kitaboo-studio),
+.main-content--platform-admin:has(.platform-admin-scroll > .eiep-root),
+.main-content--platform-admin:has(.platform-admin-scroll > .erp-root) {
+  overflow: hidden;
+}
+
+.main-content--platform-admin:has(.platform-admin-scroll > .sync-studio) .platform-admin-scroll,
+.main-content--platform-admin:has(.platform-admin-scroll > .fxl-sync-studio) .platform-admin-scroll,
+.main-content--platform-admin:has(.platform-admin-scroll > .kitaboo-studio) .platform-admin-scroll,
+.main-content--platform-admin:has(.platform-admin-scroll > .eiep-root) .platform-admin-scroll,
+.main-content--platform-admin:has(.platform-admin-scroll > .erp-root) .platform-admin-scroll {
+  overflow: hidden;
+}

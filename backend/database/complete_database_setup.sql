@@ -98,6 +98,8 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(20),
     role ENUM('platform_admin', 'org_admin', 'member') NOT NULL DEFAULT 'member',
     organization_id BIGINT NULL,
+    status ENUM('active', 'suspended', 'pending_verification') NOT NULL DEFAULT 'active',
+    last_active DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),

@@ -53,4 +53,9 @@ export const queryKeys = {
     all:  () => ['media'],
     list: () => ['media', 'list'],
   },
+
+  // ── Platform admin directory ───────────────────────────────────
+  admin: {
+    users: () => ['admin', 'users'],
+  },
 };

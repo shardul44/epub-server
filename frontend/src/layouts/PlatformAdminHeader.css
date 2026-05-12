@@ -1,0 +1,190 @@
+/* Platform admin top bar — white strip, title left, utilities right */
+
+.pah {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  min-height: 70px;
+  padding: 10px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  box-sizing: border-box;
+  z-index: 5;
+}
+
+.pah-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.pah-title-strong {
+  color: #111827;
+}
+
+.pah-title-accent {
+  color: #2563eb;
+}
+
+.pah-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.pah-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  max-width: 420px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f9fafb;
+  box-sizing: border-box;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.pah-search:focus-within {
+  border-color: #93c5fd;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.pah-search-icon {
+  display: flex;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.pah-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: #111827;
+  outline: none;
+}
+
+.pah-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.pah-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pah-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pah-status--ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.pah-status--ok .pah-status-dot {
+  background: #10b981;
+}
+
+.pah-status--warn {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.pah-status--warn .pah-status-dot {
+  background: #f59e0b;
+}
+
+.pah-status--bad {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.pah-status--bad .pah-status-dot {
+  background: #ef4444;
+}
+
+.pah-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #4b5563;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.pah-icon-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+@media (max-width: 900px) {
+  .pah {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+
+  .pah-right {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pah-search {
+    max-width: none;
+    width: 100%;
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .pah-status-text {
+    font-size: 0.75rem;
+  }
+
+  .pah-status {
+    padding: 0 10px;
+  }
+}

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import './Dashboard.css';
 import OrgDashboard from './org/OrgDashboard';
+import AdminDashboard from './admin/AdminDashboard';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -149,19 +150,7 @@ const Dashboard = () => {
 
   /* ── platform admin view ── */
   if (!loading && user?.role === 'platform_admin') {
-    return (
-      <div className="ds-container">
-        <div className="ds-page-header">
-          <h1>Platform admin</h1>
-          <p>Manage organizations, plans, and subscriptions.</p>
-        </div>
-        <div className="ds-admin-actions">
-          <Link to="/admin/organizations" className="wb-btn wb-btn--primary">Organizations &amp; clients</Link>
-          <Link to="/admin/plans"         className="wb-btn wb-btn--secondary">Plans &amp; features</Link>
-          <Link to="/activity"            className="wb-btn wb-btn--secondary">View activity</Link>
-        </div>
-      </div>
-    );
+    return <AdminDashboard />;
   }
 
   const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';

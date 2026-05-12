@@ -121,7 +121,10 @@ export class UserService {
       phoneNumber: user.phone_number,
       role: user.role,
       organizationId: user.organization_id ?? null,
-      createdAt: user.created_at
+      status: user.status ?? 'active',
+      lastActive: user.last_active ?? user.updated_at ?? null,
+      createdAt: user.created_at,
+      updatedAt: user.updated_at
     };
   }
 }

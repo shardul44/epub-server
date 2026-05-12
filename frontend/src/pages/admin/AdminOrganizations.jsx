@@ -1,11 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Users } from 'lucide-react';
 import { adminService } from '../../services/adminService';
-import '../Login.css';
+import './AdminOrganizations.css';
+
+function planBadgeClass(planName) {
+  const n = String(planName || '').toLowerCase();
+  if (n.includes('advance')) return 'aorg-badge aorg-badge--purple';
+  if (n.includes('full')) return 'aorg-badge aorg-badge--teal';
+  if (n.includes('basic')) return 'aorg-badge aorg-badge--blue';
+  return 'aorg-badge aorg-badge--neutral';
+}
+
+function fmtDate(d) {
+  if (d == null || d === '') return '—';
+  const s = typeof d === 'string' ? d : String(d);
+  return s.slice(0, 10);
+}
+
+function fmtNum(n) {
+  if (n == null || n === '') return '—';
+  const x = Number(n);
+  return Number.isFinite(x) ? x.toLocaleString() : '—';
+}
 
 export default function AdminOrganizations() {
   const [list, setList] = useState([]);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const firstFetch = useRef(true);
+
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [planId, setPlanId] = useState('');
@@ -13,31 +38,39 @@ export default function AdminOrganizations() {
   const [pdfPageQuota, setPdfPageQuota] = useState('');
   const [validFrom, setValidFrom] = useState('');
   const [validUntil, setValidUntil] = useState('');
+
   const [manageOrgId, setManageOrgId] = useState(null);
   const [orgAdmins, setOrgAdmins] = useState([]);
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setError('');
+    if (firstFetch.current) setInitialLoad(true);
     try {
       const [orgs, pls] = await Promise.all([adminService.getOrganizations(), adminService.getPlans()]);
       setList(orgs);
       setPlans(pls);
-      if (pls.length && !planId) setPlanId(String(pls[0].id));
+      setPlanId((prev) => prev || (pls.length ? String(pls[0].id) : ''));
     } catch (e) {
       setError(e.response?.data?.error || e.message);
+    } finally {
+      if (firstFetch.current) {
+        firstFetch.current = false;
+        setInitialLoad(false);
+      }
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const create = async (e) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       const seat = parseInt(String(memberSeatLimit).trim(), 10);
       const pages = parseInt(String(pdfPageQuota).trim(), 10);
@@ -46,7 +79,7 @@ export default function AdminOrganizations() {
         return;
       }
       if (Number.isNaN(pages) || pages < 1) {
-        setError('PDF page quota is required and must be a positive integer');
+        setError('PDF page quota is required and must be a positive integer (API does not allow blank on create).');
         return;
       }
       if (!validFrom || !String(validFrom).trim()) {
@@ -70,7 +103,7 @@ export default function AdminOrganizations() {
         memberSeatLimit: seat,
         pdfPageQuota: pages,
         validFrom: vf,
-        validUntil: vu
+        validUntil: vu,
       };
       await adminService.createOrganization(payload);
       setName('');
@@ -80,12 +113,15 @@ export default function AdminOrganizations() {
       setValidFrom('');
       setValidUntil('');
       await load();
-    } catch (e) {
-      setError(e.response?.data?.error || e.message);
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const toggleActive = async (org) => {
+    setError('');
     try {
       await adminService.updateOrganization(org.id, { active: !org.active });
       await load();
@@ -134,7 +170,7 @@ export default function AdminOrganizations() {
         name: adminName.trim(),
         email,
         password: adminPassword,
-        role: 'org_admin'
+        role: 'org_admin',
       });
       setAdminName('');
       setAdminEmail('');
@@ -146,161 +182,289 @@ export default function AdminOrganizations() {
     }
   };
 
-  const fmtDate = (d) => {
-    if (d == null || d === '') return '—';
-    const s = typeof d === 'string' ? d : String(d);
-    return s.slice(0, 10);
-  };
+  if (initialLoad) {
+    return (
+      <div className="aorg-root">
+        <div className="aorg-inner aorg-loading">
+          <div className="aorg-spinner" aria-hidden />
+          Loading organizations…
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container" style={{ maxWidth: 1100, padding: '24px' }}>
-      <h1 style={{ marginBottom: 8 }}>Organizations</h1>
-      <p style={{ color: '#666', marginBottom: 24 }}>
-        Create clients (tenants), assign a plan, set valid from / valid until, seat limit, and total PDF page quota
-        for that period (usage resets when subscription dates change).
-      </p>
-      {error && <div className="auth-error">{error}</div>}
+    <div className="aorg-root">
+      <div className="aorg-inner">
+        <header className="aorg-head">
+          <h1 className="aorg-title">Organizations</h1>
+          <p className="aorg-sub">
+            Create clients (tenants), assign plans, set seat limits and PDF page quotas.
+          </p>
+        </header>
 
-      <form onSubmit={create} style={{ marginBottom: 32, padding: 16, border: '1px solid #e0e0e0', borderRadius: 8 }}>
-        <h3 style={{ marginTop: 0 }}>New organization</h3>
-        <div className="form-group">
-          <label>Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Slug (optional)</label>
-          <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="auto from name" />
-        </div>
-        <div className="form-group">
-          <label>Plan *</label>
-          <select value={planId} onChange={(e) => setPlanId(e.target.value)} required>
-            {plans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="form-group">
-          <label>Valid from *</label>
-          <input type="date" required value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
-          <small style={{ color: '#666' }}>Subscription start (YYYY-MM-DD).</small>
-        </div>
-        <div className="form-group">
-          <label>Valid until *</label>
-          <input type="date" required value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
-          <small style={{ color: '#666' }}>Subscription end date (must be on or after valid from).</small>
-        </div>
-        <div className="form-group">
-          <label>Seat limit (licenses) *</label>
-          <input
-            type="number"
-            min={1}
-            required
-            value={memberSeatLimit}
-            onChange={(e) => setMemberSeatLimit(e.target.value)}
-            placeholder="e.g. 10"
-          />
-          <small style={{ color: '#666' }}>
-            Counts <strong>member</strong> and <strong>org admin</strong> users in the organization.
-          </small>
-        </div>
-        <div className="form-group">
-          <label>PDF page quota *</label>
-          <input
-            type="number"
-            min={1}
-            required
-            value={pdfPageQuota}
-            onChange={(e) => setPdfPageQuota(e.target.value)}
-            placeholder="e.g. 5000"
-          />
-          <small style={{ color: '#666' }}>
-            Total PDF pages this org may upload during the subscription period. When exhausted, uploads are blocked
-            until the quota is increased or subscription dates are renewed (usage resets when dates change).
-          </small>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Create
-        </button>
-      </form>
+        {error && <div className="aorg-alert">{error}</div>}
 
-      <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ textAlign: 'left', borderBottom: '2px solid #eee' }}>
-            <th style={{ padding: 8 }}>Name</th>
-            <th style={{ padding: 8 }}>Slug</th>
-            <th style={{ padding: 8 }}>Plan</th>
-            <th style={{ padding: 8 }}>Valid from</th>
-            <th style={{ padding: 8 }}>Valid until</th>
-            <th style={{ padding: 8 }}>Seats</th>
-            <th style={{ padding: 8 }}>Page quota</th>
-            <th style={{ padding: 8 }}>Used</th>
-            <th style={{ padding: 8 }}>Active</th>
-            <th style={{ padding: 8 }} />
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((o) => (
-            <React.Fragment key={o.id}>
-              <tr style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: 8 }}>{o.name}</td>
-                <td style={{ padding: 8 }}>{o.slug}</td>
-                <td style={{ padding: 8 }}>{o.planName || '—'}</td>
-                <td style={{ padding: 8 }}>{fmtDate(o.validFrom)}</td>
-                <td style={{ padding: 8 }}>{fmtDate(o.validUntil)}</td>
-                <td style={{ padding: 8 }}>{o.memberSeatLimit != null ? o.memberSeatLimit : '—'}</td>
-                <td style={{ padding: 8 }}>{o.pdfPageQuota != null ? o.pdfPageQuota : '—'}</td>
-                <td style={{ padding: 8 }}>{o.pdfPagesUsed != null ? o.pdfPagesUsed : '—'}</td>
-                <td style={{ padding: 8 }}>{o.active ? 'Yes' : 'No'}</td>
-                <td style={{ padding: 8, display: 'flex', gap: 8 }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => toggleActive(o)}>
-                    Toggle active
-                  </button>
-                  <button type="button" className="btn btn-secondary" onClick={() => openManageUsers(o.id)}>
-                    {manageOrgId === o.id ? 'Close users' : 'Manage users'}
-                  </button>
-                </td>
-              </tr>
-              {manageOrgId === o.id && (
-                <tr style={{ borderBottom: '1px solid #eee' }}>
-                  <td colSpan={10} style={{ padding: 12, background: '#fafafa' }}>
-                    <div style={{ marginBottom: 10, fontWeight: 600 }}>Create Org Admin</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: 8 }}>
-                      <input
-                        className="form-control"
-                        placeholder="Name"
-                        value={adminName}
-                        onChange={(e) => setAdminName(e.target.value)}
-                      />
-                      <input
-                        className="form-control"
-                        placeholder="Email"
-                        type="email"
-                        value={adminEmail}
-                        onChange={(e) => setAdminEmail(e.target.value)}
-                      />
-                      <input
-                        className="form-control"
-                        placeholder="Password"
-                        type="password"
-                        value={adminPassword}
-                        onChange={(e) => setAdminPassword(e.target.value)}
-                      />
-                      <button type="button" className="btn btn-primary" onClick={() => createOrgAdmin(o.id)}>
-                        Create Org Admin
-                      </button>
-                    </div>
-                    <div style={{ marginTop: 10, fontSize: 13, color: '#555' }}>
-                      Existing org admins: {orgAdmins.length ? orgAdmins.map((u) => u.email).join(', ') : 'none'}
-                    </div>
-                  </td>
+        <section className="aorg-card" aria-labelledby="aorg-new-title">
+          <div className="aorg-card-head">
+            <h2 id="aorg-new-title">New Organization</h2>
+            <button
+              type="submit"
+              form="aorg-create-form"
+              className="aorg-btn-create"
+              disabled={submitting}
+            >
+              + Create
+            </button>
+          </div>
+          <form id="aorg-create-form" className="aorg-form" onSubmit={create}>
+            <div className="aorg-grid">
+              <div className="aorg-field">
+                <label className="aorg-label" htmlFor="aorg-name">
+                  Organization name<span className="aorg-req">*</span>
+                </label>
+                <input
+                  id="aorg-name"
+                  className="aorg-input"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Acme Corp"
+                  required
+                  autoComplete="organization"
+                />
+              </div>
+              <div className="aorg-field">
+                <label className="aorg-label" htmlFor="aorg-slug">
+                  Slug (optional)
+                </label>
+                <input
+                  id="aorg-slug"
+                  className="aorg-input"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder="auto from name"
+                  autoComplete="off"
+                />
+              </div>
+              <div className="aorg-field">
+                <label className="aorg-label" htmlFor="aorg-plan">
+                  Plan<span className="aorg-req">*</span>
+                </label>
+                <select
+                  id="aorg-plan"
+                  className="aorg-select"
+                  value={planId}
+                  onChange={(e) => setPlanId(e.target.value)}
+                  required
+                >
+                  {plans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="aorg-field">
+                <label className="aorg-label" htmlFor="aorg-seats">
+                  Seat limit (licenses)<span className="aorg-req">*</span>
+                </label>
+                <input
+                  id="aorg-seats"
+                  className="aorg-input"
+                  type="number"
+                  min={1}
+                  value={memberSeatLimit}
+                  onChange={(e) => setMemberSeatLimit(e.target.value)}
+                  placeholder="e.g. 10"
+                  required
+                />
+                <span className="aorg-hint">Counts member and org admin seats.</span>
+              </div>
+              <div className="aorg-field">
+                <label className="aorg-label" htmlFor="aorg-from">
+                  Valid from<span className="aorg-req">*</span>
+                </label>
+                <div className="aorg-date-wrap">
+                  <input
+                    id="aorg-from"
+                    className="aorg-input"
+                    type="date"
+                    value={validFrom}
+                    onChange={(e) => setValidFrom(e.target.value)}
+                    required
+                  />
+                </div>
+                <span className="aorg-hint">Subscription start (YYYY-MM-DD).</span>
+              </div>
+              <div className="aorg-field">
+                <label className="aorg-label" htmlFor="aorg-until">
+                  Valid until<span className="aorg-req">*</span>
+                </label>
+                <div className="aorg-date-wrap">
+                  <input
+                    id="aorg-until"
+                    className="aorg-input"
+                    type="date"
+                    value={validUntil}
+                    onChange={(e) => setValidUntil(e.target.value)}
+                    required
+                  />
+                </div>
+                <span className="aorg-hint">Must be on or after valid from.</span>
+              </div>
+              <div className="aorg-field aorg-field--full">
+                <label className="aorg-label" htmlFor="aorg-quota">
+                  PDF page quota<span className="aorg-req">*</span>
+                </label>
+                <input
+                  id="aorg-quota"
+                  className="aorg-input"
+                  type="number"
+                  min={1}
+                  value={pdfPageQuota}
+                  onChange={(e) => setPdfPageQuota(e.target.value)}
+                  placeholder="e.g. 5000"
+                  required
+                />
+                <span className="aorg-hint">
+                  Total pages allowed for the subscription period. Create requires a positive number; unlimited-style
+                  quotas can be adjusted later via organization update APIs where supported.
+                </span>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <section className="aorg-card" aria-labelledby="aorg-list-title">
+          <div className="aorg-card-head">
+            <div className="aorg-table-head">
+              <h2 id="aorg-list-title">All Organizations</h2>
+              <span className="aorg-count-badge">{list.length} total</span>
+            </div>
+          </div>
+          <div className="aorg-table-wrap">
+            <table className="aorg-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Slug</th>
+                  <th>Plan</th>
+                  <th>Valid from</th>
+                  <th>Valid until</th>
+                  <th>Seats</th>
+                  <th>Quota</th>
+                  <th>Used</th>
+                  <th>Active</th>
+                  <th>Actions</th>
                 </tr>
-              )}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
+              </thead>
+              <tbody>
+                {list.map((o) => (
+                  <React.Fragment key={o.id}>
+                    <tr>
+                      <td className="aorg-name">{o.name}</td>
+                      <td className="aorg-slug">{o.slug || '—'}</td>
+                      <td>
+                        <span className={planBadgeClass(o.planName)}>{o.planName || '—'}</span>
+                      </td>
+                      <td>{fmtDate(o.validFrom)}</td>
+                      <td>{fmtDate(o.validUntil)}</td>
+                      <td>{fmtNum(o.memberSeatLimit)}</td>
+                      <td>
+                        {o.pdfPageQuota == null || o.pdfPageQuota === ''
+                          ? 'Unlimited'
+                          : fmtNum(o.pdfPageQuota)}
+                      </td>
+                      <td>{fmtNum(o.pdfPagesUsed)}</td>
+                      <td>
+                        <span className={`aorg-badge ${o.active ? 'aorg-badge--yes' : 'aorg-badge--no'}`}>
+                          {o.active ? 'Yes' : 'No'}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="aorg-actions">
+                          <button type="button" className="aorg-btn-ghost" onClick={() => toggleActive(o)}>
+                            Toggle
+                          </button>
+                          <button type="button" className="aorg-btn-ghost" onClick={() => openManageUsers(o.id)}>
+                            <Users size={16} aria-hidden />
+                            Users
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {manageOrgId === o.id && (
+                      <tr>
+                        <td colSpan={10}>
+                          <div className="aorg-users-panel">
+                            <h4>Create org admin</h4>
+                            <div className="aorg-users-grid">
+                              <div className="aorg-field">
+                                <label className="aorg-label" htmlFor={`aorg-admin-name-${o.id}`}>
+                                  Name
+                                </label>
+                                <input
+                                  id={`aorg-admin-name-${o.id}`}
+                                  className="aorg-input"
+                                  placeholder="Name"
+                                  value={adminName}
+                                  onChange={(e) => setAdminName(e.target.value)}
+                                />
+                              </div>
+                              <div className="aorg-field">
+                                <label className="aorg-label" htmlFor={`aorg-admin-email-${o.id}`}>
+                                  Email
+                                </label>
+                                <input
+                                  id={`aorg-admin-email-${o.id}`}
+                                  className="aorg-input"
+                                  type="email"
+                                  placeholder="Email"
+                                  value={adminEmail}
+                                  onChange={(e) => setAdminEmail(e.target.value)}
+                                />
+                              </div>
+                              <div className="aorg-field">
+                                <label className="aorg-label" htmlFor={`aorg-admin-pass-${o.id}`}>
+                                  Password
+                                </label>
+                                <input
+                                  id={`aorg-admin-pass-${o.id}`}
+                                  className="aorg-input"
+                                  type="password"
+                                  placeholder="Password"
+                                  value={adminPassword}
+                                  onChange={(e) => setAdminPassword(e.target.value)}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className="aorg-btn-primary-sm"
+                                onClick={() => createOrgAdmin(o.id)}
+                              >
+                                Create org admin
+                              </button>
+                            </div>
+                            <div className="aorg-admin-list">
+                              Existing org admins:{' '}
+                              {orgAdmins.length ? orgAdmins.map((u) => u.email).join(', ') : 'none'}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+            {!list.length && (
+              <div className="aorg-loading" style={{ padding: 32 }}>
+                No organizations yet. Create one above.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

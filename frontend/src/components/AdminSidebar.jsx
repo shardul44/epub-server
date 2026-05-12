@@ -1,51 +1,72 @@
 /**
  * AdminSidebar.jsx
  *
- * Sidebar for platform_admin role.
- * Uses the exact same CSS classes and visual style as the sidebar in Layout.jsx
- * (sidebar, sidebar-nav, sidebar-link, sidebar-icon, active).
- *
- * Routes:
- *   /admin/organizations  — Manage orgs / tenants
- *   /admin/plans          — Plans & feature catalog
- *   /activity             — Platform-wide activity log
- *
- * Props:
- *   onCollapse(collapsed: boolean) — notifies Layout so main content can shift
+ * Platform administrator sidebar — grouped nav matching the product shell
+ * (Overview / Management / Configuration). Routes mirror AppRouter.jsx.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Building2,
-  LayoutTemplate,
+  Home,
   Activity,
+  BarChart3,
+  Briefcase,
+  Package,
+  Users,
+  RefreshCw,
+  Settings,
+  CreditCard,
+  Shield,
+  Terminal,
+  FileText,
   LogOut,
-  BookOpen,
   Menu,
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useAppBootstrap } from '../hooks/queries/useAppBootstrap';
+import { adminService } from '../services/adminService';
 
-/* Reuse the exact same stylesheet that drives the sidebar in Layout.jsx */
 import './layout/Layout.css';
 import './AdminSidebar.css';
 
-/* ─── AdminSidebar ────────────────────────────────────────────────────────── */
+function NavRow({ to, icon: Icon, label, end, isActive }) {
+  return (
+    <Link to={to} className={`sidebar-link${isActive ? ' active' : ''}`}>
+      <Icon className="sidebar-icon" aria-hidden />
+      <span className="admin-sidebar-label">{label}</span>
+      {end}
+    </Link>
+  );
+}
+
+function CountBadge({ count, tone = 'mint' }) {
+  const n = Number(count);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const text = n > 99 ? '99+' : String(n);
+  return <span className={`admin-sidebar-badge admin-sidebar-badge--${tone}`}>{text}</span>;
+}
 
 const AdminSidebar = ({ onCollapse }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, setUser } = useAuth();
+  const { activities, users } = useAppBootstrap();
+
+  const { data: organizations = [] } = useQuery({
+    queryKey: ['admin', 'organizations', 'sidebar'],
+    queryFn: () => adminService.getOrganizations(),
+    staleTime: 60 * 1000,
+  });
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  /* Close mobile drawer on route change */
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  /* Notify parent — admin sidebar is always full-width (never collapses to icon) */
   useEffect(() => {
     onCollapse?.(false);
   }, [onCollapse]);
@@ -56,15 +77,31 @@ const AdminSidebar = ({ onCollapse }) => {
     navigate('/login');
   };
 
-  /* Returns 'active' string when route matches — same helper as Layout.jsx */
-  const isActive = (path) => {
-    if (path === '/') return location.pathname === '/' ? 'active' : '';
-    return location.pathname.startsWith(path) ? 'active' : '';
-  };
+  const path = location.pathname;
+
+  const active = useMemo(
+    () => ({
+      home: path === '/' || path === '',
+      activity: path.startsWith('/admin/activity') || path.startsWith('/activity'),
+      analytics: path.startsWith('/admin/analytics'),
+      orgs: path.startsWith('/admin/organizations'),
+      plans: path.startsWith('/admin/plans'),
+      users: path.startsWith('/admin/users'),
+      conversions: path.startsWith('/conversions'),
+      settings: path.startsWith('/admin/settings'),
+      billing: path.startsWith('/admin/billing'),
+      security: path.startsWith('/admin/security'),
+      logs: path.startsWith('/admin/system-logs'),
+    }),
+    [path],
+  );
+
+  const activityCount = Array.isArray(activities) ? activities.length : 0;
+  const userCount = Array.isArray(users) ? users.length : 0;
+  const orgCount = Array.isArray(organizations) ? organizations.length : 0;
 
   return (
     <>
-      {/* ── Mobile hamburger (≤ 768px) ── */}
       <button
         className="admin-mobile-toggle"
         onClick={() => setMobileOpen((o) => !o)}
@@ -74,7 +111,6 @@ const AdminSidebar = ({ onCollapse }) => {
         {mobileOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* ── Mobile overlay ── */}
       {mobileOpen && (
         <div
           className="admin-sidebar-overlay"
@@ -83,57 +119,104 @@ const AdminSidebar = ({ onCollapse }) => {
         />
       )}
 
-      {/* ── Sidebar — same markup pattern as Layout.jsx ── */}
       <aside className={`sidebar${mobileOpen ? ' sidebar--mobile-open' : ''}`}>
-
-        {/* Brand — same style as .navbar-brand in Layout.jsx */}
         <div className="admin-sidebar-brand">
-          <BookOpen className="navbar-brand-icon" />
+          <div className="admin-sidebar-brand-mark" aria-hidden>
+            <FileText size={22} strokeWidth={2} />
+          </div>
           <div className="navbar-brand-text">
             <span className="navbar-brand-title">PDF to EPUB</span>
-            <span className="navbar-brand-subtitle">Platform Admin</span>
+            <span className="navbar-brand-subtitle admin-sidebar-brand-tag">Converter</span>
           </div>
         </div>
 
         <nav className="sidebar-nav">
+          <span className="admin-sidebar-section-label">Overview</span>
 
-          {/* ── Administration ── */}
-          <span className="admin-sidebar-section-label">Administration</span>
+          <NavRow to="/" icon={Home} label="Dashboard" isActive={active.home} />
 
-          <Link
+          <NavRow
+            to="/admin/activity"
+            icon={Activity}
+            label="Activity"
+            isActive={active.activity}
+            end={<CountBadge count={activityCount} tone="mint" />}
+          />
+
+          <NavRow
+            to="/admin/analytics"
+            icon={BarChart3}
+            label="Analytics"
+            isActive={active.analytics}
+          />
+
+          <span className="admin-sidebar-section-label">Management</span>
+
+          <NavRow
             to="/admin/organizations"
-            className={`sidebar-link ${isActive('/admin/organizations')}`}
-          >
-            <Building2 className="sidebar-icon" />
-            <span>Organizations</span>
-          </Link>
+            icon={Briefcase}
+            label="Organizations"
+            isActive={active.orgs}
+            end={<CountBadge count={orgCount} tone="blue" />}
+          />
 
-          <Link
+          <NavRow
             to="/admin/plans"
-            className={`sidebar-link ${isActive('/admin/plans')}`}
-          >
-            <LayoutTemplate className="sidebar-icon" />
-            <span>Plans &amp; Features</span>
-          </Link>
+            icon={Package}
+            label="Plans & Features"
+            isActive={active.plans}
+          />
 
-          {/* ── Monitoring ── */}
-          <span className="admin-sidebar-section-label">Monitoring</span>
+          <NavRow
+            to="/admin/users"
+            icon={Users}
+            label="User Management"
+            isActive={active.users}
+            end={<CountBadge count={userCount} tone="amber" />}
+          />
 
-          <Link
-            to="/activity"
-            className={`sidebar-link ${isActive('/activity')}`}
-          >
-            <Activity className="sidebar-icon" />
-            <span>Activity Log</span>
-          </Link>
+          <NavRow
+            to="/conversions"
+            icon={RefreshCw}
+            label="Conversions"
+            isActive={active.conversions}
+          />
 
+          <span className="admin-sidebar-section-label">Configuration</span>
+
+          <NavRow
+            to="/admin/settings"
+            icon={Settings}
+            label="Settings"
+            isActive={active.settings}
+          />
+
+          <NavRow
+            to="/admin/billing"
+            icon={CreditCard}
+            label="Billing & quotas"
+            isActive={active.billing}
+          />
+
+          <NavRow
+            to="/admin/security"
+            icon={Shield}
+            label="Security & access"
+            isActive={active.security}
+          />
+
+          <NavRow
+            to="/admin/system-logs"
+            icon={Terminal}
+            label="System Logs"
+            isActive={active.logs}
+          />
         </nav>
 
-        {/* ── Footer: user info + logout ── */}
         <div className="admin-sidebar-footer">
           {user && (
             <div className="admin-sidebar-user">
-              <div className="admin-sidebar-avatar" aria-hidden="true">
+              <div className="admin-sidebar-avatar" aria-hidden>
                 {(user.name || user.email || 'A').charAt(0).toUpperCase()}
               </div>
               <div className="admin-sidebar-user-info">
@@ -156,7 +239,6 @@ const AdminSidebar = ({ onCollapse }) => {
             <span>Logout</span>
           </button>
         </div>
-
       </aside>
     </>
   );

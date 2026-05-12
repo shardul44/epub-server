@@ -1,145 +1,336 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, Plus } from 'lucide-react';
 import { adminService } from '../../services/adminService';
-import '../Login.css';
+import './AdminPlans.css';
+
+function planBadgeMeta(count, catalogLen, isSelected) {
+  const n = Number(count) || 0;
+  const c = Number(catalogLen) || 0;
+  if (c > 0 && n >= c) {
+    return { text: 'All', className: 'apl-plan-badge apl-plan-badge--all' };
+  }
+  const text = `${n} feature${n === 1 ? '' : 's'}`;
+  if (c >= 3 && n > 0 && n <= 2) {
+    return { text, className: 'apl-plan-badge apl-plan-badge--warn' };
+  }
+  if (isSelected) {
+    return { text, className: 'apl-plan-badge apl-plan-badge--selected' };
+  }
+  return { text, className: 'apl-plan-badge apl-plan-badge--muted' };
+}
 
 export default function AdminPlans() {
   const [plans, setPlans] = useState([]);
   const [catalog, setCatalog] = useState([]);
+  const [featureCounts, setFeatureCounts] = useState({});
   const [error, setError] = useState('');
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [togglingKey, setTogglingKey] = useState(null);
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [detail, setDetail] = useState(null);
 
-  const loadPlans = async () => {
-    setError('');
-    try {
-      const pls = await adminService.getPlans();
-      setPlans(pls);
-    } catch (e) {
-      setError(e.response?.data?.error || e.message);
-    }
-  };
+  const firstBoot = useRef(true);
 
-  const loadCatalog = async () => {
-    try {
-      const f = await adminService.getFeatures();
-      setCatalog(f);
-    } catch (e) {
-      setError(e.response?.data?.error || e.message);
+  const fetchCountsForPlans = useCallback(async (planList) => {
+    if (!planList.length) {
+      setFeatureCounts({});
+      return;
     }
-  };
-
-  useEffect(() => {
-    void loadPlans();
-    void loadCatalog();
+    const results = await Promise.all(
+      planList.map(async (p) => {
+        try {
+          const d = await adminService.getPlan(p.id);
+          return [p.id, (d?.features || []).length];
+        } catch {
+          return [p.id, 0];
+        }
+      }),
+    );
+    setFeatureCounts(Object.fromEntries(results));
   }, []);
 
-  const openPlan = async (id) => {
+  const loadCatalog = useCallback(async () => {
+    const f = await adminService.getFeatures();
+    setCatalog(Array.isArray(f) ? f : []);
+  }, []);
+
+  const openPlan = useCallback(async (id) => {
     setError('');
     setSelectedPlanId(id);
     try {
       const d = await adminService.getPlan(id);
       setDetail(d);
+      setFeatureCounts((prev) => ({
+        ...prev,
+        [id]: (d?.features || []).length,
+      }));
     } catch (e) {
       setError(e.response?.data?.error || e.message);
+      setDetail(null);
     }
-  };
+  }, []);
+
+  const loadPlans = useCallback(async () => {
+    setError('');
+    const pls = await adminService.getPlans();
+    const list = Array.isArray(pls) ? pls : [];
+    setPlans(list);
+    await fetchCountsForPlans(list);
+    return list;
+  }, [fetchCountsForPlans]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setError('');
+      try {
+        await loadPlans();
+        if (!cancelled) await loadCatalog();
+      } catch (e) {
+        if (!cancelled) setError(e.response?.data?.error || e.message);
+      } finally {
+        if (!cancelled && firstBoot.current) {
+          firstBoot.current = false;
+          setInitialLoad(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadPlans, loadCatalog]);
+
+  useEffect(() => {
+    if (initialLoad) return;
+    if (selectedPlanId != null && !plans.some((p) => p.id === selectedPlanId)) {
+      setSelectedPlanId(null);
+      setDetail(null);
+    }
+    if (!selectedPlanId && plans.length) {
+      void openPlan(plans[0].id);
+    }
+  }, [initialLoad, plans, selectedPlanId, openPlan]);
 
   const createPlan = async (e) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
-      await adminService.createPlan({ name, description });
+      await adminService.createPlan({
+        name: name.trim(),
+        description: description.trim() || undefined,
+      });
       setName('');
       setDescription('');
-      await loadPlans();
-    } catch (e) {
-      setError(e.response?.data?.error || e.message);
+      const list = await loadPlans();
+      if (list.length) {
+        const newest = list[list.length - 1];
+        await openPlan(newest.id);
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const addFeatureToPlan = async (featureKey) => {
     if (!selectedPlanId) return;
+    setTogglingKey(featureKey);
+    setError('');
     try {
       await adminService.setPlanFeature(selectedPlanId, featureKey, {});
       await openPlan(selectedPlanId);
     } catch (e) {
       setError(e.response?.data?.error || e.message);
+    } finally {
+      setTogglingKey(null);
     }
   };
 
   const removeFeature = async (featureKey) => {
     if (!selectedPlanId) return;
+    setTogglingKey(featureKey);
+    setError('');
     try {
       await adminService.removePlanFeature(selectedPlanId, featureKey);
       await openPlan(selectedPlanId);
     } catch (e) {
       setError(e.response?.data?.error || e.message);
+    } finally {
+      setTogglingKey(null);
     }
   };
 
   const keysOnPlan = new Set((detail?.features || []).map((f) => f.featureKey));
+  const onPlanSorted = [...(detail?.features || [])].sort((a, b) =>
+    String(a.featureKey).localeCompare(String(b.featureKey)),
+  );
+  const catalogSorted = [...catalog].sort((a, b) =>
+    String(a.featureKey).localeCompare(String(b.featureKey)),
+  );
+  const availableFromCatalog = catalogSorted.filter((c) => !keysOnPlan.has(c.featureKey));
+
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId);
+  const catalogLen = catalog.length;
+
+  if (initialLoad) {
+    return (
+      <div className="apl-root">
+        <div className="apl-inner apl-loading">
+          <div className="apl-spinner" aria-hidden />
+          Loading plans…
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container" style={{ maxWidth: 960, padding: '24px' }}>
-      <h1 style={{ marginBottom: 8 }}>Plans & features</h1>
-      <p style={{ color: '#666', marginBottom: 24 }}>Define plans and attach capability keys from the catalog.</p>
-      {error && <div className="auth-error">{error}</div>}
+    <div className="apl-root">
+      <div className="apl-inner">
+        <header className="apl-head">
+          <h1 className="apl-title">Plans & Features</h1>
+          <p className="apl-sub">Define plans and attach capability keys from the catalog.</p>
+        </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div>
-          <form onSubmit={createPlan} style={{ padding: 16, border: '1px solid #e0e0e0', borderRadius: 8, marginBottom: 16 }}>
-            <h3 style={{ marginTop: 0 }}>New plan</h3>
-            <div className="form-group">
-              <label>Name</label>
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Description</label>
-              <input value={description} onChange={(e) => setDescription(e.target.value)} />
-            </div>
-            <button type="submit" className="btn btn-primary">
-              Create plan
-            </button>
-          </form>
-          <h3>Plans</h3>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {plans.map((p) => (
-              <li key={p.id} style={{ marginBottom: 8 }}>
-                <button type="button" className="btn btn-secondary" onClick={() => openPlan(p.id)}>
-                  {p.name}
+        {error && <div className="apl-alert">{error}</div>}
+
+        <div className="apl-layout">
+          <div className="apl-col apl-col--left">
+            <section className="apl-card" aria-labelledby="apl-new-title">
+              <h2 id="apl-new-title" className="apl-card-title">
+                New Plan
+              </h2>
+              <form onSubmit={createPlan}>
+                <div className="apl-field">
+                  <label className="apl-label" htmlFor="apl-plan-name">
+                    Plan name
+                  </label>
+                  <input
+                    id="apl-plan-name"
+                    className="apl-input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Enterprise"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="apl-field">
+                  <label className="apl-label" htmlFor="apl-plan-desc">
+                    Description
+                  </label>
+                  <input
+                    id="apl-plan-desc"
+                    className="apl-input"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Short description"
+                    autoComplete="off"
+                  />
+                </div>
+                <button type="submit" className="apl-btn-create" disabled={submitting}>
+                  + Create Plan
                 </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div style={{ padding: 16, border: '1px solid #e0e0e0', borderRadius: 8 }}>
-          <h3 style={{ marginTop: 0 }}>{selectedPlanId ? `Plan #${selectedPlanId}` : 'Select a plan'}</h3>
-          {detail?.plan && <p style={{ color: '#555' }}>{detail.plan.description || '—'}</p>}
-          <h4>Features on this plan</h4>
-          <ul>
-            {(detail?.features || []).map((f) => (
-              <li key={f.featureKey}>
-                {f.featureKey}{' '}
-                <button type="button" className="btn btn-secondary" onClick={() => removeFeature(f.featureKey)}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-          <h4>Add from catalog</h4>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {catalog
-              .filter((c) => !keysOnPlan.has(c.featureKey))
-              .map((c) => (
-                <li key={c.featureKey} style={{ marginBottom: 6 }}>
-                  <button type="button" className="btn btn-secondary" onClick={() => addFeatureToPlan(c.featureKey)}>
-                    + {c.featureKey}
-                  </button>
-                </li>
-              ))}
-          </ul>
+              </form>
+            </section>
+
+            <section className="apl-card" aria-labelledby="apl-list-title">
+              <h2 id="apl-list-title" className="apl-card-title">
+                All Plans
+              </h2>
+              <div className="apl-plan-list" role="list">
+                {plans.map((p) => {
+                  const cnt = featureCounts[p.id] ?? 0;
+                  const isSel = p.id === selectedPlanId;
+                  const { text, className } = planBadgeMeta(cnt, catalogLen, isSel);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      role="listitem"
+                      className={`apl-plan-item${isSel ? ' apl-plan-item--selected' : ''}`}
+                      onClick={() => void openPlan(p.id)}
+                    >
+                      <span className="apl-plan-name">{p.name}</span>
+                      <span className={className}>{text}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {!plans.length && <p className="apl-empty">No plans yet. Create one above.</p>}
+            </section>
+          </div>
+
+          <div className="apl-col apl-col--right">
+            <section className="apl-card apl-card--features" aria-labelledby="apl-features-title">
+              {selectedPlanId && selectedPlan ? (
+                <>
+                  <div className="apl-features-head">
+                    <h2 id="apl-features-title" className="apl-features-title">
+                      Features — {selectedPlan.name}
+                    </h2>
+                    <p className="apl-features-hint">Click a feature to toggle it.</p>
+                  </div>
+
+                  <div className="apl-block">
+                    <span className="apl-section-label">Currently on this plan</span>
+                    <div className="apl-tag-grid">
+                      {onPlanSorted.map((f) => (
+                        <button
+                          key={f.featureKey}
+                          type="button"
+                          className="apl-tag apl-tag--on"
+                          disabled={togglingKey === f.featureKey}
+                          onClick={() => void removeFeature(f.featureKey)}
+                          title="Remove from plan"
+                        >
+                          <Check className="apl-tag-icon" size={14} strokeWidth={2.5} aria-hidden />
+                          {f.featureKey}
+                        </button>
+                      ))}
+                    </div>
+                    {!onPlanSorted.length && (
+                      <p className="apl-empty">No features yet — add from the catalog below.</p>
+                    )}
+                  </div>
+
+                  <div className="apl-block">
+                    <span className="apl-section-label">Add from catalog</span>
+                    <div className="apl-tag-grid">
+                      {availableFromCatalog.map((c) => (
+                        <button
+                          key={c.featureKey}
+                          type="button"
+                          className="apl-tag apl-tag--off"
+                          disabled={togglingKey === c.featureKey}
+                          onClick={() => void addFeatureToPlan(c.featureKey)}
+                          title="Add to plan"
+                        >
+                          <Plus className="apl-tag-icon" size={14} strokeWidth={2.5} aria-hidden />
+                          {c.featureKey}
+                        </button>
+                      ))}
+                    </div>
+                    {!availableFromCatalog.length && catalogLen > 0 && (
+                      <p className="apl-empty">All catalog features are on this plan.</p>
+                    )}
+                    {!catalogLen && (
+                      <p className="apl-empty">No keys in the feature catalog yet.</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="apl-placeholder" id="apl-features-title">
+                  Select a plan from the list, or create a new plan.
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </div>
     </div>

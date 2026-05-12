@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { ROLES } from '../constants/roles.js';
 
 const userCols =
-  'id, name, email, phone_number, role, organization_id, created_at, updated_at';
+  'id, name, email, phone_number, role, organization_id, status, last_active, created_at, updated_at';
 
 export class UserModel {
   static async findAll() {
@@ -85,6 +85,14 @@ export class UserModel {
     if (userData.organizationId !== undefined) {
       updates.push('organization_id = ?');
       values.push(userData.organizationId);
+    }
+    if (userData.status !== undefined) {
+      updates.push('status = ?');
+      values.push(userData.status);
+    }
+    if (userData.lastActive !== undefined) {
+      updates.push('last_active = ?');
+      values.push(userData.lastActive);
     }
 
     if (updates.length === 0) {

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import {
   Activity as ActivityIcon,
   ChevronDown,
@@ -181,6 +182,10 @@ export default function Activity() {
     URL.revokeObjectURL(url);
     setExportOpen(false);
   }, [filteredRows, user?.role]);
+
+  if (user?.role === 'platform_admin') {
+    return <Navigate to="/admin/activity" replace />;
+  }
 
   if (loading) {
     return (
