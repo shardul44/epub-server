@@ -1,21 +1,21 @@
 /**
  * useConversionsQuery — THE single source of truth for all job/conversion data.
  *
- * ONE cache key: ['conversions', 'list']
+ * ONE cache key: ['conversions']
  * ONE network request: GET /conversions (reflow) + GET /kitaboo/jobs (FXL)
  *
  * Every component that needs job data calls this hook and filters locally.
  * No component should ever call /conversions or /kitaboo/jobs directly.
  *
  * Smart polling:
- *   - Polls every 5 s while IN_PROGRESS / PENDING / PROCESSING jobs exist.
+ *   - Polls every 3 s while IN_PROGRESS / PENDING / PROCESSING jobs exist.
  *   - Stops automatically once all jobs reach a terminal state.
  *
  * @param {{ statusFilter?: string, enabled?: boolean }} [options]
  *   statusFilter – client-side filter applied to the shared cache.
  *                  Does NOT create a separate cache entry or network request.
  *
- * @returns {{ jobs, allJobs, isLoading, isFetching, error, refresh }}
+ * @returns {{ jobs, allJobs, isLoading, isPending, isFetching, error, refresh }}
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -79,20 +79,23 @@ export function useConversionsQuery({ statusFilter = 'all', enabled = true } = {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: queryKeys.conversions.list(),   // ← always the same key
+    queryKey: queryKeys.conversions.list(),
     queryFn:  fetchAllJobs,
     enabled,
-    staleTime:            0,                  // always refetch on mount so new jobs appear immediately
-    gcTime:               10 * 60 * 1000,     // keep cache for 10 min
-    refetchOnWindowFocus: true,               // pick up changes when user returns to tab
+    // Fresh enough for new jobs without refetch-on-every-mount (StrictMode / layout churn).
+    staleTime:            20 * 1000,
+    gcTime:               10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     refetchOnReconnect:   true,
     refetchOnMount:       true,
+    // Keep last list visible while a refetch is in flight (no empty-state flicker).
+    placeholderData: (previousData) => previousData,
     // Poll every 3 s while active jobs exist; stop when all terminal
     refetchInterval: (q) => {
       const jobs = q.state.data;
       return hasActiveJobs(jobs) ? 3000 : false;
     },
-    refetchIntervalInBackground: true,        // keep polling even when tab is not focused
+    refetchIntervalInBackground: true,
   });
 
   const allJobs = query.data ?? [];
@@ -110,6 +113,7 @@ export function useConversionsQuery({ statusFilter = 'all', enabled = true } = {
     jobs,        // filtered view
     allJobs,     // full unfiltered list (for dashboard, etc.)
     isLoading:   query.isLoading,
+    isPending:   query.isPending,
     isFetching:  query.isFetching,
     error:       query.error?.message ?? '',
     refresh,

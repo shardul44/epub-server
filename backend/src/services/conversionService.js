@@ -6956,7 +6956,13 @@ ${bodyContent}
       reviewedAt: job.reviewed_at,
       createdAt: job.created_at,
       updatedAt: job.updated_at,
-      completedAt: job.completed_at
+      completedAt: job.completed_at,
+      pdfFilename: job.pdf_original_file_name ?? job.original_file_name ?? null,
+      totalPages: job.pdf_total_pages ?? job.total_pages ?? null,
+      organizationId: job.pdf_organization_id ?? null,
+      organizationName: job.organization_name ?? null,
+      userEmail: job.user_email ?? null,
+      userName: job.user_name ?? null
     };
   }
 

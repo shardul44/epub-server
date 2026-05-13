@@ -8,8 +8,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
-  Legend,
   PieChart,
   Pie,
   Cell,
@@ -19,9 +17,8 @@ import {
   Package,
   Activity,
   UserCog,
-  Building2,
   Users,
-  FileText,
+  CloudUpload,
   RefreshCw,
   TrendingUp,
   TrendingDown,
@@ -279,73 +276,78 @@ export default function AdminDashboard() {
 
       <div className="adm-grid4">
         <div className="adm-stat">
-          <div className="adm-stat-top">
+          <div className="adm-stat-icon adm-stat-icon--blue" aria-hidden>
+            <Briefcase size={22} strokeWidth={2} />
+          </div>
+          <div className="adm-stat-body">
             <span className="adm-stat-label">Organizations</span>
-            <Building2 size={18} color="#9ca3af" aria-hidden />
-          </div>
-          <div className="adm-stat-value">{loading ? '—' : orgCount}</div>
-          <div
-            className={`adm-stat-trend ${
-              newOrgsThisMonth > 0 ? 'adm-stat-trend--up' : 'adm-stat-trend--muted'
-            }`}
-          >
-            {newOrgsThisMonth > 0 ? (
-              <>
-                <TrendingUp size={14} aria-hidden />+{newOrgsThisMonth} this month
-              </>
-            ) : (
-              'No new orgs this month'
-            )}
+            <div className="adm-stat-value">{loading ? '—' : orgCount}</div>
+            <div
+              className={`adm-stat-trend ${
+                newOrgsThisMonth > 0 ? 'adm-stat-trend--up' : 'adm-stat-trend--muted'
+              }`}
+            >
+              {newOrgsThisMonth > 0 ? (
+                <>
+                  <TrendingUp size={14} strokeWidth={2.5} aria-hidden />+{newOrgsThisMonth} this month
+                </>
+              ) : (
+                'No new orgs this month'
+              )}
+            </div>
           </div>
         </div>
 
         <div className="adm-stat">
-          <div className="adm-stat-top">
+          <div className="adm-stat-icon adm-stat-icon--teal" aria-hidden>
+            <Users size={22} strokeWidth={2} />
+          </div>
+          <div className="adm-stat-body">
             <span className="adm-stat-label">Total users</span>
-            <Users size={18} color="#9ca3af" aria-hidden />
+            <div className="adm-stat-value">{loading ? '—' : totalUsers.toLocaleString()}</div>
+            <div className="adm-stat-trend adm-stat-trend--muted">Across all organizations</div>
           </div>
-          <div className="adm-stat-value">{loading ? '—' : totalUsers}</div>
-          <div className="adm-stat-trend adm-stat-trend--muted">Across all organizations</div>
         </div>
 
         <div className="adm-stat">
-          <div className="adm-stat-top">
+          <div className="adm-stat-icon adm-stat-icon--amber" aria-hidden>
+            <CloudUpload size={22} strokeWidth={2} />
+          </div>
+          <div className="adm-stat-body">
             <span className="adm-stat-label">PDF pages used</span>
-            <FileText size={18} color="#9ca3af" aria-hidden />
-          </div>
-          <div className="adm-stat-value">
-            {loading ? '—' : totalPagesUsed.toLocaleString()}
-          </div>
-          <div className={`adm-stat-trend adm-stat-trend--${pdfWeekTrend.tone}`}>
-            {pdfWeekTrend.tone === 'up' && <TrendingUp size={14} aria-hidden />}
-            {pdfWeekTrend.tone === 'down' && <TrendingDown size={14} aria-hidden />}
-            {pdfWeekTrend.text}
+            <div className="adm-stat-value">
+              {loading ? '—' : totalPagesUsed.toLocaleString()}
+            </div>
+            <div className={`adm-stat-trend adm-stat-trend--${pdfWeekTrend.tone}`}>
+              {pdfWeekTrend.tone === 'up' && <TrendingUp size={14} strokeWidth={2.5} aria-hidden />}
+              {pdfWeekTrend.tone === 'down' && <TrendingDown size={14} strokeWidth={2.5} aria-hidden />}
+              {pdfWeekTrend.text}
+            </div>
           </div>
         </div>
 
         <div className="adm-stat">
-          <div className="adm-stat-top">
-            <span className="adm-stat-label">Conversions today</span>
-            <RefreshCw size={18} color="#9ca3af" aria-hidden />
+          <div className="adm-stat-icon adm-stat-icon--violet" aria-hidden>
+            <RefreshCw size={22} strokeWidth={2} />
           </div>
-          <div className="adm-stat-value">{loading ? '—' : todayJobCount}</div>
-          <div className={`adm-stat-trend adm-stat-trend--${convTodayTrend.tone}`}>
-            {convTodayTrend.tone === 'up' && <TrendingUp size={14} aria-hidden />}
-            {convTodayTrend.tone === 'down' && <TrendingDown size={14} aria-hidden />}
-            {convTodayTrend.text}
+          <div className="adm-stat-body">
+            <span className="adm-stat-label">Conversions today</span>
+            <div className="adm-stat-value">{loading ? '—' : todayJobCount}</div>
+            <div className={`adm-stat-trend adm-stat-trend--${convTodayTrend.tone}`}>
+              {convTodayTrend.tone === 'up' && <TrendingUp size={14} strokeWidth={2.5} aria-hidden />}
+              {convTodayTrend.tone === 'down' && <TrendingDown size={14} strokeWidth={2.5} aria-hidden />}
+              {convTodayTrend.text}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="adm-row2">
-        <div className="adm-panel">
+        <div className="adm-panel adm-panel--volume">
           <div className="adm-panel-head">
             <div>
-              <h2 className="adm-panel-title">PDF upload &amp; job volume</h2>
-              <p className="adm-panel-sub">
-                Per day for the selected week — bars prefer PDF upload counts from the activity
-                stream, then fall back to new jobs when no uploads are logged.
-              </p>
+              <h2 className="adm-panel-title">PDF Upload Volume</h2>
+              <p className="adm-panel-sub">Last 7 days — all organizations</p>
             </div>
             <div className="adm-seg" role="group" aria-label="Week range">
               <button
@@ -364,22 +366,49 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-          <div className="adm-chart">
-            {volumeChart.every((d) => d.volume === 0) ? (
+          <div className="adm-chart adm-chart--bars">
+            {volumeChart.every((d) => d.uploads === 0 && d.jobs === 0) ? (
               <div className="adm-empty">No data for this range yet.</div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={volumeChart} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="day" tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                  <Tooltip
-                    formatter={(v, name) => [v, name === 'uploads' ? 'PDF uploads' : 'Jobs']}
-                    labelFormatter={(l) => l}
+                <BarChart
+                  data={volumeChart}
+                  margin={{ top: 12, right: 8, left: 0, bottom: 2 }}
+                  barGap={2}
+                  barCategoryGap="10%"
+                >
+                  <XAxis
+                    dataKey="day"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#9ca3af', fontWeight: 500 }}
+                    dy={6}
                   />
-                  <Legend />
-                  <Bar dataKey="uploads" name="uploads" fill="#2563eb" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="jobs" name="jobs" fill="#93c5fd" radius={[6, 6, 0, 0]} />
+                  <YAxis hide domain={[0, 'dataMax + 3']} allowDataOverflow={false} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(241, 245, 249, 0.5)' }}
+                    formatter={(v, name) => [v, name === 'uploads' ? 'PDF uploads' : 'Conversions']}
+                    labelFormatter={(l) => l}
+                    contentStyle={{
+                      borderRadius: 10,
+                      border: '1px solid #e5e7eb',
+                      fontSize: 12,
+                    }}
+                  />
+                  <Bar
+                    dataKey="jobs"
+                    name="jobs"
+                    fill="#dbeafe"
+                    radius={[8, 8, 0, 0]}
+                    maxBarSize={64}
+                  />
+                  <Bar
+                    dataKey="uploads"
+                    name="uploads"
+                    fill="#3b82f6"
+                    radius={[8, 8, 0, 0]}
+                    maxBarSize={64}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -390,7 +419,7 @@ export default function AdminDashboard() {
           <div className="adm-panel-head">
             <div>
               <h2 className="adm-panel-title">Plan distribution</h2>
-              <p className="adm-panel-sub">Active organizations by plan name</p>
+              <p className="adm-panel-sub">Active subscriptions</p>
             </div>
           </div>
           {planDistribution.length === 0 ? (
@@ -398,7 +427,7 @@ export default function AdminDashboard() {
           ) : (
             <>
               <div className="adm-donut-wrap">
-                <div className="adm-chart" style={{ minHeight: 220 }}>
+                <div className="adm-chart adm-chart--donut">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -407,8 +436,8 @@ export default function AdminDashboard() {
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={54}
-                        outerRadius={78}
+                        innerRadius="58%"
+                        outerRadius="82%"
                         paddingAngle={2}
                       >
                         {planDistribution.map((_, i) => (
@@ -423,21 +452,23 @@ export default function AdminDashboard() {
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                </div>
-                <div className="adm-donut-center" aria-hidden>
-                  <div className="adm-donut-num">{planDistribution.length}</div>
-                  <div className="adm-donut-label">Plans</div>
+                  <div className="adm-donut-center" aria-hidden>
+                    <div className="adm-donut-num">{planDistribution.length}</div>
+                    <div className="adm-donut-label">Plans</div>
+                  </div>
                 </div>
               </div>
               <div className="adm-legend">
                 {planDistribution.map((row, i) => (
                   <div key={row.name} className="adm-legend-row">
-                    <span
-                      className="adm-dot"
-                      style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }}
-                    />
-                    <span style={{ flex: 1 }}>{row.name}</span>
-                    <strong>{row.pct}%</strong>
+                    <span className="adm-legend-left">
+                      <span
+                        className="adm-dot"
+                        style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }}
+                      />
+                      <span className="adm-legend-name">{row.name}</span>
+                    </span>
+                    <span className="adm-legend-pct">{row.pct}%</span>
                   </div>
                 ))}
               </div>

@@ -2,25 +2,32 @@ import pool from '../config/database.js';
 import { pdfDocumentWhereClause } from '../utils/tenantScope.js';
 
 export class ConversionJobModel {
+  static _scopedJobsSelect(wSql, orderBy = 'cj.created_at DESC') {
+    return `SELECT cj.*,
+      p.original_file_name AS pdf_original_file_name,
+      p.total_pages AS pdf_total_pages,
+      p.organization_id AS pdf_organization_id,
+      o.name AS organization_name,
+      u.email AS user_email,
+      u.name AS user_name
+     FROM conversion_jobs cj
+     INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
+     LEFT JOIN organizations o ON o.id = p.organization_id
+     LEFT JOIN users u ON u.id = p.user_id
+     WHERE ${wSql}
+     ORDER BY ${orderBy}`;
+  }
+
   static async findAllForUser(user, options = {}) {
     const w = pdfDocumentWhereClause(user, options);
-    const [rows] = await pool.execute(
-      `SELECT cj.* FROM conversion_jobs cj
-       INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
-       WHERE ${w.sql}
-       ORDER BY cj.created_at DESC`,
-      w.params
-    );
+    const [rows] = await pool.execute(this._scopedJobsSelect(w.sql), w.params);
     return rows;
   }
 
   static async findByStatusForUser(user, status, options = {}) {
     const w = pdfDocumentWhereClause(user, options);
     const [rows] = await pool.execute(
-      `SELECT cj.* FROM conversion_jobs cj
-       INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
-       WHERE cj.status = ? AND (${w.sql})
-       ORDER BY cj.created_at DESC`,
+      this._scopedJobsSelect(`cj.status = ? AND (${w.sql})`),
       [status, ...w.params]
     );
     return rows;
@@ -29,10 +36,7 @@ export class ConversionJobModel {
   static async findByRequiresReviewForUser(user, options = {}) {
     const w = pdfDocumentWhereClause(user, options);
     const [rows] = await pool.execute(
-      `SELECT cj.* FROM conversion_jobs cj
-       INNER JOIN pdf_documents p ON p.id = cj.pdf_document_id
-       WHERE cj.requires_review = TRUE AND (${w.sql})
-       ORDER BY cj.created_at DESC`,
+      this._scopedJobsSelect(`cj.requires_review = TRUE AND (${w.sql})`),
       w.params
     );
     return rows;

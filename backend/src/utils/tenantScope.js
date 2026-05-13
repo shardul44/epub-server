@@ -8,7 +8,7 @@ import { ROLES } from '../constants/roles.js';
 export function pdfDocumentWhereClause(user, options = {}) {
   const onlyOwn = options.onlyOwn === true;
   if (!user) return { sql: '1=0', params: [] };
-  if (user.role === ROLES.PLATFORM_ADMIN) return { sql: '1=0', params: [] };
+  if (user.role === ROLES.PLATFORM_ADMIN) return { sql: '1=1', params: [] };
   if (onlyOwn || user.role === ROLES.MEMBER) {
     return { sql: 'p.user_id = ?', params: [user.id] };
   }
@@ -24,7 +24,7 @@ export function pdfDocumentWhereClause(user, options = {}) {
  */
 export function canAccessPdfRow(user, pdfRow) {
   if (!user || !pdfRow) return false;
-  if (user.role === ROLES.PLATFORM_ADMIN) return false;
+  if (user.role === ROLES.PLATFORM_ADMIN) return true;
   if (user.role === ROLES.MEMBER) {
     return pdfRow.user_id != null && Number(pdfRow.user_id) === Number(user.id);
   }

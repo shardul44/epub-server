@@ -5672,7 +5672,7 @@ const SyncStudio = () => {
               {loading ? 'Saving...' : (
                 <>
                   <Save size={18} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                  Save Sync Studio
+                  Save & Next
                 </>
               )}
             </button>

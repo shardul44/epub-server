@@ -67,7 +67,8 @@ const EpubReaderPage          = lazy(() => import('../pages/EpubReaderPage'));
 const AdminOrganizations      = lazy(() => import('../pages/admin/AdminOrganizations'));
 const AdminPlans              = lazy(() => import('../pages/admin/AdminPlans'));
 const UsersManagement         = lazy(() => import('../pages/admin/UsersManagement'));
-const AdminStubPage           = lazy(() => import('../pages/admin/AdminStubPage'));
+const SystemLogs              = lazy(() => import('../pages/admin/SystemLogs'));
+const PlatformSetting         = lazy(() => import('../pages/admin/PlatformSetting'));
 const PlatformAnalytics       = lazy(() => import('../pages/admin/PlatformAnalytics'));
 const OrgTeam                 = lazy(() => import('../pages/org/OrgTeam'));
 const MediaLibrary            = lazy(() => import('../pages/org/MediaLibrary'));
@@ -78,6 +79,10 @@ const InteractiveEditorEnhanced = lazy(() => import('../pages/interactive/Intera
 const InteractiveReader       = lazy(() => import('../pages/interactive/InteractiveReader'));
 const Activity                = lazy(() => import('../pages/Activity'));
 const ActivityPage            = lazy(() => import('../pages/admin/ActivityPage'));
+const PlatformConversions     = lazy(() => import('../pages/admin/PlatformConversions'));
+const PlatformConversionJobDetail = lazy(() => import('../pages/admin/PlatformConversionJobDetail'));
+const PlatformBilling         = lazy(() => import('../pages/admin/PlatformBilling'));
+const PlatformSecurity        = lazy(() => import('../pages/admin/PlatformSecurity'));
 const ApiDebugger             = lazy(() => import('../components/ApiDebugger'));
 
 /* ─── Helper: wrap a lazy element in a local Suspense fallback ── */
@@ -186,20 +191,28 @@ export default function AppRouter() {
             element={<RequirePlatformAdmin>{lazyEl(UsersManagement)}</RequirePlatformAdmin>}
           />
           <Route
+            path="admin/conversions/job/:jobId"
+            element={<RequirePlatformAdmin>{lazyEl(PlatformConversionJobDetail)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/conversions"
+            element={<RequirePlatformAdmin>{lazyEl(PlatformConversions)}</RequirePlatformAdmin>}
+          />
+          <Route
             path="admin/settings"
-            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+            element={<RequirePlatformAdmin>{lazyEl(PlatformSetting)}</RequirePlatformAdmin>}
           />
           <Route
             path="admin/billing"
-            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+            element={<RequirePlatformAdmin>{lazyEl(PlatformBilling)}</RequirePlatformAdmin>}
           />
           <Route
             path="admin/security"
-            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+            element={<RequirePlatformAdmin>{lazyEl(PlatformSecurity)}</RequirePlatformAdmin>}
           />
           <Route
             path="admin/system-logs"
-            element={<RequirePlatformAdmin>{lazyEl(AdminStubPage)}</RequirePlatformAdmin>}
+            element={<RequirePlatformAdmin>{lazyEl(SystemLogs)}</RequirePlatformAdmin>}
           />
 
           {/* Org-admin gated */}

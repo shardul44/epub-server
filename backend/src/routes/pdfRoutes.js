@@ -192,35 +192,36 @@ router.use(authenticate, requireFeature('conversion.basic'));
 
 router.param('id', paramPdfTenantAccess);
 
-// Configure multer for file uploads
 const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE || '52428800') // 50MB default
+
+async function pdfUploadMulter(req, res, next) {
+  try {
+    const { PlatformSettingsModel } = await import('../models/PlatformSettings.js');
+    const maxBytes = await PlatformSettingsModel.getMaxUploadBytesCached();
+    const upload = multer({
+      storage,
+      limits: { fileSize: maxBytes }
+    });
+    upload.single('file')(req, res, (multerErr) => {
+      if (multerErr) {
+        if (multerErr.code === 'LIMIT_FILE_SIZE') {
+          const limitMB = Math.round(maxBytes / (1024 * 1024));
+          return badRequestResponse(res, `File too large. Maximum allowed size is ${limitMB} MB.`);
+        }
+        return badRequestResponse(res, multerErr.message || 'File upload error');
+      }
+      next();
+    });
+  } catch (e) {
+    return errorResponse(res, e.message || 'Upload initialization failed', 500);
   }
-});
+}
 
 // Initialize directories
 ensureDirectories();
 
 // POST /api/pdfs/upload - Upload PDF and convert to EPUB3
-router.post('/upload', (req, res, next) => {
-  // Run multer manually so we can catch its errors (e.g. LIMIT_FILE_SIZE)
-  // and return a clean JSON response instead of a raw Express error.
-  upload.single('file')(req, res, (multerErr) => {
-    if (multerErr) {
-      if (multerErr.code === 'LIMIT_FILE_SIZE') {
-        const limitMB = Math.round(
-          parseInt(process.env.MAX_FILE_SIZE || '209715200') / (1024 * 1024)
-        );
-        return badRequestResponse(res, `File too large. Maximum allowed size is ${limitMB} MB.`);
-      }
-      return badRequestResponse(res, multerErr.message || 'File upload error');
-    }
-    next();
-  });
-}, async (req, res) => {
+router.post('/upload', pdfUploadMulter, async (req, res) => {
   try {
     if (!req.file) {
       return badRequestResponse(res, 'PDF file is required');
@@ -271,8 +272,31 @@ router.post('/upload', (req, res, next) => {
   }
 });
 
+async function pdfBulkUploadMulter(req, res, next) {
+  try {
+    const { PlatformSettingsModel } = await import('../models/PlatformSettings.js');
+    const maxBytes = await PlatformSettingsModel.getMaxUploadBytesCached();
+    const upload = multer({
+      storage,
+      limits: { fileSize: maxBytes }
+    });
+    upload.array('files', 10)(req, res, (multerErr) => {
+      if (multerErr) {
+        if (multerErr.code === 'LIMIT_FILE_SIZE') {
+          const limitMB = Math.round(maxBytes / (1024 * 1024));
+          return badRequestResponse(res, `File too large. Maximum allowed size is ${limitMB} MB per file.`);
+        }
+        return badRequestResponse(res, multerErr.message || 'File upload error');
+      }
+      next();
+    });
+  } catch (e) {
+    return errorResponse(res, e.message || 'Upload initialization failed', 500);
+  }
+}
+
 // POST /api/pdfs/upload/bulk - Bulk upload PDFs
-router.post('/upload/bulk', upload.array('files', 10), async (req, res) => {
+router.post('/upload/bulk', pdfBulkUploadMulter, async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return badRequestResponse(res, 'At least one file is required');

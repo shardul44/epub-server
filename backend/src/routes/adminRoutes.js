@@ -6,7 +6,10 @@ import { OrganizationModel } from '../models/Organization.js';
 import { PlanModel } from '../models/Plan.js';
 import { FeatureCatalogModel } from '../models/FeatureCatalog.js';
 import { OrganizationSubscriptionModel } from '../models/OrganizationSubscription.js';
+import { PlatformSettingsModel } from '../models/PlatformSettings.js';
+import { PlatformApiKeyModel } from '../models/PlatformApiKey.js';
 import { UserModel } from '../models/User.js';
+import { UserActivityModel } from '../models/UserActivity.js';
 import { UserService } from '../services/userService.js';
 import { validateUserDTO, validateUserUpdateDTO } from '../utils/validation.js';
 import {
@@ -106,6 +109,305 @@ function toSubDto(row) {
     updatedAt: row.updated_at
   };
 }
+
+function toPlatformSettingsDto(row, plans) {
+  const r = row || {};
+  const num = (v, fallback) => {
+    if (v === null || v === undefined || v === '') return fallback;
+    const n = typeof v === 'bigint' ? Number(v) : Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const defaultPlanId =
+    r.default_plan_id === null || r.default_plan_id === undefined
+      ? null
+      : (() => {
+          const n = typeof r.default_plan_id === 'bigint' ? Number(r.default_plan_id) : Number(r.default_plan_id);
+          return Number.isFinite(n) && n > 0 ? n : null;
+        })();
+  return {
+    platformName: r.platform_name ?? 'PDF to EPUB Converter',
+    defaultPlanId,
+    maxUploadMb: num(r.max_upload_mb, 100),
+    sessionTimeoutMinutes: num(r.session_timeout_minutes, 60),
+    smtpHost: r.smtp_host ?? '',
+    smtpPort: num(r.smtp_port, 587),
+    smtpFromEmail: r.smtp_from_email ?? '',
+    smtpAdminAlertEmail: r.smtp_admin_alert_email ?? '',
+    updatedAt: r.updated_at ?? null,
+    plans: (plans || []).map((p) => ({
+      id: typeof p.id === 'bigint' ? Number(p.id) : p.id,
+      name: p.name
+    }))
+  };
+}
+
+/** MySQL ER_NO_SUCH_TABLE = 1146 — surface a clear message when migration was not applied */
+function platformSettingsDbError(res, e) {
+  const errno = e?.errno;
+  const msg = e?.message || String(e);
+  if (
+    errno === 1146 ||
+    (/doesn't exist/i.test(msg) && /platform_settings/i.test(msg)) ||
+    /Unknown table.*platform_settings/i.test(msg)
+  ) {
+    return errorResponse(
+      res,
+      'Table platform_settings is missing. Run the SQL migration: backend/database/migrations/012_platform_settings.sql',
+      503
+    );
+  }
+  return errorResponse(res, msg, 500);
+}
+
+function parseActivityMetadata(raw) {
+  if (raw == null) return null;
+  if (typeof raw === 'object' && !Buffer.isBuffer(raw)) return raw;
+  try {
+    return JSON.parse(String(raw));
+  } catch {
+    return null;
+  }
+}
+
+function inferActivityLogLevel(action, summary) {
+  const t = `${action || ''} ${summary || ''}`.toLowerCase();
+  if (/\b(error|fail|fatal|denied|exception|forbidden)\b/.test(t)) return 'ERROR';
+  if (/\b(warn|warning|threshold|usage|quota|limit|cancelled|canceled)\b/.test(t)) return 'WARN';
+  return 'INFO';
+}
+
+function activityLogCategory(action, entityType) {
+  const a = (action || '').trim();
+  if (a.includes('.')) return a;
+  if (entityType) return `${String(entityType).replace(/_/g, '.')}.event`;
+  return 'system';
+}
+
+function buildActivityLogMessage(row) {
+  const meta = parseActivityMetadata(row.metadata);
+  const parts = [];
+  if (row.summary) parts.push(String(row.summary).trim());
+  const actor = row.actor_email || row.actor_name;
+  if (actor) parts.push(`by ${actor}`);
+  if (row.organization_name) parts.push(`(org: ${row.organization_name})`);
+  const pages = meta && (meta.totalPages ?? meta.pages ?? meta.pageCount);
+  if (pages != null && Number.isFinite(Number(pages))) parts.push(`${pages} pages`);
+  const msg = parts.join(' ').replace(/\s+/g, ' ').trim();
+  return msg || row.action || 'Event';
+}
+
+// --- Platform settings (single row) ---
+router.get('/platform-settings', async (_req, res) => {
+  try {
+    const row = await PlatformSettingsModel.getRow();
+    const plans = await PlanModel.findAll();
+    return successResponse(res, toPlatformSettingsDto(row, plans));
+  } catch (e) {
+    return platformSettingsDbError(res, e);
+  }
+});
+
+router.put('/platform-settings/general', async (req, res) => {
+  try {
+    const { platformName, defaultPlanId, maxUploadMb, sessionTimeoutMinutes } = req.body || {};
+    let pid = defaultPlanId;
+    if (pid !== undefined && pid !== null && pid !== '') {
+      pid = parseInt(pid, 10);
+      if (Number.isNaN(pid)) return badRequestResponse(res, 'Invalid defaultPlanId');
+      const pl = await PlanModel.findById(pid);
+      if (!pl) return badRequestResponse(res, 'Plan not found');
+    } else {
+      pid = null;
+    }
+    const updated = await PlatformSettingsModel.updateGeneral({
+      platformName,
+      defaultPlanId: pid,
+      maxUploadMb,
+      sessionTimeoutMinutes
+    });
+    const plans = await PlanModel.findAll();
+    return successResponse(res, toPlatformSettingsDto(updated, plans));
+  } catch (e) {
+    return platformSettingsDbError(res, e);
+  }
+});
+
+router.put('/platform-settings/email', async (req, res) => {
+  try {
+    const { smtpHost, smtpPort, smtpFromEmail, smtpAdminAlertEmail } = req.body || {};
+    const updated = await PlatformSettingsModel.updateEmail({
+      smtpHost,
+      smtpPort,
+      smtpFromEmail,
+      smtpAdminAlertEmail
+    });
+    const plans = await PlanModel.findAll();
+    return successResponse(res, toPlatformSettingsDto(updated, plans));
+  } catch (e) {
+    return platformSettingsDbError(res, e);
+  }
+});
+
+/**
+ * GET /admin/system-logs
+ * Merges platform-wide user_activities with recent failed conversion_jobs for a live audit feed.
+ * Query: level=all|INFO|WARN|ERROR, limit=1..500 (default 400)
+ */
+router.get('/system-logs', async (req, res) => {
+  try {
+    const levelRaw = (req.query.level || 'all').toString().toUpperCase();
+    const level = ['ALL', 'INFO', 'WARN', 'ERROR'].includes(levelRaw) ? levelRaw : 'ALL';
+
+    let lim = parseInt(String(req.query.limit), 10);
+    if (Number.isNaN(lim) || lim < 1) lim = 400;
+    lim = Math.min(lim, 500);
+
+    const activityLimit = Math.min(500, lim + 100);
+    const rows = await UserActivityModel.listForViewer({
+      viewerRole: 'platform_admin',
+      viewerId: req.user.id,
+      viewerOrgId: null,
+      limit: activityLimit
+    });
+
+    const fromActivities = rows.map((r) => {
+      const aid = typeof r.id === 'bigint' ? Number(r.id) : r.id;
+      const ts = r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at;
+      return {
+        id: `a-${aid}`,
+        source: 'activity',
+        ts,
+        level: inferActivityLogLevel(r.action, r.summary),
+        category: activityLogCategory(r.action, r.entity_type),
+        message: buildActivityLogMessage(r)
+      };
+    });
+
+    const [jobRows] = await pool.execute(
+      `SELECT cj.id, cj.updated_at AS ts, cj.error_message AS error_message,
+              pd.original_file_name AS pdf_name, o.name AS org_name
+       FROM conversion_jobs cj
+       INNER JOIN pdf_documents pd ON pd.id = cj.pdf_document_id
+       LEFT JOIN organizations o ON o.id = pd.organization_id
+       WHERE cj.status = 'FAILED'
+       ORDER BY cj.updated_at DESC
+       LIMIT 120`
+    );
+
+    const fromJobs = jobRows.map((j) => {
+      const jid = typeof j.id === 'bigint' ? Number(j.id) : j.id;
+      const pdf = j.pdf_name || 'PDF';
+      const org = j.org_name ? ` (org: ${j.org_name})` : '';
+      const err = (j.error_message || 'Unknown error').replace(/\s+/g, ' ').trim().slice(0, 420);
+      const jobTag = `JOB-${String(jid).padStart(3, '0')}`;
+      const ts = j.ts instanceof Date ? j.ts.toISOString() : j.ts;
+      return {
+        id: `j-${jid}`,
+        source: 'conversion',
+        ts,
+        level: 'ERROR',
+        category: 'conversion',
+        message: `Job #${jobTag} failed: ${err} on ${pdf}${org}`
+      };
+    });
+
+    let logs = [...fromActivities, ...fromJobs];
+    logs.sort((x, y) => new Date(y.ts).getTime() - new Date(x.ts).getTime());
+
+    if (level !== 'ALL') {
+      logs = logs.filter((L) => L.level === level);
+    }
+
+    logs = logs.slice(0, lim);
+
+    return successResponse(res, {
+      logs,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+/** Role × capability matrix (reflects how this product gates routes today). */
+function getRolePermissionMatrix() {
+  return [
+    {
+      role: 'platform_admin',
+      roleLabel: 'Platform Admin',
+      orgs: 'Full',
+      plans: 'Full',
+      users: 'Full',
+      billing: 'Full'
+    },
+    {
+      role: 'org_admin',
+      roleLabel: 'Org Admin',
+      orgs: 'Read',
+      plans: 'Read',
+      users: 'Full',
+      billing: 'Read'
+    },
+    {
+      role: 'member',
+      roleLabel: 'Member',
+      orgs: 'None',
+      plans: 'None',
+      users: 'None',
+      billing: 'None'
+    }
+  ];
+}
+
+router.get('/security/overview', async (_req, res) => {
+  try {
+    const apiKeys = await PlatformApiKeyModel.listForAdmin();
+    return successResponse(res, {
+      rolePermissions: getRolePermissionMatrix(),
+      apiKeys
+    });
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.post('/security/api-keys', async (req, res) => {
+  try {
+    const { name, environment = 'staging' } = req.body || {};
+    const { dto, plainSecret } = await PlatformApiKeyModel.create({ name, environment });
+    return successResponse(res, { key: dto, plainSecret }, 201);
+  } catch (e) {
+    if (e.message === 'name is required') return badRequestResponse(res, e.message);
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.patch('/security/api-keys/:id/revoke', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
+    const ok = await PlatformApiKeyModel.revoke(id);
+    if (!ok) return notFoundResponse(res, 'Key not found or already revoked');
+    const list = await PlatformApiKeyModel.listForAdmin();
+    const key = list.find((k) => k.id === id);
+    return successResponse(res, key || { id, revoked: true });
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.patch('/security/api-keys/:id/renew', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
+    const dto = await PlatformApiKeyModel.renew(id);
+    return successResponse(res, dto);
+  } catch (e) {
+    if (e.message === 'API key not found') return notFoundResponse(res, e.message);
+    if (e.message === 'Cannot renew a revoked key') return badRequestResponse(res, e.message);
+    return errorResponse(res, e.message, 500);
+  }
+});
 
 // --- Organizations ---
 router.get('/organizations', async (_req, res) => {

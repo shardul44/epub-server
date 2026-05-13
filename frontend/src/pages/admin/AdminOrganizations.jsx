@@ -49,10 +49,21 @@ export default function AdminOrganizations() {
     setError('');
     if (firstFetch.current) setInitialLoad(true);
     try {
-      const [orgs, pls] = await Promise.all([adminService.getOrganizations(), adminService.getPlans()]);
+      const [orgs, pls, ps] = await Promise.all([
+        adminService.getOrganizations(),
+        adminService.getPlans(),
+        adminService.getPlatformSettings().catch(() => null),
+      ]);
       setList(orgs);
       setPlans(pls);
-      setPlanId((prev) => prev || (pls.length ? String(pls[0].id) : ''));
+      setPlanId((prev) => {
+        if (prev) return prev;
+        const def = ps?.defaultPlanId;
+        if (def != null && pls.some((p) => Number(p.id) === Number(def))) {
+          return String(def);
+        }
+        return pls.length ? String(pls[0].id) : '';
+      });
     } catch (e) {
       setError(e.response?.data?.error || e.message);
     } finally {

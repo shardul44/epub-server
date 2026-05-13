@@ -1,7 +1,7 @@
 /* Platform analytics — pan- prefix */
 
 .pan-root {
-  --pan-bg: #f8fafc;
+  --pan-bg: #f7f7f2;
   --pan-card: #ffffff;
   --pan-border: #e2e8f0;
   --pan-text: #0f172a;
@@ -112,14 +112,14 @@
 
 .pan-kpi-value {
   font-size: 1.65rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--pan-text);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
 
 .pan-kpi-trend {
-  margin-top: 8px;
+  margin-top: 3px;
   font-size: 0.8125rem;
   font-weight: 600;
 }

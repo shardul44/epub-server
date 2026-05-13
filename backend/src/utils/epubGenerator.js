@@ -84,6 +84,28 @@ function cssFontFamilyDecl(fontFamilyValue, important = false) {
   return `font-family:"${v}"${imp};`;
 }
 
+/**
+ * PDF outlines often carry large strokeWidth values. In SVG those become black "scribbles"
+ * over text. Cap stroke relative to font size for readable FXL exports.
+ * @param {unknown} strokeWidth
+ * @param {number} [fontSize]
+ * @returns {number|null} clamped width in px, or null to omit stroke
+ */
+function clampSvgStrokeWidthPx(strokeWidth, fontSize = 12) {
+  const w = Number(strokeWidth);
+  if (!Number.isFinite(w) || w <= 0) return null;
+  const fs = Math.max(8, Number(fontSize) || 12);
+  const cap = Math.max(0.35, fs * 0.12);
+  return Math.min(w, cap);
+}
+
+/** Returns CSS fragment e.g. stroke:...;stroke-width:... or empty if no stroke. */
+function svgStrokeStyleDecl(strokeColor, strokeWidthRaw, fontSize = 12) {
+  const sw = clampSvgStrokeWidthPx(strokeWidthRaw, fontSize);
+  if (!strokeColor || sw == null) return '';
+  return `stroke:${strokeColor};stroke-width:${sw}px;paint-order:stroke fill;`;
+}
+
 function stripSubsetPrefix(name) {
   if (name == null) return '';
   return String(name).replace(/^[^+]+\+/, '').trim();
@@ -908,7 +930,8 @@ ${inner}
     /* FXL: left align only — no justify; no injected word/letter spacing */
     .page-container { position: relative; width: ${width}px; height: ${height}px; overflow: hidden; margin: 0 auto; text-align: left; text-align-last: left; word-spacing: normal; letter-spacing: normal; }
     .pf { position: relative; width: 100%; height: 100%; text-align: left; text-align-last: left; white-space: normal; word-spacing: normal; letter-spacing: normal; }
-    .bi { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; z-index: 0; }`;
+    /* fill: text coords match page pixel space; contain letterboxed the image vs overlays */
+    .bi { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; }`;
     // Join with no whitespace between </span> and <span> so browser doesn't render a sliver of space between word wrappers.
     const xhtmlBody = `<body epub:type="bodymatter">
   <div class="page-container">
@@ -1231,9 +1254,9 @@ ${xhtmlBody}`;
           segStyle.push(`font-weight:${run.bold ? 'bold' : 'normal'}`);
           segStyle.push(`font-style:${run.italic ? 'italic' : 'normal'}`);
           const strokeColor = run.strokeColor ?? zoneForStroke?.strokeColor;
-          const strokeWidth = run.strokeWidth ?? zoneForStroke?.strokeWidth;
-          if (strokeColor) segStyle.push(`stroke:${strokeColor}`);
-          if (strokeWidth != null && Number(strokeWidth) > 0) segStyle.push(`stroke-width:${Number(strokeWidth)}px;paint-order:stroke fill`);
+          const strokeWidthRaw = run.strokeWidth ?? zoneForStroke?.strokeWidth;
+          const strokeDecl = svgStrokeStyleDecl(strokeColor, strokeWidthRaw, defFontSize);
+          if (strokeDecl) segStyle.push(strokeDecl);
           const styleAttr = segStyle.length ? ` style="${escapeXml(segStyle.join(';') + ';')}"` : '';
           const posAttr = includePosition && ri === 0 ? ` x="${Number(fragment.x).toFixed(2)}" y="${Number(fragment.y).toFixed(2)}"` : '';
           const tspan = `<tspan${posAttr}${styleAttr}>${escapeXml(displayText)}</tspan>`;
@@ -1286,8 +1309,8 @@ ${xhtmlBody}`;
               + (transparentText ? 'fill:transparent;' : `fill:${z.color || defFill};`)
               + `font-weight:${z.bold ? 'bold' : 'normal'};`
               + `font-style:${z.italic ? 'italic' : 'normal'};`;
-            if (z.strokeColor) fallbackStyle += `stroke:${z.strokeColor};`;
-            if (z.strokeWidth != null && Number(z.strokeWidth) > 0) fallbackStyle += `stroke-width:${Number(z.strokeWidth)}px;paint-order:stroke fill;`;
+            const strokeFrag = svgStrokeStyleDecl(z.strokeColor, z.strokeWidth, zoneFontSize);
+            if (strokeFrag) fallbackStyle += strokeFrag;
             return `<tspan${attr} style="${escapeXml(fallbackStyle)}">${escapeXml(f.text || '')}</tspan>`;
           }).join('');
           tspanParts.push(`<tspan id="${zoneId}" class="smil-target"${zoneFontSizeAttr}>${innerTspans}</tspan>`);
@@ -1303,8 +1326,8 @@ ${xhtmlBody}`;
                 + (transparentText ? 'fill:transparent;' : `fill:${z.color || defFill};`)
                 + `font-weight:${z.bold ? 'bold' : 'normal'};`
                 + `font-style:${z.italic ? 'italic' : 'normal'};`;
-              if (z.strokeColor) fallbackStyle += `stroke:${z.strokeColor};`;
-              if (z.strokeWidth != null && Number(z.strokeWidth) > 0) fallbackStyle += `stroke-width:${Number(z.strokeWidth)}px;paint-order:stroke fill;`;
+              const strokeFrag2 = svgStrokeStyleDecl(z.strokeColor, z.strokeWidth, zoneFontSize);
+              if (strokeFrag2) fallbackStyle += strokeFrag2;
               tspanParts.push(`<tspan id="${zoneId}" class="smil-target"${posAttr} style="${escapeXml(fallbackStyle)}">${escapeXml(f.text || '')}</tspan>`);
             }
           } else {
@@ -1313,8 +1336,8 @@ ${xhtmlBody}`;
               + (transparentText ? 'fill:transparent;' : `fill:${z.color || defFill};`)
               + `font-weight:${z.bold ? 'bold' : 'normal'};`
               + `font-style:${z.italic ? 'italic' : 'normal'};`;
-            if (z.strokeColor) fallbackStyle += `stroke:${z.strokeColor};`;
-            if (z.strokeWidth != null && Number(z.strokeWidth) > 0) fallbackStyle += `stroke-width:${Number(z.strokeWidth)}px;paint-order:stroke fill;`;
+            const strokeFrag3 = svgStrokeStyleDecl(z.strokeColor, z.strokeWidth, zoneFontSize);
+            if (strokeFrag3) fallbackStyle += strokeFrag3;
             tspanParts.push(`<tspan id="${zoneId}" class="smil-target"${posAttr} style="${escapeXml(fallbackStyle)}">${escapeXml(f.text || '')}</tspan>`);
           }
         }
@@ -1505,9 +1528,10 @@ ${xhtmlBody}`;
               if (run.bold) segStyle.push('font-weight:bold');
               if (run.italic) segStyle.push('font-style:italic');
               const strokeColor = run.strokeColor ?? z.strokeColor;
-              const strokeWidth = run.strokeWidth ?? z.strokeWidth;
-              if (strokeColor) segStyle.push(`stroke:${strokeColor}`);
-              if (strokeWidth != null && Number(strokeWidth) > 0) segStyle.push(`stroke-width:${Number(strokeWidth)}px;paint-order:stroke fill`);
+              const strokeWidthRaw = run.strokeWidth ?? z.strokeWidth;
+              const lineFs = Number(line.fontSize) || Number(z.fontSize) || 12;
+              const strokeFragLine = svgStrokeStyleDecl(strokeColor, strokeWidthRaw, lineFs);
+              if (strokeFragLine) segStyle.push(strokeFragLine);
               if (lineAlign === 'right') segStyle.push('text-anchor:end');
               else if (lineAlign === 'center' && syncLevel !== 'sentence') segStyle.push('text-anchor:middle');
               const styleAttr = segStyle.length ? ` style="${escapeXml(segStyle.join(';') + ';')}"` : '';
@@ -1524,8 +1548,9 @@ ${xhtmlBody}`;
         if (line.color != null && !transparentText) lineStyle += `fill:${line.color};`;
         if (line.bold) lineStyle += 'font-weight:bold;';
         if (line.italic) lineStyle += 'font-style:italic;';
-        if (z.strokeColor) lineStyle += `stroke:${z.strokeColor};`;
-        if (z.strokeWidth != null && Number(z.strokeWidth) > 0) lineStyle += `stroke-width:${Number(z.strokeWidth)}px;paint-order:stroke fill;`;
+        const lineFs2 = Number(line.fontSize) || Number(z.fontSize) || 12;
+        const strokeLine2 = svgStrokeStyleDecl(z.strokeColor, z.strokeWidth, lineFs2);
+        if (strokeLine2) lineStyle += strokeLine2;
         if (lineAlign === 'right') lineStyle += 'text-anchor:end;';
         else if (lineAlign === 'center' && syncLevel !== 'sentence') lineStyle += 'text-anchor:middle;';
         const tspanStyleAttr = lineStyle ? ` style="${escapeXml(lineStyle)}"` : (lineAlign === 'right' ? ' style="text-anchor:end"' : (lineAlign === 'center' && syncLevel !== 'sentence' ? ' style="text-anchor:middle"' : ''));
@@ -1652,14 +1677,20 @@ ${xhtmlBody}`;
       else if (defaultZone.bold) spanStyle += 'font-weight:normal;';
       if (z.italic) spanStyle += 'font-style:italic;';
       else if (defaultZone.italic) spanStyle += 'font-style:normal;';
-      if (z.strokeColor) spanStyle += `stroke:${z.strokeColor};`;
-      if (z.strokeWidth) spanStyle += `stroke-width:${z.strokeWidth}px;paint-order:stroke fill;`;
+      const zFs = Number(z.fontSize) || defFontSize || 12;
+      const strokeWord = svgStrokeStyleDecl(z.strokeColor, z.strokeWidth, zFs);
+      if (strokeWord) spanStyle += strokeWord;
 
       const id = (z.id || '').replace(/"/g, '&quot;');
       const styleAttr = spanStyle ? ` style="${escapeXml(spanStyle)}"` : '';
       const posAttr = useExplicitHere ? ` x="${Number(zx).toFixed(2)}" y="${Number(zy).toFixed(2)}"` : '';
-      // Word-level: stretch each word (and optional trailing space) to its width so fallback fonts don't leave extra gaps; include space width when we add inter-word space.
-      const wordTlAttr = (isWordLevel && (zw + wordLevelSpaceWidth) > 0) ? ` textLength="${(zw + wordLevelSpaceWidth).toFixed(2)}" lengthAdjust="spacingAndGlyphs"` : '';
+      // Word-level: stretch each word only when bbox width is plausible (tiny zw + spacingAndGlyphs smears glyphs).
+      const twRaw = zw + wordLevelSpaceWidth;
+      const charCount = Math.max(1, (content.replace(/\s+/g, '') || '').length);
+      const minTl = Math.max(2, charCount * (defFontSize || 12) * 0.28);
+      const wordTlAttr = (isWordLevel && twRaw > 0 && twRaw >= minTl * 0.72)
+        ? ` textLength="${twRaw.toFixed(2)}" lengthAdjust="spacingAndGlyphs"`
+        : '';
       // Word-level styles: zone.styleRuns (from PDF or Studio) — one tspan per run so e.g. "mane" can be bold in sentence.
       const runs = Array.isArray(z.styleRuns) && z.styleRuns.length > 0 ? z.styleRuns : null;
       if (runs && !(z.lines && z.lines.length > 1)) {
@@ -1678,8 +1709,9 @@ ${xhtmlBody}`;
           else if (defaultZone.bold) runStyle.push('font-weight:normal');
           if (run.italic) runStyle.push('font-style:italic');
           else if (defaultZone.italic) runStyle.push('font-style:normal');
-          if (z.strokeColor) runStyle.push(`stroke:${z.strokeColor}`);
-          if (z.strokeWidth) runStyle.push(`stroke-width:${z.strokeWidth}px;paint-order:stroke fill`);
+          const zFsRun = Number(z.fontSize) || defFontSize || 12;
+          const strokeRun = svgStrokeStyleDecl(z.strokeColor, z.strokeWidth, zFsRun);
+          if (strokeRun) runStyle.push(strokeRun);
           const rStyleAttr = runStyle.length ? ` style="${escapeXml(runStyle.join(';') + ';')}"` : '';
           const isFirst = ri === 0;
           const isLast = ri === runs.length - 1;

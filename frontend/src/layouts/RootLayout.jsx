@@ -10,14 +10,15 @@
  *
  * Auth gating happens upstream in routes/guards.jsx (RequireAuth) so this
  * component can assume a user exists.
+ *
+ * No Suspense here: each lazy route wraps its own element in AppRouter so the
+ * org/platform shell (sidebar + Outlet) stays mounted during chunk loads.
  */
-import { Suspense } from 'react';
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../features/auth/authSlice';
 import OrgAdminLayout from './OrgAdminLayout';
 import PlatformAdminLayout from './PlatformAdminLayout';
 import DefaultLayout from './DefaultLayout';
-import RouteFallback from './RouteFallback';
 
 export default function RootLayout() {
   const user = useAppSelector(selectUser);
@@ -27,9 +28,5 @@ export default function RootLayout() {
   if (role === 'org_admin')      Layout = OrgAdminLayout;
   if (role === 'platform_admin') Layout = PlatformAdminLayout;
 
-  return (
-    <Suspense fallback={<RouteFallback />}>
-      <Layout />
-    </Suspense>
-  );
+  return <Layout />;
 }

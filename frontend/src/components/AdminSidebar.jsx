@@ -87,7 +87,7 @@ const AdminSidebar = ({ onCollapse }) => {
       orgs: path.startsWith('/admin/organizations'),
       plans: path.startsWith('/admin/plans'),
       users: path.startsWith('/admin/users'),
-      conversions: path.startsWith('/conversions'),
+      conversions: path.startsWith('/admin/conversions'),
       settings: path.startsWith('/admin/settings'),
       billing: path.startsWith('/admin/billing'),
       security: path.startsWith('/admin/security'),
@@ -176,7 +176,7 @@ const AdminSidebar = ({ onCollapse }) => {
           />
 
           <NavRow
-            to="/conversions"
+            to="/admin/conversions"
             icon={RefreshCw}
             label="Conversions"
             isActive={active.conversions}

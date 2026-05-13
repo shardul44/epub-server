@@ -30,19 +30,29 @@ export default function OrgAdminLayout() {
   const { pdfCount, conversionCount } = useSidebarBadges();
 
   // Warm the same React Query keys the sidebar reads so badge counts are
-  // correct on first paint (no need to visit Conversion Jobs / PDFs first).
+  // correct on first paint. Skip when cache already has data; concurrent
+  // prefetches for the same key are deduplicated by React Query.
   useEffect(() => {
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.conversions.list(),
-      queryFn:  fetchAllJobs,
-    });
-    void queryClient.prefetchQuery({
-      queryKey: queryKeys.pdfs.list(),
-      queryFn:  async () => {
-        const data = await pdfService.getAllPdfs({});
-        return data ?? [];
-      },
-    });
+    const convKey = queryKeys.conversions.list();
+    if (queryClient.getQueryData(convKey) == null) {
+      void queryClient.prefetchQuery({
+        queryKey: convKey,
+        queryFn:  fetchAllJobs,
+        staleTime: 20 * 1000,
+      });
+    }
+
+    const pdfKey = queryKeys.pdfs.list();
+    if (queryClient.getQueryData(pdfKey) == null) {
+      void queryClient.prefetchQuery({
+        queryKey: pdfKey,
+        queryFn:  async () => {
+          const data = await pdfService.getAllPdfs({});
+          return data ?? [];
+        },
+        staleTime: 30 * 1000,
+      });
+    }
   }, [queryClient]);
 
   const handleSidebarCollapse = useCallback(

@@ -560,8 +560,14 @@ export default function FxlSyncStudio() {
     <div className="fxl-sync-studio">
       <header className="studio-header">
         <div className="header-left">
-          <button type="button" onClick={() => navigate(`/kitaboo-studio/${jobId}`)} className="btn-back">
-            <ChevronLeft size={18} {...fxlIc} /> Back to Zoning Studio
+          <button
+            type="button"
+            className="btn-back"
+            onClick={() => navigate('/conversions/audio-sync')}
+            title="Back to Audio Sync Studio (job list)"
+          >
+            <ChevronLeft size={18} {...fxlIc} />
+            Back
           </button>
           <h1>FXL Sync Studio</h1>
           <span className="job-badge">Job #{jobId}</span>
@@ -575,8 +581,11 @@ export default function FxlSyncStudio() {
             {saving ? (
               <><Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> Saving…</>
             ) : (
-              <><Download size={18} {...fxlIc} /> Save & Download EPUB</>
+              <><Download size={18} {...fxlIc} /> Save & Next</>
             )}
+          </button>
+          <button type="button" onClick={() => navigate(`/kitaboo-studio/${jobId}`)} className="btn-back">
+            <ChevronLeft size={18} {...fxlIc} /> Back to Zoning Studio
           </button>
         </div>
       </header>
@@ -584,6 +593,7 @@ export default function FxlSyncStudio() {
         {/* {!effectiveAudioUrl && (
           <span className="no-audio-hint">Upload narration.mp3 in Zoning Studio (one file for all pages) or use Configure page boundaries → MP3 per page.</span>
         )} */}
+
         <button
           type="button"
           onClick={() => handleRunAlignment(false)}

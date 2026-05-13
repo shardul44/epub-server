@@ -34,7 +34,7 @@ export function useAppBootstrap({ enabled = true } = {}) {
     gcTime:               10 * 60 * 1000, // 10 min — keep in cache after unmount
     refetchOnWindowFocus: false,
     refetchOnReconnect:   false,
-    refetchOnMount:       true,           // fetch once on first mount
+    refetchOnMount:       false,
     retry:                2,
   });
 

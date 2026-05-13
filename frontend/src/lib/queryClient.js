@@ -7,10 +7,12 @@
  * refetchOnWindowFocus / refetchOnReconnect are DISABLED to prevent
  * the request storm that occurs when the user clicks around the app.
  *
- * refetchOnMount: true  – ensures a page always gets data on first mount
+ * refetchOnMount: true — ensures a page always gets data on first mount
  *                         but React Query deduplicates concurrent calls.
  *
- * NOTE: PDF list queries are intentionally excluded from localStorage
+ * NOTE: useConversionsQuery sets its own staleTime / refetch rules for jobs.
+ *
+ * PDF list queries are intentionally excluded from localStorage
  * persistence (shouldDehydrateQuery filter below). Persisting the PDF
  * list causes deleted/stale PDFs to reappear on page reload because
  * the rehydrated cache is shown before the fresh server fetch completes.
@@ -23,7 +25,7 @@ import { persistQueryClient } from '@tanstack/react-query-persist-client';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime:            30 * 1000,       // 30 s default (conversions hook overrides to 0)
+      staleTime:            30 * 1000,       // 30 s default (conversions use ~20 s in useConversionsQuery)
       gcTime:               10 * 60 * 1000,  // 10 min
       retry:                1,
       refetchOnWindowFocus: false,

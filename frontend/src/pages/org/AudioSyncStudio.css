@@ -45,17 +45,30 @@
   margin: 0;
 }
 
+.ass-topbar-title--grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.ass-topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .ass-back-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 12px;
+  padding: 12px 10px; 
   border-radius: 6px;
   border: 1px solid var(--ass-border);
   background: var(--ass-white);
   color: var(--ass-muted);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s;

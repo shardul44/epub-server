@@ -39,20 +39,36 @@ export const kitabooService = {
    * If the EPUB hasn't been published yet, publishes it first then downloads.
    */
   downloadFxlEpub: async (jobId, filename = null, onStatus = null) => {
-    // Try to download directly first
-    let downloadRes;
-    try {
-      downloadRes = await api.get(`/kitaboo/download/${jobId}`, { responseType: 'blob' });
-    } catch (err) {
-      // 404 means not published yet — publish first, then download
-      if (err.response?.status === 404) {
-        if (onStatus) onStatus('Publishing EPUB…');
-        await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });
-        if (onStatus) onStatus('Downloading…');
-        downloadRes = await api.get(`/kitaboo/download/${jobId}`, { responseType: 'blob' });
-      } else {
-        throw err;
-      }
+    // 404 when the EPUB file is not on disk yet is normal (user never hit Publish, or first download).
+    // Use validateStatus so axios resolves instead of rejecting — avoids error interceptor noise and
+    // duplicate handling; we publish then fetch again.
+    const getBlob = () =>
+      api.get(`/kitaboo/download/${jobId}`, {
+        responseType: 'blob',
+        validateStatus: (s) => s === 200 || s === 404,
+      });
+
+    let downloadRes = await getBlob();
+    if (downloadRes.status === 404) {
+      if (onStatus) onStatus('Publishing EPUB…');
+      await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });
+      if (onStatus) onStatus('Downloading…');
+      downloadRes = await getBlob();
+    }
+    if (downloadRes.status !== 200 || !(downloadRes.data instanceof Blob)) {
+      let detail = 'EPUB file is not available.';
+      try {
+        const t = await downloadRes.data?.text?.();
+        if (t && t.trim().startsWith('{')) {
+          const j = JSON.parse(t);
+          if (j.error || j.message) detail = j.error || j.message;
+        }
+      } catch (_) { /* ignore */ }
+      throw new Error(
+        downloadRes.status === 404
+          ? `${detail} Run publish from FXL Zoning Studio or ensure kitaboo_${jobId} output still exists on the server.`
+          : detail,
+      );
     }
     const name = filename
       || downloadRes.headers['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1]

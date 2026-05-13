@@ -19,9 +19,14 @@ export default function WorkflowStudioChrome({
   backTo,
   onBack,
   rightActions,
+  conversionsPath = '/conversions',
+  hideBackToConversions,
 }) {
   const navigate = useNavigate();
   const handleBack = onBack ?? (() => navigate(backTo));
+  const handleBackToConversions = useCallback(() => {
+    navigate(conversionsPath);
+  }, [navigate, conversionsPath]);
   const handleStepClick = useCallback((step) => {
     navigate(step.path);
   }, [navigate]);
@@ -37,7 +42,14 @@ export default function WorkflowStudioChrome({
         <button type="button" className="ass-back-btn" onClick={handleBack}>
           <ArrowLeft size={15} /> Back
         </button>
-        <h1 className="ass-topbar-title">{topTitle}</h1>
+        <h1 className="ass-topbar-title ass-topbar-title--grow">{topTitle}</h1>
+        {!hideBackToConversions ? (
+          <div className="ass-topbar-right">
+            <button type="button" className="ass-back-btn" onClick={handleBackToConversions}>
+              <ArrowLeft size={15} /> Back to conversions
+            </button>
+          </div>
+        ) : null}
       </div>
       <WorkflowStepper
         activeStep={activeStep}

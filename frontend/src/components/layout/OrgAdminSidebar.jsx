@@ -176,11 +176,12 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
 
   const isOrgAdmin = user?.role === 'org_admin';
 
-  // Feature flags
-  const showConversion   = hasFeature(user, 'conversion.basic');
-  const showAccessibility = hasFeature(user, 'accessibility_tools');
-  const showEpubTools    = hasFeature(user, 'epub_tools');
-  const showInteractive  = hasFeature(user, 'interactive.content');
+  // Plan feature flags — org admins always see full workflow + tools in this shell
+  // (matches in-job pages; avoids empty WORKFLOW / TOOLS when `user.features` is sparse).
+  const showConversion    = isOrgAdmin || hasFeature(user, 'conversion.basic');
+  const showAccessibility = isOrgAdmin || hasFeature(user, 'accessibility_tools');
+  const showEpubTools       = isOrgAdmin || hasFeature(user, 'epub_tools');
+  const showInteractive     = isOrgAdmin || hasFeature(user, 'interactive.content');
 
   useEffect(() => {
     // Entrance animation

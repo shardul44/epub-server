@@ -79,23 +79,23 @@ const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ jobId, pdfId }) {
 const DownloadEpub = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const params   = useParams();
+  const params = useParams();
   const dispatch = useAppDispatch();
   const { goToAudioSync } = useWorkflowNavigation();
 
   // jobId priority: URL param → navigation state → Redux state
-  const urlJobId         = params?.jobId;
-  const stateJobId       = location.state?.jobId;
+  const urlJobId = params?.jobId;
+  const stateJobId = location.state?.jobId;
   const preselectedJobId = urlJobId ?? stateJobId;
 
   // ── Redux UI state ────────────────────────────────────────────
   const selectedJobId = useAppSelector(selectDESelectedJobId);
-  const error         = useAppSelector(selectDEError);
+  const error = useAppSelector(selectDEError);
 
   // ── Local UI state (ephemeral) ────────────────────────────────
-  const [downloading, setDownloading]         = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [quickDownloadId, setQuickDownloadId] = useState(null);
-  const [downloadStatus, setDownloadStatus]   = useState('');
+  const [downloadStatus, setDownloadStatus] = useState('');
 
   // ── React Query (server state — COMPLETED jobs only) ──────────
   const { jobs, isLoading: loading, error: fetchError } = useConversionsQuery({
@@ -182,13 +182,13 @@ const DownloadEpub = () => {
     );
   }
 
-  const job    = selectedJob;
-  const jobId  = job ? (job.id ?? job.jobId) : null;
-  const isFxl  = job?.jobType === 'FXL';
-  const pages  = job?.totalPages ?? job?.pageCount ?? null;
-  const size   = fmtSize(job?.fileSizeBytes ?? job?.fileSize ?? null);
-  const filename  = job ? `job-${jobId}.epub` : null;
-  const pdfName   = job?.pdfFilename ?? null;
+  const job = selectedJob;
+  const jobId = job ? (job.id ?? job.jobId) : null;
+  const isFxl = job?.jobType === 'FXL';
+  const pages = job?.totalPages ?? job?.pageCount ?? null;
+  const size = fmtSize(job?.fileSizeBytes ?? job?.fileSize ?? null);
+  const filename = job ? `job-${jobId}.epub` : null;
+  const pdfName = job?.pdfFilename ?? null;
 
   return (
     <div className="de-root">
@@ -196,21 +196,22 @@ const DownloadEpub = () => {
       {/* ── Top bar ── */}
       <div className="de-topbar">
         <div className="de-topbar-left">
-          <button
-            className="de-back-btn"
-            onClick={() => {
-              if (job) {
-                goToAudioSync(job);
-              } else {
-                navigate('/conversions/audio-sync');
-              }
-            }}
-          >
-            <ArrowLeft size={15} /> Audio Sync
-          </button>
           <h1 className="de-topbar-title">Download EPUB</h1>
           {jobId && <span className="de-job-chip-top">Job #{jobId}</span>}
+
         </div>
+        <button
+          className="de-back-btn"
+          onClick={() => {
+            if (job) {
+              goToAudioSync(job);
+            } else {
+              navigate('/conversions/audio-sync');
+            }
+          }}
+        >
+          <ArrowLeft size={15} /> Audio Sync
+        </button>
       </div>
 
       {/* ── Stepper ── */}
@@ -265,7 +266,7 @@ const DownloadEpub = () => {
                   <span className="de-file-meta">
                     {isFxl ? 'FXL' : 'Reflow'}
                     {pages ? ` · ${pages} pages` : ''}
-                    {size  ? ` · ${size}` : ''}
+                    {size ? ` · ${size}` : ''}
                   </span>
                 </div>
                 <span className="de-ready-badge">READY</span>

@@ -503,6 +503,11 @@ export default function SyncStudioEpubReader({
   epubSource = 'conversion',
   fixedLayout = false
 }) {
+  const [resolvedSource, setResolvedSource] = useState(epubSource);
+  useEffect(() => {
+    setResolvedSource(epubSource);
+  }, [epubSource, jobId]);
+
   const stageRef = useRef(null);
   const bookRef = useRef(null);
   const renditionRef = useRef(null);
@@ -806,7 +811,7 @@ export default function SyncStudioEpubReader({
     if (!jobId || !stageRef.current) return undefined;
 
     const downloadPath =
-      epubSource === 'kitaboo' ? `/kitaboo/download/${jobId}` : `/conversions/${jobId}/download`;
+      resolvedSource === 'kitaboo' ? `/kitaboo/download/${jobId}` : `/conversions/${jobId}/download`;
 
     (async () => {
       try {
@@ -849,7 +854,7 @@ export default function SyncStudioEpubReader({
         rendition.on('relocated', (loc) => {
           const s = syncStudioRef.current;
 
-          if (epubSource === 'conversion' && s?.perSectionAudioUrls && Object.keys(s.perSectionAudioUrls).length > 0) {
+          if (resolvedSource === 'conversion' && s?.perSectionAudioUrls && Object.keys(s.perSectionAudioUrls).length > 0) {
             const bk = bookRef.current;
             const spineIdx = spineIndexFromLocation(bk, loc);
             if (spineIdx == null) return;
@@ -873,7 +878,7 @@ export default function SyncStudioEpubReader({
             return;
           }
 
-          if (epubSource !== 'kitaboo') return;
+          if (resolvedSource !== 'kitaboo') return;
           if (!s?.perPageAudioUrls || Object.keys(s.perPageAudioUrls).length === 0) return;
           const main = s.audioUrl || '';
           if (main && !/\/audio\/page\//.test(main)) return;
@@ -1058,7 +1063,11 @@ export default function SyncStudioEpubReader({
       } catch (e) {
         if (!cancelled) {
           const status = e?.response?.status;
-          if (status === 404 && epubSource === 'kitaboo') {
+          if (status === 404 && resolvedSource === 'conversion') {
+            setResolvedSource('kitaboo');
+            return;
+          }
+          if (status === 404 && resolvedSource === 'kitaboo') {
             setLoadError(
               'No FXL EPUB on the server yet. Use Export FXL EPUB 3 in Zoning Studio, then open Reader again.'
             );
@@ -1085,7 +1094,7 @@ export default function SyncStudioEpubReader({
       bookRef.current = null;
       renditionRef.current = null;
     };
-  }, [jobId, epubSource, fixedLayout]);
+  }, [jobId, epubSource, fixedLayout, resolvedSource]);
 
   // Load audio + sync alignment blocks (word/sentence/zone ids + timings)
   useEffect(() => {
@@ -1116,7 +1125,7 @@ export default function SyncStudioEpubReader({
     (async () => {
       try {
         const endpoint =
-          epubSource === 'kitaboo'
+          resolvedSource === 'kitaboo'
             ? `/kitaboo/sync-studio/${jobId}`
             : `/audio-sync/sync-studio/${jobId}`;
 
@@ -1127,7 +1136,7 @@ export default function SyncStudioEpubReader({
         setSyncStudio(data);
         syncStudioRef.current = data;
         fxlZoneIdToPageRef.current =
-          epubSource === 'kitaboo' ? buildZoneIdToPageMap(data.pages || []) : new Map();
+          resolvedSource === 'kitaboo' ? buildZoneIdToPageMap(data.pages || []) : new Map();
 
         const { blocks, byId } = normalizeAlignmentToBlocks(data?.alignment ?? data?.segments);
         syncBlocksAllRef.current = blocks;
@@ -1146,7 +1155,7 @@ export default function SyncStudioEpubReader({
         rebuildActiveSyncBlocksForPlayback();
 
         // Per-page-only jobs (FXL): sync may finish after the book renders; point audio at the visible spine page.
-        if (epubSource === 'kitaboo' && data?.perPageAudioUrls && Object.keys(data.perPageAudioUrls).length > 0) {
+        if (resolvedSource === 'kitaboo' && data?.perPageAudioUrls && Object.keys(data.perPageAudioUrls).length > 0) {
           requestAnimationFrame(() => {
             try {
               const s = syncStudioRef.current;
@@ -1177,7 +1186,7 @@ export default function SyncStudioEpubReader({
         }
 
         // Reflowable: one MP3 per spine chapter/section — match audio to current location when sync loads after EPUB.
-        if (epubSource === 'conversion' && data?.perSectionAudioUrls && Object.keys(data.perSectionAudioUrls).length > 0) {
+        if (resolvedSource === 'conversion' && data?.perSectionAudioUrls && Object.keys(data.perSectionAudioUrls).length > 0) {
           requestAnimationFrame(() => {
             try {
               const s = syncStudioRef.current;
@@ -1209,6 +1218,10 @@ export default function SyncStudioEpubReader({
         }
       } catch (e) {
         if (cancelled) return;
+        if (e?.response?.status === 404 && resolvedSource === 'conversion') {
+          setResolvedSource('kitaboo');
+          return;
+        }
         console.error('[SyncStudioEpubReader] sync load error:', e);
         setSyncLoadError(e?.response?.data?.error || e?.message || 'Could not load sync data.');
       }
@@ -1217,12 +1230,12 @@ export default function SyncStudioEpubReader({
     return () => {
       cancelled = true;
     };
-  }, [jobId, epubSource]);
+  }, [jobId, epubSource, resolvedSource]);
 
   // After the book iframe + location exist, re-filter blocks (spine href / DOM ids were unknown at first sync load).
   useEffect(() => {
     if (!ready || !syncStudio) return;
-    if (epubSource === 'conversion' && syncStudio.perSectionAudioUrls && Object.keys(syncStudio.perSectionAudioUrls).length > 0) {
+    if (resolvedSource === 'conversion' && syncStudio.perSectionAudioUrls && Object.keys(syncStudio.perSectionAudioUrls).length > 0) {
       const loc = renditionRef.current?.currentLocation?.();
       const spineIdx = spineIndexFromLocation(bookRef.current, loc);
       if (spineIdx == null) {
@@ -1254,10 +1267,10 @@ export default function SyncStudioEpubReader({
       }
       return;
     }
-    if (epubSource === 'kitaboo') {
+    if (resolvedSource === 'kitaboo') {
       rebuildActiveSyncBlocksForPlayback();
     }
-  }, [ready, syncStudio, epubSource]);
+  }, [ready, syncStudio, resolvedSource]);
 
   // Drive highlight from audio time (real-time)
   useEffect(() => {
@@ -1427,7 +1440,7 @@ export default function SyncStudioEpubReader({
       <div className="sync-studio-epub-root sync-studio-epub-error">
         <p>{loadError}</p>
         <p className="sync-studio-epub-hint">
-          {epubSource === 'kitaboo'
+          {resolvedSource === 'kitaboo'
             ? 'Reader uses the same file as download from Zoning Studio. Fixed-layout rendering in the browser may differ from a desktop reader.'
             : 'The job needs an EPUB on the server (complete conversion, Save & export, or EPUB import). Use HTML preview for tap-to-sync.'}
         </p>

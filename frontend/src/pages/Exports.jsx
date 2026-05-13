@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildEpubReaderPath } from '../utils/epubReaderUrl';
 import { conversionService } from '../services/conversionService';
 import api from '../services/api';
 import { useQueryClient } from '@tanstack/react-query';
@@ -101,7 +102,7 @@ const Exports = () => {
   const handleDownload = async (job) => {
     const jobId = job.id ?? job.jobId;
     try {
-      await conversionService.downloadEpub(jobId);
+      await conversionService.downloadEpub(jobId, { jobType: job.jobType });
     } catch {
       setError('Download failed. Please try again.');
     }
@@ -109,7 +110,13 @@ const Exports = () => {
 
   const handlePreview = (job) => {
     const jobId = job.id ?? job.jobId;
-    navigate(`/reader/epub/${jobId}`);
+    const isFxl = job.jobType === 'FXL';
+    navigate(
+      buildEpubReaderPath(jobId, {
+        source: isFxl ? 'kitaboo' : 'conversion',
+        fixedLayout: isFxl,
+      }),
+    );
   };
 
   const handleDelete = async (job) => {

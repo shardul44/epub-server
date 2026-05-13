@@ -99,10 +99,12 @@ const AudioSyncStudio = () => {
   return (
     <div className="ass-root">
       <div className="ass-topbar">
-        <button type="button" className="ass-back-btn" onClick={() => navigate('/conversions')}>
-          <ArrowLeft size={15} /> Back to conversions
-        </button>
-        <h1 className="ass-topbar-title">Audio Sync Studio</h1>
+        <h1 className="ass-topbar-title ass-topbar-title--grow">Audio Sync Studio</h1>
+        <div className="ass-topbar-right">
+          <button type="button" className="ass-back-btn" onClick={() => navigate('/conversions')}>
+            <ArrowLeft size={15} /> Back to conversions
+          </button>
+        </div>
       </div>
 
       <WorkflowStepper activeStep={2} jobId={null} onStepClick={handleStepClick} />

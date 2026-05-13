@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --ife-blue:     #2563eb;
+  --ife-blue:     #6b7280;
   --ife-blue-lt:  #eff6ff;
   --ife-blue-mid: #dbeafe;
   --ife-green:    #22c55e;
@@ -67,13 +67,13 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 12px;
+  padding: 12px 10px;
   border-radius: 6px;
   border: 1px solid var(--ife-border);
-  background: transparent;
-  color: var(--ife-muted);
+  background: var(--ife-white);
+  color: var(--ife-blue);
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s, color 0.15s;

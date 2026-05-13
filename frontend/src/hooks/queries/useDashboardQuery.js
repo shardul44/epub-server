@@ -2,7 +2,7 @@
  * useDashboardQuery — derives dashboard stats from the shared conversions cache.
  *
  * Does NOT make its own /conversions call. Reads from the same
- * ['conversions', 'list'] cache that every other component uses.
+ * ['conversions'] cache that every other component uses.
  * Only fetches /users and /health (once, cached 5 min).
  */
 

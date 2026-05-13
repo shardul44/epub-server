@@ -240,7 +240,7 @@ const ConversionJobs = () => {
   const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
 
   // ── React Query (server state) ────────────────────────────────
-  const { jobs, isLoading: loading, error: pollError, refresh } = useConversionsQuery({ statusFilter });
+  const { jobs, isPending, isLoading: loading, error: pollError, refresh } = useConversionsQuery({ statusFilter });
 
   // If another page redirects here (e.g. editor opened while job is still running),
   // focus that job and switch filter to show the converting job.
@@ -299,7 +299,7 @@ const ConversionJobs = () => {
   const displayError   = actionError || pollError;
 
   /* ── render ── */
-  if (loading && jobs.length === 0) {
+  if (isPending && jobs.length === 0) {
     return (
       <div className="cj-root">
         <div className="cj-loading">

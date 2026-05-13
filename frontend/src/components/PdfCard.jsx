@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo, useCallback } from 'react';
+import { useState, useRef, useEffect, memo, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FileText,
@@ -15,6 +15,7 @@ import PdfThumbnail from './PdfThumbnail';
 import './PdfCard.css';
 
 // In-memory guard to prevent repeated thumbnail fetches for deleted/missing PDFs.
+// Keys are always strings so number/string id mismatches cannot bypass the guard.
 const missingThumbnailPdfIds = new Set();
 
 /* ─────────────────────────────────────────────
@@ -48,26 +49,27 @@ export const getGradient = (id) => cardGradients[(id || 0) % cardGradients.lengt
 ───────────────────────────────────────────── */
 const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
   const notFoundHandledRef = useRef(false);
+  const idKey = pdfId != null && pdfId !== '' ? String(pdfId) : '';
 
   // Build a stable cache key from the PDF id so we don't re-render on every mount
-  const cacheKey = pdfId ? `pdf-thumb-card-${pdfId}` : null;
+  const cacheKey = idKey ? `pdf-thumb-card-${idKey}` : null;
+
+  const pdfUrl = useMemo(() => {
+    if (!idKey) return null;
+    const token = localStorage.getItem('token');
+    const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+    return `${base}/pdfs/${idKey}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  }, [idKey]);
 
   // If this PDF already failed with 404 in this session, skip requesting again.
-  if (pdfId && missingThumbnailPdfIds.has(pdfId)) return null;
-
-  // Use the /view endpoint — served inline with auth token in query param
-  const token = localStorage.getItem('token');
-  const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-  const pdfUrl = pdfId
-    ? `${base}/pdfs/${pdfId}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`
-    : null;
+  if (idKey && missingThumbnailPdfIds.has(idKey)) return null;
 
   if (!pdfUrl) return null;
 
   const handleError = (err) => {
     // 404 means the file is gone from disk — remove the card entirely
     if (err?.httpStatus === 404 || err?.message?.includes('404')) {
-      if (pdfId) missingThumbnailPdfIds.add(pdfId);
+      if (idKey) missingThumbnailPdfIds.add(idKey);
       // Purge the stale thumbnail cache entry so it can't resurface
       if (cacheKey) { try { localStorage.removeItem(cacheKey); } catch (_) { /* ignore */ } }
       // Ensure callback fires once for this card instance.

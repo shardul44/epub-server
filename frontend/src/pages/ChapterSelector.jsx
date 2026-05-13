@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -198,6 +198,11 @@ const ChapterSelector = () => {
   const [submitting, setSubmitting] = useState(false);
   const [previewPage, setPreviewPage] = useState(1);
 
+  const previewSrc = useMemo(
+    () => (pdfId ? pdfViewUrl(pdfId, previewPage) : ''),
+    [pdfId, previewPage],
+  );
+
   /* Load PDF */
   useEffect(() => {
     if (!pdfId) return;
@@ -396,7 +401,7 @@ const ChapterSelector = () => {
               key={previewPage}
               className="cs-iframe"
               title={`PDF Preview — page ${previewPage}`}
-              src={pdfViewUrl(pdfId, previewPage)}
+              src={previewSrc}
             />
           </div>
         </div>

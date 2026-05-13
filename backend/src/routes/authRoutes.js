@@ -8,6 +8,7 @@ import { signToken } from '../utils/authToken.js';
 import { EntitlementService } from '../services/entitlementService.js';
 import { LicenseService } from '../services/licenseService.js';
 import { OrganizationModel } from '../models/Organization.js';
+import { PlatformSettingsModel } from '../models/PlatformSettings.js';
 import { ROLES } from '../constants/roles.js';
 import { LICENSING_MODE } from '../constants/licensingMode.js';
 
@@ -68,7 +69,8 @@ router.post('/register', async (req, res) => {
       organizationId
     });
     const full = await UserModel.findByEmail(email);
-    const token = signToken(full);
+    const sessionMin = await PlatformSettingsModel.getSessionTimeoutMinutes();
+    const token = signToken(full, { expiresIn: `${sessionMin}m` });
     const dto = UserService.convertToDTO(created);
     const features = await EntitlementService.getFeatureKeysForUser(full);
     const license = await licensePayloadForUser(full);
@@ -100,7 +102,8 @@ router.post('/login', async (req, res) => {
       return errorResponse(res, 'Invalid email or password', 401);
     }
 
-    const token = signToken(userRow);
+    const sessionMin = await PlatformSettingsModel.getSessionTimeoutMinutes();
+    const token = signToken(userRow, { expiresIn: `${sessionMin}m` });
 
     const dto = UserService.convertToDTO(await UserModel.findById(userRow.id));
     const features = await EntitlementService.getFeatureKeysForUser(userRow);

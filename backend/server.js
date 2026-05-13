@@ -192,6 +192,18 @@ async function startServer(retryCount = 0) {
   } catch (e) {
     console.warn('[bootstrap] ensurePlatformAdmin failed:', e.message);
   }
+  try {
+    const { ensurePlatformSettings } = await import('./src/bootstrap/ensurePlatformSettings.js');
+    await ensurePlatformSettings();
+  } catch (e) {
+    console.warn('[bootstrap] ensurePlatformSettings failed:', e.message);
+  }
+  try {
+    const { ensurePlatformApiKeys } = await import('./src/bootstrap/ensurePlatformApiKeys.js');
+    await ensurePlatformApiKeys();
+  } catch (e) {
+    console.warn('[bootstrap] ensurePlatformApiKeys failed:', e.message);
+  }
 
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

@@ -2,9 +2,8 @@
  * queryKeys.js — single source of truth for all React Query cache keys.
  *
  * RULE: conversion/job data always uses queryKeys.conversions.list()
- * regardless of which component or hook is asking. This guarantees
- * every consumer shares the same cache entry and there is exactly
- * ONE network request for job data at any point in time.
+ * (cache key `['conversions']`). This guarantees every consumer shares the same
+ * cache entry and there is exactly ONE network request for job data at any point in time.
  */
 
 export const queryKeys = {
@@ -15,8 +14,9 @@ export const queryKeys = {
   // All consumers MUST use conversions.list() as their queryKey.
   // Status filtering is done client-side — never via separate keys.
   conversions: {
+    /** Job list cache — `all()` is the same key for broad invalidations. */
     all:    () => ['conversions'],
-    list:   () => ['conversions', 'list'],   // ← THE single shared key
+    list:   () => ['conversions'],
     detail: (jobId) => ['conversions', 'detail', jobId],
     status: (jobId) => ['conversion', jobId], // for useConversionStatus polling
   },

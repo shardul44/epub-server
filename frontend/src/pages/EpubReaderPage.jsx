@@ -13,9 +13,18 @@ export default function EpubReaderPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const source = searchParams.get('source') === 'kitaboo' ? 'kitaboo' : 'conversion';
+  const rawSource = searchParams.get('source');
   const fixedLayout =
     searchParams.get('fixedLayout') === '1' || searchParams.get('fixedLayout') === 'true';
+  // FXL reader links always send fixedLayout=1; tolerate bare /reader/epub/:id (e.g. old bookmarks).
+  const source =
+    rawSource === 'kitaboo'
+      ? 'kitaboo'
+      : rawSource === 'conversion'
+        ? 'conversion'
+        : fixedLayout
+          ? 'kitaboo'
+          : 'conversion';
   const spine = searchParams.get('spine') || undefined;
   const anchorId = searchParams.get('anchorId') || undefined;
 

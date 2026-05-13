@@ -47,26 +47,29 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error);
+    const status = error.response?.status;
 
-    if (error.response?.status === 401) {
+    if (status === 401) {
       localStorage.removeItem('token');
       const path = window.location?.pathname || '';
       // Avoid forcing a full page reload if user is already on the auth screen.
       if (path !== '/login' && path !== '/register') {
         window.location.href = '/login';
       }
-    } else if (error.response?.status === 403) {
+    } else if (status === 403) {
       const msg = error.response?.data?.error || 'You do not have access to this action or feature.';
       console.warn('Forbidden (403):', msg);
       window.dispatchEvent(new CustomEvent('app-forbidden', { detail: { message: msg } }));
-    } else if (error.response?.status === 404) {
-      // 404s are often expected (e.g. deleted jobs, missing resources) — log at warn level only
+    } else if (status === 404) {
+      // 404s are often expected (e.g. deleted jobs, probe-before-publish) — never use console.error here
       console.warn('API resource not found:', error.config?.url);
-    } else if (error.response?.status >= 500) {
+    } else if (status >= 500) {
       console.error('Server error:', error.response?.status, error.response?.data);
     } else if (!error.response) {
       console.error('Network error - check if backend server is running');
+    } else {
+      // Other 4xx (400, 409, 422, …)
+      console.error('API Error:', error.response?.status, error.response?.data ?? error.message);
     }
 
     return Promise.reject(error);

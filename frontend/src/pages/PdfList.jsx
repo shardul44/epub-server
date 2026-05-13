@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { pdfService } from '../services/pdfService';
@@ -187,6 +187,11 @@ const PdfList = () => {
   const [hifiSubmitting, setHifiSubmitting] = useState(false);
   const [previewPdf, setPreviewPdf] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null, loading: false });
+
+  const previewIframeSrc = useMemo(
+    () => (previewPdf ? mediaUrl(`/api/pdfs/${previewPdf.id}/view`) : ''),
+    [previewPdf],
+  );
 
   // ── Single source of truth for PDFs — no duplicate API calls ──
   const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf } = usePdfs();
@@ -649,7 +654,7 @@ const PdfList = () => {
             </div>
             <iframe
               className="pld-preview-iframe"
-              src={mediaUrl(`/api/pdfs/${previewPdf.id}/view`)}
+              src={previewIframeSrc}
               title={`Preview: ${previewPdf.originalFileName}`}
             />
           </div>

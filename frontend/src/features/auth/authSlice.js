@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { loginRequest, fetchMeRequest } from './authAPI';
 
+/** Coalesces concurrent /auth/me calls (React StrictMode double mount, duplicate dispatches). */
+let refreshUserInFlight = null;
+
 /* ─── Async thunks ────────────────────────────────────────────── */
 
 /**
@@ -32,16 +35,22 @@ export const loginUser = createAsyncThunk(
  *
  * Guards:
  *  - Skips if no token is present.
- *  - Skips if a fetch is already in-flight (status === 'loading'), preventing
- *    duplicate calls from Strict Mode double-invocation and Layout route changes.
+ *  - A module-level in-flight promise coalesces overlapping calls (e.g. React
+ *    StrictMode double mount) into a single HTTP request.
+ *  - `condition` skips duplicate dispatches once a user exists and status is loading.
  */
 export const refreshUser = createAsyncThunk(
   'auth/refreshUser',
   async (_, { rejectWithValue }) => {
     const token = localStorage.getItem('token');
     if (!token) return rejectWithValue('No token');
+    if (!refreshUserInFlight) {
+      refreshUserInFlight = fetchMeRequest().finally(() => {
+        refreshUserInFlight = null;
+      });
+    }
     try {
-      return await fetchMeRequest();
+      return await refreshUserInFlight;
     } catch (err) {
       localStorage.removeItem('token');
       return rejectWithValue(err.message || 'Session expired');

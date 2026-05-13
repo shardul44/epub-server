@@ -29,5 +29,20 @@ export const adminService = {
     api.delete(`/admin/plans/${planId}/features/${encodeURIComponent(featureKey)}`),
 
   getFeatures: () => api.get('/admin/features').then((r) => r.data.data),
-  createFeature: (body) => api.post('/admin/features', body).then((r) => r.data.data)
+  createFeature: (body) => api.post('/admin/features', body).then((r) => r.data.data),
+
+  getPlatformSettings: () => api.get('/admin/platform-settings').then((r) => r.data.data),
+  updatePlatformSettingsGeneral: (body) =>
+    api.put('/admin/platform-settings/general', body).then((r) => r.data.data),
+  updatePlatformSettingsEmail: (body) =>
+    api.put('/admin/platform-settings/email', body).then((r) => r.data.data),
+
+  getSecurityOverview: () => api.get('/admin/security/overview').then((r) => r.data.data),
+  createPlatformApiKey: (body) => api.post('/admin/security/api-keys', body).then((r) => r.data.data),
+  revokePlatformApiKey: (id) => api.patch(`/admin/security/api-keys/${id}/revoke`).then((r) => r.data.data),
+  renewPlatformApiKey: (id) => api.patch(`/admin/security/api-keys/${id}/renew`).then((r) => r.data.data),
+
+  /** Platform-wide audit feed (activities + failed conversions). */
+  getSystemLogs: (params = {}) =>
+    api.get('/admin/system-logs', { params }).then((r) => r.data.data)
 };

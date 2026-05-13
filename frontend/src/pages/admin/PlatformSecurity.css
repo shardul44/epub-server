@@ -1,0 +1,490 @@
+/* Platform admin security & access — psec- prefix */
+
+.psec-root {
+  --psec-bg: #f7f7f2;
+  --psec-card: #ffffff;
+  --psec-border: #e5e7eb;
+  --psec-text: #111827;
+  --psec-muted: #6b7280;
+  --psec-blue: #2563eb;
+  --psec-green: #059669;
+  --psec-amber: #d97706;
+  --psec-red: #dc2626;
+  min-height: 100%;
+  width: 100%;
+  background: var(--psec-bg);
+  padding: 10px 32px 40px;
+  box-sizing: border-box;
+}
+
+.psec-inner {
+  max-width: 100%; 
+  margin: 0 auto;
+}
+
+.psec-head {
+  margin-bottom: 24px;
+}
+
+.psec-title {
+  margin: 0 0 8px;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--psec-text);
+}
+
+.psec-sub {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--psec-muted);
+  line-height: 1.45;
+}
+
+.psec-err {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.875rem;
+}
+
+.psec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .psec-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.psec-card {
+  background: var(--psec-card);
+  border: 1px solid var(--psec-border);
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.psec-card-header {
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--psec-border);
+}
+
+.psec-card-header .psec-card-title {
+  margin: 0;
+}
+
+.psec-card-body {
+  padding: 20px 22px 22px;
+}
+
+.psec-card-body--keys {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.psec-card-title {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--psec-text);
+  letter-spacing: -0.01em;
+}
+
+.psec-table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--psec-border);
+}
+
+.psec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.psec-table th,
+.psec-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--psec-border);
+}
+
+.psec-table th {
+  background: #f9fafb;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--psec-muted);
+}
+
+.psec-table tr:last-child td {
+  border-bottom: none;
+}
+
+.psec-role-cell {
+  font-weight: 600;
+}
+
+.psec-perm {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.psec-perm--full {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.psec-perm--read {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.psec-perm--none {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.psec-role-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.psec-role-badge--platform {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.psec-role-badge--org {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.psec-role-badge--member {
+  background: #e2e2e2;
+  color: #000000;
+}
+
+.psec-key-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.psec-key-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--psec-border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.psec-key-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.psec-key-text {
+  min-width: 0;
+}
+
+.psec-key-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.psec-key-right-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 10px;
+}
+
+.psec-key-expires {
+  font-size: 0.75rem;
+  color: var(--psec-muted);
+  white-space: nowrap;
+}
+
+.psec-key-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.psec-key-icon--prod {
+  background: #eff6ff;
+  color: var(--psec-blue);
+}
+
+.psec-key-icon--stg {
+  background: #fffbeb;
+  color: var(--psec-amber);
+}
+
+.psec-key-name {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--psec-text);
+}
+
+.psec-key-mask {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: var(--psec-muted);
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.psec-status {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.psec-status--active {
+  border-color: #10b981;
+  color: #059669;
+}
+
+.psec-status--expiring {
+  border-color: #f59e0b;
+  color: #d97706;
+}
+
+.psec-status--expired {
+  border-color: #f87171;
+  color: #dc2626;
+}
+
+.psec-status--revoked {
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.psec-key-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.psec-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--psec-border);
+  background: var(--psec-card);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--psec-text);
+  cursor: pointer;
+}
+
+.psec-btn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.psec-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.psec-btn--revoke {
+  border-color: #fecaca;
+  color: var(--psec-red);
+}
+
+.psec-btn--revoke:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.psec-btn--renew {
+  border-color: var(--psec-border);
+  color: var(--psec-muted);
+}
+
+.psec-btn--renew:hover:not(:disabled) {
+  background: #f9fafb;
+  color: var(--psec-text);
+}
+
+.psec-btn--primary {
+  background: var(--psec-blue);
+  color: #fff;
+  border-color: var(--psec-blue);
+  padding: 10px 18px;
+  gap: 8px;
+}
+
+.psec-btn--primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.psec-btn--generate {
+  align-self: flex-start;
+  margin-top: 16px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.psec-empty-keys {
+  font-size: 0.875rem;
+  color: var(--psec-muted);
+  padding: 4px 0 8px;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .psec-key-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .psec-key-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .psec-key-right-top {
+    justify-content: flex-start;
+  }
+
+  .psec-key-actions {
+    justify-content: flex-start;
+  }
+}
+
+.psec-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 200px;
+  color: var(--psec-muted);
+  font-weight: 600;
+}
+
+.psec-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--psec-border);
+  border-top-color: var(--psec-blue);
+  border-radius: 50%;
+  animation: psec-spin 0.7s linear infinite;
+}
+
+@keyframes psec-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.psec-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.psec-modal {
+  background: var(--psec-card);
+  border-radius: 14px;
+  max-width: 440px;
+  width: 100%;
+  padding: 22px 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.psec-modal h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.psec-modal-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--psec-muted);
+  margin-bottom: 6px;
+}
+
+.psec-modal-input,
+.psec-modal-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--psec-border);
+  font-size: 0.9375rem;
+  margin-bottom: 14px;
+}
+
+.psec-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.psec-secret-box {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  padding: 12px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  word-break: break-all;
+  margin: 10px 0;
+  border: 1px solid var(--psec-border);
+}
+
+.psec-hint {
+  font-size: 0.8125rem;
+  color: var(--psec-muted);
+  margin: 0 0 12px;
+  line-height: 1.45;
+}

@@ -313,6 +313,36 @@ WHERE NOT EXISTS (
     SELECT 1 FROM organization_subscriptions WHERE organization_id = @seed_org_id
 );
 
+-- Platform-wide settings (single row)
+CREATE TABLE IF NOT EXISTS platform_settings (
+    id TINYINT UNSIGNED NOT NULL PRIMARY KEY DEFAULT 1,
+    platform_name VARCHAR(255) NOT NULL DEFAULT 'PDF to EPUB Converter',
+    default_plan_id BIGINT NULL COMMENT 'Suggested default plan for new organizations',
+    max_upload_mb INT NOT NULL DEFAULT 100,
+    session_timeout_minutes INT NOT NULL DEFAULT 60,
+    smtp_host VARCHAR(255) NOT NULL DEFAULT '',
+    smtp_port INT NOT NULL DEFAULT 587,
+    smtp_from_email VARCHAR(255) NOT NULL DEFAULT '',
+    smtp_admin_alert_email VARCHAR(255) NOT NULL DEFAULT '',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO platform_settings (id) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS platform_api_keys (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    environment ENUM('production','staging') NOT NULL DEFAULT 'staging',
+    token_hash CHAR(64) NOT NULL,
+    last_four CHAR(4) NOT NULL,
+    expires_at DATE NULL,
+    revoked_at DATETIME NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_platform_api_keys_env (environment),
+    INDEX idx_platform_api_keys_revoked (revoked_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 
 

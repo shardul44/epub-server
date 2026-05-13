@@ -42,16 +42,16 @@ const PdfThumbnail = memo(({
   alt       = 'PDF preview',
   fallback  = null,   // React node shown on error
   onLoad,             // () => void
-  onError,            // (error: Error) => void
+  onError,            // (error: Error) => void — NOT called for 404s
 }) => {
   const [thumbSrc, setThumbSrc]   = useState(null);
   const [status, setStatus]       = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
   const [errorMsg, setErrorMsg]   = useState('');
   const objectUrlRef              = useRef(null);
-  const cancelledRef              = useRef(false);
 
   useEffect(() => {
-    cancelledRef.current = false;
+    let cancelled = false;
+    const ac = new AbortController();
 
     // Check in-memory cache first (avoids re-generating on re-render)
     if (cacheKey) {
@@ -61,14 +61,20 @@ const PdfThumbnail = memo(({
           setThumbSrc(cached);
           setStatus('ready');
           onLoad?.();
-          return;
+          return () => {
+            cancelled = true;
+            ac.abort();
+          };
         }
       } catch (_) { /* ignore */ }
     }
 
     if (!file && !url) {
       setStatus('idle');
-      return;
+      return () => {
+        cancelled = true;
+        ac.abort();
+      };
     }
 
     setStatus('loading');
@@ -80,18 +86,17 @@ const PdfThumbnail = memo(({
         let pdfBlob;
 
         if (file) {
-          // Use the File/Blob directly
           pdfBlob = file;
         } else {
-          // Fetch from URL — include auth token if present in the URL already
-          // (the caller is responsible for appending ?token= if needed)
-          const response = await fetch(url);
+          const response = await fetch(url, { signal: ac.signal });
+          if (cancelled) return;
           if (!response.ok) {
             const err = new Error(`HTTP ${response.status}`);
             err.httpStatus = response.status;
             throw err;
           }
           pdfBlob = await response.blob();
+          if (cancelled) return;
         }
 
         const dataUrl = await generatePdfThumbnail(pdfBlob, {
@@ -103,7 +108,7 @@ const PdfThumbnail = memo(({
           pageNumber: 1,
         });
 
-        if (cancelledRef.current) return;
+        if (cancelled) return;
 
         // Cache the result
         if (cacheKey) {
@@ -114,19 +119,30 @@ const PdfThumbnail = memo(({
         setStatus('ready');
         onLoad?.();
       } catch (err) {
-        if (cancelledRef.current) return;
-        console.error('[PdfThumbnail] Error:', err);
-        setErrorMsg(err.message || 'Failed to generate thumbnail');
-        setStatus('error');
-        onError?.(err);
+        if (cancelled || err?.name === 'AbortError') return;
+
+        const is404 = err?.httpStatus === 404 || String(err?.message || '').includes('404');
+
+        if (is404) {
+          // A missing thumbnail is not a fatal error — show placeholder silently.
+          // Do NOT call onError, which could trigger removePdf or other destructive actions.
+          setErrorMsg('PDF not found');
+          setStatus('error');
+        } else {
+          // Real error (network failure, corrupt PDF, auth error, etc.)
+          console.error('[PdfThumbnail] Error:', err);
+          setErrorMsg(err.message || 'Failed to generate thumbnail');
+          setStatus('error');
+          onError?.(err);
+        }
       }
     }
 
     generate();
 
     return () => {
-      cancelledRef.current = true;
-      // Revoke any object URL we created
+      cancelled = true;
+      ac.abort();
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
         objectUrlRef.current = null;

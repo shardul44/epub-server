@@ -331,20 +331,7 @@ const PreviewModal = ({ asset, onClose }) => {
             <span className="ml-modal-title" title={name}>{name}</span>
           </div>
           <div className="ml-modal-header-right">
-            {url && (
-              <a
-                href={url}
-                download={name}
-                className="ml-modal-dl-btn"
-                target="_blank"
-                rel="noreferrer"
-                title="Download"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Download size={15} />
-                <span>Download</span>
-              </a>
-            )}
+           
             <button className="ml-modal-close" onClick={onClose} aria-label="Close preview">
               <X size={16} />
             </button>

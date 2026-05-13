@@ -34,8 +34,9 @@ export function usePdfsQuery({ scope = 'org', enabled = true } = {}) {
       const safeData = data ?? [];
       // Strip any IDs that were deleted in this session before caching
       if (deletedIdsRef.current.size === 0) return safeData;
+      const tomb = new Set([...deletedIdsRef.current].map((id) => String(id)));
       return Array.isArray(safeData)
-        ? safeData.filter((p) => !deletedIdsRef.current.has(p.id))
+        ? safeData.filter((p) => p?.id != null && !tomb.has(String(p.id)))
         : safeData;
     },
     enabled,
@@ -85,7 +86,8 @@ export function usePdfsQuery({ scope = 'org', enabled = true } = {}) {
     // 2. Optimistic update — filter the item out of the current cache immediately.
     queryClient.setQueryData(queryKeys.pdfs.list(), (prev) => {
       if (!Array.isArray(prev)) return prev;
-      const next = prev.filter((p) => p.id !== pdfId);
+      const idStr = String(pdfId);
+      const next = prev.filter((p) => String(p.id) !== idStr);
       console.log('[usePdfsQuery] cache updated — removed id', pdfId, '| remaining:', next.length);
       return next;
     });
@@ -99,9 +101,12 @@ export function usePdfsQuery({ scope = 'org', enabled = true } = {}) {
     //    fire GET /conversions/<id> requests that return 404.
     queryClient.setQueryData(queryKeys.conversions.list(), (prev) => {
       if (!Array.isArray(prev)) return prev;
-      const next = prev.filter(
-        (job) => (job.pdfDocumentId ?? job.pdfId) !== pdfId,
-      );
+      const pid = String(pdfId);
+      const next = prev.filter((job) => {
+        const jPdf = job.pdfDocumentId ?? job.pdfId;
+        if (jPdf == null || jPdf === '') return true;
+        return String(jPdf) !== pid;
+      });
       console.log(
         '[usePdfsQuery] conversions cache updated — removed jobs for pdfId',
         pdfId,

@@ -1,0 +1,175 @@
+/* Platform admin settings — pst- prefix */
+
+.pst-root {
+  --pst-bg: #f7f7f2;
+  --pst-card: #ffffff;
+  --pst-border: #e5e7eb;
+  --pst-text: #111827;
+  --pst-muted: #6b7280;
+  --pst-blue: #2563eb;
+  min-height: 100%;
+  width: 100%;
+  background: var(--pst-bg);
+  padding: 10px 32px 40px;
+  box-sizing: border-box;
+}
+
+.pst-inner {
+  max-width: 100%; 
+  margin: 0 auto;
+}
+
+.pst-head {
+  margin-bottom: 28px;
+}
+
+.pst-title {
+  margin: 0 0 8px;
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--pst-text);
+}
+
+.pst-sub {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--pst-muted);
+  line-height: 1.45;
+}
+
+.pst-err {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  font-size: 0.875rem;
+}
+
+.pst-ok {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 0.875rem;
+}
+
+.pst-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .pst-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pst-card {
+  background: var(--pst-card);
+  border: 1px solid var(--pst-border);
+  border-radius: 14px;
+  padding: 22px 24px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.pst-card-title {
+  margin: 0 0 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--pst-text);
+}
+
+.pst-field {
+  margin-bottom: 18px;
+}
+
+.pst-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.pst-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--pst-muted);
+  margin-bottom: 6px;
+}
+
+.pst-input,
+.pst-select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--pst-border);
+  font-size: 0.9375rem;
+  color: var(--pst-text);
+  background: #fff;
+}
+
+.pst-input:focus,
+.pst-select:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.pst-actions {
+  margin-top: 22px;
+}
+
+.pst-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--pst-blue);
+  cursor: pointer;
+}
+
+.pst-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.pst-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pst-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 200px;
+  color: var(--pst-muted);
+  font-weight: 600;
+}
+
+.pst-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--pst-border);
+  border-top-color: var(--pst-blue);
+  border-radius: 50%;
+  animation: pst-spin 0.7s linear infinite;
+}
+
+@keyframes pst-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

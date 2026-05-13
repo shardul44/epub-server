@@ -95,7 +95,7 @@
   flex: 1;
 }
 
-.pap-kpi-label {
+.pap-kpi-label { 
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -104,16 +104,16 @@
   margin-bottom: 6px;
 }
 
-.pap-kpi-value {
+.pap-kpi-value { 
   font-size: 1.85rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--pap-text);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
 
 .pap-kpi-hint {
-  margin-top: 8px;
+  margin-top: 3px;
   font-size: 0.8125rem;
   font-weight: 600;
 }

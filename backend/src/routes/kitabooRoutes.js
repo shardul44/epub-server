@@ -13,7 +13,7 @@ import sharp from 'sharp';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
 import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
-import { httpCache } from '../middlewares/httpCache.js';
+import { noCache } from '../middlewares/httpCache.js';
 import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const router = express.Router();
@@ -204,8 +204,11 @@ router.get('/ready/:jobId', async (req, res) => {
  * GET /api/kitaboo/jobs
  * List all FXL conversion jobs (for Conversions page). In-memory jobs are merged with
  * jobs recovered from kitaboo_zones so completed FXL jobs survive server restart.
+ *
+ * Must use noCache (like GET /conversions): httpCache would let browsers reuse the
+ * response for max-age seconds, so after DELETE the UI refetch could still show removed FXL jobs.
  */
-router.get('/jobs', httpCache(TTL.SHORT), async (req, res) => {
+router.get('/jobs', noCache, async (req, res) => {
   try {
     const orgId = req.user?.organizationId ?? 'none';
     const cacheKey = `kitaboo:jobs:${orgId}`;

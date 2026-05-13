@@ -1633,10 +1633,10 @@ const KitabooZoningStudio = () => {
                 disabled={saving || !jobId}
                 title="Save current page and continue to Sync Studio"
               >
-                {saving ? 'Saving…' : 'Save & Next: Sync Studio'}
+                {saving ? 'Saving…' : 'Save & Next'}
               </button>
               <button className="kz-btn kz-btn--save" onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving…' : 'Save Page'}
+                {saving ? 'Saving…' : 'Save Current Page'}
               </button>
             </div>
           )}

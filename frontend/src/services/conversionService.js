@@ -57,24 +57,49 @@ export const conversionService = {
   retryConversion: (jobId) => 
     api.post(`/conversions/${jobId}/retry`).then(res => res.data.data),
   
-  downloadEpub: async (jobId) => {
+  /**
+   * Download packaged EPUB. Reflow jobs use GET /conversions/:id/download;
+   * FXL / Kitaboo jobs use GET /kitaboo/download/:id (conversion route returns 404).
+   * @param {string|number} jobId
+   * @param {{ jobType?: string, preferKitaboo?: boolean }} [opts]
+   */
+  downloadEpub: async (jobId, opts = {}) => {
     const { API_BASE_URL } = await import('./api');
     const token = localStorage.getItem('token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const response = await fetch(`${API_BASE_URL}/conversions/${jobId}/download`, {
-      method: 'GET',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
+    const conversionUrl = `${API_BASE_URL}/conversions/${jobId}/download`;
+    const kitabooUrl = `${API_BASE_URL}/kitaboo/download/${jobId}`;
+    const tryOrder =
+      opts.jobType === 'FXL' || opts.preferKitaboo
+        ? [kitabooUrl, conversionUrl]
+        : [conversionUrl, kitabooUrl];
+
+    let response;
+    let lastStatus = 0;
+    for (const url of tryOrder) {
+      response = await fetch(url, { method: 'GET', headers });
+      if (response.ok) break;
+      lastStatus = response.status;
+      if (response.status !== 404) {
+        let msg = `Download failed (${response.status})`;
+        try {
+          const text = await response.text();
+          const json = JSON.parse(text);
+          msg = json.error || json.message || msg;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(msg);
+      }
+    }
 
     if (!response.ok) {
-      // Try to extract a readable error message even from non-JSON responses
-      let msg = `Download failed (${response.status})`;
-      try {
-        const text = await response.text();
-        const json = JSON.parse(text);
-        msg = json.error || json.message || msg;
-      } catch { /* ignore parse errors */ }
-      throw new Error(msg);
+      throw new Error(
+        lastStatus === 404
+          ? 'No EPUB download for this job (not found as conversion or Kitaboo export).'
+          : `Download failed (${lastStatus})`
+      );
     }
 
     const blob = await response.blob();
