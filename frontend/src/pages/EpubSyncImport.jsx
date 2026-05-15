@@ -1,6 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { conversionService } from '../services/conversionService';
+import { queryKeys } from '../lib/queryKeys';
+import { useListScope } from '../context/ListScopeContext';
 import {
   Upload,
   FileText,
@@ -86,6 +89,8 @@ const EpubSyncImport = () => {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef          = useRef(null);
   const navigate              = useNavigate();
+  const queryClient           = useQueryClient();
+  const listScope             = useListScope();
 
   /* ── file helpers ── */
   const validateAndSet = (f) => {
@@ -134,11 +139,40 @@ const EpubSyncImport = () => {
     setError('');
     try {
       const result = await conversionService.importEpubForSync(file, mode);
-      if (result.kind === 'fxl' && result.fxlSyncStudioPath) {
+      const jobId = result?.job?.id ?? result?.jobId;
+      const pdfId = result?.pdfId ?? result?.job?.pdfDocumentId;
+      const kind = result?.kind;
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversions.all() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.pdfs.all() });
+
+      if (jobId) {
+        const convType = kind === 'fxl' ? 'FXL' : 'REFLOW';
+        queryClient.setQueryData(queryKeys.conversions.list(listScope), (prev = []) => {
+          const optimistic = {
+            id: jobId,
+            jobId,
+            jobType: convType,
+            status: 'COMPLETED',
+            pdfDocumentId: pdfId,
+            pdfId,
+            pdfFilename: file.name,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            progressPercentage: 100,
+          };
+          const filtered = Array.isArray(prev)
+            ? prev.filter((j) => String(j.id ?? j.jobId) !== String(jobId))
+            : [];
+          return [optimistic, ...filtered];
+        });
+      }
+
+      if (kind === 'fxl' && result.fxlSyncStudioPath) {
         navigate(result.fxlSyncStudioPath);
         return;
       }
-      if (result.kind === 'reflowable' && result.syncStudioPath) {
+      if (kind === 'reflowable' && result.syncStudioPath) {
         navigate(result.syncStudioPath);
         return;
       }

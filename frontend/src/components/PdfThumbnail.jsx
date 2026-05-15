@@ -1,66 +1,60 @@
 /**
  * PdfThumbnail — client-side PDF first-page thumbnail renderer
  *
- * Generates thumbnails entirely in the browser using pdfjs-dist.
- * No backend API call required.
+ * Generates thumbnails in the browser using pdfjs-dist after fetching the PDF
+ * bytes (e.g. GET …/pdfs/:id/view).
  *
  * Usage:
- *   // From a File object (e.g. after upload)
  *   <PdfThumbnail file={file} width={200} height={280} />
- *
- *   // From a URL (fetches and renders client-side)
  *   <PdfThumbnail url="/path/to/file.pdf" width={200} height={280} />
- *
- *   // With custom fallback
- *   <PdfThumbnail file={file} fallback={<MyPlaceholder />} />
  */
 
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { generatePdfThumbnail } from '../utils/pdfThumbnail';
 import './PdfThumbnail.css';
 
-/* ─── PdfThumbnail ────────────────────────────────────────────── */
 const PdfThumbnail = memo(({
-  // Source — provide one of these
-  file,           // File | Blob — from <input type="file"> or drag-drop
-  url,            // string — remote or local URL to fetch
-
-  // Dimensions
+  file,
+  url,
   width  = 200,
   height = 280,
-
-  // Rendering options
-  scale   = 2,    // Render at 2× for crisp display on retina screens
-  quality = 0.92, // JPEG quality (only used when format='image/jpeg')
+  scale   = 2,
+  quality = 0.92,
   format  = 'image/png',
-
-  // Caching — set a stable key to avoid re-rendering on re-mount
   cacheKey,
-
-  // UI
   className = '',
   alt       = 'PDF preview',
-  fallback  = null,   // React node shown on error
-  onLoad,             // () => void
-  onError,            // (error: Error) => void — NOT called for 404s
+  fallback  = null,
+  onLoad,
+  onError,
+  /** Called when the PDF URL returns 404 (no visible error state). */
+  onAbsent,
 }) => {
   const [thumbSrc, setThumbSrc]   = useState(null);
-  const [status, setStatus]       = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
+  const [status, setStatus]       = useState('idle'); // idle | loading | ready | error | absent
   const [errorMsg, setErrorMsg]   = useState('');
   const objectUrlRef              = useRef(null);
+  const onLoadRef   = useRef(onLoad);
+  const onErrorRef  = useRef(onError);
+  const onAbsentRef = useRef(onAbsent);
+
+  onLoadRef.current   = onLoad;
+  onErrorRef.current  = onError;
+  onAbsentRef.current = onAbsent;
+
+  const fetchUrl = useMemo(() => (typeof url === 'string' && url ? url : null), [url]);
 
   useEffect(() => {
     let cancelled = false;
     const ac = new AbortController();
 
-    // Check in-memory cache first (avoids re-generating on re-render)
     if (cacheKey) {
       try {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
           setThumbSrc(cached);
           setStatus('ready');
-          onLoad?.();
+          onLoadRef.current?.();
           return () => {
             cancelled = true;
             ac.abort();
@@ -69,7 +63,7 @@ const PdfThumbnail = memo(({
       } catch (_) { /* ignore */ }
     }
 
-    if (!file && !url) {
+    if (!file && !fetchUrl) {
       setStatus('idle');
       return () => {
         cancelled = true;
@@ -88,7 +82,7 @@ const PdfThumbnail = memo(({
         if (file) {
           pdfBlob = file;
         } else {
-          const response = await fetch(url, { signal: ac.signal });
+          const response = await fetch(fetchUrl, { signal: ac.signal });
           if (cancelled) return;
           if (!response.ok) {
             const err = new Error(`HTTP ${response.status}`);
@@ -110,31 +104,34 @@ const PdfThumbnail = memo(({
 
         if (cancelled) return;
 
-        // Cache the result
         if (cacheKey) {
-          try { localStorage.setItem(cacheKey, dataUrl); } catch (_) { /* storage full */ }
+          try {
+            localStorage.setItem(cacheKey, dataUrl);
+          } catch (_) { /* storage full */ }
         }
 
         setThumbSrc(dataUrl);
         setStatus('ready');
-        onLoad?.();
+        onLoadRef.current?.();
       } catch (err) {
         if (cancelled || err?.name === 'AbortError') return;
 
-        const is404 = err?.httpStatus === 404 || String(err?.message || '').includes('404');
+        const httpStatus = err?.response?.status ?? err?.httpStatus;
+        const msg = String(err?.message || '');
+        const is404 = httpStatus === 404 || msg.includes('404');
 
         if (is404) {
-          // A missing thumbnail is not a fatal error — show placeholder silently.
-          // Do NOT call onError, which could trigger removePdf or other destructive actions.
-          setErrorMsg('PDF not found');
-          setStatus('error');
-        } else {
-          // Real error (network failure, corrupt PDF, auth error, etc.)
-          console.error('[PdfThumbnail] Error:', err);
-          setErrorMsg(err.message || 'Failed to generate thumbnail');
-          setStatus('error');
-          onError?.(err);
+          if (!cancelled) {
+            setStatus('absent');
+            onAbsentRef.current?.();
+          }
+          return;
         }
+
+        console.error('[PdfThumbnail] Error:', err);
+        setErrorMsg(err.message || 'Failed to generate thumbnail');
+        setStatus('error');
+        onErrorRef.current?.(err);
       }
     }
 
@@ -148,9 +145,12 @@ const PdfThumbnail = memo(({
         objectUrlRef.current = null;
       }
     };
-  }, [file, url, width, height, scale, format, quality, cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [file, fetchUrl, width, height, scale, format, quality, cacheKey]);
 
-  /* ── Loading skeleton ── */
+  if (status === 'absent') {
+    return null;
+  }
+
   if (status === 'loading' || status === 'idle') {
     return (
       <div
@@ -173,7 +173,6 @@ const PdfThumbnail = memo(({
     );
   }
 
-  /* ── Error state ── */
   if (status === 'error') {
     if (fallback) return fallback;
     return (
@@ -193,7 +192,6 @@ const PdfThumbnail = memo(({
     );
   }
 
-  /* ── Thumbnail ready ── */
   return (
     <img
       src={thumbSrc}

@@ -4,7 +4,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --ife-blue:     #6b7280;
+  --ife-blue:     #2563eb;
+  --ife-purple:   #7c3aed;
   --ife-blue-lt:  #eff6ff;
   --ife-blue-mid: #dbeafe;
   --ife-green:    #22c55e;
@@ -15,7 +16,7 @@
   --ife-text:     #111827;
   --ife-muted:    #6b7280;
   --ife-topbar-h: 70px;
-  --ife-radius:   8px;
+  --ife-radius:   14px;
 }
 
 /* ── Root ──────────────────────────────────────────────────────── */
@@ -201,135 +202,345 @@
 
 .ife-selector-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
 }
 
-/* ── Job card ──────────────────────────────────────────────────── */
+/* ═══ Job card (aligned with Conversion Jobs / cj-card layout) ═══ */
 .ife-job-card {
+  --ife-accent: var(--ife-blue);
   display: flex;
   flex-direction: column;
   background: var(--ife-white);
-  border: 1.5px solid var(--ife-border);
+  border: 1px solid #e8e8e3;
+  border-left: 4px solid var(--ife-accent);
   border-radius: var(--ife-radius);
   overflow: hidden;
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  font-family: inherit;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+}
+.ife-job-card--reflow {
+  --ife-accent: #22c55e;
+}
+.ife-job-card--reflow.ife-job-card--running {
+  --ife-accent: var(--ife-blue);
+}
+.ife-job-card--fxl {
+  --ife-accent: var(--ife-purple);
 }
 .ife-job-card:hover {
-  border-color: var(--ife-blue);
-  box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
   transform: translateY(-2px);
 }
-
-.ife-job-card-thumb-wrap {
-  position: relative;
-  width: 100%;
+.ife-job-card:focus-visible {
+  outline: 2px solid var(--ife-blue);
+  outline-offset: 2px;
 }
 
-.ife-job-card-thumb {
-  width: 100%;
-  height: 140px;
-  background-color: #f3f4f6;
-  background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px);
-  background-size: 14px 14px;
+.ife-job-card-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
+  justify-content: space-between;
+  padding: 12px 14px 0;
+  gap: 10px;
 }
-.ife-job-card-thumb--custom {
-  background-image: none;
-  background-color: #0f172a;
-}
-.ife-job-card-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  position: absolute;
-  inset: 0;
-}
-.ife-job-card-thumb--custom img { object-fit: cover; }
-.ife-job-card-fallback {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-  width: 100%;
-  height: 100%;
-}
-
-.ife-job-card-zones-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 7px;
+.ife-job-card-header .ife-type-pill {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.55px;
+  text-transform: uppercase;
+  padding: 4px 9px;
   border-radius: 6px;
-  background: rgba(37,99,235,0.85);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  backdrop-filter: blur(4px);
-  pointer-events: none;
 }
-
-.ife-job-card-body {
-  padding: 12px 14px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
+.ife-type-fxl {
+  background: #faf5ff;
+  color: #6d28d9;
 }
-.ife-job-card-id   { font-size: 15px; font-weight: 700; color: var(--ife-text); }
-.ife-job-card-name {
-  font-size: 12.5px;
-  color: var(--ife-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.ife-job-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-.ife-type-pill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
-}
-.ife-type-fxl    { background: var(--ife-blue-lt); color: var(--ife-blue); }
-.ife-type-reflow { background: #f0fdf4; color: #15803d; }
-
-.ife-status-pill {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: #dcfce7;
+.ife-type-reflow {
+  background: var(--ife-green-lt);
   color: #15803d;
 }
 
-.ife-job-card-open {
-  display: block;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ife-blue);
-  border-top: 1px solid var(--ife-border);
-  background: var(--ife-blue-lt);
-  transition: background 0.15s;
+.ife-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
 }
-.ife-job-card:hover .ife-job-card-open { background: var(--ife-blue-mid); }
+.ife-status-pill--done {
+  background: #dcfce7;
+  color: #15803d;
+}
+.ife-status-pill--done::before {
+  content: '✓';
+  font-size: 11px;
+  font-weight: 900;
+  color: #15803d;
+}
+.ife-status-pill--running {
+  background: #fef9c3;
+  color: #a16207;
+}
+.ife-status-pill--running::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ea580c;
+  flex-shrink: 0;
+}
+.ife-status-pill--info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.ife-status-pill--fail {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* PDF strip */
+.ife-job-card-pdf-panel {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 10px 12px 0;
+  padding: 10px 12px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+.ife-job-card-pdf-thumb-col {
+  position: relative;
+  flex-shrink: 0;
+  width: 76px;
+}
+.ife-job-card-pdf-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 4;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #fff;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  padding: 2px 5px;
+  border-radius: 3px;
+  line-height: 1.1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+.ife-job-card-zones-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: rgba(37, 99, 235, 0.9);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  pointer-events: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.ife-job-card-thumb {
+  position: relative;
+  width: 76px;
+  aspect-ratio: 3 / 4;
+  min-height: 96px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #e5e7eb;
+  background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+.ife-job-card-thumb-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  pointer-events: none;
+}
+.ife-job-card-thumb-fallback--under {
+  z-index: 0;
+}
+.ife-job-card-thumb-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #f1f5f9;
+}
+.ife-job-card-thumb-preview .ife-job-card-pdf-thumb.pdf-thumb--ready,
+.ife-job-card-thumb-preview .ife-job-card-pdf-thumb.pdf-thumb--loading {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100%;
+  max-width: none !important;
+  border-radius: 0;
+}
+.ife-job-card-thumb-preview .ife-job-card-pdf-thumb.pdf-thumb--ready {
+  object-fit: cover;
+}
+
+.ife-job-card-pdf-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+.ife-job-card-pdf-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ife-text);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ife-job-card-pdf-sub {
+  font-size: 12px;
+  color: var(--ife-muted);
+}
+
+/* Body */
+.ife-job-card-body {
+  padding: 12px 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.ife-job-card-job-id {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ife-text);
+  letter-spacing: -0.02em;
+}
+.ife-job-card-step-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+  color: var(--ife-muted);
+}
+.ife-job-card-step-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ife-job-card-pct {
+  font-weight: 800;
+  color: var(--ife-text);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.ife-job-card-progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e8ecf1;
+  overflow: hidden;
+}
+.ife-job-card-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.45s ease;
+}
+.ife-progress-fill--done {
+  background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+.ife-progress-fill--fail {
+  background: linear-gradient(90deg, #dc2626, #f87171);
+}
+.ife-progress-fill--fxl {
+  background: linear-gradient(90deg, #6d28d9, #a78bfa);
+}
+.ife-progress-fill--reflow {
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
+}
+
+.ife-job-card-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 10px;
+  padding: 4px 0 2px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 2px;
+}
+.ife-job-card-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ife-job-card-metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+.ife-job-card-metric-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+/* Footer CTA */
+.ife-job-card-footer {
+  padding: 12px 14px 14px;
+  margin-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+.ife-job-card-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #15803d 100%);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+  transition: filter 0.15s ease, box-shadow 0.2s ease;
+}
+.ife-job-card:hover .ife-job-card-cta {
+  filter: brightness(1.04);
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.45);
+}
 
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 480px) {

@@ -1,5 +1,5 @@
 /**
- * Shared workflow chrome: top bar + 4-step WorkflowStepper + optional page heading.
+ * Shared workflow chrome: top bar + 4-step WorkflowStepper.
  * Reuses AudioSyncStudio.css (ass-*) for visual parity with /conversions/audio-sync.
  */
 import { useCallback } from 'react';
@@ -14,11 +14,8 @@ export default function WorkflowStudioChrome({
   jobId,
   job,
   topTitle,
-  headingTitle,
-  headingSub,
   backTo,
   onBack,
-  rightActions,
   conversionsPath = '/conversions',
   hideBackToConversions,
 }) {
@@ -57,19 +54,6 @@ export default function WorkflowStudioChrome({
         job={job}
         onStepClick={handleStepClick}
       />
-      {(headingTitle || headingSub) && (
-        <div className="ass-selector-header wsc-page-heading">
-          <div className="wsc-page-heading-main">
-            {headingTitle ? <h2 className="ass-selector-title">{headingTitle}</h2> : null}
-            {headingSub ? <p className="ass-selector-sub">{headingSub}</p> : null}
-          </div>
-          {rightActions ? (
-            <div className="wsc-page-heading-actions">
-              {rightActions}
-            </div>
-          ) : null}
-        </div>
-      )}
     </div>
   );
 }

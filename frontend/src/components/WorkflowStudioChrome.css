@@ -3,23 +3,3 @@
 .wsc-chrome {
   flex-shrink: 0;
 }
-
-.wsc-page-heading {
-  margin-bottom: 0 !important;
-  padding: 10px 18px 10px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.wsc-page-heading-main {
-  min-width: 0;
-}
-
-.wsc-page-heading-actions {
-  margin-left: auto;
-  flex-shrink: 0;
-}

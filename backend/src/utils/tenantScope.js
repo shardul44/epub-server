@@ -20,6 +20,46 @@ export function pdfDocumentWhereClause(user, options = {}) {
 }
 
 /**
+ * Members are always restricted to own rows; org_admin may request ?scope=own.
+ * Ignores malicious ?scope=org from members.
+ */
+export function resolveListScope(user, queryScope) {
+  if (!user) return { onlyOwn: true };
+  if (user.role === ROLES.MEMBER) return { onlyOwn: true };
+  if (queryScope === 'own') return { onlyOwn: true };
+  return { onlyOwn: false };
+}
+
+/** Cache / log key segment for list endpoints. */
+export function listScopeKey(user, queryScope) {
+  const scope = resolveListScope(user, queryScope);
+  if (user?.role === ROLES.MEMBER) return 'own';
+  return scope.onlyOwn ? 'own' : 'org';
+}
+
+export function isMemberRole(user) {
+  return user?.role === ROLES.MEMBER;
+}
+
+/**
+ * SQL fragment for media_assets (no alias).
+ * Members: own uploads only. Org admin: org library. Others: own user row.
+ */
+export function mediaAssetWhereClause(user) {
+  if (!user) return { sql: '1=0', params: [] };
+  if (user.role === ROLES.MEMBER) {
+    return { sql: 'user_id = ?', params: [user.id] };
+  }
+  if (user.role === ROLES.ORG_ADMIN && user.organizationId != null) {
+    return { sql: 'organization_id = ?', params: [user.organizationId] };
+  }
+  if (user.organizationId != null) {
+    return { sql: 'organization_id = ?', params: [user.organizationId] };
+  }
+  return { sql: 'user_id = ?', params: [user.id] };
+}
+
+/**
  * PDF row access: members see own uploads; org_admin sees all PDFs in org; platform_admin has no product data access.
  */
 export function canAccessPdfRow(user, pdfRow) {
@@ -36,4 +76,23 @@ export function canAccessPdfRow(user, pdfRow) {
     );
   }
   return false;
+}
+
+/**
+ * Media library row access (matches list rules).
+ */
+export function canAccessMediaAsset(user, assetRow) {
+  if (!user || !assetRow) return false;
+  if (user.role === ROLES.MEMBER) {
+    return assetRow.user_id != null && Number(assetRow.user_id) === Number(user.id);
+  }
+  if (user.role === ROLES.ORG_ADMIN) {
+    return (
+      user.organizationId != null &&
+      assetRow.organization_id != null &&
+      Number(assetRow.organization_id) === Number(user.organizationId)
+    );
+  }
+  if (user.role === ROLES.PLATFORM_ADMIN) return true;
+  return assetRow.user_id != null && Number(assetRow.user_id) === Number(user.id);
 }

@@ -1,48 +1,14 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useMemo } from 'react';
 import {
   Trash2,
   Image,
   RefreshCw,
   FileText,
-  ImageUp,
+  ChevronRight,
 } from 'lucide-react';
 import styles from './JobCard.module.css';
-import { loadStoredJobThumb, saveStoredJobThumb } from '../utils/jobCardThumb';
 import { isFixedLayout } from '../hooks/useConversionActions';
-
-/** Resize to JPEG data URL for localStorage; keeps payload small. */
-const fileToResizedDataUrl = (file, maxWidth = 320, quality = 0.78) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('read'));
-    reader.onload = () => {
-      const img = new window.Image();
-      img.onerror = () => reject(new Error('decode'));
-      img.onload = () => {
-        const w = img.naturalWidth;
-        const h = img.naturalHeight;
-        if (!w || !h) {
-          reject(new Error('size'));
-          return;
-        }
-        const scale = w > maxWidth ? maxWidth / w : 1;
-        const cw = Math.max(1, Math.round(w * scale));
-        const ch = Math.max(1, Math.round(h * scale));
-        const canvas = document.createElement('canvas');
-        canvas.width = cw;
-        canvas.height = ch;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('canvas'));
-          return;
-        }
-        ctx.drawImage(img, 0, 0, cw, ch);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
-  });
+import PdfThumbnail from './PdfThumbnail';
 
 const MAX_RETRIES = 3;
 
@@ -54,24 +20,87 @@ const STATUS_CLASS = {
   CANCELLED:   'cj-badge--danger',
 };
 
-const fmtDate = (d) =>
-  d
-    ? new Date(d).toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      })
-    : '';
-
 const fmtStep = (s) =>
   s ? String(s).replace(/STEP_\d+_/, '').replace(/_/g, ' ') : '';
+
+const formatFileSize = (bytes) => {
+  if (bytes == null || bytes === 0) return null;
+  const n = Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const fmtDurationMs = (ms) => {
+  if (ms == null || !Number.isFinite(ms) || ms < 0) return '—';
+  const sec = Math.floor(ms / 1000);
+  const m = Math.floor(sec / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${sec % 60}s`;
+  if (sec > 0) return `${sec}s`;
+  return '—';
+};
+
+const fmtTimeShort = (d) =>
+  d
+    ? new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    : '—';
+
+const fmtCompletedNice = (d) =>
+  d
+    ? new Date(d).toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : '—';
+
+const estimateEta = (job) => {
+  const pct = job.progressPercentage ?? 0;
+  if (pct <= 0 || pct >= 100) return '—';
+  const start = new Date(job.createdAt || job.updatedAt).getTime();
+  if (!Number.isFinite(start)) return '—';
+  const elapsed = Date.now() - start;
+  if (elapsed < 4000) return '—';
+  const remaining = (elapsed / pct) * (100 - pct);
+  return fmtDurationMs(remaining);
+};
+
+const jobDurationMs = (job) => {
+  const end = job.completedAt || job.updatedAt;
+  const start = job.createdAt;
+  if (!start || !end) return null;
+  return new Date(end).getTime() - new Date(start).getTime();
+};
+
+const resolveAiModel = (job) =>
+  job.aiModel ||
+  job.ai_model ||
+  job.modelName ||
+  job.model ||
+  job.llmModel ||
+  null;
+
+function buildPdfViewUrl(pdfDocumentId) {
+  if (pdfDocumentId == null || pdfDocumentId === '') return null;
+  try {
+    const token = localStorage.getItem('token');
+    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+    const id = String(pdfDocumentId);
+    return `${base}/pdfs/${id}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  } catch {
+    return null;
+  }
+}
 
 /* ─── JobGrid ─────────────────────────────────────────────────── */
 /**
  * Responsive grid wrapper that replaces `className="cj-grid"`.
- * Renders children in an auto-fill grid (min 290 px per column).
+ * Renders children in an auto-fill grid (min 320 px per column).
  */
 export const JobGrid = ({ children }) => (
   <div className={styles.grid}>{children}</div>
@@ -97,44 +126,75 @@ const JobCard = ({
   const retryCount = job.retryCount ?? 0;
   const canRetry   = retryCount < MAX_RETRIES;
 
-  const fileInputRef = useRef(null);
-  const [customThumb, setCustomThumb] = useState(null);
+  const pdfDocumentId = job.pdfDocumentId ?? job.pdfId;
+  const pdfViewUrl = useMemo(() => buildPdfViewUrl(pdfDocumentId), [pdfDocumentId]);
 
-  useEffect(() => {
-    setCustomThumb(loadStoredJobThumb(jobId));
-  }, [jobId]);
+  const displayName =
+    job.pdfFilename ||
+    job.filename ||
+    (pdfDocumentId != null && pdfDocumentId !== ''
+      ? `PDF #${pdfDocumentId}`
+      : 'Untitled PDF');
 
-  const onThumbFile = useCallback(
-    async (e) => {
-      const file = e.target.files?.[0];
-      e.target.value = '';
-      if (!file || !file.type.startsWith('image/')) return;
-      try {
-        const dataUrl = await fileToResizedDataUrl(file);
-        if (dataUrl.length > 1_600_000) {
-          window.alert('That image is still too large after resizing. Try a smaller original file.');
-          return;
-        }
-        saveStoredJobThumb(jobId, dataUrl);
-        setCustomThumb(dataUrl);
-      } catch {
-        window.alert('Could not use that image. Try JPG or PNG.');
-      }
-    },
-    [jobId],
-  );
+  const sizeStr = formatFileSize(job.fileSize ?? job.pdfFileSize ?? job.bytes ?? job.size);
+  const pagesPart = job.totalPages != null ? `${job.totalPages} pages` : null;
+  const subMeta = [pagesPart, sizeStr].filter(Boolean).join(' · ') || (pagesPart || '—');
 
-  const clearCustomThumb = useCallback(() => {
-    saveStoredJobThumb(jobId, null);
-    setCustomThumb(null);
-  }, [jobId]);
+  const metrics = useMemo(() => {
+    const ai = resolveAiModel(job);
+    const durMs = jobDurationMs(job);
+    if (job.status === 'COMPLETED') {
+      return {
+        c1Label: 'Completed',
+        c1Val: fmtCompletedNice(job.completedAt || job.updatedAt),
+        c2Label: 'Duration',
+        c2Val: durMs != null ? fmtDurationMs(durMs) : '—',
+        c3Label: 'AI model',
+        c3Val: ai || '—',
+      };
+    }
+    if (job.status === 'IN_PROGRESS') {
+      return {
+        c1Label: 'ETA',
+        c1Val: estimateEta(job),
+        c2Label: 'Started',
+        c2Val: fmtTimeShort(job.createdAt),
+        c3Label: 'AI model',
+        c3Val: ai || '—',
+      };
+    }
+    return {
+      c1Label: 'Status',
+      c1Val: job.status.replace(/_/g, ' '),
+      c2Label: 'Started',
+      c2Val: fmtTimeShort(job.createdAt),
+      c3Label: 'AI model',
+      c3Val: ai || '—',
+    };
+  }, [job]);
+
+  const progressFillClass =
+    job.status === 'COMPLETED'
+      ? 'cj-progress-fill--done'
+      : job.status === 'FAILED' || job.status === 'CANCELLED'
+        ? 'cj-progress-fill--failed'
+        : isFxl
+          ? 'cj-progress-fill--fxl'
+          : 'cj-progress-fill--reflow';
+
+  const thumbCacheKey =
+    pdfDocumentId != null && pdfDocumentId !== ''
+      ? `pdf-thumb-card-${String(pdfDocumentId)}`
+      : null;
 
   return (
     <div
       className={[
         'cj-card',
-        job.status === 'IN_PROGRESS' ? 'cj-card--running'  : '',
-        isSelected                   ? 'cj-card--selected' : '',
+        isFxl ? 'cj-card--theme-fxl' : 'cj-card--theme-reflow',
+        job.status === 'IN_PROGRESS' ? 'cj-card--running' : '',
+        job.status === 'COMPLETED' ? 'cj-card--state-done' : '',
+        isSelected ? 'cj-card--selected' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -143,147 +203,159 @@ const JobCard = ({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onSelect?.(job)}
     >
-      {/* top badges row */}
-      <div className="cj-card-top">
+      <div className="cj-card-header">
         <span className={`cj-type-pill ${isFxl ? 'cj-type-fxl' : 'cj-type-reflow'}`}>
           {isFxl ? 'FXL' : 'REFLOW'}
         </span>
         <span className={`cj-status-pill ${STATUS_CLASS[job.status] ?? 'cj-badge--info'}`}>
-          {job.status === 'COMPLETED'   ? '✓ COMPLETED' :
-           job.status === 'IN_PROGRESS' ? '● RUNNING'   :
-           job.status.replace(/_/g, ' ')}
+          {job.status === 'COMPLETED'
+            ? 'COMPLETED'
+            : job.status === 'IN_PROGRESS'
+              ? 'RUNNING'
+              : job.status.replace(/_/g, ' ')}
         </span>
       </div>
 
-      {/* Custom cover only — no PDF first-page preview */}
-      <div
-        className={[
-          'cj-card-thumb',
-          customThumb ? 'cj-card-thumb--has-custom' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        {customThumb ? (
-          <img src={customThumb} alt="" className="cj-card-thumb-img" />
-        ) : null}
-        <div className="cj-card-thumb-fallback" aria-hidden={!!customThumb}>
-          <FileText size={40} />
+      <div className="cj-card-pdf-panel">
+        <div className="cj-card-pdf-thumb-col">
+          <span className="cj-card-pdf-badge" aria-hidden>
+            PDF
+          </span>
+          <div className="cj-card-thumb" onClick={(e) => e.stopPropagation()}>
+            <div className="cj-card-thumb-fallback" aria-hidden={!!pdfViewUrl}>
+              <FileText size={28} />
+            </div>
+            {pdfViewUrl ? (
+              <div className="cj-card-thumb-preview-layer">
+                <PdfThumbnail
+                  url={pdfViewUrl}
+                  width={200}
+                  height={280}
+                  scale={1.25}
+                  cacheKey={thumbCacheKey}
+                  className="cj-job-pdf-thumb"
+                  alt=""
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
-        <div className="cj-card-thumb-actions" onClick={(ev) => ev.stopPropagation()}>
-          <button
-            type="button"
-            className="cj-card-thumb-btn"
-            onClick={() => fileInputRef.current?.click()}
-            title="Upload a cover image for this job card"
-          >
-            <ImageUp size={14} aria-hidden />
-            {customThumb ? 'Change cover' : 'Upload cover'}
-          </button>
-          {customThumb ? (
-            <button
-              type="button"
-              className="cj-card-thumb-btn cj-card-thumb-btn--ghost"
-              onClick={clearCustomThumb}
-              title="Remove custom cover"
-            >
-              Remove
-            </button>
-          ) : null}
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="cj-sr-only"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={onThumbFile}
-            aria-label="Upload job card cover image"
-          />
+        <div className="cj-card-pdf-meta">
+          <div className="cj-card-pdf-name" title={displayName}>
+            {displayName}
+          </div>
+          <div className="cj-card-pdf-sub">{subMeta}</div>
         </div>
       </div>
 
-      {/* info block */}
       <div className="cj-card-body">
-        <div className="cj-card-row-space">
-          <span className="cj-card-title">Job #{jobId}</span>
-          {job.totalPages && (
-            <span className="cj-card-pages">{job.totalPages} pages</span>
-          )}
-        </div>
-        {job.pdfFilename && (
-          <div className="cj-card-filename">{job.pdfFilename}</div>
-        )}
+        <div className="cj-card-job-id">Job #{jobId}</div>
 
-        {/* progress */}
-        <div className="cj-card-row-space cj-card-prog-label">
-          <span>Progress</span>
+        <div className="cj-card-step-row">
+          <span className="cj-card-step-text">
+            Step: {fmtStep(job.currentStep) || '—'}
+          </span>
           <span className="cj-card-pct">{pct}%</span>
         </div>
-        <div className="cj-progress-track">
+
+        <div className="cj-progress-track cj-progress-track--card">
           <div
-            className="cj-progress-fill"
-            style={{
-              width: `${pct}%`,
-              background:
-                job.status === 'COMPLETED' ? '#22c55e' :
-                job.status === 'FAILED'    ? '#ef4444' :
-                '#2563eb',
-            }}
+            className={['cj-progress-fill', progressFillClass].filter(Boolean).join(' ')}
+            style={{ width: `${pct}%` }}
           />
         </div>
 
-        {/* step */}
-        {(job.currentStep || job.completedAt) && (
-          <div className="cj-card-step">
-            {job.currentStep && <span>Step: {fmtStep(job.currentStep)}</span>}
-            {job.completedAt && (
-              <span className="cj-card-date">Completed {fmtDate(job.completedAt)}</span>
-            )}
+        <div className="cj-card-metrics">
+          <div className="cj-card-metric">
+            <span className="cj-card-metric-label">{metrics.c1Label}</span>
+            <span className="cj-card-metric-value">{metrics.c1Val}</span>
           </div>
-        )}
+          <div className="cj-card-metric">
+            <span className="cj-card-metric-label">{metrics.c2Label}</span>
+            <span className="cj-card-metric-value">{metrics.c2Val}</span>
+          </div>
+          <div className="cj-card-metric">
+            <span className="cj-card-metric-label">{metrics.c3Label}</span>
+            <span className="cj-card-metric-value">{metrics.c3Val}</span>
+          </div>
+        </div>
 
-        {/* error message */}
         {job.status === 'FAILED' && (job.error || job.errorMessage) && (
           <div className="cj-card-error" title={job.error || job.errorMessage}>
             ⚠ {job.error || job.errorMessage}
           </div>
         )}
 
-        {/* retry limit notice */}
         {job.status === 'FAILED' && !canRetry && (
-          <div className="cj-card-retry-limit">
-            Max retries ({MAX_RETRIES}) reached
-          </div>
+          <div className="cj-card-retry-limit">Max retries ({MAX_RETRIES}) reached</div>
         )}
       </div>
 
-      {/* action bar */}
       <div
-        className="cj-card-actions"
+        className={[
+          'cj-card-actions',
+          job.status === 'IN_PROGRESS' ? 'cj-card-actions--running' : '',
+          job.status === 'COMPLETED' ? 'cj-card-actions--completed' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {job.status === 'COMPLETED' && (
           <button
             type="button"
-            className="cj-btn cj-btn-primary"
-            onClick={(e) => { e.stopPropagation(); onOpenEditor?.(job); }}
+            className="cj-btn cj-btn-open-editor"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenEditor?.(job);
+            }}
           >
-            <Image size={14} />
-            {isFxl ? 'Open with Zones →' : 'Open Editor →'}
+            <Image size={16} aria-hidden />
+            {isFxl ? 'Open in Zoning Studio' : 'Open in Editor'}
+            <ChevronRight size={18} aria-hidden />
           </button>
         )}
+
         {job.status === 'IN_PROGRESS' && !isFxl && (
           <button
+            type="button"
             className="cj-btn cj-btn-stop"
-            onClick={(e) => { e.stopPropagation(); onStop?.(jobId); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onStop?.(jobId);
+            }}
           >
+            <span className="cj-btn-stop-icon" aria-hidden />
             Stop
           </button>
         )}
+
+        {job.status === 'IN_PROGRESS' && (
+          <button
+            type="button"
+            className="cj-btn cj-btn-del cj-btn-del--inline"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(job);
+            }}
+            title="Delete job"
+            aria-label="Delete job"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+
+        {job.status === 'IN_PROGRESS' && <span className="cj-card-actions-spacer" aria-hidden />}
+
         {(job.status === 'FAILED' || job.status === 'CANCELLED') && (
           <button
-            className="cj-btn cj-btn-primary"
-            onClick={(e) => { e.stopPropagation(); onRetry?.(jobId); }}
+            type="button"
+            className="cj-btn cj-btn-retry"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRetry?.(jobId);
+            }}
             disabled={!canRetry}
             title={
               !canRetry
@@ -291,21 +363,43 @@ const JobCard = ({
                 : `Retry (attempt ${retryCount + 1}/${MAX_RETRIES})`
             }
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={14} aria-hidden />
             Retry{retryCount > 0 ? ` (${retryCount}/${MAX_RETRIES})` : ''}
           </button>
         )}
+
         {job.status === 'PENDING' && (
           <span className="cj-card-waiting">Waiting to start…</span>
         )}
-        <button
-          className="cj-btn cj-btn-del"
-          onClick={(e) => { e.stopPropagation(); onDelete?.(job); }}
-          title="Delete job"
-          aria-label="Delete job"
-        >
-          <Trash2 size={15} />
-        </button>
+
+        {job.status === 'IN_PROGRESS' && (
+          <button
+            type="button"
+            className="cj-btn cj-btn-details"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect?.(job);
+            }}
+          >
+            View Details
+            <ChevronRight size={16} aria-hidden />
+          </button>
+        )}
+
+        {job.status !== 'IN_PROGRESS' && (
+          <button
+            type="button"
+            className="cj-btn cj-btn-del"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(job);
+            }}
+            title="Delete job"
+            aria-label="Delete job"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
     </div>
   );

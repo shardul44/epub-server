@@ -1,0 +1,34 @@
+/*
+ * Regular user shell (`.layout--user` + `.main-content--user`): main column =
+ * header + scrollable outlet. Mirrors PlatformAdminLayout so full-height
+ * studios keep working.
+ */
+.main-content.main-content--user {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.main-content--user .user-app-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.main-content--user:has(.user-app-scroll > .sync-studio),
+.main-content--user:has(.user-app-scroll > .fxl-sync-studio),
+.main-content--user:has(.user-app-scroll > .kitaboo-studio),
+.main-content--user:has(.user-app-scroll > .eiep-root),
+.main-content--user:has(.user-app-scroll > .erp-root) {
+  overflow: hidden;
+}
+
+.main-content--user:has(.user-app-scroll > .sync-studio) .user-app-scroll,
+.main-content--user:has(.user-app-scroll > .fxl-sync-studio) .user-app-scroll,
+.main-content--user:has(.user-app-scroll > .kitaboo-studio) .user-app-scroll,
+.main-content--user:has(.user-app-scroll > .eiep-root) .user-app-scroll,
+.main-content--user:has(.user-app-scroll > .erp-root) .user-app-scroll {
+  overflow: hidden;
+}

@@ -151,9 +151,24 @@ export const conversionService = {
   getJobPages: async (jobId) => {
     try {
       const res = await api.get(`/conversions/${jobId}/pages`);
-      return res.data.data;
+      const d = res.data?.data;
+      if (Array.isArray(d)) {
+        return {
+          spine: d,
+          documentPageCount: d.length ? Math.max(...d.map((p) => p.pageNumber || 0)) : 0,
+          chapterSpineCount: d.length
+        };
+      }
+      const spine = Array.isArray(d?.spine) ? d.spine : [];
+      return {
+        spine,
+        documentPageCount: Number(d?.documentPageCount) || (spine.length ? Math.max(...spine.map((p) => p.pageNumber || 0)) : 0),
+        chapterSpineCount: Number(d?.chapterSpineCount) || spine.length
+      };
     } catch (err) {
-      if (err.response?.status === 404) return [];
+      if (err.response?.status === 404) {
+        return { spine: [], documentPageCount: 0, chapterSpineCount: 0 };
+      }
       throw err;
     }
   },

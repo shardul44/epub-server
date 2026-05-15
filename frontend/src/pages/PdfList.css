@@ -618,6 +618,115 @@
   display: block;
 }
 
+/* ── PDF detail page (/pdfs/:pdfId) ─────────────────────────── */
+.pld-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+  text-decoration: none;
+}
+.pld-detail-back:hover {
+  color: #2563eb;
+}
+
+.pld-detail-header {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pld-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.pld-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+}
+.pld-detail-btn--ghost:hover {
+  background: #f9fafb;
+}
+.pld-detail-btn--danger {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+.pld-detail-btn--danger:hover {
+  background: #fef2f2;
+}
+
+.pld-detail-viewer {
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.pld-detail-viewer-bar {
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.pld-detail-iframe {
+  width: 100%;
+  height: min(72vh, 900px);
+  border: none;
+  display: block;
+  background: #f3f4f6;
+}
+
+.pld-detail-loading,
+.pld-detail-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 320px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #6b7280;
+}
+.pld-detail-error h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 1.25rem;
+}
+.pld-detail-error p {
+  margin: 0;
+  max-width: 420px;
+}
+.pld-detail-spinner {
+  animation: pld-spin 0.8s linear infinite;
+}
+@keyframes pld-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ── Hi-Fi Modal ────────────────────────────────────────────── */
 @keyframes hifi-overlay-in {
   from {

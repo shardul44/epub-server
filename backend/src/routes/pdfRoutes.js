@@ -14,10 +14,11 @@ import {
 import { getUploadDir, ensureDirectories } from '../config/fileStorage.js';
 import fs from 'fs/promises';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
-import { paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
+import { paramPdfTenantAccess, loadPdfIfAccessible } from '../middlewares/tenantAccess.js';
 import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
-import { httpCache } from '../middlewares/httpCache.js';
+import { httpCache, noCache } from '../middlewares/httpCache.js';
 import { getOrGenerateThumbnail, invalidateThumbnail } from '../services/thumbnailService.js';
+import { resolveListScope, listScopeKey } from '../utils/tenantScope.js';
 
 const router = express.Router();
 
@@ -25,9 +26,18 @@ const router = express.Router();
    THUMBNAIL SUB-ROUTER
    Uses a separate router instance so router.param('id', ...) on
    the main router does NOT fire for these routes.
-   Auth only — no feature gate, no tenant access check.
+   Auth + tenant check (member: own PDFs only; org_admin: org PDFs).
 ══════════════════════════════════════════════════════════════ */
 const thumbRouter = express.Router();
+
+async function assertThumbPdfAccess(req, res, pdfId) {
+  const pdf = await loadPdfIfAccessible(req.user, pdfId);
+  if (!pdf) {
+    res.status(req.user ? 403 : 401).json({ error: req.user ? 'Forbidden' : 'Unauthorized' });
+    return null;
+  }
+  return pdf;
+}
 
 // GET /pdfs/:id/page/:pageNumber/thumbnail
 thumbRouter.get('/:id/page/:pageNumber/thumbnail', authenticate, async (req, res) => {
@@ -38,6 +48,8 @@ thumbRouter.get('/:id/page/:pageNumber/thumbnail', authenticate, async (req, res
     if (isNaN(pdfId) || isNaN(pageNumber) || pageNumber < 1) {
       return res.status(400).json({ error: 'Invalid PDF ID or page number' });
     }
+
+    if (!(await assertThumbPdfAccess(req, res, pdfId))) return;
 
     const { getHtmlIntermediateDir } = await import('../config/fileStorage.js');
     const htmlIntermediateDir = getHtmlIntermediateDir();
@@ -89,6 +101,8 @@ thumbRouter.get('/:id/thumbnail', authenticate, async (req, res) => {
   try {
     const pdfId = parseInt(req.params.id);
     if (isNaN(pdfId)) return res.status(400).json({ error: 'Invalid PDF ID' });
+
+    if (!(await assertThumbPdfAccess(req, res, pdfId))) return;
 
     // 1. Disk cache (fastest path)
     const { getThumbnailDir } = await import('../config/fileStorage.js');
@@ -341,6 +355,10 @@ router.post('/upload/bulk', pdfBulkUploadMulter, async (req, res) => {
       }
     }
 
+    if (successfulUploads.length > 0) {
+      cacheDelByPrefix('pdfs:');
+    }
+
     return successResponse(res, {
       totalUploaded: successfulUploads.length,
       totalFailed: errors.length,
@@ -353,12 +371,12 @@ router.post('/upload/bulk', pdfBulkUploadMulter, async (req, res) => {
 });
 
 // GET /api/pdfs - Get all PDFs (?scope=own = only PDFs this user uploaded; org admins default: full org)
-router.get('/', httpCache(TTL.MEDIUM), async (req, res) => {
+router.get('/', noCache, async (req, res) => {
   try {
-    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const scope = resolveListScope(req.user, req.query.scope);
     const userId = req.user?.id ?? 'anon';
     const orgId  = req.user?.organizationId ?? 'none';
-    const scopeKey = req.query.scope === 'own' ? 'own' : 'org';
+    const scopeKey = listScopeKey(req.user, req.query.scope);
     const cacheKey = `pdfs:list:${orgId}:${userId}:${scopeKey}`;
 
     const pdfs = await cacheWrap(cacheKey, () => PdfService.getAllPdfs(req.user, scope), TTL.MEDIUM);
@@ -369,11 +387,13 @@ router.get('/', httpCache(TTL.MEDIUM), async (req, res) => {
 });
 
 // GET /api/pdfs/grouped - Get PDFs grouped by ZIP
-router.get('/grouped', httpCache(TTL.MEDIUM), async (req, res) => {
+router.get('/grouped', noCache, async (req, res) => {
   try {
-    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const scope = resolveListScope(req.user, req.query.scope);
+    const userId = req.user?.id ?? 'anon';
     const orgId  = req.user?.organizationId ?? 'none';
-    const cacheKey = `pdfs:grouped:${orgId}`;
+    const scopeKey = listScopeKey(req.user, req.query.scope);
+    const cacheKey = `pdfs:grouped:${orgId}:${userId}:${scopeKey}`;
     const grouped = await cacheWrap(cacheKey, () => PdfService.getPdfsGroupedByZip(req.user, scope), TTL.MEDIUM);
     return successResponse(res, grouped);
   } catch (error) {

@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import fs from 'fs/promises';
+import { zipEntryIsStored } from './epubZipHelpers.js';
 
 /**
  * Validate EPUB structure
@@ -39,9 +40,9 @@ export class EpubValidator {
         }
       }
       
-      // Check mimetype is uncompressed
+      // Check mimetype is uncompressed (JSZip uses options.compression === 'STORE' or raw method 0)
       const mimetype = zip.files['mimetype'];
-      if (mimetype && mimetype.options.compression !== 'STORE') {
+      if (mimetype && !zipEntryIsStored(mimetype)) {
         warnings.push('mimetype should be uncompressed (STORE)');
       }
       

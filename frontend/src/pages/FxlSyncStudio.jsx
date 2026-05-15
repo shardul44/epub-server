@@ -3,6 +3,7 @@
  * Loads pages/zones, single-book audio, and alignment; waveform + regions; edit timings; Run alignment; Save.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
@@ -81,6 +82,8 @@ export default function FxlSyncStudio() {
   const [perPageFiles, setPerPageFiles] = useState({}); // { pageNumber: File }
   const [pagesWithPerPageAudio, setPagesWithPerPageAudio] = useState([]); // page numbers that already have page_N.mp3
   const [uploadingPerPage, setUploadingPerPage] = useState(false);
+  /** Bumped after per-page upload/align so WaveSurfer reloads the same URL (browser cache bust). */
+  const [audioStreamNonce, setAudioStreamNonce] = useState(0);
   const tapSyncStartRef = useRef(null);
   const segmentsRef = useRef(segments);
   const selectedZoneIdRef = useRef(selectedZoneId);
@@ -95,8 +98,11 @@ export default function FxlSyncStudio() {
   const currentPageZones = currentPage?.zones || [];
   const perPageUrlForCurrentPage = currentPage && perPageAudioUrls[currentPage.pageNumber];
   const resolvedMediaBase = perPageUrlForCurrentPage ? resolveBackendUrl(perPageUrlForCurrentPage) : audioUrl;
+  const cacheBustedMediaBase = resolvedMediaBase
+    ? `${resolvedMediaBase}${resolvedMediaBase.includes('?') ? '&' : '?'}_cv=${audioStreamNonce}`
+    : null;
   // WaveSurfer / fetch cannot send Authorization; backend accepts ?token= on GET (see authenticate middleware).
-  const effectiveAudioUrl = resolvedMediaBase ? withAuthImageQuery(resolvedMediaBase) : null;
+  const effectiveAudioUrl = cacheBustedMediaBase ? withAuthImageQuery(cacheBustedMediaBase) : null;
   const usePerPageAudioForWaveform = Boolean(perPageUrlForCurrentPage);
   const alignmentMap = useMemo(() => {
     const m = {};
@@ -126,13 +132,16 @@ export default function FxlSyncStudio() {
 
   // Saving is done only via the "Save alignment" button (no auto-save / no "Saved" message).
 
-  const loadSyncStudioData = useCallback(async () => {
-    setLoading(true);
+  const loadSyncStudioData = useCallback(async (opts = {}) => {
+    const showLoading = opts.showLoading !== false;
+    const preservePageIndex = opts.preservePageIndex === true;
+    const bumpAudioCache = opts.bumpAudioCache === true;
+    if (showLoading) setLoading(true);
     setError('');
     const numericJobId = parseInt(String(jobId), 10);
     if (jobId == null || jobId === '' || Number.isNaN(numericJobId)) {
       setError('Invalid job ID in the URL.');
-      setLoading(false);
+      if (showLoading) setLoading(false);
       return;
     }
     try {
@@ -141,8 +150,15 @@ export default function FxlSyncStudio() {
         headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
       });
       const data = res.data?.data ?? res.data;
-      setPages(data.pages || []);
-      if (data.pages?.length) setCurrentPageIndex(0);
+      const nextPages = data.pages || [];
+      setPages(nextPages);
+      if (nextPages.length) {
+        if (preservePageIndex) {
+          setCurrentPageIndex(i => Math.min(Math.max(0, i), nextPages.length - 1));
+        } else {
+          setCurrentPageIndex(0);
+        }
+      }
       if (data.audioUrl) {
         setAudioUrl(resolveBackendUrl(data.audioUrl));
       } else {
@@ -151,15 +167,21 @@ export default function FxlSyncStudio() {
       setAudioDuration(Number(data.audioDuration) || 0);
       const pp = data.perPageAudioUrls || {};
       setPerPageAudioUrls(pp);
+      const pageNumsFromUrls = Object.keys(pp)
+        .map(n => parseInt(n, 10))
+        .filter(n => !Number.isNaN(n) && n > 0)
+        .sort((a, b) => a - b);
+      setPagesWithPerPageAudio(pageNumsFromUrls);
       const alignment = data.alignment || [];
       segmentsRef.current = alignment;
       setSegments(alignment);
+      if (bumpAudioCache) setAudioStreamNonce(n => n + 1);
     } catch (e) {
       setError(e.response?.data?.message || e.message || 'Failed to load Sync Studio data');
       setPages([]);
       setSegments([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [jobId]);
 
@@ -337,6 +359,13 @@ export default function FxlSyncStudio() {
       const newSegments = data.segments || [];
       setSegments(newSegments);
       segmentsRef.current = newSegments;
+      if (config?.usePerPageAudio) {
+        await loadSyncStudioData({
+          showLoading: false,
+          preservePageIndex: true,
+          bumpAudioCache: true,
+        });
+      }
       setSuccess('Alignment complete and saved.');
       setShowManualConfig(false);
     } catch (e) {
@@ -349,8 +378,10 @@ export default function FxlSyncStudio() {
   const handlePerPageUploadAndAlign = async () => {
     const filesToUpload = Object.entries(perPageFiles).filter(([, file]) => file instanceof File);
     const skipPages = manualConfig.skipPages || [];
-    setUploadingPerPage(true);
-    setAligning(true);
+    flushSync(() => {
+      setUploadingPerPage(true);
+      setAligning(true);
+    });
     setError('');
     try {
       for (const [pageNum, file] of filesToUpload) {
@@ -584,9 +615,6 @@ export default function FxlSyncStudio() {
               <><Download size={18} {...fxlIc} /> Save & Next</>
             )}
           </button>
-          <button type="button" onClick={() => navigate(`/kitaboo-studio/${jobId}`)} className="btn-back">
-            <ChevronLeft size={18} {...fxlIc} /> Back to Zoning Studio
-          </button>
         </div>
       </header>
       <div className="studio-content-header">
@@ -654,7 +682,7 @@ export default function FxlSyncStudio() {
               <button
                 type="button"
                 className="fxl-reader-toggle"
-                title="Open EPUB reader on a full page (exported FXL EPUB)"
+                title="Open EPUB reader on a full page. Requires Export FXL EPUB 3 in Zoning Studio first (Save & continue does not build the EPUB file)."
                 onClick={() => {
                   const spine = currentPage ? `page${currentPage.pageNumber}.xhtml` : 'page1.xhtml';
                   navigate(buildEpubReaderPath(jobId, { source: 'kitaboo', fixedLayout: true, spine }));
@@ -666,7 +694,7 @@ export default function FxlSyncStudio() {
               <button
                 type="button"
                 className="fxl-reader-toggle fxl-reader-newtab"
-                title="Open reader in a new browser tab"
+                title="Open reader in a new tab (requires Export FXL EPUB 3 in Zoning Studio first)"
                 aria-label="Open reader in a new browser tab"
                 onClick={() => {
                   const spine = currentPage ? `page${currentPage.pageNumber}.xhtml` : 'page1.xhtml';

@@ -95,6 +95,7 @@ export default ConfirmModal;
  *   status    {string}   — "uploading" | "success" | "error"
  *   error     {string}   — error message when status === "error"
  *   onClose   {function} — called when user dismisses after success/error
+ *   successActionLabel {string} — primary button on success (default: "Go to My PDFs")
  */
 export const UploadLoadingModal = ({
   isOpen = false,
@@ -103,6 +104,7 @@ export const UploadLoadingModal = ({
   status = 'uploading',
   error = '',
   onClose,
+  successActionLabel = 'Go to My PDFs',
 }) => {
   if (!isOpen) return null;
 
@@ -170,7 +172,14 @@ export const UploadLoadingModal = ({
           )}
 
           {isSuccess && (
-            <p className="ulm-hint ulm-hint--success">Your PDF has been uploaded successfully. Redirecting…</p>
+            <>
+              <p className="ulm-hint ulm-hint--success">
+                Your PDF is in My PDFs. Start conversion from there when you are ready.
+              </p>
+              <button type="button" className="cm-btn cm-btn-confirm cm-btn-confirm--info ulm-close-btn" onClick={onClose}>
+                {successActionLabel}
+              </button>
+            </>
           )}
 
           {isError && (

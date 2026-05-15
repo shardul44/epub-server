@@ -16,24 +16,32 @@ import { LicenseService } from '../services/licenseService.js';
 const router = express.Router();
 
 router.use(authenticate);
-router.use(requireRole(ROLES.ORG_ADMIN));
 
-router.use((req, res, next) => {
+function requireOrgAssigned(req, res, next) {
   if (!req.user.organizationId) {
     return forbiddenResponse(res, 'No organization assigned');
   }
   next();
-});
+}
 
-// GET /org/license — subscription, seats, monthly PDF page usage (DB-backed)
-router.get('/license', async (req, res) => {
-  try {
-    const status = await LicenseService.getOrgLicenseStatus(req.user.organizationId);
-    return successResponse(res, status);
-  } catch (error) {
-    return errorResponse(res, error.message, 500);
+// GET /org/license — org members and admins may read their org's subscription / usage.
+// (Team management routes below remain org_admin only.)
+router.get(
+  '/license',
+  requireRole(ROLES.ORG_ADMIN, ROLES.MEMBER),
+  requireOrgAssigned,
+  async (req, res) => {
+    try {
+      const status = await LicenseService.getOrgLicenseStatus(req.user.organizationId);
+      return successResponse(res, status);
+    } catch (error) {
+      return errorResponse(res, error.message, 500);
+    }
   }
-});
+);
+
+router.use(requireRole(ROLES.ORG_ADMIN));
+router.use(requireOrgAssigned);
 
 // GET /org/plans — list all available plans (for upgrade modal)
 router.get('/plans', async (_req, res) => {

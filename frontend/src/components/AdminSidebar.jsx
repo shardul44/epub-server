@@ -110,7 +110,6 @@ const AdminSidebar = ({ onCollapse }) => {
       >
         {mobileOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
-
       {mobileOpen && (
         <div
           className="admin-sidebar-overlay"
@@ -118,7 +117,6 @@ const AdminSidebar = ({ onCollapse }) => {
           aria-hidden="true"
         />
       )}
-
       <aside className={`sidebar${mobileOpen ? ' sidebar--mobile-open' : ''}`}>
         <div className="admin-sidebar-brand">
           <div className="admin-sidebar-brand-mark" aria-hidden>
@@ -129,12 +127,9 @@ const AdminSidebar = ({ onCollapse }) => {
             <span className="navbar-brand-subtitle admin-sidebar-brand-tag">Converter</span>
           </div>
         </div>
-
         <nav className="sidebar-nav">
           <span className="admin-sidebar-section-label">Overview</span>
-
           <NavRow to="/" icon={Home} label="Dashboard" isActive={active.home} />
-
           <NavRow
             to="/admin/activity"
             icon={Activity}
@@ -142,16 +137,13 @@ const AdminSidebar = ({ onCollapse }) => {
             isActive={active.activity}
             end={<CountBadge count={activityCount} tone="mint" />}
           />
-
           <NavRow
             to="/admin/analytics"
             icon={BarChart3}
             label="Analytics"
             isActive={active.analytics}
           />
-
           <span className="admin-sidebar-section-label">Management</span>
-
           <NavRow
             to="/admin/organizations"
             icon={Briefcase}
@@ -159,14 +151,12 @@ const AdminSidebar = ({ onCollapse }) => {
             isActive={active.orgs}
             end={<CountBadge count={orgCount} tone="blue" />}
           />
-
           <NavRow
             to="/admin/plans"
             icon={Package}
             label="Plans & Features"
             isActive={active.plans}
           />
-
           <NavRow
             to="/admin/users"
             icon={Users}
@@ -174,16 +164,31 @@ const AdminSidebar = ({ onCollapse }) => {
             isActive={active.users}
             end={<CountBadge count={userCount} tone="amber" />}
           />
-
           <NavRow
             to="/admin/conversions"
             icon={RefreshCw}
             label="Conversions"
             isActive={active.conversions}
           />
-
           <span className="admin-sidebar-section-label">Configuration</span>
-
+          <NavRow
+            to="/admin/billing"
+            icon={CreditCard}
+            label="Billing & quotas"
+            isActive={active.billing}
+          />
+          <NavRow
+            to="/admin/security"
+            icon={Shield}
+            label="Security & access"
+            isActive={active.security}
+          />
+          <NavRow
+            to="/admin/system-logs"
+            icon={Terminal}
+            label="System Logs"
+            isActive={active.logs}
+          />
           <NavRow
             to="/admin/settings"
             icon={Settings}
@@ -191,26 +196,8 @@ const AdminSidebar = ({ onCollapse }) => {
             isActive={active.settings}
           />
 
-          <NavRow
-            to="/admin/billing"
-            icon={CreditCard}
-            label="Billing & quotas"
-            isActive={active.billing}
-          />
 
-          <NavRow
-            to="/admin/security"
-            icon={Shield}
-            label="Security & access"
-            isActive={active.security}
-          />
 
-          <NavRow
-            to="/admin/system-logs"
-            icon={Terminal}
-            label="System Logs"
-            isActive={active.logs}
-          />
         </nav>
 
         <div className="admin-sidebar-footer">

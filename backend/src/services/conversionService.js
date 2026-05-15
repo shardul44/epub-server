@@ -2793,6 +2793,17 @@ ${bodyContent}
       // Cheerio can rewrite tags; re-apply BR fix so </br> never leaves invalid paragraph nesting.
       xhtmlContent = ConversionService._fixMalformedBrTags(xhtmlContent);
 
+      try {
+        const { sanitizeXhtml } = await import('../utils/sanitizeXhtml.js');
+        const { xhtml: san, warnings } = sanitizeXhtml(xhtmlContent, { title: `Page ${page.pageNumber}` });
+        xhtmlContent = san;
+        if (warnings?.length) {
+          console.log(`[Job ${jobId}] sanitizeXhtml warnings (page ${page.pageNumber}):`, warnings.slice(0, 3).join('; '));
+        }
+      } catch (e) {
+        console.warn(`[Job ${jobId}] sanitizeXhtml skipped:`, e.message);
+      }
+
       // Write fixed XHTML to EPUB
       const destPath = path.join(oebpsDir, page.xhtmlFileName);
       await fs.writeFile(destPath, xhtmlContent, 'utf8');
@@ -6958,7 +6969,14 @@ ${bodyContent}
       updatedAt: job.updated_at,
       completedAt: job.completed_at,
       pdfFilename: job.pdf_original_file_name ?? job.original_file_name ?? null,
-      totalPages: job.pdf_total_pages ?? job.total_pages ?? null,
+      totalPages: (() => {
+        const a = Number(job.pdf_total_pages);
+        const b = Number(job.total_pages);
+        if (Number.isFinite(a) && a > 0 && Number.isFinite(b) && b > 0) return Math.max(a, b);
+        if (Number.isFinite(a) && a > 0) return a;
+        if (Number.isFinite(b) && b > 0) return b;
+        return job.pdf_total_pages ?? job.total_pages ?? null;
+      })(),
       organizationId: job.pdf_organization_id ?? null,
       organizationName: job.organization_name ?? null,
       userEmail: job.user_email ?? null,
@@ -7256,6 +7274,19 @@ mark, mark * {
       // Ensure all text elements have unique IDs
       xhtmlContent = this.ensureAllTextElementsHaveIds(xhtmlContent, pageNumber);
 
+      try {
+        const { sanitizeXhtml, extractCanonicalFromXhtml } = await import('../utils/sanitizeXhtml.js');
+        const { xhtml: san } = sanitizeXhtml(xhtmlContent, { title: `Page ${pageNumber}` });
+        xhtmlContent = san;
+        await fs.writeFile(
+          path.join(jobHtmlDir, `page_${pageNumber}.canonical.json`),
+          JSON.stringify(extractCanonicalFromXhtml(xhtmlContent, pageNumber), null, 2),
+          'utf8'
+        );
+      } catch (e) {
+        console.warn(`[Regenerate Page ${pageNumber}] sanitizeXhtml / canonical:`, e.message);
+      }
+
       // Save the regenerated XHTML, replacing the old one
       const xhtmlFilePath = path.join(jobHtmlDir, `page_${pageNumber}.xhtml`);
       await fs.writeFile(xhtmlFilePath, xhtmlContent, 'utf8');
@@ -7342,6 +7373,18 @@ mark, mark * {
     const outPath = path.join(jobHtmlDir, `page_${xhtmlFilePageNumber}.xhtml`);
     let chapterXhtml = xhtmlResult.xhtml;
     chapterXhtml = this.ensureAllTextElementsHaveIds(chapterXhtml, xhtmlFilePageNumber);
+    try {
+      const { sanitizeXhtml, extractCanonicalFromXhtml } = await import('../utils/sanitizeXhtml.js');
+      const { xhtml: san } = sanitizeXhtml(chapterXhtml, { title: chapterTitle });
+      chapterXhtml = san;
+      await fs.writeFile(
+        path.join(jobHtmlDir, `page_${xhtmlFilePageNumber}.canonical.json`),
+        JSON.stringify(extractCanonicalFromXhtml(chapterXhtml, xhtmlFilePageNumber), null, 2),
+        'utf8'
+      );
+    } catch (e) {
+      console.warn(`[Regenerate Chapter ${chapterNumber}] sanitizeXhtml:`, e.message);
+    }
     await fs.writeFile(outPath, chapterXhtml, 'utf8');
 
     // Best-effort cleanup: remove per-page files inside the chapter range except the start page file

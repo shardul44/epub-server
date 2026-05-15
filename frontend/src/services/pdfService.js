@@ -2,11 +2,14 @@ import api from './api';
 
 export const pdfService = {
   /** @param {{ scope?: 'own' }} [params] - scope=own: only PDFs uploaded by the current user (dashboard) */
-  getAllPdfs: (params = {}) => api.get('/pdfs', { params }).then(res => {
-    const data = res.data?.data;
-    console.log('[pdfService] GET /pdfs response — count:', Array.isArray(data) ? data.length : 'non-array', data);
-    return Array.isArray(data) ? data : [];
-  }),
+  getAllPdfs: (params = {}) =>
+    api.get('/pdfs', { params }).then((res) => {
+      const data = res.data?.data;
+      if (import.meta.env.DEV) {
+        console.log('[pdfService] GET /pdfs — count:', Array.isArray(data) ? data.length : 0, params);
+      }
+      return Array.isArray(data) ? data : [];
+    }),
   
   getPdfById: (id) => api.get(`/pdfs/${id}`).then(res => res.data.data),
   

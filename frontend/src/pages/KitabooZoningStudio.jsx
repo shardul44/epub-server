@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import * as fabric from 'fabric';
 import api, { API_BASE_URL } from '../services/api';
@@ -20,6 +20,18 @@ import {
 } from 'lucide-react';
 import './KitabooZoningStudio.css';
 import WorkflowStudioChrome from '../components/WorkflowStudioChrome';
+
+/** Merge paginated Kitaboo payloads by pageNumber (later poll wins). */
+function mergeKitabooPages(prev, next) {
+  const map = new Map();
+  (prev || []).forEach((p) => {
+    if (p?.pageNumber != null) map.set(p.pageNumber, p);
+  });
+  (next || []).forEach((p) => {
+    if (p?.pageNumber != null) map.set(p.pageNumber, p);
+  });
+  return [...map.values()].sort((a, b) => a.pageNumber - b.pageNumber);
+}
 
 const KitabooZoningStudio = () => {
   const READING_ORDER_LABEL_SIZE = 40;
@@ -79,6 +91,14 @@ const KitabooZoningStudio = () => {
   const canvasContainerRef = useRef(null); // scroll reset on page change
   const fitScaleRef = useRef(1);
   const zoomRatioRef = useRef(1);
+  const [hdBackgroundActive, setHdBackgroundActive] = useState(false);
+  const [slowStepHint, setSlowStepHint] = useState(false);
+  const lastProgressRef = useRef({ pct: 0, at: Date.now() });
+
+  const pagesRef = useRef(pages);
+  pagesRef.current = pages;
+  const currentPageRef = useRef(currentPage);
+  currentPageRef.current = currentPage;
 
   // Derive backend origin from API_BASE_URL (e.g., http://localhost:8081)
   const backendOrigin = API_BASE_URL.replace('/api', '');
@@ -91,12 +111,40 @@ const KitabooZoningStudio = () => {
       try {
         const res = await api.get(`/kitaboo/job/${routeJobId}`);
         const d = res.data?.data || res.data;
-        setProgressPercentage(d.progressPercentage ?? 0);
+        const pct = d.progressPercentage ?? 0;
+        setProgressPercentage(pct);
         setCurrentStep(d.currentStep ?? '');
+        if (pct !== lastProgressRef.current.pct) {
+          lastProgressRef.current = { pct, at: Date.now() };
+          setSlowStepHint(false);
+        } else if (
+          (d.status === 'IN_PROGRESS' || d.status === 'PENDING') &&
+          pct > 0 &&
+          pct < 48 &&
+          Date.now() - lastProgressRef.current.at > 90000
+        ) {
+          setSlowStepHint(true);
+        }
         if (d.status === 'COMPLETED' && Array.isArray(d.pages) && d.pages.length > 0) {
           if (pollTimerRef.current) clearInterval(pollTimerRef.current);
           pollTimerRef.current = null;
           setPages(d.pages);
+          setHdBackgroundActive(false);
+          setJobId(d.jobId);
+          const level = d.zoneLevel || d.extractionLevel;
+          if (level === 'word' || level === 'sentence') setSyncLevel(level);
+          setLoading(false);
+          setLoadError(null);
+          return;
+        }
+        if (
+          (d.status === 'IN_PROGRESS' || d.status === 'PENDING') &&
+          d.previewReady &&
+          Array.isArray(d.pages) &&
+          d.pages.length > 0
+        ) {
+          setPages((prev) => mergeKitabooPages(prev, d.pages));
+          setHdBackgroundActive(true);
           setJobId(d.jobId);
           const level = d.zoneLevel || d.extractionLevel;
           if (level === 'word' || level === 'sentence') setSyncLevel(level);
@@ -144,6 +192,20 @@ const KitabooZoningStudio = () => {
           const level = readyData.zoneLevel || readyData.extractionLevel;
           if (level === 'word' || level === 'sentence') setSyncLevel(level);
           setLoading(false);
+          try {
+            const jr = await api.get(`/kitaboo/job/${routeJobId}`);
+            const jd = jr.data?.data ?? jr.data;
+            if (jd.status === 'IN_PROGRESS' || jd.status === 'PENDING') {
+              setHdBackgroundActive(!!jd.previewReady);
+              if (!pollTimerRef.current) {
+                pollTimerRef.current = setInterval(pollJobStatus, 1500);
+              }
+            } else {
+              setHdBackgroundActive(false);
+            }
+          } catch (_) {
+            setHdBackgroundActive(false);
+          }
           return;
         }
 
@@ -168,8 +230,22 @@ const KitabooZoningStudio = () => {
           setJobId(jobData.jobId);
           const level = jobData.zoneLevel || jobData.extractionLevel;
           if (level === 'word' || level === 'sentence') setSyncLevel(level);
+          setHdBackgroundActive(false);
           setLoading(false);
           return;
+        }
+        if (
+          (jobData.status === 'IN_PROGRESS' || jobData.status === 'PENDING') &&
+          jobData.previewReady &&
+          Array.isArray(jobData.pages) &&
+          jobData.pages.length > 0
+        ) {
+          setPages(jobData.pages);
+          setJobId(jobData.jobId);
+          const level = jobData.zoneLevel || jobData.extractionLevel;
+          if (level === 'word' || level === 'sentence') setSyncLevel(level);
+          setHdBackgroundActive(true);
+          setLoading(false);
         }
         if (jobData.status === 'IN_PROGRESS' || jobData.status === 'PENDING') {
           setProgressPercentage(jobData.progressPercentage ?? 0);
@@ -203,20 +279,33 @@ const KitabooZoningStudio = () => {
     };
   }, [routeJobId, retryKey]);
 
-  useEffect(() => {
-    if (!loading && pages.length > 0) {
-      if (Date.now() < skipCanvasReinitUntil.current) return;
-      setSelectedZone(null);
-      setSelectedObjects([]);
-      // Scroll the canvas container back to the top so changing pages always
-      // starts at the top-left of the new page, not where the previous page left off.
-      if (canvasContainerRef.current) {
-        canvasContainerRef.current.scrollTop = 0;
-        canvasContainerRef.current.scrollLeft = 0;
-      }
-      initCanvas(pages[currentPage]);
-    }
+  /**
+   * Only rebuild the Fabric canvas when the *page shell* changes (page index, image URL,
+   * dimensions, or zone count). Saving zone geometry updates `pages` but must NOT dispose
+   * the canvas — full re-init was the main cause of overlays "jumping" after Save.
+   */
+  const studioCanvasInitKey = useMemo(() => {
+    if (loading || pages.length === 0 || !pages[currentPage]) return '';
+    const p = pages[currentPage];
+    const dw = p.dimensions?.width ?? '';
+    const dh = p.dimensions?.height ?? '';
+    const zc = Array.isArray(p.zones) ? p.zones.length : 0;
+    return `${currentPage}|${p.imagePath || ''}|${dw}x${dh}|z${zc}`;
   }, [loading, currentPage, pages]);
+
+  useEffect(() => {
+    if (!studioCanvasInitKey) return;
+    if (Date.now() < skipCanvasReinitUntil.current) return;
+    const pageData = pagesRef.current[currentPageRef.current];
+    if (!pageData) return;
+    setSelectedZone(null);
+    setSelectedObjects([]);
+    if (canvasContainerRef.current) {
+      canvasContainerRef.current.scrollTop = 0;
+      canvasContainerRef.current.scrollLeft = 0;
+    }
+    initCanvas(pageData);
+  }, [studioCanvasInitKey]);
 
   // syncLevel is set from job extractionLevel (Convert modal choice); no Sync dropdown
 
@@ -476,71 +565,8 @@ const KitabooZoningStudio = () => {
       requestAnimationFrame(() => createCanvas(pageData));
     };
     const createCanvas = (pageData) => {
-      try {
-        // 1. Lock canvas to the ACTUAL image dimensions from the backend
-        // This ensures saved coordinates (x, y, w, h) match the EPUB viewport 1:1
-        const canvas = new fabric.Canvas('kitaboo-canvas', {
-          width: pageData.dimensions.width,
-          height: pageData.dimensions.height,
-          backgroundColor: '#ffffff',
-          selection: true,
-          preserveObjectStacking: true,
-          selectionKey: 'shiftKey',
-          altSelectionKey: 'ctrlKey'
-        });
-
-        const imageUrl = `${backendOrigin}${pageData.imagePath}`;
-        console.log('[Studio] Loading background:', imageUrl);
-
-        fabric.Image.fromURL(imageUrl, {
-          crossOrigin: 'anonymous'
-        }).then((img) => {
-          // 1. Force the canvas to match the image dimensions exactly
-          canvas.setDimensions({
-            width: img.width,
-            height: img.height
-          }, { backstoreOnly: false });
-
-          // 2. Ensure image is at 0,0 and origin is top-left
-          img.set({
-            left: 0,
-            top: 0,
-            originX: 'left',
-            originY: 'top',
-            scaleX: 1,
-            scaleY: 1
-          });
-
-          canvas.backgroundImage = img;
-          canvas.renderAll();
-          console.log('[Studio] Background applied 1:1:', img.width, 'x', img.height);
-
-          // 3. Fit canvas to the visible container using Fabric's own zoom.
-          //    This resizes the actual canvas element (no CSS transform tricks)
-          //    so the container scrolls correctly and zone hit-testing stays accurate.
-          requestAnimationFrame(() => {
-            const scrollEl = canvasContainerRef.current;
-            if (!scrollEl) return;
-            const padding = 48; // 24px each side
-            const availW = scrollEl.clientWidth  - padding;
-            const availH = scrollEl.clientHeight - padding;
-            const fitScale = Math.min(availW / img.width, availH / img.height, 1);
-            fitScaleRef.current = fitScale;
-            const initialRatio = zoomRatioRef.current;
-            const effectiveScale = fitScale * initialRatio;
-            canvas.setZoom(effectiveScale);
-            canvas.setDimensions({
-              width:  Math.round(img.width  * effectiveScale),
-              height: Math.round(img.height * effectiveScale),
-            });
-            canvas.renderAll();
-          });
-        }).catch(err => {
-          console.error('[Studio] Background load failed:', err);
-        });
-
-        // Render Gemini Zones (rect or polygon)
-        pageData.zones.forEach((zone, index) => {
+      const addZonesAndGroups = (canvas) => {
+        (pageData.zones || []).forEach((zone, index) => {
           const rOrder = zone.readingOrder || index + 1;
           const text = new fabric.IText(rOrder.toString(), {
             left: 5,
@@ -560,26 +586,15 @@ const KitabooZoningStudio = () => {
           };
           let shape;
           let groupLeft, groupTop;
-          // Track whether points came from stored zone.points (already went through at least
-          // one init cycle) vs freshly derived from x,y,w,h.  The EXTRA_RIGHT_PAD is a
-          // display-only tweak that must only be applied once, and must NOT be saved back into
-          // data.points — otherwise every reinit adds another 8 px and zones grow forever.
           const hadStoredPoints = Array.isArray(zone.points) && zone.points.length >= 3;
           let zonePoints = hadStoredPoints
             ? zone.points.map(p => Array.isArray(p) ? [Number(p[0]), Number(p[1])] : [Number(p.x), Number(p.y)])
             : null;
-          // Default rect zones (x,y,w,h): represent as 4-point polygon so all zones are polygons
           if (!zonePoints && zone.x != null && zone.y != null && zone.w != null && zone.h != null) {
             const x = Number(zone.x), y = Number(zone.y), w = Number(zone.w), h = Number(zone.h);
             zonePoints = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
           }
-          // The canonical (un-padded) points that get stored in data.points.
-          // Saved separately so the display polygon can be padded without mutating the stored coords.
           const canonicalPoints = zonePoints ? zonePoints.map(p => [...p]) : null;
-          // UI-only padding: some PDFs have very tight bboxes, so the last glyph can look "cut"
-          // by the right edge of the zone.  Only apply to zones freshly derived from x,y,w,h
-          // (hadStoredPoints === false).  Never apply to already-stored polygon points so we
-          // don't accumulate +8 px on every save/navigate cycle.
           if (!hadStoredPoints && zonePoints && zonePoints.length === 4) {
             const xs = zonePoints.map(p => p[0]);
             const ys = zonePoints.map(p => p[1]);
@@ -622,8 +637,6 @@ const KitabooZoningStudio = () => {
             originY: 'top',
             data: {
               ...zone,
-              // Store the UN-PADDED canonical points so future reinits start from the true
-              // coordinates and the display-only EXTRA_RIGHT_PAD is never accumulated.
               ...(canonicalPoints && canonicalPoints.length >= 3 && { points: canonicalPoints }),
               readingOrder: rOrder,
               altText: zone.altText || '',
@@ -632,7 +645,9 @@ const KitabooZoningStudio = () => {
           });
           canvas.add(group);
         });
+      };
 
+      const wireSelectionHandlers = (canvas) => {
         canvas.on('selection:created', (e) => {
           const sel = e.selected || [];
           setSelectedObjects(sel);
@@ -648,9 +663,80 @@ const KitabooZoningStudio = () => {
           setSelectedZone(null);
           updateMultiSelectHighlight(canvas, []);
         });
+      };
 
+      const finishInit = (canvas, img) => {
+        addZonesAndGroups(canvas);
+        wireSelectionHandlers(canvas);
         setFabricCanvas(canvas);
-      } finally {
+        requestAnimationFrame(() => {
+          const scrollEl = canvasContainerRef.current;
+          if (!scrollEl || !img) return;
+          const padding = 48;
+          const availW = scrollEl.clientWidth - padding;
+          const availH = scrollEl.clientHeight - padding;
+          const fitScale = Math.min(availW / img.width, availH / img.height, 1);
+          fitScaleRef.current = fitScale;
+          const initialRatio = zoomRatioRef.current;
+          const effectiveScale = fitScale * initialRatio;
+          canvas.setZoom(effectiveScale);
+          canvas.setDimensions({
+            width: Math.round(img.width * effectiveScale),
+            height: Math.round(img.height * effectiveScale),
+          });
+          canvas.renderAll();
+        });
+        canvasInitScheduled.current = false;
+      };
+
+      try {
+        const canvas = new fabric.Canvas('kitaboo-canvas', {
+          width: pageData.dimensions.width,
+          height: pageData.dimensions.height,
+          backgroundColor: '#ffffff',
+          selection: true,
+          preserveObjectStacking: true,
+          selectionKey: 'shiftKey',
+          altSelectionKey: 'ctrlKey'
+        });
+
+        const imageUrl = `${backendOrigin}${pageData.imagePath}`;
+        console.log('[Studio] Loading background:', imageUrl);
+
+        fabric.Image.fromURL(imageUrl, {
+          crossOrigin: 'anonymous'
+        }).then((img) => {
+          canvas.setDimensions({
+            width: img.width,
+            height: img.height
+          }, { backstoreOnly: false });
+
+          img.set({
+            left: 0,
+            top: 0,
+            originX: 'left',
+            originY: 'top',
+            scaleX: 1,
+            scaleY: 1
+          });
+
+          canvas.backgroundImage = img;
+          canvas.renderAll();
+          console.log('[Studio] Background applied 1:1:', img.width, 'x', img.height);
+
+          // Zones MUST be added after the real image size is known. Previously zones were
+          // created while fromURL was still pending; then the canvas resized to img — saved
+          // coords stayed correct but re-init after "Save current page" left overlays shifted.
+          finishInit(canvas, img);
+        }).catch((err) => {
+          console.error('[Studio] Background load failed:', err);
+          const dw = Number(pageData.dimensions?.width) || 800;
+          const dh = Number(pageData.dimensions?.height) || 1200;
+          canvas.setDimensions({ width: dw, height: dh }, { backstoreOnly: false });
+          finishInit(canvas, { width: dw, height: dh });
+        });
+      } catch (e) {
+        console.warn('[Studio] createCanvas:', e?.message);
         canvasInitScheduled.current = false;
       }
     };
@@ -731,6 +817,101 @@ const KitabooZoningStudio = () => {
     setZonePropsVersion(v => v + 1);
   };
 
+  /**
+   * Serialize a Fabric zone group to backend { x, y, w, h, points? } in page pixel space.
+   * Fabric 6/7 changed polygon point layout vs older Fabric; use getBoundingRect + calcTransformMatrix
+   * so EPUB export coordinates match the canvas (fixes stacked/overlapping text in Thorium).
+   */
+  const serializeFabricZoneGroup = (group) => {
+    const shape = group.item(0);
+    const data = group.get('data') || group.data || {};
+    if (!shape) {
+      const raw = (data.content != null ? String(data.content) : '').trim();
+      return {
+        ...data,
+        id: data.id,
+        type: data.type || 'text',
+        content: raw,
+        x: Math.round(group.left),
+        y: Math.round(group.top),
+        w: 1,
+        h: 1,
+        readingOrder: data.readingOrder,
+        enrichmentType: data.enrichmentType,
+        enrichmentValue: data.enrichmentValue,
+        altText: data.altText,
+        syncId: data.syncId,
+        lines: Array.isArray(data.lines) && data.lines.length > 0 ? data.lines : undefined,
+      };
+    }
+    const isPolygon =
+      shape &&
+      String(shape.type || '').toLowerCase() === 'polygon' &&
+      shape.points &&
+      shape.points.length >= 3;
+
+    group.setCoords();
+    let x;
+    let y;
+    let w;
+    let h;
+    let points;
+
+    if (isPolygon) {
+      shape.setCoords();
+      const m = shape.calcTransformMatrix();
+      points = shape.points.map((p) => {
+        const px = typeof p.x === 'number' ? p.x : Number(p[0]);
+        const py = typeof p.y === 'number' ? p.y : Number(p[1]);
+        const tp = fabric.util.transformPoint({ x: px, y: py }, m);
+        return [Math.round(tp.x), Math.round(tp.y)];
+      });
+      const xs = points.map((p) => p[0]);
+      const ys = points.map((p) => p[1]);
+      x = Math.round(Math.min(...xs));
+      y = Math.round(Math.min(...ys));
+      w = Math.max(1, Math.round(Math.max(...xs) - x));
+      h = Math.max(1, Math.round(Math.max(...ys) - y));
+    } else if (String(shape.type || '').toLowerCase() === 'rect') {
+      x = Math.round(group.left);
+      y = Math.round(group.top);
+      const sw = Number(shape.width) || 0;
+      const sh = Number(shape.height) || 0;
+      const sx = (shape.scaleX || 1) * (group.scaleX || 1);
+      const sy = (shape.scaleY || 1) * (group.scaleY || 1);
+      w = Math.max(1, Math.round(sw * sx));
+      h = Math.max(1, Math.round(sh * sy));
+    } else {
+      const br = group.getBoundingRect();
+      x = Math.round(br.left);
+      y = Math.round(br.top);
+      w = Math.max(1, Math.round(br.width));
+      h = Math.max(1, Math.round(br.height));
+    }
+    const contentFromLines = Array.isArray(data.lines) && data.lines.length > 0
+      ? data.lines.map((l) => (l.text || '').trim()).filter(Boolean).join(' ')
+      : '';
+    const rawContent = (data.content != null ? String(data.content) : '').trim();
+    const content = rawContent || contentFromLines;
+    return {
+      ...data,
+      id: data.id,
+      type: data.type || 'text',
+      content,
+      x,
+      y,
+      w,
+      h,
+      readingOrder: data.readingOrder,
+      enrichmentType: data.enrichmentType,
+      enrichmentValue: data.enrichmentValue,
+      altText: data.altText,
+      syncId: data.syncId,
+      lines: Array.isArray(data.lines) && data.lines.length > 0 ? data.lines : undefined,
+      points: isPolygon && points && points.length >= 3 ? points : undefined
+    };
+  };
+
   const savePageZones = async ({ showSuccessAlert = true } = {}) => {
     try {
       if (!fabricCanvas) return;
@@ -738,51 +919,7 @@ const KitabooZoningStudio = () => {
 
       const currentZones = fabricCanvas.getObjects()
         .filter(obj => obj.type === 'group')
-        .map(group => {
-          const shape = group.item(0);
-          const data = group.get('data') || group.data || {};
-          const isPolygon = shape.type === 'polygon';
-          let x, y, w, h, points;
-          if (isPolygon && shape.points && shape.points.length >= 3) {
-            const scaleX = group.scaleX ?? 1;
-            const scaleY = group.scaleY ?? 1;
-            points = shape.points.map(p => [
-              Math.round(group.left + (p.x ?? p[0]) * scaleX),
-              Math.round(group.top + (p.y ?? p[1]) * scaleY)
-            ]);
-            const xs = points.map(p => p[0]);
-            const ys = points.map(p => p[1]);
-            x = Math.min(...xs);
-            y = Math.min(...ys);
-            w = Math.max(...xs) - x;
-            h = Math.max(...ys) - y;
-          } else {
-            x = Math.round(group.left);
-            y = Math.round(group.top);
-            w = Math.round((shape.width || 0) * (group.scaleX ?? 1));
-            h = Math.round((shape.height || 0) * (group.scaleY ?? 1));
-          }
-          const contentFromLines = Array.isArray(data.lines) && data.lines.length > 0
-            ? data.lines.map((l) => (l.text || '').trim()).filter(Boolean).join(' ')
-            : '';
-          const rawContent = (data.content != null ? String(data.content) : '').trim();
-          // Always prefer explicitly set content; only fall back to lines when content is empty
-          const content = rawContent || contentFromLines;
-          return {
-            ...data,
-            id: data.id,
-            type: data.type || 'text',
-            content,
-            x, y, w, h,
-            readingOrder: data.readingOrder,
-            enrichmentType: data.enrichmentType,
-            enrichmentValue: data.enrichmentValue,
-            altText: data.altText,
-            syncId: data.syncId,
-            lines: Array.isArray(data.lines) && data.lines.length > 0 ? data.lines : undefined,
-            points: isPolygon && points && points.length >= 3 ? points : undefined
-          };
-        })
+        .map(serializeFabricZoneGroup)
         .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
 
       console.log(`Saving ${currentZones.length} sorted zones for page ${currentPage + 1}`);
@@ -797,16 +934,11 @@ const KitabooZoningStudio = () => {
         groups.sort((a, b) => ((a.get?.('data') || a.data)?.readingOrder ?? 0) - ((b.get?.('data') || b.data)?.readingOrder ?? 0));
         savedZones.forEach((z, i) => {
           if (groups[i]) {
-            const rect = groups[i].item(0);
             const existing = groups[i].get?.('data') || groups[i].data || {};
-            // Sync full saved zone back so canvas (and future exports) match DB, including updated content
+            // Server response is source of truth for geometry (Fabric 7–safe); do not re-derive from group.left/rect.width.
             groups[i].set?.('data', {
               ...existing,
               ...z,
-              x: Math.round(groups[i].left),
-              y: Math.round(groups[i].top),
-              w: rect ? Math.round((rect.width || 0) * (groups[i].scaleX || 1)) : (z.w || existing.w),
-              h: rect ? Math.round((rect.height || 0) * (groups[i].scaleY || 1)) : (z.h || existing.h),
               readingOrder: z.readingOrder ?? existing.readingOrder
             });
           }
@@ -850,7 +982,7 @@ const KitabooZoningStudio = () => {
         : undefined;
       console.log(`[Publish] Triggering export with Sync Level: ${syncLevel}, Voice: ${ttsVoice?.name ?? 'default'}`);
       await api.post(`/kitaboo/publish/${jobId}`, {
-        syncLevel: syncLevel || 'word',
+        syncLevel: syncLevel === 'word' || syncLevel === 'sentence' ? syncLevel : 'sentence',
         voice: voicePayload,
         ...(useAbsoluteHtml ? { renderMode: 'absolute-html' } : {}),
         ...(bodyFontFamily && bodyFontFamily.trim() ? { bodyFontFamily: bodyFontFamily.trim() } : {})
@@ -885,21 +1017,7 @@ const KitabooZoningStudio = () => {
       // Use zones currently on canvas (same format as Save) so positions match what you see
       const zonesToSplit = fabricCanvas.getObjects()
         .filter(obj => obj.type === 'group')
-        .map(group => {
-          const rect = group.item(0);
-          const data = group.get('data') || group.data || {};
-          return {
-            ...data,
-            x: Math.round(group.left),
-            y: Math.round(group.top),
-            w: Math.round((rect?.width || 0) * (group.scaleX || 1)),
-            h: Math.round((rect?.height || 0) * (group.scaleY || 1)),
-            content: data.content,
-            id: data.id,
-            type: data.type || 'text',
-            readingOrder: data.readingOrder
-          };
-        })
+        .map(serializeFabricZoneGroup)
         .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
       const res = await api.post(
         `/kitaboo/split-zones-by-level/${jobId}/${currentPage + 1}`,
@@ -926,44 +1044,7 @@ const KitabooZoningStudio = () => {
     if (pageIndex === currentPage && fabricCanvas) {
       return fabricCanvas.getObjects()
         .filter(obj => obj.type === 'group')
-        .map(group => {
-          const shape = group.item(0);
-          const data = group.get('data') || group.data || {};
-          const isPolygon = shape?.type === 'polygon' && shape?.points?.length >= 3;
-          let x, y, w, h, points;
-          if (isPolygon) {
-            const scaleX = group.scaleX ?? 1;
-            const scaleY = group.scaleY ?? 1;
-            points = shape.points.map(p => [
-              Math.round(group.left + (p.x ?? p[0]) * scaleX),
-              Math.round(group.top + (p.y ?? p[1]) * scaleY)
-            ]);
-            const xs = points.map(p => p[0]);
-            const ys = points.map(p => p[1]);
-            x = Math.min(...xs);
-            y = Math.min(...ys);
-            w = Math.max(...xs) - x;
-            h = Math.max(...ys) - y;
-          } else {
-            x = Math.round(group.left);
-            y = Math.round(group.top);
-            w = Math.round((shape?.width || 0) * (group.scaleX ?? 1));
-            h = Math.round((shape?.height || 0) * (group.scaleY ?? 1));
-          }
-          return {
-            ...data,
-            x,
-            y,
-            w,
-            h,
-            content: data.content,
-            id: data.id,
-            type: data.type || 'text',
-            readingOrder: data.readingOrder,
-            lines: Array.isArray(data.lines) && data.lines.length > 0 ? data.lines : undefined,
-            points: isPolygon && points?.length >= 3 ? points : undefined
-          };
-        })
+        .map(serializeFabricZoneGroup)
         .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
     }
     return pages[pageIndex]?.zones || [];
@@ -1572,6 +1653,11 @@ const KitabooZoningStudio = () => {
               />
             </div>
             <span className="kitaboo-progress-percent">{progressPercentage}%</span>
+            {slowStepHint ? (
+              <p className="kitaboo-loading-hint" style={{ marginTop: 12, fontSize: 13, color: '#64748b', maxWidth: 420 }}>
+                This step renders the first pages of your PDF with Python (150 DPI). Large books can take several minutes here — progress should update per page. If nothing changes for more than 15 minutes, check the backend terminal or start a new conversion.
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -1622,25 +1708,14 @@ const KitabooZoningStudio = () => {
           jobId={jobId}
           job={workflowJob}
           topTitle="FXL Zoning Studio"
-          headingTitle="Image Editor & FXL Studio"
-          headingSub="Zone pages and prepare your fixed-layout EPUB before audio sync."
           backTo="/conversions/fxl-editor"
-          rightActions={(
-            <div className="kz-topbar-right">
-              <button
-                className="kz-btn kz-btn--primary"
-                onClick={handleSaveAndGoToSyncStudio}
-                disabled={saving || !jobId}
-                title="Save current page and continue to Sync Studio"
-              >
-                {saving ? 'Saving…' : 'Save & Next'}
-              </button>
-              <button className="kz-btn kz-btn--save" onClick={handleSave} disabled={saving}>
-                {saving ? 'Saving…' : 'Save Current Page'}
-              </button>
-            </div>
-          )}
         />
+      ) : null}
+
+      {hdBackgroundActive ? (
+        <div className="kitaboo-hd-banner" role="status">
+          Finishing the full book in the background (150 DPI). You can work on the pages shown; more pages appear when each is ready.
+        </div>
       ) : null}
 
       <div className="kitaboo-studio-body">
@@ -1847,6 +1922,20 @@ const KitabooZoningStudio = () => {
               >
                 {uploadingCleanPage ? 'Uploading…' : `Upload clean (p.${currentPage + 1})`}
               </button>
+              <div className="kz-toolbar-workflow-actions">
+                <button
+                  type="button"
+                  className="kz-btn kz-btn--primary"
+                  onClick={handleSaveAndGoToSyncStudio}
+                  disabled={saving || !jobId}
+                  title="Save current page and continue to Sync Studio"
+                >
+                  {saving ? 'Saving…' : 'Save & Next'}
+                </button>
+                <button type="button" className="kz-btn kz-btn--save" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving…' : 'Save Current Page'}
+                </button>
+              </div>
             </div>
 
             {/* ── Canvas ── */}

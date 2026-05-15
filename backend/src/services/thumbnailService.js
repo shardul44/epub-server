@@ -46,7 +46,7 @@ export async function generatePdfThumbnail(pdfId, filePath) {
   }));
   const pdfDoc = await loadingTask.promise;
 
-  const page = await pdfDoc.getPage(0);
+  const page = await pdfDoc.getPage(1);
   const viewport = page.getViewport({ scale: 1 });
 
   // Scale to fit within THUMB_WIDTH × THUMB_HEIGHT preserving aspect ratio

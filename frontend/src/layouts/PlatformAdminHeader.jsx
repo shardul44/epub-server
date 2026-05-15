@@ -1,32 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Search, Bell, CircleHelp } from 'lucide-react';
-import { useAppBootstrap } from '../hooks/queries/useAppBootstrap';
 import './PlatformAdminHeader.css';
 
 /**
  * Sticky top bar for platform administrators — title, global search field,
- * backend status from app bootstrap, and utility actions.
+ * and utility actions.
  */
 export default function PlatformAdminHeader() {
   const [query, setQuery] = useState('');
-  const { health, isLoading } = useAppBootstrap();
-
-  const backendLabel = useMemo(() => {
-    if (isLoading) return 'Checking…';
-    const s = health?.status;
-    if (s === 'OK') return 'Healthy';
-    if (s === 'SERVICE_UNAVAILABLE') return 'Degraded';
-    if (s === 'UNKNOWN') return 'Unknown';
-    return 'Unavailable';
-  }, [health, isLoading]);
-
-  const backendTone = useMemo(() => {
-    if (isLoading) return 'warn';
-    const s = health?.status;
-    if (s === 'OK') return 'ok';
-    if (s === 'SERVICE_UNAVAILABLE') return 'warn';
-    return 'bad';
-  }, [health, isLoading]);
 
   return (
     <header className="pah" role="banner">
@@ -53,11 +34,6 @@ export default function PlatformAdminHeader() {
             spellCheck={false}
           />
         </label>
-
-        <div className={`pah-status pah-status--${backendTone}`} role="status" aria-live="polite">
-          <span className="pah-status-dot" aria-hidden />
-          <span className="pah-status-text">Backend: {backendLabel}</span>
-        </div>
 
         <button type="button" className="pah-icon-btn" aria-label="Notifications" title="Notifications">
           <Bell size={20} strokeWidth={2} />

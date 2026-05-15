@@ -1,4 +1,5 @@
 import pool from '../config/database.js';
+import { pdfDocumentWhereClause } from '../utils/tenantScope.js';
 
 /** Build zone row for response (shared by getZonesByPdfId and getZonesByJobId). */
 function rowToZone(row) {
@@ -219,14 +220,20 @@ export class KitabooZoneModel {
   }
 
   /** List distinct FXL jobs that have zones in DB (for recovering jobs after server restart). */
-  static async getDistinctJobs() {
+  static async getDistinctJobs(user = null, options = {}) {
     try {
-      const [rows] = await pool.execute(
-        `SELECT DISTINCT job_id, pdf_document_id 
-         FROM kitaboo_zones 
-         WHERE job_id IS NOT NULL AND job_id != '' 
-         ORDER BY job_id`
-      );
+      let sql = `SELECT DISTINCT kz.job_id, kz.pdf_document_id
+         FROM kitaboo_zones kz`;
+      const params = [];
+      if (user) {
+        const w = pdfDocumentWhereClause(user, options);
+        sql += ` INNER JOIN pdf_documents p ON p.id = kz.pdf_document_id WHERE kz.job_id IS NOT NULL AND kz.job_id != '' AND (${w.sql})`;
+        params.push(...w.params);
+      } else {
+        sql += ` WHERE kz.job_id IS NOT NULL AND kz.job_id != ''`;
+      }
+      sql += ' ORDER BY kz.job_id';
+      const [rows] = await pool.execute(sql, params);
       return rows.map(r => ({ jobId: String(r.job_id), pdfId: r.pdf_document_id }));
     } catch (err) {
       // Table may not exist yet — return empty list instead of crashing

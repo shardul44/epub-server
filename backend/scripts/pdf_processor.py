@@ -50,11 +50,12 @@ def _line_threshold_for_font(font_size):
         font_size = 12
     return max(LINE_THRESHOLD_MIN_PT, min(float(font_size) * LINE_THRESHOLD_FACTOR, LINE_THRESHOLD_MAX_PT))
 
-def render_pages(pdf_path, output_dir, dpi=150):
+def render_pages(pdf_path, output_dir, dpi=150, page_from=1, page_to=None):
     """
     Phase 1: Render PDF pages to images.
     Default DPI is 150 — good balance of quality vs. speed/file-size.
     Use 300 only when pixel-perfect accuracy is required.
+    page_from / page_to are 1-based inclusive indices; page_to=None renders through last page.
     """
     try:
         doc = fitz.open(pdf_path)
@@ -63,19 +64,28 @@ def render_pages(pdf_path, output_dir, dpi=150):
 
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
+    total = len(doc)
+    pf = max(1, int(page_from or 1))
+    if page_to is None:
+        pt = total
+    else:
+        pt = min(total, max(pf, int(page_to)))
+
     rendered_files = []
     zoom = dpi / 72  # 72 points per inch is standard PDF resolution
     mat = fitz.Matrix(zoom, zoom)
 
-    for page_num, page in enumerate(doc):
+    for page_index in range(pf - 1, pt):
+        page = doc[page_index]
+        page_num = page_index + 1
         try:
             pix = page.get_pixmap(matrix=mat, alpha=False)
-            output_file = Path(output_dir) / f"page_{page_num + 1}.png"
+            output_file = Path(output_dir) / f"page_{page_num}.png"
             pix.save(str(output_file))
             rendered_files.append(str(output_file))
-            print(f"Rendered page {page_num + 1} to {output_file}", flush=True)
+            print(f"Rendered page {page_num} to {output_file}", flush=True)
         except Exception as e:
-            print(f"Warning: failed to render page {page_num + 1}: {e}", file=sys.stderr, flush=True)
+            print(f"Warning: failed to render page {page_num}: {e}", file=sys.stderr, flush=True)
 
     return rendered_files
 
@@ -472,6 +482,8 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             word_id = 0
             sentence_id = 0
             in_word = False
+            prev_line_bottom = None
+            prev_line_max_size = None
             for block in raw_blocks:
                 if block.get("type") != 0 or "lines" not in block:
                     continue
@@ -481,11 +493,36 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     rotation = round(math.atan2(direction[1], direction[0]) * 180 / math.pi, 2)
                     # Precompute full line text so we can distinguish true single-word labels
                     line_chars = []
+                    line_sizes = []
+                    line_y0 = None
+                    line_y1 = None
                     for _span in line["spans"]:
+                        sz = _span.get("size", 12)
+                        if sz:
+                            line_sizes.append(sz)
+                        sb = _span.get("bbox")
+                        if sb and len(sb) >= 4:
+                            line_y0 = sb[1] if line_y0 is None else min(line_y0, sb[1])
+                            line_y1 = sb[3] if line_y1 is None else max(line_y1, sb[3])
                         for ch in _span.get("chars", []):
                             line_chars.append(ch.get("c", ""))
+                            cb = ch.get("bbox")
+                            if cb and len(cb) >= 4:
+                                line_y0 = cb[1] if line_y0 is None else min(line_y0, cb[1])
+                                line_y1 = cb[3] if line_y1 is None else max(line_y1, cb[3])
                     full_line_text = "".join(line_chars)
                     full_line_word_count = len(full_line_text.strip().split())
+                    line_max_size = max(line_sizes) if line_sizes else 12
+                    # New sentence when a line is far below the previous (image / layout gap) or font size jumps (heading vs body).
+                    if prev_line_bottom is not None and line_y0 is not None and full_line_text.strip():
+                        gap = line_y0 - prev_line_bottom
+                        gap_thresh = max(prev_line_max_size or 12, line_max_size, 12) * 1.05
+                        if gap > gap_thresh:
+                            sentence_id += 1
+                        elif prev_line_max_size and line_max_size:
+                            ratio = line_max_size / prev_line_max_size
+                            if ratio >= 1.22 or ratio <= 0.82:
+                                sentence_id += 1
 
                     for span in line["spans"]:
                         font_name = span.get("font", "")
@@ -567,6 +604,9 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                                 sentence_id += 1
                         if is_page_number_span or is_label_span:
                             sentence_id += 1
+                    if line_y1 is not None:
+                        prev_line_bottom = line_y1
+                        prev_line_max_size = line_max_size
         elif extraction_level == "word":
             # Word-level: use get_text("words") and attach font/size from overlapping span in dict
             extracted_items = []
@@ -1037,6 +1077,8 @@ def main():
     parser.add_argument("--output-dir", required=True, help="Output directory")
     parser.add_argument("--mode", choices=["render", "extract", "cleanup", "extract-images", "all"], default="all")
     parser.add_argument("--dpi", type=int, default=150, help="DPI for rendering (default: 150)")
+    parser.add_argument("--page-from", type=int, default=1, help="1-based first page to render (inclusive, default: 1)")
+    parser.add_argument("--page-to", type=int, default=None, help="1-based last page to render (inclusive); omit for all pages")
     parser.add_argument("--coords-json", help="Path to JSON file for coordinates (required for cleanup)")
     parser.add_argument("--extraction-level", choices=["sentence", "word", "glyph"], default="sentence",
                         help="Coordinate extraction level: sentence (end at .?!), word, or glyph (one item per character)")
@@ -1066,7 +1108,13 @@ def main():
     try:
         if args.mode in ["render", "all"]:
             print("Starting Render Phase...", flush=True)
-            render_pages(pdf_path, output_dir, args.dpi)
+            render_pages(
+                pdf_path,
+                output_dir,
+                args.dpi,
+                page_from=args.page_from,
+                page_to=args.page_to,
+            )
 
         if args.mode in ["extract", "all"]:
             print("Starting Extraction Phase...", flush=True)

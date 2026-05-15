@@ -32,7 +32,7 @@ export class PdfAnalysisService {
       
       for (let i = 0; i < samplePages; i++) {
         try {
-          const page = await pdfDoc.getPage(i);
+          const page = await pdfDoc.getPage(i + 1);
           const operators = await page.getOperatorList();
           
           // Count text vs image operators

@@ -107,14 +107,15 @@
   opacity: 1 !important;
 }
 
-/* Ensure images fit their containers in GrapesJS */
+/* Full-page / chapter images: show entire asset (cover + fixed 100% height crops like a zoomed strip) */
 .gjs-frame body .image-placeholder img,
 .gjs-frame body .image-drop-zone img,
 .gjs-frame body .has-image img,
 .gjs-frame body img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
+  max-width: 100% !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
   display: block !important;
 }
 

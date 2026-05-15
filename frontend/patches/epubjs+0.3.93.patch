@@ -1,0 +1,51 @@
+diff --git a/node_modules/epubjs/lib/managers/views/iframe.js b/node_modules/epubjs/lib/managers/views/iframe.js
+index 00b69ac..c5e35de 100644
+--- a/node_modules/epubjs/lib/managers/views/iframe.js
++++ b/node_modules/epubjs/lib/managers/views/iframe.js
+@@ -94,14 +94,14 @@ class IframeView {
+ 
+     this.iframe.style.border = "none"; // sandbox
+ 
+-    this.iframe.sandbox = "allow-same-origin";
+-
+     if (this.settings.allowScriptedContent) {
+-      this.iframe.sandbox += " allow-scripts";
+-    }
++      this.iframe.removeAttribute("sandbox");
++    } else {
++      this.iframe.sandbox = "allow-same-origin";
+ 
+-    if (this.settings.allowPopups) {
+-      this.iframe.sandbox += " allow-popups";
++      if (this.settings.allowPopups) {
++        this.iframe.sandbox += " allow-popups";
++      }
+     }
+ 
+     this.iframe.setAttribute("enable-annotation", "true");
+diff --git a/node_modules/epubjs/src/managers/views/iframe.js b/node_modules/epubjs/src/managers/views/iframe.js
+index e20e54d..d95acd1 100644
+--- a/node_modules/epubjs/src/managers/views/iframe.js
++++ b/node_modules/epubjs/src/managers/views/iframe.js
+@@ -90,13 +90,15 @@ class IframeView {
+ 		// Back up if seamless isn't supported
+ 		this.iframe.style.border = "none";
+ 
+-		// sandbox
+-		this.iframe.sandbox = "allow-same-origin";
++		// Sandbox: avoid `allow-same-origin` + `allow-scripts` together — Chrome warns that pair
++		// effectively removes isolation. Our scripted path is trusted (first-party EPUB buffer).
+ 		if (this.settings.allowScriptedContent) {
+-			this.iframe.sandbox += " allow-scripts";
+-		}
+-		if (this.settings.allowPopups) {
+-			this.iframe.sandbox += " allow-popups";
++			this.iframe.removeAttribute("sandbox");
++		} else {
++			this.iframe.sandbox = "allow-same-origin";
++			if (this.settings.allowPopups) {
++				this.iframe.sandbox += " allow-popups";
++			}
+ 		}
+ 		
+ 		this.iframe.setAttribute("enable-annotation", "true");

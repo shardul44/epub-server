@@ -27,6 +27,7 @@ export const kitabooFxlJobStore = {
       pdfDocumentId: parseInt(job.pdfId, 10),
       jobType: 'FXL',
       id: jobId,
+      previewReady: !!job.previewReady,
       createdAt: job.createdAt,
       completedAt: job.status === STATUS.COMPLETED ? job.updatedAt || job.createdAt : null
     })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -50,6 +51,20 @@ export const kitabooFxlJobStore = {
     return job;
   },
 
+  /** First-chunk hi-fi: enough pages+zones to open Zoning Studio while full render continues. */
+  markPreviewReady(jobId, { pages, extractedFonts, extractionLevel, zoneLevel }) {
+    const job = jobsByJobId.get(String(jobId));
+    if (!job) return;
+    job.previewReady = true;
+    job.pages = Array.isArray(pages) ? pages : [];
+    job.extractedFonts = extractedFonts || [];
+    if (extractionLevel) job.extractionLevel = extractionLevel;
+    if (zoneLevel) job.zoneLevel = zoneLevel;
+    job.progressPercentage = Math.min(90, Math.max(job.progressPercentage || 0, 48));
+    job.currentStep = 'Studio ready — finishing remaining pages in the background…';
+    job.updatedAt = new Date().toISOString();
+  },
+
   updateProgress(jobId, { progressPercentage, currentStep }) {
     const job = jobsByJobId.get(String(jobId));
     if (!job) return;
@@ -67,6 +82,7 @@ export const kitabooFxlJobStore = {
     job.pages = pages;
     job.extractedFonts = extractedFonts || [];
     job.extractionLevel = extractionLevel || 'sentence';
+    job.previewReady = false;
     job.error = null;
     job.updatedAt = new Date().toISOString();
   },

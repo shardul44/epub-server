@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { pdfService } from '../services/pdfService';
 import { queryKeys } from '../lib/queryKeys';
+import { jobFromKitabooStart, upsertConversionJobInCache } from '../lib/syncConversionCaches';
+import { useListScope } from '../context/ListScopeContext';
 import usePdfs from '../hooks/usePdfs';
 import ConfirmModal from '../components/Loadingmodal';
 import {
@@ -11,6 +12,7 @@ import {
   Trash2,
   Play,
   Sparkles,
+  Eye,
   Search,
   LayoutGrid,
   List,
@@ -24,17 +26,16 @@ import {
 } from 'lucide-react';
 import { kitabooService } from '../services/kitabooService';
 import PdfCard, { formatFileSize, getGradient } from '../components/PdfCard';
-import { mediaUrl } from '../utils/mediaUrl';
 import './PdfList.css';
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Helpers
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const totalBytes = (pdfs) => pdfs.reduce((s, p) => s + (p.fileSize || 0), 0);
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    StatCard
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const StatCard = ({ icon, label, value, accent }) => (
   <div className="pld-stat-card" style={{ '--accent': accent }}>
     <div className="pld-stat-icon">{icon}</div>
@@ -45,10 +46,10 @@ const StatCard = ({ icon, label, value, accent }) => (
   </div>
 );
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    PdfRow (list view)
-───────────────────────────────────────────── */
-const PdfRow = ({ pdf, onConvert, onHifi, onDelete, isHighlight, rowRef }) => {
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+const PdfRow = ({ pdf, onConvert, onHifi, onDelete, onPreview, isHighlight, rowRef }) => {
   const isFixed = pdf.layoutType === 'FIXED_LAYOUT';
   return (
     <tr
@@ -76,6 +77,14 @@ const PdfRow = ({ pdf, onConvert, onHifi, onDelete, isHighlight, rowRef }) => {
       </td>
       <td>
         <div className="pld-row-actions">
+          <button
+            type="button"
+            className="pld-action-btn"
+            onClick={() => onPreview?.(pdf)}
+            title="Open PDF"
+          >
+            <Eye size={13} />
+          </button>
           {!isFixed && (
             <button className="pld-action-btn pld-action-convert" onClick={() => onConvert(pdf)}>
               <Play size={13} /> Convert
@@ -95,16 +104,16 @@ const PdfRow = ({ pdf, onConvert, onHifi, onDelete, isHighlight, rowRef }) => {
   );
 };
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Toolbar
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const Toolbar = ({ search, onSearch, filter, onFilter, viewMode, onViewMode }) => (
   <div className="pld-toolbar">
     <div className="pld-search-wrap">
       <Search className="pld-search-icon" />
       <input
         className="pld-search"
-        placeholder="Search PDFs by name…"
+        placeholder="Search PDFs by nameâ€¦"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
       />
@@ -139,9 +148,9 @@ const Toolbar = ({ search, onSearch, filter, onFilter, viewMode, onViewMode }) =
   </div>
 );
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Loading Skeleton
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const SkeletonCard = () => (
   <div className="pld-skeleton-card">
     <div className="pld-skeleton-visual pld-shimmer" />
@@ -152,9 +161,9 @@ const SkeletonCard = () => (
   </div>
 );
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Empty State
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const EmptyState = ({ filtered }) => (
   <div className="pld-empty">
     <div className="pld-empty-icon">
@@ -170,12 +179,14 @@ const EmptyState = ({ filtered }) => (
   </div>
 );
 
-/* ─────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Main Page
-───────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const PdfList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+  const listScope = useListScope();
   const [searchParams, setSearchParams] = useSearchParams();
   const [error, setError] = useState('');
   const [viewMode, setViewMode] = useState('grid');
@@ -185,26 +196,18 @@ const PdfList = () => {
   const [hifiZoneLevel, setHifiZoneLevel] = useState('word');
   const [hifiTocEndPage, setHifiTocEndPage] = useState('');
   const [hifiSubmitting, setHifiSubmitting] = useState(false);
-  const [previewPdf, setPreviewPdf] = useState(null);
-  const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null, loading: false });
+  const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null });
 
-  const previewIframeSrc = useMemo(
-    () => (previewPdf ? mediaUrl(`/api/pdfs/${previewPdf.id}/view`) : ''),
-    [previewPdf],
-  );
-
-  // ── Single source of truth for PDFs — no duplicate API calls ──
-  const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf } = usePdfs();
+  // â”€â”€ Single source of truth for PDFs â€” no duplicate API calls â”€â”€
+  const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf, deleteMutation } = usePdfs();
 
   const highlightIdRaw = searchParams.get('highlight');
   const highlightId = highlightIdRaw != null && highlightIdRaw !== '' ? parseInt(highlightIdRaw, 10) : null;
   const highlightName = searchParams.get('name') || '';
   const rowRefs = useRef({});
 
-  // NOTE: No manual refetch on ?highlight — usePdfsQuery has staleTime:0 which
-  // guarantees a fresh GET /pdfs on every mount. A second loadPdfs() call here
-  // would race against the automatic mount fetch and could overwrite fresh data
-  // with a stale response.
+  // NOTE: No manual refetch on ?highlight â€” mount already refetches via React Query.
+  // A second loadPdfs() here would race and could overwrite fresh data with a stale response.
 
   // Merge fetch error into local error state for display
   useEffect(() => {
@@ -230,47 +233,55 @@ const PdfList = () => {
     }
   }, [loading, highlightId, pdfs]);
 
+  useEffect(() => {
+    if (hifiModalPdf && !pdfs.some((p) => p.id === hifiModalPdf.id)) {
+      setHifiModalPdf(null);
+    }
+  }, [pdfs, hifiModalPdf]);
+
+  useEffect(() => {
+    const openId = location.state?.openHifiForPdfId;
+    if (!openId || loading) return;
+    const target = pdfs.find((p) => String(p.id) === String(openId));
+    if (target) {
+      setHifiModalPdf(target);
+      setHifiZoneLevel('word');
+      setHifiTocEndPage('');
+    }
+    navigate('/pdfs', { replace: true, state: {} });
+  }, [location.state, pdfs, loading, navigate]);
+
   const handleDelete = async (id) => {
-    setDeleteModal({ open: true, pdfId: id, loading: false });
+    setDeleteModal({ open: true, pdfId: id });
   };
 
   // Ref so confirmDelete always reads the latest deleteModal without stale closure
   const deleteModalRef = useRef(null);
   deleteModalRef.current = deleteModal;
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     const { pdfId } = deleteModalRef.current;
     if (!pdfId) return;
 
-    setDeleteModal((prev) => ({ ...prev, loading: true }));
-    try {
-      setError('');
-
-      console.log('[PdfList] DELETE /api/pdfs/' + pdfId);
-      await pdfService.deletePdf(pdfId);
-      console.log('[PdfList] API delete success — pdfId:', pdfId);
-
-      // Close modal first
-      setDeleteModal({ open: false, pdfId: null, loading: false });
-
-      // Optimistically remove from cache → card disappears instantly.
-      // removePdf also queues a delayed background refetch to confirm.
-      removePdf(pdfId);
-
-      // Purge the thumbnail from localStorage so it doesn't reappear
-      // if the same PDF ID is reused in the future.
-      try { localStorage.removeItem(`pdf-thumb-card-${pdfId}`); } catch (_) { /* ignore */ }
-
-      console.log('[PdfList] state updated — card removed, component re-rendered');
-    } catch (err) {
-      const msg = err.message || 'Failed to delete PDF.';
-      console.error('[PdfList] delete failed:', msg);
-      setDeleteModal({ open: false, pdfId: null, loading: false });
-      setError(msg);
-      setTimeout(() => setError(''), 6000);
-      // Refetch to restore correct server state on error
-      loadPdfs();
-    }
+    const id = pdfId;
+    setError('');
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        setDeleteModal({ open: false, pdfId: null });
+        try {
+          localStorage.removeItem(`pdf-thumb-card-${id}`);
+        } catch (_) {
+          /* ignore */
+        }
+      },
+      onError: (err) => {
+        const msg = err.message || 'Failed to delete PDF.';
+        setDeleteModal({ open: false, pdfId: null });
+        setError(msg);
+        setTimeout(() => setError(''), 6000);
+        loadPdfs();
+      },
+    });
   };
 
   const handleConvert = (pdf) => navigate(`/chapter-plan/${pdf.id}`);
@@ -279,7 +290,7 @@ const PdfList = () => {
     setHifiZoneLevel('word');
     setHifiTocEndPage('');
   };
-  const handlePreview = (pdf) => setPreviewPdf(pdf);
+  const handlePreview = (pdf) => navigate(`/pdfs/${pdf.id}`);
 
   useEffect(() => {
     if (!hifiModalPdf || hifiSubmitting) return undefined;
@@ -308,23 +319,27 @@ const PdfList = () => {
   return (
     <div className="pld-page">
 
-      {/* ── Top Navbar ── */}
+      {/* â”€â”€ Top Navbar â”€â”€ */}
       <div className="pld-navbar">
         <span className="pld-navbar-title">PDF Library</span>
       </div>
 
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div className="pld-header">
         <div className="pld-header-left">
           <h1 className="pld-title">PDF Library</h1>
-          <p className="pld-subtitle">All source PDFs uploaded by your team — browse like a bookshelf.</p>
+          <p className="pld-subtitle">
+            {listScope === 'own'
+              ? 'Your uploaded PDFs â€” browse like a bookshelf.'
+              : 'All source PDFs uploaded by your team â€” browse like a bookshelf.'}
+          </p>
         </div>
         <Link to="/pdfs/upload" className="pld-upload-btn">
           <CloudUpload size={16} /> Upload PDF
         </Link>
       </div>
 
-      {/* ── Stat Cards ── */}
+      {/* â”€â”€ Stat Cards â”€â”€ */}
       <div className="pld-stats">
         <StatCard
           icon={<FileText size={22} />}
@@ -352,7 +367,7 @@ const PdfList = () => {
         />
       </div>
 
-      {/* ── Toolbar ── */}
+      {/* â”€â”€ Toolbar â”€â”€ */}
       <Toolbar
         search={search}
         onSearch={setSearch}
@@ -362,22 +377,22 @@ const PdfList = () => {
         onViewMode={setViewMode}
       />
 
-      {/* ── Error ── */}
+      {/* â”€â”€ Error â”€â”€ */}
       {error && <div className="pld-error">{error}</div>}
 
-      {/* ── Highlight banner ── */}
+      {/* â”€â”€ Highlight banner â”€â”€ */}
       {highlightId != null && !Number.isNaN(highlightId) && (
         <div className="pld-highlight-banner">
           <strong>Just uploaded</strong>
-          {highlightName ? ` — ${highlightName}` : ''} (PDF ID <strong>{highlightId}</strong>).
-          Use <strong>Hi-Fi FXL</strong> on this row — not an older document.{' '}
+          {highlightName ? ` â€” ${highlightName}` : ''} (PDF ID <strong>{highlightId}</strong>).
+          Use <strong>Hi-Fi FXL</strong> on this row â€” not an older document.{' '}
           <button type="button" className="pld-dismiss-btn" onClick={() => setSearchParams({})}>
             Dismiss
           </button>
         </div>
       )}
 
-      {/* ── Content ── */}
+      {/* â”€â”€ Content â”€â”€ */}
       {loading ? (
         <div className="pld-grid">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
@@ -397,7 +412,7 @@ const PdfList = () => {
                 onDelete={handleDelete}
                 onPreview={handlePreview}
                 onFileNotFound={() => {
-                  // File is gone from disk — silently remove the orphaned card
+                  // File is gone from disk â€” silently remove the orphaned card
                   // without a confirm modal (there's nothing to delete on disk).
                   try { localStorage.removeItem(`pdf-thumb-card-${pdf.id}`); } catch (_) { /* ignore */ }
                   removePdf(pdf.id);
@@ -433,6 +448,7 @@ const PdfList = () => {
                     onConvert={handleConvert}
                     onHifi={handleHifi}
                     onDelete={handleDelete}
+                    onPreview={handlePreview}
                   />
                 );
               })}
@@ -441,7 +457,7 @@ const PdfList = () => {
         </div>
       )}
 
-      {/* ── Hi-Fi Modal ── */}
+      {/* â”€â”€ Hi-Fi Modal â”€â”€ */}
       {hifiModalPdf && (
         <div
           className="hifi-convert-modal-overlay"
@@ -461,7 +477,7 @@ const PdfList = () => {
               </div>
               <div className="hifi-modal-header-text">
                 <h4 id="hifi-modal-title">Hi-Fi FXL</h4>
-                <p className="hifi-modal-tagline">Glyph-level extraction · Zoning Studio zones</p>
+                <p className="hifi-modal-tagline">Glyph-level extraction Â· Zoning Studio zones</p>
               </div>
               <button
                 type="button"
@@ -578,37 +594,14 @@ const PdfList = () => {
                       opts.tocEndPage = tocNum;
                     }
                     const data = await kitabooService.startHighFidelity(targetPdf.id, opts);
-                    const id = data?.jobId || data?.data?.jobId;
-                    if (id) {
-                      // Optimistically insert the new FXL job into the shared
-                      // conversions cache so the card appears instantly on
-                      // /conversions without waiting for the next poll cycle.
-                      queryClient.setQueryData(queryKeys.conversions.list(), (prev = []) => {
-                        const optimisticJob = {
-                          id,
-                          jobId: id,
-                          jobType: 'FXL',
-                          status: 'PENDING',
-                          pdfDocumentId: targetPdf.id,
-                          pdfId: targetPdf.id,
-                          filename: targetPdf.originalFileName || targetPdf.name || '',
-                          createdAt: new Date().toISOString(),
-                          updatedAt: new Date().toISOString(),
-                          progress: 0,
-                        };
-                        // Avoid duplicates if the cache already has this job
-                        const filtered = Array.isArray(prev)
-                          ? prev.filter((j) => (j.id ?? j.jobId) !== id)
-                          : [];
-                        return [optimisticJob, ...filtered];
-                      });
-
-                      // Invalidate so the next background fetch replaces the
-                      // optimistic entry with real server data.
-                      queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
-
+                    const job = jobFromKitabooStart(data, {
+                      pdfId: targetPdf.id,
+                      filename: targetPdf.originalFileName || targetPdf.name || '',
+                    });
+                    if (job) {
+                      upsertConversionJobInCache(queryClient, listScope, job);
                       setHifiModalPdf(null);
-                      navigate('/conversions');
+                      navigate('/conversions', { state: { focusJobId: job.jobId } });
                     } else {
                       setError('No job ID returned');
                     }
@@ -623,7 +616,7 @@ const PdfList = () => {
                 {hifiSubmitting ? (
                   <>
                     <Loader2 size={18} className="hifi-btn-spinner" aria-hidden />
-                    Starting…
+                    Startingâ€¦
                   </>
                 ) : (
                   <>
@@ -636,35 +629,10 @@ const PdfList = () => {
           </div>
         </div>
       )}
-      {/* ── PDF Preview Modal ── */}
-      {previewPdf && (
-        <div className="pld-preview-overlay" onClick={() => setPreviewPdf(null)}>
-          <div className="pld-preview-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="pld-preview-header">
-              <span className="pld-preview-title" title={previewPdf.originalFileName}>
-                {previewPdf.originalFileName || 'PDF Preview'}
-              </span>
-              <button
-                className="pld-preview-close"
-                onClick={() => setPreviewPdf(null)}
-                aria-label="Close preview"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <iframe
-              className="pld-preview-iframe"
-              src={previewIframeSrc}
-              title={`Preview: ${previewPdf.originalFileName}`}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* ── Delete confirmation modal ── */}
+      {/* â”€â”€ Delete confirmation modal â”€â”€ */}
       <ConfirmModal
         isOpen={deleteModal.open}
-        onClose={() => setDeleteModal({ open: false, pdfId: null, loading: false })}
+        onClose={() => setDeleteModal({ open: false, pdfId: null })}
         onConfirm={confirmDelete}
         title="Confirm Deletion"
         subtitle="This action cannot be undone."
@@ -672,7 +640,7 @@ const PdfList = () => {
         confirmLabel="Delete"
         cancelLabel="Cancel"
         variant="danger"
-        loading={deleteModal.loading}
+        loading={deleteMutation.isPending}
       />
     </div>
   );

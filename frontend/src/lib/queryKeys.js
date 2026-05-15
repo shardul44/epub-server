@@ -1,9 +1,9 @@
 /**
  * queryKeys.js — single source of truth for all React Query cache keys.
  *
- * RULE: conversion/job data always uses queryKeys.conversions.list()
- * (cache key `['conversions']`). This guarantees every consumer shares the same
- * cache entry and there is exactly ONE network request for job data at any point in time.
+ * RULE: conversion/job data uses queryKeys.conversions.list(scope) so member (`own`)
+ * and org_admin (`org`) caches never mix. Pass scope from useListScope() or
+ * getListScopeForUser(user).
  */
 
 export const queryKeys = {
@@ -14,24 +14,31 @@ export const queryKeys = {
   // All consumers MUST use conversions.list() as their queryKey.
   // Status filtering is done client-side — never via separate keys.
   conversions: {
-    /** Job list cache — `all()` is the same key for broad invalidations. */
+    /** Job list cache — `all()` invalidates every scope. */
     all:    () => ['conversions'],
-    list:   () => ['conversions'],
+    list:   (scope = 'org') => ['conversions', scope],
     detail: (jobId) => ['conversions', 'detail', jobId],
     status: (jobId) => ['conversion', jobId], // for useConversionStatus polling
+  },
+
+  /** Alias for invalidations tied to GET /kitaboo/jobs (merged into conversions cache today). */
+  kitabooJobs: {
+    all: () => ['kitaboo-jobs'],
   },
 
   // ── PDFs ───────────────────────────────────────────────────────
   pdfs: {
     all:     () => ['pdfs'],
-    list:    () => ['pdfs', 'list'],
-    grouped: () => ['pdfs', 'grouped'],
+    list:    (scope = 'org') => ['pdfs', 'list', scope],
+    grouped: (scope = 'org') => ['pdfs', 'grouped', scope],
     detail:  (id) => ['pdfs', 'detail', id],
   },
 
   // ── Dashboard (derived from conversions — no separate fetch) ───
   dashboard: {
-    org:  () => ['dashboard', 'org'],
+    /** `full` = GET /users + /health (org_admin); `health` = /health only (members). */
+    org:  (mode = 'full') => ['dashboard', 'org', mode],
+    orgPrefix: () => ['dashboard', 'org'],
     user: () => ['dashboard', 'user'],
   },
 

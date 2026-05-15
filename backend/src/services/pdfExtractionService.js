@@ -9,6 +9,7 @@ import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import fse from 'fs-extra';
 import { getPdfjsLib, buildPdfDocumentOptions } from '../utils/pdfjsHelper.js';
+import { delayMs } from '../utils/asyncDelay.js';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -40,7 +41,7 @@ export class PdfExtractionService {
       const uint8Array = new Uint8Array(dataBuffer);
       const loadingTask = pdfjsLib.getDocument(buildPdfDocumentOptions(uint8Array));
 
-      const pdfDoc = await loadingTask.promise;
+      let pdfDoc = await loadingTask.promise;
 
       // Ensure document is fully loaded
       const totalPages = pdfDoc.numPages;
@@ -54,40 +55,32 @@ export class PdfExtractionService {
       const pages = [];
       let allText = '';
 
-      // Extract text with coordinates from each page
-      // pdfjs uses 0-based indexing: page 1 = index 0, page 2 = index 1, etc.
+      // Extract text with coordinates from each page (pdfjs-dist getPage is 1-based)
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        const pageNum = pageIndex + 1; // 1-based page number for display/storage
+        const pageNum = pageIndex + 1;
 
         try {
-          // Validate page index before accessing
-          if (pageIndex < 0 || pageIndex >= totalPages) {
-            throw new Error(`Invalid page index: ${pageIndex} (total pages: ${totalPages})`);
+          if (pageNum < 1 || pageNum > totalPages) {
+            throw new Error(`Invalid page number: ${pageNum} (total pages: ${totalPages})`);
           }
 
-          // Get the page - handle page 0 issues (some PDFs have problems with first page)
           let page;
           try {
-            page = await pdfDoc.getPage(pageIndex);
+            page = await pdfDoc.getPage(pageNum);
           } catch (getPageError) {
-            // If page 0 fails, try to get page 1 (index 1) as a fallback
-            if (pageIndex === 0 && getPageError.message.includes('Invalid page request')) {
-              console.warn(`[Page 1] PDF structure issue - page 0 not accessible, trying page 1 (index 1) as fallback...`);
+            if (pageNum === 1 && getPageError.message.includes('Invalid page request')) {
+              console.warn('[Page 1] getPage(1) failed, reloading document and retrying once...');
+              await delayMs(150);
               try {
-                // Try to get page 1 (index 1) instead
-                if (totalPages > 1) {
-                  page = await pdfDoc.getPage(1);
-                  console.log(`[Page 1] Successfully loaded page 1 (index 1) as fallback for page 0`);
-                } else {
-                  throw getPageError; // If only one page and it fails, throw original error
-                }
+                const fresh = await pdfjsLib.getDocument(buildPdfDocumentOptions(uint8Array)).promise;
+                await pdfDoc.destroy().catch(() => {});
+                pdfDoc = fresh;
+                page = await pdfDoc.getPage(1);
               } catch (fallbackError) {
-                console.warn(`[Page 1] Fallback also failed, skipping invalid page:`, fallbackError.message);
-                // Skip invalid pages - don't create blank page
-                continue; // Skip to next page
+                throw getPageError;
               }
             } else {
-              throw getPageError; // Re-throw if it's a different error or not page 0
+              throw getPageError;
             }
           }
           const viewport = page.getViewport({ scale: 1.0 });
@@ -223,8 +216,14 @@ export class PdfExtractionService {
       return rawError;
     };
 
+    const hiFiTimeoutMs = parseInt(process.env.HI_FI_PYTHON_TIMEOUT_MS || '900000', 10);
+    const execOpts = {
+      maxBuffer: 50 * 1024 * 1024,
+      timeout: hiFiTimeoutMs,
+    };
+
     try {
-      const { stdout, stderr } = await execAsync(cmd);
+      const { stdout, stderr } = await execAsync(cmd, execOpts);
       if (stderr) {
         // Warnings from Python (non-fatal) — log but don't throw
         console.warn(`[PdfExtractionService] Python stderr: ${stderr}`);
@@ -232,6 +231,14 @@ export class PdfExtractionService {
       return stdout;
     } catch (error) {
       const stderr = error.stderr || '';
+      if (error.killed || error.signal === 'SIGTERM' || /timed out/i.test(error.message || '')) {
+        const err = new Error(
+          `[PYTHON_TIMEOUT] High-fidelity PDF step exceeded ${Math.round(hiFiTimeoutMs / 60000)} minutes. ` +
+          'Try a smaller PDF or increase HI_FI_PYTHON_TIMEOUT_MS.'
+        );
+        err.code = 'PYTHON_TIMEOUT';
+        throw err;
+      }
 
       // Linux images sometimes only expose "python" and not "python3"
       if (!isWindows && !hasVenvPython && pythonCmd === 'python3') {
@@ -239,7 +246,7 @@ export class PdfExtractionService {
           pythonCmd = 'python';
           const retryCmd = `"${pythonCmd}" "${pythonScript}" ${args.join(' ')}`;
           console.log(`[PdfExtractionService] Retrying with python: ${retryCmd}`);
-          const { stdout, stderr: retryStderr } = await execAsync(retryCmd);
+          const { stdout, stderr: retryStderr } = await execAsync(retryCmd, execOpts);
           if (retryStderr) console.warn(`[PdfExtractionService] Python stderr: ${retryStderr}`);
           return stdout;
         } catch (retryError) {
@@ -256,41 +263,61 @@ export class PdfExtractionService {
   }
 
   /**
-   * Phase 1 (New): Render pages using PyMuPDF (faster and better quality than Poppler/Puppeteer)
-   * Default DPI reduced to 150 for performance. Use 300 only for pixel-perfect output.
+   * Phase 1 (New): Render PDF pages to images (optional page range, 1-based inclusive).
+   * @param {string} pdfFilePath
+   * @param {string} outputDir
+   * @param {number} [dpi=150]
+   * @param {{ pageFrom?: number, pageTo?: number }} [rangeOpts]
    */
-  static async renderPagesHighFidelity(pdfFilePath, outputDir, dpi = 150) {
+  static async renderPagesHighFidelity(pdfFilePath, outputDir, dpi = 150, rangeOpts = {}) {
     try {
       await fs.mkdir(outputDir, { recursive: true });
-      await this.runPythonProcessor([
+      const args = [
         `--pdf "${pdfFilePath}"`,
         `--output-dir "${outputDir}"`,
         `--mode render`,
         `--dpi ${dpi}`
-      ]);
-
-      // Return list of images similar to renderPagesAsImages
-      const images = [];
-      const files = await fs.readdir(outputDir);
-      for (const file of files) {
-        if (file.endsWith('.png') && file.startsWith('page_')) {
-          const pageNum = parseInt(file.match(/page_(\d+)/)[1]);
-          const imgPath = path.join(outputDir, file);
-          const metadata = await sharp(imgPath).metadata();
-          images.push({
-            path: imgPath,
-            fileName: file,
-            pageNumber: pageNum,
-            width: metadata.width,
-            height: metadata.height
-          });
-        }
+      ];
+      if (rangeOpts.pageFrom != null && Number(rangeOpts.pageFrom) > 0) {
+        args.push(`--page-from ${Math.floor(Number(rangeOpts.pageFrom))}`);
       }
-      return { images: images.sort((a, b) => a.pageNumber - b.pageNumber) };
+      if (rangeOpts.pageTo != null && Number(rangeOpts.pageTo) > 0) {
+        args.push(`--page-to ${Math.floor(Number(rangeOpts.pageTo))}`);
+      }
+      await this.runPythonProcessor(args);
+
+      return PdfExtractionService.listHighFidelityRenderedPngs(outputDir);
     } catch (error) {
       console.error('High-Fidelity Render failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * List page_*.png renders in a high-fidelity output dir (excludes _clean and embedded thumbs).
+   * @param {string} outputDir
+   */
+  static async listHighFidelityRenderedPngs(outputDir) {
+    const images = [];
+    const files = await fs.readdir(outputDir);
+    for (const file of files) {
+      if (!file.endsWith('.png') || !file.startsWith('page_')) continue;
+      if (file.includes('_clean')) continue;
+      if (/page_\d+_image_/i.test(file)) continue;
+      const m = file.match(/^page_(\d+)\.png$/i);
+      if (!m) continue;
+      const pageNum = parseInt(m[1], 10);
+      const imgPath = path.join(outputDir, file);
+      const metadata = await sharp(imgPath).metadata();
+      images.push({
+        path: imgPath,
+        fileName: file,
+        pageNumber: pageNum,
+        width: metadata.width,
+        height: metadata.height
+      });
+    }
+    return { images: images.sort((a, b) => a.pageNumber - b.pageNumber) };
   }
 
   /**
@@ -378,12 +405,17 @@ export class PdfExtractionService {
         const pageNum = pageIndex + 1;
         let page;
         try {
-          page = await pdfDoc.getPage(pageIndex);
+          page = await pdfDoc.getPage(pageNum);
         } catch (e) {
-          if (pageIndex === 0 && totalPages > 1) {
-            try { page = await pdfDoc.getPage(1); } catch (_) { /* skip */ }
-          }
-          if (!page) {
+          if (pageNum === 1 && totalPages > 1) {
+            await delayMs(100);
+            try {
+              page = await pdfDoc.getPage(1);
+            } catch (_) {
+              pages.push({ pageNumber: pageNum, width: 612 * scalePixelsPerPoint, height: 792 * scalePixelsPerPoint, fragments: [] });
+              continue;
+            }
+          } else {
             pages.push({ pageNumber: pageNum, width: 612 * scalePixelsPerPoint, height: 792 * scalePixelsPerPoint, fragments: [] });
             continue;
           }
@@ -764,29 +796,27 @@ export class PdfExtractionService {
       let maxWidth = 0;
       let maxHeight = 0;
 
-      // First pass: Get max page dimensions
-      // Note: pdfjs uses 0-based indexing for getPage()
-      for (let i = 0; i < totalPages; i++) {
+      // First pass: Get max page dimensions (pdfjs getPage is 1-based)
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const pageNum = pageIndex + 1;
         try {
-          // pdfjs getPage uses 0-based index
           let pdfPage;
           try {
-            pdfPage = await pdfDoc.getPage(i);
+            pdfPage = await pdfDoc.getPage(pageNum);
           } catch (pageError) {
-            // If page 0 fails, try page 1 (index 1) as fallback
-            if (i === 0 && pageError.message.includes('Invalid page request') && totalPages > 1) {
-              console.warn(`[Page 1] Could not get dimensions: Invalid page request. Trying page 1 (index 1) as fallback...`);
+            if (pageNum === 1 && pageError.message.includes('Invalid page request') && totalPages > 1) {
+              console.warn(`[Page 1] Could not get dimensions: Invalid page request. Retrying after short delay...`);
+              await delayMs(200);
               try {
                 pdfPage = await pdfDoc.getPage(1);
               } catch (fallbackError) {
                 console.warn(`[Page 1] Fallback also failed:`, fallbackError.message);
-                // Use default dimensions if we can't get them
-                if (maxWidth === 0) maxWidth = 612; // US Letter width in points
-                if (maxHeight === 0) maxHeight = 792; // US Letter height in points
+                if (maxWidth === 0) maxWidth = 612;
+                if (maxHeight === 0) maxHeight = 792;
                 continue;
               }
             } else {
-              console.warn(`[Page ${i + 1}] Could not get dimensions:`, pageError.message);
+              console.warn(`[Page ${pageNum}] Could not get dimensions:`, pageError.message);
               // Use default dimensions if we can't get them
               if (maxWidth === 0) maxWidth = 612; // US Letter width in points
               if (maxHeight === 0) maxHeight = 792; // US Letter height in points
@@ -797,7 +827,7 @@ export class PdfExtractionService {
           maxWidth = Math.max(maxWidth, viewport.width);
           maxHeight = Math.max(maxHeight, viewport.height);
         } catch (pageError) {
-          console.warn(`[Page ${i + 1}] Unexpected error getting dimensions:`, pageError.message);
+          console.warn(`[Page ${pageNum}] Unexpected error getting dimensions:`, pageError.message);
           // Use default dimensions if we can't get them
           if (maxWidth === 0) maxWidth = 612; // US Letter width in points
           if (maxHeight === 0) maxHeight = 792; // US Letter height in points
@@ -829,29 +859,28 @@ export class PdfExtractionService {
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
           try {
             // Get actual page dimensions for this page FIRST (before creating browser page)
-            // Handle page 1 (index 0) which might fail
             let pdfPage = null;
             let viewport = null;
-            // pdfjs getPage uses 0-based page index
-            let actualPageIndex = pageNum - 1;
+            // pdfjs-dist getPage uses 1-based page numbers
+            const pdfPageNumber = pageNum;
             let retryCount = 0;
             const maxRetries = 3;
 
             // Try to get page with retry logic (especially for page 1)
             while (retryCount < maxRetries && !pdfPage) {
               try {
-                pdfPage = await pdfDoc.getPage(actualPageIndex);
+                pdfPage = await pdfDoc.getPage(pdfPageNumber);
                 viewport = pdfPage.getViewport({ scale: 1.0 });
                 break; // Success, exit retry loop
               } catch (pageError) {
                 retryCount++;
 
-                // Special handling for page 1 (index 0)
+                // Special handling for page 1
                 if (pageNum === 1 && pageError.message.includes('Invalid page request')) {
                   if (retryCount === 1) {
                     // Strategy 1: Wait a bit and retry (sometimes PDF needs time to initialize)
                     console.warn(`[Page 1] Could not get page: Invalid page request. Retrying (attempt ${retryCount}/${maxRetries})...`);
-                    await new Promise(resolve => setTimeout(resolve, 200)); // Wait 200ms
+                    await delayMs(200);
                     continue;
                   } else if (retryCount === 2) {
                     // Strategy 2: Try to reload the document and retry
@@ -869,7 +898,7 @@ export class PdfExtractionService {
                         disableStream: false,
                         disableRange: false,
                       })).promise;
-                      pdfPage = await freshPdfDoc.getPage(actualPageIndex);
+                      pdfPage = await freshPdfDoc.getPage(pdfPageNumber);
                       viewport = pdfPage.getViewport({ scale: 1.0 });
                       // Update pdfDoc reference for future use
                       await pdfDoc.destroy().catch(() => { });
@@ -924,7 +953,7 @@ export class PdfExtractionService {
       const pdfData = atob('${pdfBase64}');
       const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
       const targetPageNum = ${pageNum};
-      const page = await pdf.getPage(targetPageNum - 1); // pdfjs uses 0-based index
+      const page = await pdf.getPage(targetPageNum);
       const viewport = page.getViewport({ scale: ${scale} });
       const canvas = document.getElementById('pdf-canvas');
       const context = canvas.getContext('2d');
@@ -946,7 +975,7 @@ export class PdfExtractionService {
 </html>`;
 
                 await browserPage.setContent(htmlContent);
-                await browserPage.waitForTimeout(2000); // Wait for PDF.js to render
+                await delayMs(2000);
 
                 const screenshot = await browserPage.screenshot({
                   type: 'png',
@@ -1052,7 +1081,7 @@ export class PdfExtractionService {
     (async function() {
         const pdfData = atob('${pdfBase64}');
                 const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-                const page = await pdf.getPage(${pageNum - 1});
+                const page = await pdf.getPage(${pageNum});
         
         const viewport = page.getViewport({ scale: ${scale} });
         const canvas = document.getElementById('pdf-canvas');

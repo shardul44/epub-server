@@ -39,7 +39,7 @@ export class TextExtractionService {
       const pages = [];
       
       for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        const page = await pdfDoc.getPage(pageNum - 1);
+        const page = await pdfDoc.getPage(pageNum);
         const viewport = page.getViewport({ scale: 1.0 });
         
         // Extract text content with positioning

@@ -13,6 +13,35 @@ import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess, paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
 import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
 import { httpCache, noCache } from '../middlewares/httpCache.js';
+import { validateXhtmlStrict, extractCanonicalFromXhtml } from '../utils/sanitizeXhtml.js';
+import { resolveListScope, listScopeKey } from '../utils/tenantScope.js';
+
+async function resolveDocumentPageCount(jobId) {
+  const htmlIntermediateDir = getHtmlIntermediateDir();
+  const pngDir = path.join(htmlIntermediateDir, `job_${jobId}_png`);
+  const jobDir = path.join(htmlIntermediateDir, `job_${jobId}`);
+  const htmlDir = path.join(htmlIntermediateDir, `job_${jobId}_html`);
+  let maxPage = 0;
+  const bump = async (dir, re) => {
+    try {
+      const files = await fs.readdir(dir);
+      for (const f of files) {
+        const m = f.match(re);
+        if (m) maxPage = Math.max(maxPage, parseInt(m[1], 10));
+      }
+    } catch (_) { /* missing dir */ }
+  };
+  await bump(pngDir, /^page_(\d+)\.png$/i);
+  await bump(path.join(htmlIntermediateDir, `job_${jobId}_images`), /^page_(\d+)_/i);
+  await bump(htmlDir, /^page_(\d+)\.xhtml$/i);
+  try {
+    const raw = await fs.readFile(path.join(jobDir, `text_data_${jobId}.json`), 'utf8');
+    const td = JSON.parse(raw);
+    const tp = Number(td.totalPages) || (Array.isArray(td.pages) ? td.pages.length : 0);
+    if (tp > 0) maxPage = Math.max(maxPage, tp);
+  } catch (_) { /* optional */ }
+  return maxPage;
+}
 
 const router = express.Router();
 router.use(authenticate, requireFeature('conversion.basic'));
@@ -42,7 +71,7 @@ const epubImportUpload = multer({
 // frontend keeps seeing stale job states until the cache TTL expires.
 router.get('/', noCache, async (req, res) => {
   try {
-    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const scope = resolveListScope(req.user, req.query.scope);
     const jobs = await ConversionService.getAllConversions(req.user, scope);
     return successResponse(res, jobs);
   } catch (error) {
@@ -136,10 +165,10 @@ router.get('/status/:status', httpCache(TTL.SHORT), async (req, res) => {
       return badRequestResponse(res, 'Invalid status');
     }
 
-    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const scope = resolveListScope(req.user, req.query.scope);
     const userId  = req.user?.id ?? 'anon';
     const orgId   = req.user?.organizationId ?? 'none';
-    const scopeKey = req.query.scope === 'own' ? 'own' : 'org';
+    const scopeKey = listScopeKey(req.user, req.query.scope);
     const cacheKey = `conversions:status:${status}:${orgId}:${userId}:${scopeKey}`;
 
     // Active jobs change frequently — use SHORT TTL; terminal jobs can use MEDIUM
@@ -157,7 +186,7 @@ router.get('/status/:status', httpCache(TTL.SHORT), async (req, res) => {
 // GET /api/conversions/review-required - Get jobs requiring review
 router.get('/review-required', async (req, res) => {
   try {
-    const scope = req.query.scope === 'own' ? { onlyOwn: true } : {};
+    const scope = resolveListScope(req.user, req.query.scope);
     const jobs = await ConversionService.getReviewRequired(req.user, scope);
     return successResponse(res, jobs);
   } catch (error) {
@@ -814,9 +843,20 @@ router.get('/:jobId/pages', async (req, res) => {
         .filter(f => f.pageNumber !== null)
         .sort((a, b) => a.pageNumber - b.pageNumber);
       
-      return successResponse(res, xhtmlFiles);
+      const documentPageCount = await resolveDocumentPageCount(jobId);
+      const maxSpine = xhtmlFiles.length ? Math.max(...xhtmlFiles.map((p) => p.pageNumber)) : 0;
+      return successResponse(res, {
+        spine: xhtmlFiles,
+        documentPageCount: Math.max(documentPageCount, maxSpine),
+        chapterSpineCount: xhtmlFiles.length
+      });
     } catch (dirError) {
-      return successResponse(res, []); // Return empty array if directory doesn't exist
+      const documentPageCount = await resolveDocumentPageCount(jobId);
+      return successResponse(res, {
+        spine: [],
+        documentPageCount,
+        chapterSpineCount: 0
+      });
     }
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -973,7 +1013,21 @@ ${bodyContent}
     
     const xhtmlFilePath = path.join(jobHtmlDir, `page_${pageNumber}.xhtml`);
     xhtml = ConversionService.ensureReadAloudOnImagesWithAlt(xhtml);
+    try {
+      const { xhtml: validXhtml } = validateXhtmlStrict(xhtml);
+      xhtml = validXhtml;
+    } catch (ve) {
+      return badRequestResponse(res, ve.message || 'XHTML validation failed');
+    }
     await fs.writeFile(xhtmlFilePath, xhtml, 'utf8');
+    try {
+      const canonical = extractCanonicalFromXhtml(xhtml, pageNumber);
+      await fs.writeFile(
+        path.join(jobHtmlDir, `page_${pageNumber}.canonical.json`),
+        JSON.stringify(canonical, null, 2),
+        'utf8'
+      );
+    } catch (_) { /* canonical is best-effort */ }
     
     return successResponse(res, { message: 'XHTML saved successfully', pageNumber });
   } catch (error) {
@@ -1008,6 +1062,9 @@ router.post('/import-epub-for-sync', epubImportUpload.single('epub'), async (req
       summary: 'Imported EPUB for Sync Studio',
       metadata: { kind: result?.kind }
     }).catch(() => {});
+    cacheDelByPrefix('conversions:');
+    cacheDelByPrefix('pdfs:');
+    cacheDelByPrefix('kitaboo:jobs:');
     return successResponse(res, result, 201);
   } catch (error) {
     if (tmpPath) await fs.unlink(tmpPath).catch(() => {});

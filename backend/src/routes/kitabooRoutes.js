@@ -14,6 +14,8 @@ import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess } from '../middlewares/tenantAccess.js';
 import { cacheWrap, cacheDel, cacheDelByPrefix, TTL } from '../services/cacheService.js';
 import { noCache } from '../middlewares/httpCache.js';
+import { resolveListScope } from '../utils/tenantScope.js';
+import { PdfService } from '../services/pdfService.js';
 import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
 
 const router = express.Router();
@@ -208,35 +210,56 @@ router.get('/ready/:jobId', async (req, res) => {
  * Must use noCache (like GET /conversions): httpCache would let browsers reuse the
  * response for max-age seconds, so after DELETE the UI refetch could still show removed FXL jobs.
  */
+async function buildKitabooJobsList(user, scope) {
+  const inMemory = kitabooFxlJobStore.listAll();
+  const inMemoryIds = new Set(inMemory.map((j) => String(j.jobId)));
+  const fromDb = await KitabooZoneModel.getDistinctJobs();
+  const recovered = fromDb
+    .filter(({ jobId }) => !inMemoryIds.has(String(jobId)))
+    .map(({ jobId, pdfId }) => ({
+      jobId,
+      pdfId: String(pdfId),
+      pdfDocumentId: parseInt(pdfId, 10),
+      jobType: 'FXL',
+      id: jobId,
+      status: 'COMPLETED',
+      progressPercentage: 100,
+      currentStep: 'Complete',
+      createdAt: null,
+      completedAt: null,
+    }));
+  const merged = [...inMemory, ...recovered].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
+
+  const allowedPdfs = await PdfService.getAllPdfs(user, scope);
+  const allowedIds = new Set(allowedPdfs.map((p) => String(p.id)));
+  return merged.filter((j) => {
+    const pid = j.pdfDocumentId ?? j.pdfId;
+    if (pid == null || pid === '') return false;
+    return allowedIds.has(String(pid));
+  });
+}
+
 router.get('/jobs', noCache, async (req, res) => {
   try {
+    const scope = resolveListScope(req.user, req.query.scope);
+    const userId = req.user?.id ?? 'anon';
     const orgId = req.user?.organizationId ?? 'none';
-    const cacheKey = `kitaboo:jobs:${orgId}`;
+    const scopeKey = scope.onlyOwn ? 'own' : 'org';
+    const cacheKey = `kitaboo:jobs:${orgId}:${userId}:${scopeKey}`;
 
-    const jobs = await cacheWrap(cacheKey, async () => {
-      const inMemory = kitabooFxlJobStore.listAll();
-      const inMemoryIds = new Set(inMemory.map(j => String(j.jobId)));
-      const fromDb = await KitabooZoneModel.getDistinctJobs();
-      const recovered = fromDb
-        .filter(({ jobId }) => !inMemoryIds.has(String(jobId)))
-        .map(({ jobId, pdfId }) => ({
-          jobId,
-          pdfId: String(pdfId),
-          pdfDocumentId: parseInt(pdfId, 10),
-          jobType: 'FXL',
-          id: jobId,
-          status: 'COMPLETED',
-          progressPercentage: 100,
-          currentStep: 'Complete',
-          createdAt: null,
-          completedAt: null
-        }));
-      return [...inMemory, ...recovered].sort((a, b) => {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      });
-    }, TTL.SHORT);
+    const inMemory = kitabooFxlJobStore.listAll();
+    const hasActiveInMemory = inMemory.some(
+      (j) => j.status === 'IN_PROGRESS' || j.status === 'PENDING',
+    );
+
+    // While FXL jobs are running, bypass server cache so poll/refetch sees live progress.
+    const jobs = hasActiveInMemory
+      ? await buildKitabooJobsList(req.user, scope)
+      : await cacheWrap(cacheKey, () => buildKitabooJobsList(req.user, scope), TTL.SHORT);
 
     return successResponse(res, jobs);
   } catch (error) {
@@ -376,6 +399,7 @@ router.get('/job/:jobId', async (req, res) => {
       progressPercentage: job.progressPercentage,
       currentStep: job.currentStep,
       error: job.error || undefined,
+      previewReady: !!job.previewReady,
       pages: pages || undefined,
       extractionLevel: extractionLevel || 'sentence',
       zoneLevel: zoneLevel || undefined
@@ -454,12 +478,15 @@ router.post('/process-layout-only', async (req, res) => {
     })
       .then((result) => {
         kitabooFxlJobStore.complete(jobId, result.pages);
+        cacheDelByPrefix('kitaboo:jobs:');
       })
       .catch((err) => {
         console.error('[KitabooRoute] Layout-only process error:', err);
         kitabooFxlJobStore.fail(jobId, err.message);
+        cacheDelByPrefix('kitaboo:jobs:');
       });
 
+    cacheDelByPrefix('kitaboo:jobs:');
     res.status(202).json({
       success: true,
       data: {
@@ -506,13 +533,17 @@ router.post('/process-high-fidelity', async (req, res) => {
       kitabooFxlJobStore.updateProgress(jobId, { progressPercentage: progress, currentStep });
     }, options)
       .then((result) => {
+        if (result?.deferredCompletion) return;
         kitabooFxlJobStore.complete(jobId, result.pages, result.extractedFonts, 'glyph');
+        cacheDelByPrefix('kitaboo:jobs:');
       })
       .catch((err) => {
         console.error('[KitabooRoute] High-Fidelity process error:', err);
         kitabooFxlJobStore.fail(jobId, err.message);
+        cacheDelByPrefix('kitaboo:jobs:');
       });
 
+    cacheDelByPrefix('kitaboo:jobs:');
     res.status(202).json({
       success: true,
       data: {
@@ -696,8 +727,9 @@ router.get('/human-audio/:jobId', async (req, res) => {
  * POST /api/kitaboo/publish/:jobId
  * Generate the final FXL EPUB for this job.
  * If job not in memory (e.g. recovered job), restore from DB so publish succeeds.
- * IMPORTANT: zoneLevel is NEVER read from req.body. It is read only from job_metadata.json inside assembleFxlEpub
- * so that glyph vs zone-based layout is determined by how the job was created (word/sentence), not the publish request.
+ * IMPORTANT: zoneLevel is NEVER read from req.body for layout. It is read from job_metadata.json inside assembleFxlEpub.
+ * syncLevel for SMIL/XHTML: when the client omits it (e.g. empty POST body), default from job_metadata.zoneLevel so
+ * sentence-level Hi-Fi jobs do not incorrectly export as word-level.
  */
 router.post('/publish/:jobId', async (req, res) => {
   try {
@@ -802,15 +834,14 @@ router.post('/publish/:jobId', async (req, res) => {
     const useClassicLayout = classicLayout === true || classicLayout === 'true';
     let pagesData = [];
 
-    // Load zoning dimensions from job_metadata so viewport matches zone coordinate system (fixes "coordinate far away" in Thorium)
+    // Load job_metadata whenever present (Hi-Fi stores zoneLevel + page dimensions). Do not gate on isHighFi —
+    // webp assets can exist alongside high_fidelity_render/; we still need zoneLevel for publish defaults.
     let jobMeta = null;
-    if (isHighFi) {
-      try {
-        const metaPath = path.join(highFiDir, 'job_metadata.json');
-        jobMeta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
-      } catch (e) {
-        // ignore
-      }
+    try {
+      const metaPath = path.join(highFiDir, 'job_metadata.json');
+      jobMeta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
+    } catch (e) {
+      // ignore (standard AI job or legacy without metadata file)
     }
     const getZoningDimensions = (pageNum) => {
       const p = jobMeta?.pagesMetadata?.find(m => m.pageNumber === pageNum);
@@ -913,19 +944,24 @@ router.post('/publish/:jobId', async (req, res) => {
 
     // Use in-memory extractedFonts; if missing (e.g. job restored from DB), load from job_metadata.json so font pipeline works
     let extractedFontsToUse = job?.extractedFonts || [];
-    if (extractedFontsToUse.length === 0 && isHighFi) {
-      try {
-        const metaPath = path.join(highFiDir, 'job_metadata.json');
-        const meta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
-        extractedFontsToUse = meta.extractedFonts || [];
-        if (extractedFontsToUse.length > 0) console.log(`[KitabooRoute] Restored font list for job ${jobId} from job_metadata.json (${extractedFontsToUse.length} fonts)`);
-      } catch (e) {
-        // no job_metadata or no extractedFonts
-      }
+    if (extractedFontsToUse.length === 0 && jobMeta?.extractedFonts?.length > 0) {
+      extractedFontsToUse = jobMeta.extractedFonts;
+      console.log(`[KitabooRoute] Restored font list for job ${jobId} from job_metadata.json (${extractedFontsToUse.length} fonts)`);
+    }
+
+    const bodySync = syncLevel;
+    const publishSyncLevel =
+      bodySync === 'sentence' || bodySync === 'word'
+        ? bodySync
+        : (jobMeta?.zoneLevel === 'sentence' || jobMeta?.zoneLevel === 'word'
+          ? jobMeta.zoneLevel
+          : 'word');
+    if (bodySync !== 'sentence' && bodySync !== 'word' && jobMeta?.zoneLevel) {
+      console.log(`[Kitaboo] Publish: syncLevel omitted in body — using job_metadata.zoneLevel=${publishSyncLevel}`);
     }
 
     const epubPath = await KitabooFxlService.assembleFxlEpub(jobId, pagesData, {
-      syncLevel: syncLevel || 'word',
+      syncLevel: publishSyncLevel,
       voice: voice || undefined,
       useWhisperAlignment: useWhisper,
       classicLayout: useClassicLayout,
@@ -938,7 +974,7 @@ router.post('/publish/:jobId', async (req, res) => {
       epubPath: path.basename(epubPath),
       fullPath: epubPath,
       downloadUrl: `/api/kitaboo/download/${jobId}`,
-      syncLevel: syncLevel || 'word'
+      syncLevel: publishSyncLevel
     });
   } catch (error) {
     console.error('[KitabooRoute] Publish Error:', error);

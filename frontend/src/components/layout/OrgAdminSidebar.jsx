@@ -1,4 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+/**
+ * OrgAdminSidebar.jsx
+ *
+ * Org administrator sidebar — uses the SAME visual design system as the
+ * Platform AdminSidebar (`.sidebar`, `.sidebar-link`, `.admin-sidebar-*`).
+ *
+ * The only differences vs. Platform Admin are:
+ *   - menu items (Workflow / Library / Tools / Org)
+ *   - data sources (org-scoped React Query / props)
+ *   - an expandable "Conversions" group with sub-items
+ *
+ * Layout / spacing / typography / colors / shadows / sidebar width all
+ * come from the shared admin styles in `Layout.css` + `AdminSidebar.css`.
+ */
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -15,74 +29,75 @@ import {
   Activity,
   Users,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   Menu,
   X,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../features/auth/authSlice';
 import { hasFeature } from '../../utils/features';
-import { useAppBootstrap } from '../../hooks/queries/useAppBootstrap';
+
+import './Layout.css';
+import '../AdminSidebar.css';
 import './OrgAdminSidebar.css';
 
-/* ─── sub-components ──────────────────────────────────────────────────────── */
+/* ─── small building blocks ───────────────────────────────────────────────── */
 
-const Badge = ({ count }) => {
-  if (count == null || Number.isNaN(Number(count))) return null;
-  return <span className="sb-badge">{Number(count)}</span>;
-};
-
-const SidebarItem = ({ to, icon, label, badge, collapsed, isActive, onClick }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const timerRef = useRef(null);
-
-  const handleMouseEnter = () => {
-    if (collapsed) {
-      timerRef.current = setTimeout(() => setShowTooltip(true), 300);
-    }
-  };
-  const handleMouseLeave = () => {
-    clearTimeout(timerRef.current);
-    setShowTooltip(false);
-  };
-
+function NavRow({ to, icon: Icon, label, end, isActive, onClick }) {
   return (
     <Link
       to={to}
-      className={`sb-item${isActive ? ' sb-item--active' : ''}`}
       onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      aria-label={label}
-      tabIndex={0}
+      className={`sidebar-link${isActive ? ' active' : ''}`}
     >
-      <span className="sb-item-icon">{icon}</span>
-      {!collapsed && <span className="sb-item-label">{label}</span>}
-      {!collapsed && badge !== undefined && <Badge count={badge} />}
-      {collapsed && showTooltip && (
-        <span className="sb-tooltip" role="tooltip">{label}</span>
-      )}
+      <Icon className="sidebar-icon" aria-hidden />
+      <span className="admin-sidebar-label">{label}</span>
+      {end}
     </Link>
   );
-};
+}
 
-const ExpandableItem = ({ icon, label, badge, collapsed, isActive, children, navigateTo }) => {
+function CountBadge({ count, tone = 'mint' }) {
+  const n = Number(count);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  const text = n > 99 ? '99+' : String(n);
+  return (
+    <span className={`admin-sidebar-badge admin-sidebar-badge--${tone}`}>
+      {text}
+    </span>
+  );
+}
+
+/**
+ * Expandable nav row (button with chevron + sub-items).
+ *
+ * Keeps the historical `sb-item--expandable` class for backward-compat
+ * targeting while using AdminSidebar's `sidebar-link` visual styles.
+ */
+function ExpandableNav({
+  icon: Icon,
+  label,
+  isActive,
+  navigateTo,
+  end,
+  children,
+}) {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(isActive);
 
-  // Open while any child route is active; collapse when leaving that section (navigateTo groups only)
   useEffect(() => {
     if (isActive) setOpen(true);
     else if (navigateTo) setOpen(false);
   }, [isActive, navigateTo]);
 
-  const handleParentClick = () => {
+  const handleClick = () => {
     if (navigateTo) {
       const onDefaultChild =
-        location.pathname === navigateTo || location.pathname === `${navigateTo}/`;
+        location.pathname === navigateTo ||
+        location.pathname === `${navigateTo}/`;
       if (onDefaultChild) {
         setOpen((o) => !o);
       } else {
@@ -95,351 +110,307 @@ const ExpandableItem = ({ icon, label, badge, collapsed, isActive, children, nav
   };
 
   return (
-    <div className="sb-expandable">
+    <div className="admin-sidebar-expandable sb-expandable">
       <button
         type="button"
-        className={`sb-item sb-item--expandable${isActive ? ' sb-item--active' : ''}`}
-        onClick={handleParentClick}
+        className={
+          `sidebar-link sidebar-link--expandable sb-item--expandable` +
+          (isActive ? ' active' : '') +
+          (open ? ' is-open' : '')
+        }
+        onClick={handleClick}
         aria-expanded={open}
       >
-        <span className="sb-item-icon">{icon}</span>
-        {!collapsed && <span className="sb-item-label">{label}</span>}
-        {!collapsed && badge !== undefined && <Badge count={badge} />}
+        <Icon className="sidebar-icon" aria-hidden />
+        <span className="admin-sidebar-label">{label}</span>
+        {end}
+        
       </button>
-      {open && !collapsed && (
-        <div className="sb-sub-items">
-          {children}
-        </div>
-      )}
+      {open && <div className="admin-sidebar-sub-items">{children}</div>}
     </div>
   );
-};
+}
 
-const SubItem = ({ to, icon, label, isActive, onClick }) => (
-  <Link
-    to={to}
-    className={`sb-sub-item${isActive ? ' sb-sub-item--active' : ''}`}
-    onClick={onClick}
-    aria-label={label}
-  >
-    <span className="sb-sub-dot" />
-    <span className="sb-sub-label">{label}</span>
-  </Link>
-);
-
-const SidebarSection = ({ label, children, collapsed }) => (
-  <div className="sb-section">
-    {!collapsed && <span className="sb-section-label">{label}</span>}
-    {collapsed && <span className="sb-section-divider" aria-hidden="true" />}
-    <div className="sb-section-items">{children}</div>
-  </div>
-);
-
-const UserFooter = ({ user, onLogout, collapsed, backendStatus }) => (
-  <div className="sb-footer">
-    <div className="sb-footer-health">
-      <span
-        className={`sb-health-dot sb-health-dot--${backendStatus}`}
-        title={`Backend ${backendStatus}`}
-      />
-      {!collapsed && (
-        <span className={`sb-health-label sb-health-label--${backendStatus}`}>
-          Backend {backendStatus}
-        </span>
-      )}
-    </div>
-    <button
-      className={`sb-signout${collapsed ? ' sb-signout--icon' : ''}`}
-      onClick={onLogout}
-      aria-label="Sign out"
+function SubNav({ to, label, isActive }) {
+  return (
+    <Link
+      to={to}
+      className={`admin-sidebar-sub-item${isActive ? ' active' : ''}`}
     >
-      <LogOut className="sb-signout-icon" />
-      {!collapsed && <span>Sign out</span>}
-    </button>
-  </div>
-);
+      <span className="admin-sidebar-sub-dot" aria-hidden />
+      <span className="admin-sidebar-sub-label">{label}</span>
+    </Link>
+  );
+}
 
-/* ─── main Sidebar ────────────────────────────────────────────────────────── */
+/* ─── main sidebar ────────────────────────────────────────────────────────── */
 
 const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Health status from shared bootstrap cache — no polling loop
-  const { health } = useAppBootstrap();
-  const backendStatus = health?.status === 'OK' ? 'healthy' : health ? 'unhealthy' : 'checking';
 
   const isOrgAdmin = user?.role === 'org_admin';
 
   // Plan feature flags — org admins always see full workflow + tools in this shell
-  // (matches in-job pages; avoids empty WORKFLOW / TOOLS when `user.features` is sparse).
   const showConversion    = isOrgAdmin || hasFeature(user, 'conversion.basic');
   const showAccessibility = isOrgAdmin || hasFeature(user, 'accessibility_tools');
-  const showEpubTools       = isOrgAdmin || hasFeature(user, 'epub_tools');
-  const showInteractive     = isOrgAdmin || hasFeature(user, 'interactive.content');
+  const showEpubTools     = isOrgAdmin || hasFeature(user, 'epub_tools');
+  const showInteractive   = isOrgAdmin || hasFeature(user, 'interactive.content');
 
+  // Close mobile drawer on route change
   useEffect(() => {
-    // Entrance animation
-    const t = setTimeout(() => setMounted(true), 30);
-    return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    // Notify parent of collapse state so main content can adjust margin
-    onCollapse?.(collapsed);
-  }, [collapsed, onCollapse]);
-
-  useEffect(() => {
-    // Close mobile drawer on route change
     setMobileOpen(false);
   }, [location.pathname]);
 
+  // Mirror AdminSidebar: this layout always uses the full-width rail (the
+  // 1024px media query collapses it automatically). Notify parent once.
+  useEffect(() => {
+    onCollapse?.(false);
+  }, [onCollapse]);
+
   const handleLogout = () => {
-    // Dispatch the centralised logout action — clears Redux auth state
-    // AND removes the persisted token in one place.
     dispatch(logoutAction());
-    // SPA redirect; no full page reload.
     navigate('/login', { replace: true });
   };
 
-  const isActive = (path) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
-  };
+  const path = location.pathname;
 
-  /** True when user is anywhere in the conversion workflow (jobs, editors, sync studios, download). */
-  const isConversionsWorkflowSection = () => {
-    const p = location.pathname;
-    return (
-      p.startsWith('/conversions') ||
-      p.startsWith('/audio-sync/') ||
-      p.startsWith('/sync-studio') ||
-      p.startsWith('/fxl-sync-studio') ||
-      p.startsWith('/kitaboo-studio') ||
-      p.startsWith('/fxl-studio') ||
-      p.startsWith('/image-editor') ||
-      p.startsWith('/epub-image-editor')
-    );
-  };
-
-  const toggleCollapse = () => setCollapsed((c) => !c);
-  const toggleMobile   = () => setMobileOpen((o) => !o);
-
-  const sidebarClass = [
-    'sb-root',
-    collapsed   ? 'sb-root--collapsed' : '',
-    mobileOpen  ? 'sb-root--mobile-open' : '',
-    mounted     ? 'sb-root--mounted' : '',
-  ].filter(Boolean).join(' ');
+  const active = useMemo(
+    () => ({
+      home:           path === '/' || path === '',
+      pdfsUpload:     path.startsWith('/pdfs/upload'),
+      epubSync:       path.startsWith('/epub-sync-import'),
+      pdfs:           path.startsWith('/pdfs') && !path.startsWith('/pdfs/upload'),
+      conversions:
+        path.startsWith('/conversions') ||
+        path.startsWith('/audio-sync/') ||
+        path.startsWith('/sync-studio') ||
+        path.startsWith('/fxl-sync-studio') ||
+        path.startsWith('/kitaboo-studio') ||
+        path.startsWith('/fxl-studio') ||
+        path.startsWith('/image-editor') ||
+        path.startsWith('/epub-image-editor'),
+      convJobs:       path === '/conversions' || path === '/conversions/',
+      convFxl:        path.startsWith('/conversions/fxl-editor'),
+      convAudio:
+        path.startsWith('/conversions/audio-sync') ||
+        path.startsWith('/audio-sync/fxl') ||
+        path.startsWith('/audio-sync/reflow') ||
+        path.startsWith('/sync-studio') ||
+        path.startsWith('/fxl-sync-studio'),
+      convDownload:   path.startsWith('/conversions/download'),
+      exports:        path.startsWith('/exports'),
+      mediaLibrary:   path.startsWith('/org/media-library'),
+      usage:          path.startsWith('/org/usage'),
+      accessibility:  path.startsWith('/accessibility'),
+      epubChecker:    path.startsWith('/epub-checker'),
+      interactive:    path.startsWith('/interactive'),
+      activity:       path.startsWith('/activity'),
+      orgTeam:        path.startsWith('/org/team'),
+    }),
+    [path],
+  );
 
   return (
     <>
-      {/* Mobile hamburger */}
+      {/* Mobile hamburger — uses shared AdminSidebar mobile styles */}
       <button
-        className="sb-mobile-toggle"
-        onClick={toggleMobile}
+        className="admin-mobile-toggle"
+        onClick={() => setMobileOpen((o) => !o)}
         aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        type="button"
       >
-        {mobileOpen ? <X /> : <Menu />}
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Overlay for mobile */}
       {mobileOpen && (
-        <div className="sb-overlay" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+        <div
+          className="admin-sidebar-overlay"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
       )}
 
-      <aside className={sidebarClass} aria-label="Main navigation">
-
-        {/* ── Branding ── */}
-        <div className="sb-brand">
-          <div className="sb-brand-logo">
-            <FileText />
+      <aside className={`sidebar${mobileOpen ? ' sidebar--mobile-open' : ''}`}>
+        {/* ── Brand block ── */}
+        <div className="admin-sidebar-brand">
+          <div className="admin-sidebar-brand-mark" aria-hidden>
+            <FileText size={22} strokeWidth={2} />
           </div>
-          {!collapsed && (
-            <div className="sb-brand-text">
-              <span className="sb-brand-title">PDF to EPUB</span>
-              <span className="sb-brand-sub">Conversion Studio</span>
-            </div>
-          )}
-          <button
-            className="sb-collapse-btn"
-            onClick={toggleCollapse}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand' : 'Collapse'}
-          >
-            {collapsed ? <ChevronRight /> : <ChevronLeft />}
-          </button>
+          <div className="navbar-brand-text">
+            <span className="navbar-brand-title">PDF to EPUB</span>
+            <span className="navbar-brand-subtitle admin-sidebar-brand-tag">
+              Studio
+            </span>
+          </div>
         </div>
 
-        {/* ── Nav ── */}
-        <nav className="sb-nav" role="navigation">
-
+        <nav className="sidebar-nav">
           {/* WORKFLOW */}
-          <SidebarSection label="Workflow" collapsed={collapsed}>
-            <SidebarItem
-              to="/"
-              icon={<LayoutGrid />}
-              label="Dashboard"
-              collapsed={collapsed}
-              isActive={isActive('/')}
-            />
-            {showConversion && (
-              <>
-                <SidebarItem
-                  to="/pdfs/upload"
-                  icon={<Upload />}
-                  label="Upload PDF"
-                  collapsed={collapsed}
-                  isActive={isActive('/pdfs/upload')}
+          <span className="admin-sidebar-section-label">Workflow</span>
+
+          <NavRow
+            to="/"
+            icon={LayoutGrid}
+            label="Dashboard"
+            isActive={active.home}
+          />
+
+          {showConversion && (
+            <>
+              <NavRow
+                to="/pdfs/upload"
+                icon={Upload}
+                label="Upload PDF"
+                isActive={active.pdfsUpload}
+              />
+              <NavRow
+                to="/epub-sync-import"
+                icon={RefreshCw}
+                label="EPUB Sync"
+                isActive={active.epubSync}
+              />
+              <NavRow
+                to="/pdfs"
+                icon={FileText}
+                label="My PDFs"
+                isActive={active.pdfs}
+                end={<CountBadge count={pdfCount} tone="blue" />}
+              />
+
+              <ExpandableNav
+                icon={ArrowLeftRight}
+                label="Conversions"
+                isActive={active.conversions}
+                navigateTo="/conversions"
+                end={<CountBadge count={conversionCount} tone="mint" />}
+              >
+                <SubNav
+                  to="/conversions"
+                  label="Conversion Jobs"
+                  isActive={active.convJobs}
                 />
-                <SidebarItem
-                  to="/epub-sync-import"
-                  icon={<RefreshCw />}
-                  label="EPUB Sync"
-                  collapsed={collapsed}
-                  isActive={isActive('/epub-sync-import')}
+                <SubNav
+                  to="/conversions/fxl-editor"
+                  label="FXL Editor"
+                  isActive={active.convFxl}
                 />
-                <SidebarItem
-                  to="/pdfs"
-                  icon={<FileText />}
-                  label="My PDFs"
-                  badge={pdfCount}
-                  collapsed={collapsed}
-                  isActive={isActive('/pdfs') && !isActive('/pdfs/upload')}
+                <SubNav
+                  to="/conversions/audio-sync"
+                  label="Audio Sync Studio"
+                  isActive={active.convAudio}
                 />
-                <ExpandableItem
-                  icon={<ArrowLeftRight />}
-                  label="Conversions"
-                  badge={conversionCount}
-                  collapsed={collapsed}
-                  isActive={isConversionsWorkflowSection()}
-                  navigateTo="/conversions"
-                >
-                  <SubItem
-                    to="/conversions"
-                    label="Conversion Jobs"
-                    isActive={
-                      location.pathname === '/conversions' ||
-                      location.pathname === '/conversions/'
-                    }
-                  />
-                  <SubItem
-                    to="/conversions/fxl-editor"
-                    label="FXL Editor"
-                    isActive={isActive('/conversions/fxl-editor')}
-                  />
-                  <SubItem
-                    to="/conversions/audio-sync"
-                    label="Audio Sync Studio"
-                    isActive={
-                      isActive('/conversions/audio-sync') ||
-                      isActive('/audio-sync/fxl') ||
-                      isActive('/audio-sync/reflow') ||
-                      isActive('/sync-studio') ||
-                      isActive('/fxl-sync-studio')
-                    }
-                  />
-                  <SubItem
-                    to="/conversions/download"
-                    label="Download EPUB"
-                    isActive={isActive('/conversions/download')}
-                  />
-                </ExpandableItem>
-              </>
-            )}
-          </SidebarSection>
+                <SubNav
+                  to="/conversions/download"
+                  label="Download EPUB"
+                  isActive={active.convDownload}
+                />
+              </ExpandableNav>
+            </>
+          )}
 
           {/* LIBRARY */}
-          <SidebarSection label="Library" collapsed={collapsed}>
-            <SidebarItem
-              to="/exports"
-              icon={<Film />}
-              label="Exports"
-              collapsed={collapsed}
-              isActive={isActive('/exports')}
-            />
-            <SidebarItem
-              to="/org/media-library"
-              icon={<FolderOpen />}
-              label="Media Library"
-              collapsed={collapsed}
-              isActive={isActive('/org/media-library')}
-            />
-            <SidebarItem
-              to="/org/usage"
-              icon={<Gauge />}
-              label="Usage"
-              collapsed={collapsed}
-              isActive={isActive('/org/usage')}
-            />
-          </SidebarSection>
+          <span className="admin-sidebar-section-label">Library</span>
+
+          <NavRow
+            to="/exports"
+            icon={Film}
+            label="Exports"
+            isActive={active.exports}
+          />
+          <NavRow
+            to="/org/media-library"
+            icon={FolderOpen}
+            label="Media Library"
+            isActive={active.mediaLibrary}
+          />
+          <NavRow
+            to="/org/usage"
+            icon={Gauge}
+            label="Usage"
+            isActive={active.usage}
+          />
 
           {/* TOOLS */}
-          <SidebarSection label="Tools" collapsed={collapsed}>
-            {showAccessibility && (
-              <SidebarItem
-                to="/accessibility"
-                icon={<Accessibility />}
-                label="Accessibility"
-                collapsed={collapsed}
-                isActive={isActive('/accessibility')}
-              />
-            )}
-            {showEpubTools && (
-              <SidebarItem
-                to="/epub-checker"
-                icon={<ClipboardCheck />}
-                label="EPUB Checker"
-                collapsed={collapsed}
-                isActive={isActive('/epub-checker')}
-              />
-            )}
-            {showInteractive && (
-              <SidebarItem
-                to="/interactive"
-                icon={<BookOpen />}
-                label="Interactive"
-                collapsed={collapsed}
-                isActive={isActive('/interactive')}
-              />
-            )}
-          </SidebarSection>
+          {(showAccessibility || showEpubTools || showInteractive) && (
+            <span className="admin-sidebar-section-label">Tools</span>
+          )}
+
+          {showAccessibility && (
+            <NavRow
+              to="/accessibility"
+              icon={Accessibility}
+              label="Accessibility"
+              isActive={active.accessibility}
+            />
+          )}
+          {showEpubTools && (
+            <NavRow
+              to="/epub-checker"
+              icon={ClipboardCheck}
+              label="EPUB Checker"
+              isActive={active.epubChecker}
+            />
+          )}
+          {showInteractive && (
+            <NavRow
+              to="/interactive"
+              icon={BookOpen}
+              label="Interactive"
+              isActive={active.interactive}
+            />
+          )}
 
           {/* ORG — org_admin only */}
           {isOrgAdmin && (
-            <SidebarSection label="Org" collapsed={collapsed}>
-              <SidebarItem
+            <>
+              <span className="admin-sidebar-section-label">Org</span>
+              <NavRow
                 to="/activity"
-                icon={<Activity />}
+                icon={Activity}
                 label="Activity"
-                collapsed={collapsed}
-                isActive={isActive('/activity')}
+                isActive={active.activity}
               />
-              <SidebarItem
+              <NavRow
                 to="/org/team"
-                icon={<Users />}
+                icon={Users}
                 label="Team Users"
-                collapsed={collapsed}
-                isActive={isActive('/org/team')}
+                isActive={active.orgTeam}
               />
-            </SidebarSection>
+            </>
           )}
-
         </nav>
 
-        {/* ── Footer ── */}
-        <UserFooter
-          user={user}
-          onLogout={handleLogout}
-          collapsed={collapsed}
-          backendStatus={backendStatus}
-        />
+        {/* ── Footer (user info + logout) ── */}
+        <div className="admin-sidebar-footer">
+          {user && (
+            <div className="admin-sidebar-user">
+              <div className="admin-sidebar-avatar" aria-hidden>
+                {(user.name || user.email || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div className="admin-sidebar-user-info">
+                <span className="admin-sidebar-user-name">
+                  {user.name || user.email?.split('@')[0] || 'Org Admin'}
+                </span>
+                {user.email && (
+                  <span className="admin-sidebar-user-email">{user.email}</span>
+                )}
+              </div>
+            </div>
+          )}
 
+          <button
+            type="button"
+            className="navbar-logout-btn admin-sidebar-logout"
+            onClick={handleLogout}
+          >
+            <LogOut size={16} />
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
     </>
   );

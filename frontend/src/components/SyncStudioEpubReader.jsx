@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ePub from 'epubjs';
 import api from '../services/api';
+import { kitabooService } from '../services/kitabooService';
 import { withAuthImageQuery } from '../utils/authImageUrl';
 import { getPageNumFromZoneId as resolveFxlZoneToPage, buildZoneIdToPageMap } from '../utils/kitabooZonePageId';
 import './SyncStudioEpubReader.css';
@@ -810,13 +811,18 @@ export default function SyncStudioEpubReader({
 
     if (!jobId || !stageRef.current) return undefined;
 
-    const downloadPath =
-      resolvedSource === 'kitaboo' ? `/kitaboo/download/${jobId}` : `/conversions/${jobId}/download`;
+    const downloadPath = resolvedSource === 'kitaboo' ? `/kitaboo/download/${jobId}` : `/conversions/${jobId}/download`;
 
     (async () => {
       try {
-        const res = await api.get(downloadPath, { responseType: 'blob' });
-        const blob = res.data;
+        let blob;
+        if (resolvedSource === 'kitaboo') {
+          const { blob: epubBlob } = await kitabooService.fetchFxlEpubBlob(jobId);
+          blob = epubBlob;
+        } else {
+          const res = await api.get(downloadPath, { responseType: 'blob' });
+          blob = res.data;
+        }
         if (!(blob instanceof Blob) || blob.size === 0) {
           throw new Error('Empty EPUB response');
         }
@@ -836,10 +842,14 @@ export default function SyncStudioEpubReader({
         if (!cancelled) setFxlMode(useFxlRendering);
 
         // FXL: paginated + spread none for page-fit; reflowable: paginated + minSpreadWidth. FXL also gets viewport scale in `rendered`.
+        // FXL / Kitaboo pages often rely on inline scripts to set left/top on absolutely
+        // positioned text (`.t`). Without allow-scripts, epub.js keeps sandbox at
+        // allow-same-origin only → scripts blocked → about:srcdoc console errors and
+        // all text stacks at (0,0). Trusted EPUBs from our API only.
         const rendition = book.renderTo(stageRef.current, {
           width: '100%',
           height: '100%',
-          allowScriptedContent: false,
+          allowScriptedContent: true,
           ...(useFxlRendering
             ? {
                 layout: 'pre-paginated',
@@ -1067,13 +1077,9 @@ export default function SyncStudioEpubReader({
             setResolvedSource('kitaboo');
             return;
           }
-          if (status === 404 && resolvedSource === 'kitaboo') {
-            setLoadError(
-              'No FXL EPUB on the server yet. Use Export FXL EPUB 3 in Zoning Studio, then open Reader again.'
-            );
-          } else {
-            setLoadError(e?.response?.data?.error || e?.message || 'Could not load EPUB for reader.');
-          }
+          const msg =
+            e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Could not load EPUB for reader.';
+          setLoadError(msg);
           console.error('[SyncStudioEpubReader]', e);
         }
       }
@@ -1441,7 +1447,7 @@ export default function SyncStudioEpubReader({
         <p>{loadError}</p>
         <p className="sync-studio-epub-hint">
           {resolvedSource === 'kitaboo'
-            ? 'Reader uses the same file as download from Zoning Studio. Fixed-layout rendering in the browser may differ from a desktop reader.'
+            ? 'The reader requests the same FXL EPUB as Zoning Studio download. If it is missing, the server builds it when you open the reader (can take a minute). Use Export FXL EPUB 3 when you want an explicit publish or a file to keep. Browser fixed-layout rendering may differ from a desktop reader.'
             : 'The job needs an EPUB on the server (complete conversion, Save & export, or EPUB import). Use HTML preview for tap-to-sync.'}
         </p>
       </div>

@@ -14,10 +14,6 @@ import {
 import PdfThumbnail from './PdfThumbnail';
 import './PdfCard.css';
 
-// In-memory guard to prevent repeated thumbnail fetches for deleted/missing PDFs.
-// Keys are always strings so number/string id mismatches cannot bypass the guard.
-const missingThumbnailPdfIds = new Set();
-
 /* ─────────────────────────────────────────────
    Shared helpers (exported so PdfList can reuse)
 ───────────────────────────────────────────── */
@@ -48,10 +44,9 @@ export const getGradient = (id) => cardGradients[(id || 0) % cardGradients.lengt
    if the PDF URL is unavailable or rendering fails.
 ───────────────────────────────────────────── */
 const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
-  const notFoundHandledRef = useRef(false);
+  const absentHandledRef = useRef(false);
   const idKey = pdfId != null && pdfId !== '' ? String(pdfId) : '';
 
-  // Build a stable cache key from the PDF id so we don't re-render on every mount
   const cacheKey = idKey ? `pdf-thumb-card-${idKey}` : null;
 
   const pdfUrl = useMemo(() => {
@@ -61,24 +56,18 @@ const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
     return `${base}/pdfs/${idKey}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   }, [idKey]);
 
-  // If this PDF already failed with 404 in this session, skip requesting again.
-  if (idKey && missingThumbnailPdfIds.has(idKey)) return null;
+  const handleAbsent = useCallback(() => {
+    if (absentHandledRef.current) return;
+    absentHandledRef.current = true;
+    if (cacheKey) {
+      try {
+        localStorage.removeItem(cacheKey);
+      } catch (_) { /* ignore */ }
+    }
+    onFileNotFound?.();
+  }, [cacheKey, onFileNotFound]);
 
   if (!pdfUrl) return null;
-
-  const handleError = (err) => {
-    // 404 means the file is gone from disk — remove the card entirely
-    if (err?.httpStatus === 404 || err?.message?.includes('404')) {
-      if (idKey) missingThumbnailPdfIds.add(idKey);
-      // Purge the stale thumbnail cache entry so it can't resurface
-      if (cacheKey) { try { localStorage.removeItem(cacheKey); } catch (_) { /* ignore */ } }
-      // Ensure callback fires once for this card instance.
-      if (!notFoundHandledRef.current) {
-        notFoundHandledRef.current = true;
-        onFileNotFound?.();
-      }
-    }
-  };
 
   return (
     <PdfThumbnail
@@ -89,7 +78,7 @@ const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
       cacheKey={cacheKey}
       className="pdc-thumb-img"
       alt=""
-      onError={handleError}
+      onAbsent={handleAbsent}
     />
   );
 });
@@ -189,6 +178,8 @@ MoreMenu.displayName = 'MoreMenu';
    PdfCard
 ───────────────────────────────────────────── */
 const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload, onFileNotFound }) => {
+  if (!pdf) return null;
+
   const isFixed  = pdf.layoutType === 'FIXED_LAYOUT';
   const gradient = getGradient(pdf.id);
 

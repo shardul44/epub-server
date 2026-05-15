@@ -21,7 +21,10 @@ import { useSidebarBadges } from '../hooks/useSidebarBadges';
 import { queryKeys } from '../lib/queryKeys';
 import { fetchAllJobs } from '../hooks/queries/useConversionsQuery';
 import { pdfService } from '../services/pdfService';
+import { listScopeQueryParams } from '../utils/listScope';
 import '../components/layout/Layout.css';
+
+const ORG_SCOPE = 'org';
 
 export default function OrgAdminLayout() {
   const dispatch      = useAppDispatch();
@@ -33,24 +36,24 @@ export default function OrgAdminLayout() {
   // correct on first paint. Skip when cache already has data; concurrent
   // prefetches for the same key are deduplicated by React Query.
   useEffect(() => {
-    const convKey = queryKeys.conversions.list();
+    const convKey = queryKeys.conversions.list(ORG_SCOPE);
     if (queryClient.getQueryData(convKey) == null) {
       void queryClient.prefetchQuery({
         queryKey: convKey,
-        queryFn:  fetchAllJobs,
+        queryFn: () => fetchAllJobs(ORG_SCOPE),
         staleTime: 20 * 1000,
       });
     }
 
-    const pdfKey = queryKeys.pdfs.list();
+    const pdfKey = queryKeys.pdfs.list(ORG_SCOPE);
     if (queryClient.getQueryData(pdfKey) == null) {
       void queryClient.prefetchQuery({
         queryKey: pdfKey,
-        queryFn:  async () => {
-          const data = await pdfService.getAllPdfs({});
+        queryFn: async () => {
+          const data = await pdfService.getAllPdfs(listScopeQueryParams(ORG_SCOPE));
           return data ?? [];
         },
-        staleTime: 30 * 1000,
+        staleTime: 0,
       });
     }
   }, [queryClient]);

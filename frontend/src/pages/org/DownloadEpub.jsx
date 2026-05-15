@@ -11,18 +11,17 @@ import {
   setError,
   clearError,
 } from '../../features/downloadEpub/downloadEpubSlice';
-import { useWorkflowNavigation } from '../../hooks/useWorkflowNavigation';
+import { useWorkflowNavigation, isFixedLayout } from '../../hooks/useWorkflowNavigation';
 import WorkflowStepper from '../../components/WorkflowStepper';
-import { loadStoredJobThumb } from '../../utils/jobCardThumb';
 import { buildEpubReaderPath } from '../../utils/epubReaderUrl';
-import ThumbnailImage from '../../components/ThumbnailImage';
+import PdfThumbnail from '../../components/PdfThumbnail';
 import {
   Download,
   ArrowLeft,
   Check,
   FileText,
   BookOpen,
-  Smartphone,
+  ChevronRight,
 } from 'lucide-react';
 import './DownloadEpub.css';
 
@@ -49,29 +48,81 @@ const fmtSize = (bytes) => {
   return `${bytes} B`;
 };
 
-/** Card thumbnail — custom cover if set, otherwise real PDF page-1 thumbnail. */
-const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ jobId, pdfId }) {
-  const customSrc = useMemo(() => loadStoredJobThumb(jobId), [jobId]);
+const fmtStep = (s) =>
+  s ? String(s).replace(/STEP_\d+_/, '').replace(/_/g, ' ') : '';
 
-  if (customSrc) {
+const fmtDurationMs = (ms) => {
+  if (ms == null || !Number.isFinite(ms) || ms < 0) return '—';
+  const sec = Math.floor(ms / 1000);
+  const m = Math.floor(sec / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${sec % 60}s`;
+  if (sec > 0) return `${sec}s`;
+  return '—';
+};
+
+const fmtCompletedNice = (d) =>
+  d
+    ? new Date(d).toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : '—';
+
+const jobDurationMs = (job) => {
+  const end = job.completedAt || job.updatedAt;
+  const start = job.createdAt;
+  if (!start || !end) return null;
+  return new Date(end).getTime() - new Date(start).getTime();
+};
+
+function buildPdfViewUrl(pdfDocumentId) {
+  if (pdfDocumentId == null || pdfDocumentId === '') return null;
+  try {
+    const token = localStorage.getItem('token');
+    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+    const id = String(pdfDocumentId);
+    return `${base}/pdfs/${id}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  } catch {
+    return null;
+  }
+}
+
+/** First-page PDF preview for ready-download cards */
+const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId }) {
+  const url = useMemo(() => buildPdfViewUrl(pdfId), [pdfId]);
+  const cacheKey =
+    pdfId != null && pdfId !== '' ? `pdf-thumb-card-${String(pdfId)}` : null;
+
+  if (!url) {
     return (
-      <div className="de-ready-pdf-thumb de-ready-pdf-thumb--custom">
-        <img src={customSrc} alt="" />
+      <div className="de-ready-pdf-thumb-fallback" aria-hidden>
+        <FileText size={28} />
       </div>
     );
   }
 
   return (
-    <div className="de-ready-pdf-thumb">
-      <ThumbnailImage
-        pdfId={pdfId}
-        fallback={
-          <div className="de-ready-pdf-thumb-fallback de-ready-pdf-thumb-fallback--visible" aria-hidden>
-            <FileText size={36} />
-          </div>
-        }
-      />
-    </div>
+    <>
+      <div className="de-ready-pdf-thumb-fallback de-ready-pdf-thumb-fallback--under" aria-hidden>
+        <FileText size={28} />
+      </div>
+      <div className="de-ready-pdf-thumb-preview">
+        <PdfThumbnail
+          url={url}
+          width={200}
+          height={280}
+          scale={1.25}
+          cacheKey={cacheKey}
+          className="de-ready-pdf-thumb-img"
+          alt=""
+        />
+      </div>
+    </>
   );
 });
 
@@ -292,13 +343,6 @@ const DownloadEpub = () => {
                   <BookOpen size={15} />
                   Open in Reader
                 </button>
-                <button
-                  className="de-btn de-btn-outline"
-                  onClick={() => navigate('/conversions')}
-                >
-                  <Smartphone size={15} />
-                  Back to Conversions
-                </button>
               </div>
             </div>
 
@@ -345,14 +389,25 @@ const DownloadEpub = () => {
                 {jobs.map((j) => {
                   const jid = j.id ?? j.jobId;
                   const isSel = job && String(jid) === String(jobId);
-                  const isFxlJ = j.jobType === 'FXL';
+                  const isFxlJ = isFixedLayout(j);
                   const pid = j.pdfDocumentId ?? j.pdfId;
-                  const pdfLabel = j.pdfFilename || (pid != null ? `PDF ${pid}` : 'Document');
+                  const pdfLabel = j.pdfFilename || (pid != null ? `PDF #${pid}` : 'Document');
                   const pagesJ = j.totalPages ?? j.pageCount ?? null;
+                  const sizeJ = fmtSize(j.fileSizeBytes ?? j.fileSize ?? null);
+                  const subMeta = [pagesJ != null ? `${pagesJ} pages` : null, sizeJ].filter(Boolean).join(' · ') || '—';
+                  const durMs = jobDurationMs(j);
+                  const pct = j.progressPercentage ?? 100;
+
                   return (
                     <article
                       key={jid}
-                      className={`de-ready-pdf-card${isSel ? ' de-ready-pdf-card--selected' : ''}`}
+                      className={[
+                        'de-ready-pdf-card',
+                        isFxlJ ? 'de-ready-pdf-card--fxl' : 'de-ready-pdf-card--reflow',
+                        isSel ? 'de-ready-pdf-card--selected' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
                       <div
                         className="de-ready-pdf-card-hit"
@@ -366,19 +421,68 @@ const DownloadEpub = () => {
                           }
                         }}
                       >
-                        <DeReadyPdfThumb jobId={jid} pdfId={pid} />
-                        <div className="de-ready-pdf-card-body">
-                          <div className="de-ready-pdf-card-badges">
-                            <span className={`de-ready-pdf-type ${isFxlJ ? 'de-ready-pdf-type--fxl' : 'de-ready-pdf-type--reflow'}`}>
-                              {isFxlJ ? 'FXL' : 'Reflow'}
+                        <div className="de-ready-pdf-card-header">
+                          <span
+                            className={`de-ready-pdf-type ${isFxlJ ? 'de-ready-pdf-type--fxl' : 'de-ready-pdf-type--reflow'}`}
+                          >
+                            {isFxlJ ? 'FXL' : 'REFLOW'}
+                          </span>
+                          <span className="de-ready-pdf-status de-ready-pdf-status--done">COMPLETED</span>
+                        </div>
+
+                        <div className="de-ready-pdf-card-pdf-panel">
+                          <div className="de-ready-pdf-card-pdf-thumb-col">
+                            <span className="de-ready-pdf-card-pdf-badge" aria-hidden>
+                              PDF
                             </span>
-                            <span className="de-ready-pdf-ready-pill">Ready</span>
+                            <div className="de-ready-pdf-thumb">
+                              <DeReadyPdfThumb pdfId={pid} />
+                            </div>
                           </div>
-                          <h4 className="de-ready-pdf-card-title">{pdfLabel}</h4>
-                          <p className="de-ready-pdf-card-meta">
-                            Job #{jid}
-                            {pagesJ != null ? ` · ${pagesJ} pages` : ''}
-                          </p>
+                          <div className="de-ready-pdf-card-pdf-meta">
+                            <div className="de-ready-pdf-card-pdf-name" title={pdfLabel}>
+                              {pdfLabel}
+                            </div>
+                            <div className="de-ready-pdf-card-pdf-sub">{subMeta}</div>
+                          </div>
+                        </div>
+
+                        <div className="de-ready-pdf-card-body">
+                          <div className="de-ready-pdf-card-job-id">Job #{jid}</div>
+                          <div className="de-ready-pdf-card-step-row">
+                            <span className="de-ready-pdf-card-step-text">
+                              Step: {fmtStep(j.currentStep) || 'COMPLETE'}
+                            </span>
+                            <span className="de-ready-pdf-card-pct">{pct}%</span>
+                          </div>
+                          <div className="de-ready-pdf-card-progress-track">
+                            <div
+                              className="de-ready-pdf-card-progress-fill de-ready-pdf-progress-fill--done"
+                              style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+                            />
+                          </div>
+
+                          <div className="de-ready-pdf-card-metrics">
+                            <div className="de-ready-pdf-card-metric">
+                              <span className="de-ready-pdf-card-metric-label">Completed</span>
+                              <span className="de-ready-pdf-card-metric-value">
+                                {fmtCompletedNice(j.completedAt || j.updatedAt)}
+                              </span>
+                            </div>
+                            <div className="de-ready-pdf-card-metric">
+                              <span className="de-ready-pdf-card-metric-label">Duration</span>
+                              <span className="de-ready-pdf-card-metric-value">
+                                {durMs != null ? fmtDurationMs(durMs) : '—'}
+                              </span>
+                            </div>
+                            <div className="de-ready-pdf-card-metric">
+                              <span className="de-ready-pdf-card-metric-label">AI model</span>
+                              <span className="de-ready-pdf-card-metric-value">
+                                {j.aiModel || j.modelName || j.model || '—'}
+                              </span>
+                            </div>
+                          </div>
+
                           {isSel ? (
                             <span className="de-ready-pdf-card-selected">Selected for preview</span>
                           ) : null}
@@ -387,13 +491,17 @@ const DownloadEpub = () => {
                       <div className="de-ready-pdf-card-actions">
                         <button
                           type="button"
-                          className="de-btn de-btn-primary de-ready-pdf-card-dl"
+                          className="de-ready-pdf-card-dl"
                           disabled={!!quickDownloadId || downloading}
-                          onClick={() => handleQuickDownload(jid)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleQuickDownload(jid);
+                          }}
                           title={`Download job-${jid}.epub`}
                         >
-                          <Download size={15} />
+                          <Download size={16} aria-hidden />
                           {quickDownloadId === jid ? 'Downloading…' : 'Download EPUB'}
+                          <ChevronRight size={18} aria-hidden />
                         </button>
                       </div>
                     </article>

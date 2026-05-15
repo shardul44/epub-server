@@ -53,6 +53,28 @@
   width: 100%;
   box-sizing: border-box;
 }
+
+/* EPUB reflow canvas: fill the XHTML column (flex), allow scroll — never 100vh here (nested layout clips / “zoomed” crop) */
+.canvas-wrapper.epub-canvas-wrapper--sized {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: auto;
+  align-self: stretch;
+}
+
+.epub-xhtml-preview-note {
+  align-self: stretch;
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff8e6;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.45;
+  z-index: 2;
+}
 .epub-image-editor {
   display: flex;
   flex-direction: column;

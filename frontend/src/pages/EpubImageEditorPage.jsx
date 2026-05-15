@@ -23,6 +23,7 @@ const EpubImageEditorPage = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const [pages, setPages] = useState([]);
+  const [documentPageCount, setDocumentPageCount] = useState(null);
   const [selectedPage, setSelectedPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,16 +87,33 @@ const EpubImageEditorPage = () => {
         return;
       }
 
-      // Load XHTML pages
-      let pagesList = await conversionService.getJobPages(parseInt(jobId));
+      // Load XHTML spine (one file per chapter or per page) + physical page count from server
+      const layout = await conversionService.getJobPages(parseInt(jobId));
       if (!mountedRef.current) return;
+
+      let pagesList = layout.spine || [];
+      const docPages =
+        layout.documentPageCount != null && layout.documentPageCount > 0
+          ? layout.documentPageCount
+          : pagesList.length
+            ? Math.max(...pagesList.map((p) => p.pageNumber || 0))
+            : 0;
+      setDocumentPageCount(docPages || null);
 
       // If no pages, try regenerating once
       if (!pagesList || pagesList.length === 0) {
         try {
           await conversionService.regenerateEpub(parseInt(jobId));
           if (!mountedRef.current) return;
-          pagesList = await conversionService.getJobPages(parseInt(jobId));
+          const layout2 = await conversionService.getJobPages(parseInt(jobId));
+          pagesList = layout2.spine || [];
+          const doc2 =
+            layout2.documentPageCount != null && layout2.documentPageCount > 0
+              ? layout2.documentPageCount
+              : pagesList.length
+                ? Math.max(...pagesList.map((p) => p.pageNumber || 0))
+                : 0;
+          setDocumentPageCount(doc2 || null);
           if (!mountedRef.current) return;
         } catch (regenErr) {
           console.error('[EpubImageEditorPage] Regeneration failed:', regenErr);
@@ -247,9 +265,8 @@ const EpubImageEditorPage = () => {
         jobId={jid}
         job={workflowJob}
         topTitle="EPUB Image Editor"
-        headingTitle="Image Editor & FXL Studio"
-        headingSub="Reflow: pick a page, edit XHTML, then continue to Audio Sync Studio."
         backTo="/conversions/fxl-editor"
+        hideBackToConversions
       />
 
       {/* ── Toast notification ── */}
@@ -279,7 +296,7 @@ const EpubImageEditorPage = () => {
         </div>
       )}
 
-      {/* ── Editor toolbar (title / job chip are in WorkflowStudioChrome) ── */}
+      {/* ── Editor toolbar ── */}
       <header className="eiep-topbar">
         <div className="eiep-topbar-left">
           <label className="eiep-page-label">
@@ -295,6 +312,12 @@ const EpubImageEditorPage = () => {
                 </option>
               ))}
             </select>
+            {documentPageCount != null && documentPageCount > 0 && (
+              <span className="eiep-page-docmeta" title="Physical pages in the PDF / text pipeline (may exceed XHTML spine files when chapters are merged)">
+                {' '}
+                · {documentPageCount} PDF pages · {pages.length} spine file{pages.length !== 1 ? 's' : ''}
+              </span>
+            )}
           </label>
         </div>
 

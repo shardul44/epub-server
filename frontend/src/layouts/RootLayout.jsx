@@ -16,6 +16,7 @@
  */
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../features/auth/authSlice';
+import { ListScopeProvider } from '../context/ListScopeContext';
 import OrgAdminLayout from './OrgAdminLayout';
 import PlatformAdminLayout from './PlatformAdminLayout';
 import DefaultLayout from './DefaultLayout';
@@ -28,5 +29,9 @@ export default function RootLayout() {
   if (role === 'org_admin')      Layout = OrgAdminLayout;
   if (role === 'platform_admin') Layout = PlatformAdminLayout;
 
-  return <Layout />;
+  return (
+    <ListScopeProvider user={user}>
+      <Layout />
+    </ListScopeProvider>
+  );
 }

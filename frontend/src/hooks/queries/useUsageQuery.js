@@ -1,7 +1,7 @@
 /**
  * useUsageQuery — fetches org license / usage data.
  *
- * Fetches GET /org/license and caches under queryKeys.usage.license().
+ * Fetches GET /org/license (org_admin + member in an org) and caches under queryKeys.usage.license().
  * Separate query for plans (lazy — only fetched when upgrade modal opens).
  *
  * @returns {{ license, isLoading, error, refresh }}

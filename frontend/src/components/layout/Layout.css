@@ -7,8 +7,9 @@
   background-color: #ffffff;
 }
 
-/* ── Org Admin layout (new premium sidebar, no top navbar) ── */
-.layout--org-admin {
+/* ── App shell: org admin, platform admin, and regular users (sidebar rail) ── */
+.layout--org-admin,
+.layout--user {
   height: 100vh;
   display: flex;
   background: transparent;
@@ -18,9 +19,9 @@
   --sb-width-collapsed: 64px;
 }
 
-.main-content--org-admin {
+.main-content--org-admin,
+.main-content--user {
   flex: 1;
-  height: 100vh;
   min-width: 0;
   padding: 0;
   margin: 0;
@@ -47,13 +48,15 @@
 }
 
 /* collapsed sidebar = 64px */
-.layout--sb-collapsed .main-content--org-admin {
+.layout--sb-collapsed .main-content--org-admin,
+.layout--sb-collapsed .main-content--user {
   margin-left: var(--sb-width-collapsed);
 }
 
 /* ── 1024px: sidebar auto-collapses to icon-only ── */
 @media (max-width: 1024px) {
-  .main-content--org-admin {
+  .main-content--org-admin,
+  .main-content--user {
     margin-left: var(--sb-width-collapsed) !important;
     padding: 0;
   }
@@ -61,7 +64,8 @@
 
 /* ── 768px: sidebar slides off-screen, content fills full width ── */
 @media (max-width: 768px) {
-  .main-content--org-admin {
+  .main-content--org-admin,
+  .main-content--user {
     margin-left: 0 !important;
     padding: 0;
     padding-top: 52px; /* room for the mobile hamburger button */

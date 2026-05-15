@@ -1,0 +1,43 @@
+/* User app top bar — utilities right (health + logout), same rhythm as platform header */
+
+.uah {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-shrink: 0;
+  min-height: 70px;
+  padding: 10px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  box-sizing: border-box;
+  z-index: 5;
+}
+
+.uah-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.uah-logout.navbar-logout-btn {
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+}
+
+@media (max-width: 768px) {
+  .uah {
+    padding: 10px 16px;
+    min-height: 60px;
+  }
+
+  .uah-logout.navbar-logout-btn span {
+    display: none;
+  }
+
+  .uah-logout.navbar-logout-btn {
+    padding: 10px 12px;
+  }
+}

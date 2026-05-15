@@ -35,13 +35,14 @@ export const kitabooService = {
   publishClassic: (jobId) =>
     api.post(`/kitaboo/publish/${jobId}`, { classicLayout: true }).then(res => res.data?.data ?? res.data),
 
-  /** Download FXL EPUB file (blob) and trigger browser download.
-   * If the EPUB hasn't been published yet, publishes it first then downloads.
+  /**
+   * Fetch FXL EPUB as a Blob (e.g. Sync Studio reader). If the file is missing, runs publish then retries.
+   * Uses validateStatus on GET so a missing file does not trip the global axios 404 handler.
+   * @param {string} jobId
+   * @param {(msg: string) => void} [onStatus]
+   * @returns {Promise<{ blob: Blob, suggestedFilename: string }>}
    */
-  downloadFxlEpub: async (jobId, filename = null, onStatus = null) => {
-    // 404 when the EPUB file is not on disk yet is normal (user never hit Publish, or first download).
-    // Use validateStatus so axios resolves instead of rejecting — avoids error interceptor noise and
-    // duplicate handling; we publish then fetch again.
+  fetchFxlEpubBlob: async (jobId, onStatus = null) => {
     const getBlob = () =>
       api.get(`/kitaboo/download/${jobId}`, {
         responseType: 'blob',
@@ -52,7 +53,7 @@ export const kitabooService = {
     if (downloadRes.status === 404) {
       if (onStatus) onStatus('Publishing EPUB…');
       await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });
-      if (onStatus) onStatus('Downloading…');
+      if (onStatus) onStatus('Loading EPUB…');
       downloadRes = await getBlob();
     }
     if (downloadRes.status !== 200 || !(downloadRes.data instanceof Blob)) {
@@ -66,14 +67,22 @@ export const kitabooService = {
       } catch (_) { /* ignore */ }
       throw new Error(
         downloadRes.status === 404
-          ? `${detail} Run publish from FXL Zoning Studio or ensure kitaboo_${jobId} output still exists on the server.`
+          ? `${detail} Run Export FXL EPUB 3 (Publish) from Zoning Studio, or ensure kitaboo_${jobId} output still exists on the server.`
           : detail,
       );
     }
-    const name = filename
-      || downloadRes.headers['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1]
-      || `fxl_${jobId}.epub`;
-    const blobUrl = URL.createObjectURL(downloadRes.data);
+    const suggestedFilename =
+      downloadRes.headers['content-disposition']?.match(/filename="?([^";]+)"?/)?.[1] || `fxl_${jobId}.epub`;
+    return { blob: downloadRes.data, suggestedFilename };
+  },
+
+  /** Download FXL EPUB file (blob) and trigger browser download.
+   * If the EPUB hasn't been published yet, publishes it first then downloads.
+   */
+  downloadFxlEpub: async (jobId, filename = null, onStatus = null) => {
+    const { blob, suggestedFilename } = await kitabooService.fetchFxlEpubBlob(jobId, onStatus);
+    const name = filename || suggestedFilename;
+    const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = blobUrl;
     a.download = name;

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import './GrapesJSCanvas.css';
+import { extractBodyAndStylesFromMarkup } from '../utils/xhtmlBodyExtract';
 
 /**
  * GrapesJS Canvas Component for EPUB Image Editor
@@ -60,14 +61,20 @@ const GrapesJSCanvas = ({
     // Reset here so loadContent and other paths work on the "real" mount.
     isMountedRef.current = true;
     if (!containerRef.current) return;
-    
-    // Prevent multiple initializations - use multiple guards
-    // Check if container already has GrapesJS initialized
-    if (containerRef.current.querySelector('.gjs-cv-canvas')) {
-      console.warn('[GrapesJSCanvas] Container already has GrapesJS canvas, skipping initialization');
+
+    const host = containerRef.current;
+    // React StrictMode / partial destroy: orphaned .gjs-* nodes with no live editor — clear and init fresh.
+    const staleGrapes = host.querySelector('.gjs-editor, .gjs-cv-canvas');
+    if (staleGrapes && !editorRef.current) {
+      console.warn('[GrapesJSCanvas] Clearing stale GrapesJS DOM before init');
+      host.innerHTML = '';
+      initializationStartedRef.current = false;
+      window.__grapesjsInitializing = false;
+    } else if (staleGrapes && editorRef.current) {
+      console.warn('[GrapesJSCanvas] GrapesJS already active in container, skipping duplicate init');
       return;
     }
-    
+
     if (initializationStartedRef.current || editorRef.current || window.__grapesjsInitializing) {
       console.warn('[GrapesJSCanvas] Editor already initialized or initializing, skipping');
       return;
@@ -175,36 +182,25 @@ const GrapesJSCanvas = ({
     // Returns true only when content was applied (so callers can set contentLoaded).
     const loadContent = () => {
       const xhtmlNow = xhtmlRef.current;
-      if (initRunIdRef.current !== runId || !isMountedRef.current || !grapesEditor || !xhtmlNow) {
+      if (initRunIdRef.current !== runId || !isMountedRef.current || !grapesEditor) {
         console.warn('[GrapesJSCanvas] Cannot load content - missing requirements', {
           runIdValid: initRunIdRef.current === runId,
           mounted: isMountedRef.current,
           hasEditor: !!grapesEditor,
-          hasXhtml: !!xhtmlNow,
         });
         return false;
       }
-      
+      if (xhtmlNow == null || !String(xhtmlNow).trim()) {
+        console.warn('[GrapesJSCanvas] Cannot load content - XHTML is empty');
+        return false;
+      }
+
       try {
         console.log('[GrapesJSCanvas] Canvas mounted, setting initial content');
         console.log('[GrapesJSCanvas] XHTML length:', xhtmlNow.length);
-        
-        // Parse XHTML to extract body content (GrapesJS setComponents expects body HTML, not full document)
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(xhtmlNow, 'text/html');
-        
-        // Extract body content
-        let bodyContent = '';
-        if (doc.body) {
-          bodyContent = doc.body.innerHTML;
-        } else if (doc.documentElement) {
-          // Fallback if no body tag
-          bodyContent = doc.documentElement.innerHTML;
-        }
-        
-        // Extract styles
-        const styles = doc.querySelector('style')?.innerHTML || '';
-        
+
+        const { bodyContent, styles } = extractBodyAndStylesFromMarkup(xhtmlNow);
+
         console.log('[GrapesJSCanvas] Body content length:', bodyContent.length, 'Styles length:', styles.length);
         
         if (!bodyContent) {
@@ -345,7 +341,7 @@ const GrapesJSCanvas = ({
         return;
       }
       
-      if (!xhtmlNow) {
+      if (xhtmlNow == null || !String(xhtmlNow).trim()) {
         console.warn('[GrapesJSCanvas] No xhtml available yet, skipping');
         return;
       }
@@ -730,25 +726,17 @@ const GrapesJSCanvas = ({
           
           // Use setTimeout to ensure editor is fully ready
           setTimeout(() => {
-            if (isMountedRef.current && editor && pendingXhtml !== lastXhtmlRef.current) {
-              // Trigger the update by setting a flag that the update useEffect can check
-              // Actually, we'll just directly update here since we have the editor
-              const parser = new DOMParser();
-              const doc = parser.parseFromString(pendingXhtml, 'text/html');
-              let bodyContent = '';
-              if (doc.body) {
-                bodyContent = doc.body.innerHTML;
-              }
-              const styles = doc.querySelector('style')?.innerHTML || '';
-              
+            if (isMountedRef.current && grapesEditor && pendingXhtml !== lastXhtmlRef.current) {
+              const { bodyContent, styles } = extractBodyAndStylesFromMarkup(pendingXhtml);
+
               if (bodyContent) {
                 try {
-                  editor.setComponents(bodyContent);
+                  grapesEditor.setComponents(bodyContent);
                   if (styles) {
-                    editor.setStyle(styles);
+                    grapesEditor.setStyle(styles);
                   }
-                  
-                  const canvas = editor.Canvas;
+
+                  const canvas = grapesEditor.Canvas;
                   const frameEl = canvas?.getFrameEl();
                   const frameDoc = frameEl?.contentDocument || frameEl?.contentWindow?.document;
                   if (frameDoc && frameDoc.body) {
@@ -762,8 +750,8 @@ const GrapesJSCanvas = ({
                       styleEl.textContent = styles;
                     }
                   }
-                  
-                  editor.refresh();
+
+                  grapesEditor.refresh();
                   lastXhtmlRef.current = pendingXhtml;
                   console.log('[GrapesJSCanvas] Pending XHTML update applied successfully');
                 } catch (e) {
@@ -821,6 +809,11 @@ const GrapesJSCanvas = ({
         setIsInitialized(false);
         setEditor(null);
         editorRef.current = null;
+      }
+      initialContentLoadedRef.current = false;
+      lastXhtmlRef.current = '';
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
       }
     };
   }, []); // Only run once on mount - don't re-initialize when xhtml changes
@@ -917,13 +910,13 @@ const GrapesJSCanvas = ({
 
   // CRITICAL: Load initial content when editor is ready and xhtml is available
   useEffect(() => {
-    if (!editor || !xhtml || !isInitialized) {
+    if (!editor || xhtml == null || !String(xhtml).trim() || !isInitialized) {
       return;
     }
-    
+
     console.log('[GrapesJSCanvas] Checking if content needs to be loaded', {
       hasEditor: !!editor,
-      hasXhtml: !!xhtml,
+      hasXhtml: String(xhtml).trim().length > 0,
       xhtmlLength: xhtml.length,
       isInitialized
     });
@@ -992,16 +985,9 @@ const GrapesJSCanvas = ({
         // If body is empty or very small, load content
         if (bodyHtml.length < 100) {
           console.log('[GrapesJSCanvas] Iframe body is empty, loading content now');
-          
-          // Parse and set content
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(xhtml, 'text/html');
-          let bodyContent = '';
-          if (doc.body) {
-            bodyContent = doc.body.innerHTML;
-          }
-          const styles = doc.querySelector('style')?.innerHTML || '';
-          
+
+          const { bodyContent, styles } = extractBodyAndStylesFromMarkup(xhtml);
+
           console.log('[GrapesJSCanvas] Extracted body content length:', bodyContent.length, 'styles length:', styles.length);
           
           if (bodyContent) {
@@ -1049,20 +1035,13 @@ const GrapesJSCanvas = ({
           // Check if this is just GrapesJS default content (starts with <style> and scrollbar styles)
           // If so, we need to replace it with actual XHTML content
           if (bodyHtml.includes('::-webkit-scrollbar') || bodyHtml.length < 2000) {
-            console.log('[GrapesJSCanvas] Detected GrapesJS default content, replacing with XHTML');
-            
-            // Parse and set actual XHTML content
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(xhtml, 'text/html');
-            let bodyContent = '';
-            if (doc.body) {
-              bodyContent = doc.body.innerHTML;
-            }
-            const styles = doc.querySelector('style')?.innerHTML || '';
-            
+            console.log('[GrapesJSCanvas] Detected GrapesJS default or short scaffold, replacing with XHTML');
+
+            const { bodyContent, styles } = extractBodyAndStylesFromMarkup(xhtml);
+
             console.log('[GrapesJSCanvas] Extracted body content length:', bodyContent.length, 'styles length:', styles.length);
-            
-            if (bodyContent && bodyContent.length > 100) {
+
+            if (bodyContent && bodyContent.length > 0) {
               // Set via API
               try {
                 editor.setComponents(bodyContent);
@@ -1109,59 +1088,51 @@ const GrapesJSCanvas = ({
             // Content looks correct, but check if xhtml prop has changed
             // Extract current body content to compare with xhtml prop
             const currentBodyContent = frameDoc.body.innerHTML || '';
-            
-            // Parse xhtml prop to get expected body content
-            const parser = new DOMParser();
-            const expectedDoc = parser.parseFromString(xhtml, 'text/html');
-            let expectedBodyContent = '';
-            if (expectedDoc.body) {
-              expectedBodyContent = expectedDoc.body.innerHTML;
-            }
-            
+
+            const { bodyContent: expectedBodyContent, styles: expectedStyles } = extractBodyAndStylesFromMarkup(xhtml);
+
             // Compare lengths as a quick check (if very different, content needs update)
             const currentLength = currentBodyContent.length;
             const expectedLength = expectedBodyContent.length;
             const lengthDiff = Math.abs(currentLength - expectedLength);
             const significantDiff = lengthDiff > 100; // More than 100 chars difference
-            
+
             console.log('[GrapesJSCanvas] Content exists, checking if update needed', {
               currentLength,
               expectedLength,
               lengthDiff,
               significantDiff
             });
-            
+
             if (significantDiff || currentBodyContent !== expectedBodyContent) {
               // Content doesn't match xhtml prop, update it
               console.log('[GrapesJSCanvas] Content mismatch detected, updating from xhtml prop');
-              
-              if (expectedBodyContent && expectedBodyContent.length > 100) {
+
+              if (expectedBodyContent && expectedBodyContent.length > 0) {
                 // Set via API
                 try {
                   editor.setComponents(expectedBodyContent);
-                  const styles = expectedDoc.querySelector('style')?.innerHTML || '';
-                  if (styles) {
-                    editor.setStyle(styles);
+                  if (expectedStyles) {
+                    editor.setStyle(expectedStyles);
                   }
                 } catch (apiError) {
                   console.warn('[GrapesJSCanvas] API method failed:', apiError);
                 }
-                
+
                 // Set directly in iframe
                 frameDoc.body.innerHTML = expectedBodyContent;
-                
+
                 // Update styles in iframe head
-                const styles = expectedDoc.querySelector('style')?.innerHTML || '';
-                if (styles) {
+                if (expectedStyles) {
                   let styleEl = frameDoc.querySelector('style');
                   if (!styleEl) {
                     styleEl = frameDoc.createElement('style');
                     frameDoc.head.appendChild(styleEl);
                   }
-                  styleEl.textContent = styles;
+                  styleEl.textContent = expectedStyles;
                 }
-                
-            editor.refresh();
+
+                editor.refresh();
                 lastXhtmlRef.current = xhtml;
                 console.log('[GrapesJSCanvas] Content updated to match xhtml prop');
               }
@@ -1169,13 +1140,13 @@ const GrapesJSCanvas = ({
               // Content matches, just ensure visibility
               console.log('[GrapesJSCanvas] Content matches xhtml prop, ensuring visibility');
             }
-            
+
             editor.refresh();
             initialContentLoadedRef.current = true; // Mark initial load as complete
             lastXhtmlRef.current = xhtml; // Update last known xhtml
-            
+
             // Ensure visibility
-              frameDoc.body.style.display = 'block';
+            frameDoc.body.style.display = 'block';
           }
         }
       } catch (e) {
@@ -1202,17 +1173,21 @@ const GrapesJSCanvas = ({
       return;
     }
     
-    if (!isMountedRef.current || !editor || !xhtml || !isInitialized) {
+    if (!isMountedRef.current || !editor || !isInitialized) {
       console.log('[GrapesJSCanvas] Skipping update - not ready, storing for later', {
         isMounted: isMountedRef.current,
         hasEditor: !!editor,
-        hasXhtml: !!xhtml,
+        hasXhtml: xhtml != null && String(xhtml).trim().length > 0,
         isInitialized
       });
       // Store the xhtml update to apply once editor is ready
-      if (xhtml && xhtml !== lastXhtmlRef.current) {
+      if (xhtml != null && String(xhtml).trim() && xhtml !== lastXhtmlRef.current) {
         pendingXhtmlUpdateRef.current = xhtml;
       }
+      return;
+    }
+
+    if (xhtml == null || !String(xhtml).trim()) {
       return;
     }
     
@@ -1246,7 +1221,7 @@ const GrapesJSCanvas = ({
       const xhtmlToApplyInTimeout = pendingXhtmlUpdateRef.current || xhtml;
       
       // Check again if component is still mounted
-      if (!isMountedRef.current || !editor || !xhtmlToApplyInTimeout || xhtmlToApplyInTimeout === lastXhtmlRef.current) {
+      if (!isMountedRef.current || !editor || !xhtmlToApplyInTimeout || !String(xhtmlToApplyInTimeout).trim() || xhtmlToApplyInTimeout === lastXhtmlRef.current) {
         return;
       }
       
@@ -1260,30 +1235,18 @@ const GrapesJSCanvas = ({
       }
       
       try {
-        // Extract body content from XHTML to apply - match the logic used in initial load
-        const parser = new DOMParser();
-        const newDoc = parser.parseFromString(xhtmlToApplyInTimeout, 'text/html');
-        let newBodyContent = '';
-        
-        // Extract body content (this will include xhtml-content-wrapper div)
-        if (newDoc.body) {
-          newBodyContent = newDoc.body.innerHTML;
-        } else if (newDoc.documentElement) {
-          newBodyContent = newDoc.documentElement.innerHTML;
-        }
-        
+        const { bodyContent: newBodyContent, styles } = extractBodyAndStylesFromMarkup(xhtmlToApplyInTimeout);
+
         console.log('[GrapesJSCanvas] Updating editor content from external change', {
           newBodyLength: newBodyContent.length,
           xhtmlLength: xhtmlToApplyInTimeout.length,
           lastXhtmlLength: lastXhtmlRef.current.length || 0,
           wasPending: !!pendingXhtmlUpdateRef.current
         });
-          
-          // Set flag to prevent event handlers from firing
-          isUpdatingFromExternalRef.current = true;
-          
-        const styles = newDoc.querySelector('style')?.innerHTML || '';
-        
+
+        // Set flag to prevent event handlers from firing
+        isUpdatingFromExternalRef.current = true;
+
         // Update editor with new content - use both API and direct iframe update (like initial load)
         try {
           editor.setComponents(newBodyContent);

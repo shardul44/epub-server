@@ -31,6 +31,12 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // Prevent browser HTTP cache from serving stale list data after upload/delete.
+    if ((config.method || 'get').toLowerCase() === 'get') {
+      config.headers['Cache-Control'] = 'no-cache';
+      config.headers.Pragma = 'no-cache';
+    }
+
     // If data is FormData, remove Content-Type header to let axios set it with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];

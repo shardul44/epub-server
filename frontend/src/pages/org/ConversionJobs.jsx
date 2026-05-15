@@ -250,7 +250,7 @@ const ConversionJobs = () => {
 
     dispatch(setFocusedJobId(String(focusJobId)));
     // Make sure the converting job is visible
-    dispatch(setStatusFilter('IN_PROGRESS'));
+    dispatch(setStatusFilter('all'));
 
     // Clear navigation state to avoid re-trigger on refresh/back
     navigate(location.pathname, { replace: true, state: null });

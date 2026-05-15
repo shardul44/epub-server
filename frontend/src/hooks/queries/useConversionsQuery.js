@@ -1,53 +1,39 @@
 /**
- * useConversionsQuery — THE single source of truth for all job/conversion data.
+ * useConversionsQuery — single source of truth for conversion + FXL job lists.
  *
- * ONE cache key: ['conversions']
- * ONE network request: GET /conversions (reflow) + GET /kitaboo/jobs (FXL)
- *
- * Every component that needs job data calls this hook and filters locally.
- * No component should ever call /conversions or /kitaboo/jobs directly.
- *
- * Smart polling:
- *   - Polls every 3 s while IN_PROGRESS / PENDING / PROCESSING jobs exist.
- *   - Stops automatically once all jobs reach a terminal state.
- *
- * @param {{ statusFilter?: string, enabled?: boolean }} [options]
- *   statusFilter – client-side filter applied to the shared cache.
- *                  Does NOT create a separate cache entry or network request.
- *
- * @returns {{ jobs, allJobs, isLoading, isPending, isFetching, error, refresh }}
+ * Scope from useListScope(): members always request `scope=own`; org admins use org-wide lists.
+ * Cache key: ['conversions', scope]
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/queryKeys';
 import api from '../../services/api';
+import { useListScope } from '../../context/ListScopeContext';
+import { listScopeQueryParams } from '../../utils/listScope';
 
-/* ─── Active-job detection ────────────────────────────────────── */
 const ACTIVE_STATUSES = new Set(['IN_PROGRESS', 'PENDING', 'PROCESSING']);
 
 function hasActiveJobs(jobs) {
-  return Array.isArray(jobs) && jobs.some(j => ACTIVE_STATUSES.has(j.status));
+  return Array.isArray(jobs) && jobs.some((j) => ACTIVE_STATUSES.has(j.status));
 }
 
-/* ─── Merge + deduplicate reflow and FXL jobs ─────────────────── */
 function mergeJobs(reflowJobs, fxlJobs) {
   const reflow = (Array.isArray(reflowJobs) ? reflowJobs : [])
     .filter(Boolean)
-    .map(j => ({
+    .map((j) => ({
       ...j,
       jobType: j.jobType ?? 'REFLOW',
     }));
   const fxl = (Array.isArray(fxlJobs) ? fxlJobs : [])
     .filter(Boolean)
-    .map(j => ({
+    .map((j) => ({
       ...j,
       jobType: 'FXL',
       pdfDocumentId: j.pdfDocumentId ?? j.pdfId,
     }));
 
-  // Deduplicate by composite key
   const seen = new Set();
-  const merged = [...reflow, ...fxl].filter(j => {
+  const merged = [...reflow, ...fxl].filter((j) => {
     if (!j) return false;
     const key = `${j.jobType}-${j.id ?? j.jobId}`;
     if (seen.has(key)) return false;
@@ -55,7 +41,6 @@ function mergeJobs(reflowJobs, fxlJobs) {
     return true;
   });
 
-  // Sort: active first, then by recency
   const ORDER = { IN_PROGRESS: 0, PENDING: 1, PROCESSING: 2, COMPLETED: 3, FAILED: 4, CANCELLED: 5 };
   merged.sort((a, b) => {
     const d = (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9);
@@ -65,32 +50,37 @@ function mergeJobs(reflowJobs, fxlJobs) {
   return merged;
 }
 
-/* ─── The single fetch function (exported for cache prefetch in OrgAdminLayout) ─ */
-export async function fetchAllJobs() {
+/**
+ * @param {import('../../utils/listScope').ListScope} scope
+ */
+export async function fetchAllJobs(scope = 'org') {
+  const params = listScopeQueryParams(scope);
   const [reflowRes, fxlRes] = await Promise.all([
-    api.get('/conversions').then(r => r.data?.data ?? r.data ?? []).catch(() => []),
-    api.get('/kitaboo/jobs').then(r => r.data?.data ?? r.data ?? []).catch(() => []),
+    api.get('/conversions', { params }).then((r) => r.data?.data ?? r.data ?? []).catch(() => []),
+    api.get('/kitaboo/jobs', { params }).then((r) => r.data?.data ?? r.data ?? []).catch(() => []),
   ]);
   return mergeJobs(reflowRes, fxlRes);
 }
 
-/* ─── Hook ────────────────────────────────────────────────────── */
-export function useConversionsQuery({ statusFilter = 'all', enabled = true } = {}) {
+/**
+ * @param {{ statusFilter?: string, enabled?: boolean, scope?: 'own'|'org' }} [options]
+ */
+export function useConversionsQuery({ statusFilter = 'all', enabled = true, scope: scopeOverride } = {}) {
   const queryClient = useQueryClient();
+  const contextScope = useListScope();
+  const scope = scopeOverride ?? contextScope;
+  const listKey = queryKeys.conversions.list(scope);
 
   const query = useQuery({
-    queryKey: queryKeys.conversions.list(),
-    queryFn:  fetchAllJobs,
+    queryKey: listKey,
+    queryFn: () => fetchAllJobs(scope),
     enabled,
-    // Fresh enough for new jobs without refetch-on-every-mount (StrictMode / layout churn).
-    staleTime:            20 * 1000,
-    gcTime:               10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect:   true,
-    refetchOnMount:       true,
-    // Keep last list visible while a refetch is in flight (no empty-state flicker).
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchOnMount: 'always',
     placeholderData: (previousData) => previousData,
-    // Poll every 3 s while active jobs exist; stop when all terminal
     refetchInterval: (q) => {
       const jobs = q.state.data;
       return hasActiveJobs(jobs) ? 3000 : false;
@@ -100,22 +90,20 @@ export function useConversionsQuery({ statusFilter = 'all', enabled = true } = {
 
   const allJobs = query.data ?? [];
 
-  // Client-side filter — zero extra requests
-  const jobs = statusFilter === 'all'
-    ? allJobs
-    : allJobs.filter(j => j.status === statusFilter);
+  const jobs =
+    statusFilter === 'all' ? allJobs : allJobs.filter((j) => j.status === statusFilter);
 
-  // Invalidate the single shared key — all consumers update simultaneously
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.conversions.all() });
 
   return {
-    jobs,        // filtered view
-    allJobs,     // full unfiltered list (for dashboard, etc.)
-    isLoading:   query.isLoading,
-    isPending:   query.isPending,
-    isFetching:  query.isFetching,
-    error:       query.error?.message ?? '',
+    jobs,
+    allJobs,
+    scope,
+    isLoading: query.isLoading,
+    isPending: query.isPending,
+    isFetching: query.isFetching,
+    error: query.error?.message ?? '',
     refresh,
   };
 }

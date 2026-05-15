@@ -1,5 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { useListScope } from '../context/ListScopeContext';
+import { jobFromReflowStart, upsertConversionJobInCache } from '../lib/syncConversionCaches';
 import {
   ArrowLeft,
   BookOpen,
@@ -190,6 +193,8 @@ const ChapterRow = ({ chapter, index, total, totalPages, onChange, onRemove }) =
 const ChapterSelector = () => {
   const { pdfId } = useParams();
   const navigate  = useNavigate();
+  const queryClient = useQueryClient();
+  const listScope = useListScope();
 
   const [pdf,        setPdf]        = useState(null);
   const [loading,    setLoading]    = useState(true);
@@ -269,7 +274,7 @@ const ChapterSelector = () => {
     setSubmitting(true);
     setError('');
     try {
-      await conversionService.startConversion(pdfId, {
+      const data = await conversionService.startConversion(pdfId, {
         chapterPlan: chapters.map((ch) => ({
           title:     ch.title,
           startPage: ch.startPage,
@@ -277,7 +282,16 @@ const ChapterSelector = () => {
           pageType:  ch.pageType || 'regular',
         })),
       });
-      navigate('/conversions');
+      const job = jobFromReflowStart(data, {
+        pdfId,
+        filename: pdf?.originalFileName || pdf?.name || '',
+      });
+      if (job) {
+        upsertConversionJobInCache(queryClient, listScope, job);
+        navigate('/conversions', { state: { focusJobId: job.jobId } });
+      } else {
+        navigate('/conversions');
+      }
     } catch (err) {
       setError(err.message || 'Failed to start conversion');
     } finally {

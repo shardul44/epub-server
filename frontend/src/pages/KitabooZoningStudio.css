@@ -31,6 +31,17 @@
   overflow: hidden;
 }
 
+.kitaboo-hd-banner {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e3a8a;
+  background: #dbeafe;
+  border-bottom: 1px solid #bfdbfe;
+}
+
 /* Body column — fills the main-content--org-admin container */
 .kitaboo-studio-body {
   display: flex;
@@ -410,6 +421,14 @@
 }
 
 .kz-toolbar-end { margin-left: auto; }
+
+.kz-toolbar-workflow-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
 
 .kz-canvas-controls {
   display: inline-flex;

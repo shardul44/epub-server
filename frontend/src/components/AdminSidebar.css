@@ -4,10 +4,10 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 /*
- * Platform admin mounts this component under `.layout--org-admin` with
- * `<aside class="sidebar">`. Layout.css `.sidebar` assumes a 70px top navbar
- * and 260px width; main-content--org-admin uses --sb-width (240px) and full
- * viewport height — override so the rail lines up with the main column.
+ * Org / platform shells mount `<aside class="sidebar">` under `.layout--org-admin`.
+ * Layout.css `.sidebar` assumes a 70px top navbar and 260px width; the shell
+ * uses --sb-width (240px) and full viewport height — override so the rail lines up.
+ * Regular users use `UserAppSidebar.css` (`.layout--user`) instead.
  */
 .layout--org-admin aside.sidebar {
   top: 0;
@@ -189,6 +189,11 @@
   color: #c2410c;
 }
 
+.admin-sidebar-badge--rose {
+  background: #fce7f3;
+  color: #be185d;
+}
+
 /* ── Section labels (Administration / Monitoring) ── */
 .admin-sidebar-section-label {
   display: block;
@@ -260,10 +265,148 @@
   text-overflow: ellipsis;
 }
 
-/* ── Logout button — full width inside footer ── */
 .admin-sidebar-logout {
   width: 100%;
   justify-content: center;
+}
+
+/* ── Expandable nav row (button + chevron) ────────────────────────────────
+   The button mirrors `.sidebar-link` so the expandable parent visually
+   matches every other nav row. Sub-items render inside `.admin-sidebar-sub-items`.
+   ──────────────────────────────────────────────────────────────────────── */
+.sidebar-link.sidebar-link--expandable {
+  width: 100%;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  /* same vertical rhythm as Link rows */
+  padding: 14px 24px;
+}
+
+.sidebar-link.sidebar-link--expandable:hover {
+  background-color: #f5f5f5;
+  color: #1976d2;
+}
+
+.sidebar-link.sidebar-link--expandable.active {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+  border-left-color: #1976d2;
+}
+
+.admin-sidebar-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  flex-shrink: 0;
+  color: #9ca3af;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-link--expandable:hover .admin-sidebar-chevron,
+.sidebar-link--expandable.active .admin-sidebar-chevron {
+  color: #1976d2;
+}
+
+/* ── Sub-items ──────────────────────────────────────────────────────────── */
+.admin-sidebar-sub-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 14px 6px 56px;
+  animation: admin-sidebar-sub-expand 0.18s ease;
+}
+
+@keyframes admin-sidebar-sub-expand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.admin-sidebar-sub-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.admin-sidebar-sub-item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.admin-sidebar-sub-item.active {
+  background: #e3f2fd;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+.admin-sidebar-sub-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.admin-sidebar-sub-item.active .admin-sidebar-sub-dot {
+  opacity: 1;
+  background: #22c55e;
+}
+
+.admin-sidebar-sub-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Collapsed: hide chevron + sub-items, center icon ── */
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-chevron,
+.layout--org-admin.layout--sb-collapsed aside.sidebar .admin-sidebar-sub-items {
+  display: none !important;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .sidebar-link--expandable {
+  justify-content: center;
+  padding: 12px 8px;
+  border-left: none;
+  border-right: 3px solid transparent;
+}
+
+.layout--org-admin.layout--sb-collapsed aside.sidebar .sidebar-link--expandable.active {
+  border-left: none;
+  border-right-color: #1976d2;
+}
+
+@media (max-width: 1024px) {
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-chevron,
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-sub-items {
+    display: none !important;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .sidebar-link--expandable {
+    justify-content: center;
+    padding: 12px 8px;
+    border-left: none;
+    border-right: 3px solid transparent;
+  }
+
+  .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .sidebar-link--expandable.active {
+    border-left: none;
+    border-right-color: #1976d2;
+  }
 }
 
 /* ── Mobile hamburger ── */
@@ -316,9 +459,8 @@
 
   /*
    * Layout.css collapses all `.sidebar` nav rows to icon-only at 768px.
-   * Platform admin uses the classic `.sidebar` — keep full labels + badges in the drawer.
+   * Platform / org / user shells use this rail — keep full labels in the drawer.
    */
-  /* aside.sidebar only exists on platform admin (OrgAdmin uses .sb-root). */
   .layout--org-admin aside.sidebar {
     width: min(280px, 86vw);
     top: 0;
@@ -342,6 +484,27 @@
   .layout--org-admin aside.sidebar .sidebar-link .admin-sidebar-label,
   .layout--org-admin aside.sidebar .sidebar-link .admin-sidebar-badge {
     display: inline-flex !important;
+  }
+
+  /* Mobile drawer (open): restore expandable chevron + sub-items */
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-chevron {
+    display: inline-flex !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-sub-items {
+    display: flex !important;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .sidebar-link--expandable {
+    justify-content: flex-start;
+    padding: 12px 20px;
+    border-left: 3px solid transparent;
+    border-right: none;
+  }
+
+  .layout--org-admin aside.sidebar.sidebar--mobile-open .sidebar-link--expandable.active {
+    border-left-color: #1976d2;
+    border-right: none;
   }
 
   .layout--org-admin aside.sidebar.sidebar--mobile-open .admin-sidebar-section-label {

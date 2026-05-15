@@ -3,7 +3,8 @@
  *
  * Does NOT make its own /conversions call. Reads from the same
  * ['conversions'] cache that every other component uses.
- * Only fetches /users and /health (once, cached 5 min).
+ * Optionally fetches GET /users + /health (org admin dashboards), or /health only
+ * when `includeTeamUsers` is false (regular members lack GET /users).
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -70,16 +71,36 @@ async function fetchTeamAndHealth() {
   };
 }
 
-export function useDashboardQuery({ enabled = true } = {}) {
+async function fetchHealthOnly() {
+  const healthRes = await api.get('/health').catch(() => ({ data: { status: 'ERROR' } }));
+  const hStatus = healthRes.data?.status;
+  return {
+    members: [],
+    systemHealth: {
+      api: hStatus === 'OK' || hStatus === 'SERVICE_UNAVAILABLE' ? 'healthy' : 'unhealthy',
+      db:  hStatus === 'OK' ? 'healthy' : 'unhealthy',
+    },
+  };
+}
+
+export function useDashboardQuery({
+  enabled = true,
+  includeTeamUsers = true,
+  scope: scopeOverride,
+} = {}) {
   const queryClient = useQueryClient();
+  const orgMode = includeTeamUsers ? 'full' : 'health';
 
   // ── Read from the shared conversions cache (no extra fetch) ───
-  const { allJobs, isLoading: jobsLoading, isFetching: jobsFetching } = useConversionsQuery({ enabled });
+  const { allJobs, isLoading: jobsLoading, isFetching: jobsFetching } = useConversionsQuery({
+    enabled,
+    scope: scopeOverride,
+  });
 
   // ── Fetch team + health separately (cached 5 min) ─────────────
   const teamQuery = useQuery({
-    queryKey: queryKeys.dashboard.org(),
-    queryFn:  fetchTeamAndHealth,
+    queryKey: queryKeys.dashboard.org(orgMode),
+    queryFn: includeTeamUsers ? fetchTeamAndHealth : fetchHealthOnly,
     enabled,
     staleTime:            5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -113,11 +134,12 @@ export function useDashboardQuery({ enabled = true } = {}) {
   const systemHealth = teamQuery.data?.systemHealth ?? { api: 'checking', db: 'checking' };
 
   const refetch = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
-    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.org() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.conversions.all() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.orgPrefix() });
   };
 
   return {
+    allJobs,
     stats,
     recentJobs,
     throughputData,

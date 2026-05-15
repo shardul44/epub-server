@@ -6,6 +6,7 @@ import { conversionService } from '../services/conversionService';
 import { injectImageIntoXhtml, applyReflowableCss } from '../utils/xhtmlUtils';
 import { saveLocalImages, getLocalImages, deleteLocalImages } from '../utils/localImageStorage';
 import { withAuthImageQuery } from '../utils/authImageUrl';
+import { extractBodyAndStylesFromMarkup } from '../utils/xhtmlBodyExtract';
 import DraggableCanvas from './DraggableCanvas';
 import GrapesJSCanvas from './GrapesJSCanvas';
 import GrapesJSFooter from './GrapesJSFooter';
@@ -918,6 +919,7 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [xhtmlPreviewNote, setXhtmlPreviewNote] = useState('');
   const [placeholders, setPlaceholders] = useState([]);
   const canvasRef = useRef(null);
   const [modified, setModified] = useState(false);
@@ -951,6 +953,16 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
   // every time unrelated state (xhtml, editMode, etc.) changes.
   const memoImages = useMemo(() => images, [images]);
 
+  /** Window gallery: render first N items; avoids mounting 40+ heavy <img> at once. */
+  const [galleryVisibleCap, setGalleryVisibleCap] = useState(48);
+  useEffect(() => {
+    setGalleryVisibleCap(48);
+  }, [jobId, pageNumber]);
+  const galleryImagesSlice = useMemo(
+    () => memoImages.slice(0, Math.min(memoImages.length, galleryVisibleCap)),
+    [memoImages, galleryVisibleCap]
+  );
+
   // Initialize edited XHTML when opening code viewer
   useEffect(() => {
     if (showCodeViewer) {
@@ -978,7 +990,8 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
     try {
       setLoading(true);
       setError('');
-      
+      setXhtmlPreviewNote('');
+
       // Load XHTML
       const xhtmlResponse = await api.get(`/conversions/${jobId}/xhtml/${pageNumber}`, {
         responseType: 'text',
@@ -1048,7 +1061,16 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       
       setOriginalXhtml(xhtmlContent);
       setXhtml(xhtmlContent);
-      
+
+      const { bodyContent: previewBody } = extractBodyAndStylesFromMarkup(xhtmlContent);
+      if (!previewBody || previewBody.replace(/\s/g, '').length < 2) {
+        setXhtmlPreviewNote(
+          `Page ${pageNumber} XHTML has almost no body content after parsing. The file may be empty, or use strict XHTML. Try another page, open View Code, or use Regenerate Chapter.`
+        );
+      } else {
+        setXhtmlPreviewNote('');
+      }
+
       // INSPECT: Check for existing images in XHTML
       const tempDoc = parser.parseFromString(xhtmlContent, 'text/html');
       const existingImages = tempDoc.querySelectorAll('img');
@@ -1182,6 +1204,7 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
     } catch (err) {
       console.error('Error loading data:', err);
       setError(err.response?.data?.message || err.message || 'Failed to load data');
+      setXhtmlPreviewNote('');
     } finally {
       setLoading(false);
     }
@@ -3806,6 +3829,11 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
             style={{ width: `${galleryWidth}%` }}
           >
             <h3>Image Gallery ({images.length} images)</h3>
+            {images.length > galleryVisibleCap && (
+              <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 8px' }}>
+                Showing {galleryImagesSlice.length} of {images.length} — scroll performance mode
+              </p>
+            )}
             
             {/* Local images info */}
             {images.some(img => img.isLocal) && (
@@ -3869,7 +3897,7 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
               <div className="gallery-scrollable-container">
                 <div className="gallery-grid">
                   {/* All Images (Server + Local) */}
-                  {memoImages.map((image) => (
+                  {galleryImagesSlice.map((image) => (
                     <div key={image.url || image.fileName} className="image-container" style={{ position: 'relative' }}>
                       <DraggableImage
                         image={image}
@@ -3936,6 +3964,16 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
                     </div>
                   ))}
                 </div>
+                {memoImages.length > galleryVisibleCap && (
+                  <button
+                    type="button"
+                    className="btn-refresh"
+                    style={{ width: '100%', marginTop: 8 }}
+                    onClick={() => setGalleryVisibleCap((c) => Math.min(c + 48, memoImages.length))}
+                  >
+                    Load more images ({Math.max(0, memoImages.length - galleryImagesSlice.length)} left)
+                  </button>
+                )}
                 {/* Debug info - remove in production */}
                 {process.env.NODE_ENV === 'development' && (
                   <div className="debug-info" style={{ padding: '1em', fontSize: '0.8em', color: '#666', borderTop: '1px solid #e0e0e0' }}>
@@ -3977,10 +4015,15 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
               )}
             </div>
             <div 
-              className="canvas-wrapper" 
+              className="canvas-wrapper epub-canvas-wrapper--sized" 
               ref={canvasRef} 
               style={{ position: 'relative', flex: '1 1 auto', minHeight: 0 }}
             >
+              {xhtmlPreviewNote && (
+                <div className="epub-xhtml-preview-note" role="status">
+                  {xhtmlPreviewNote}
+                </div>
+              )}
               {useGrapesJS ? (
                 <>
                   <GrapesJSCanvas

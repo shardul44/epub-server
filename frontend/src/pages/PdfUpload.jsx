@@ -4,6 +4,8 @@ import useAppDispatch from '../hooks/useAppDispatch';
 import useAppSelector from '../hooks/useAppSelector';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
+import { upsertPdfInListCache } from '../lib/syncPdfCaches';
+import { useListScope } from '../context/ListScopeContext';
 import { UploadLoadingModal } from '../components/Loadingmodal';
 import {
   uploadPdf as uploadPdfThunk,
@@ -14,9 +16,6 @@ import {
   setUploadProgress,
   resetUpload,
 } from '../features/epub/epubSlice';
-import { setWorkflow } from '../features/conversionWorkflow/conversionWorkflowSlice';
-import { conversionService } from '../services/conversionService';
-import { kitabooService } from '../services/kitabooService';
 import {
   Upload,
   FileText,
@@ -82,6 +81,7 @@ const PdfUpload = () => {
   const navigate                    = useNavigate();
   const dispatch                    = useAppDispatch();
   const queryClient                 = useQueryClient();
+  const listScope                   = useListScope();
   const tickerRef                   = useRef(null);
 
   // Redux upload state
@@ -100,96 +100,22 @@ const PdfUpload = () => {
     uploadStatus === 'failed'    ? 'error'   :
     'uploading';
 
-  // After successful upload: start conversion and navigate to the correct editor.
+  // After successful upload: add to My PDFs only — conversion starts from PdfList "Convert" / Hi-Fi.
   useEffect(() => {
     if (uploadStatus !== 'succeeded' || !lastDoc) return undefined;
+    upsertPdfInListCache(queryClient, listScope, lastDoc);
+    dispatch(setUploadProgress(100));
+    return undefined;
+  }, [uploadStatus, lastDoc, dispatch, queryClient, listScope]);
 
-    // Capture values immediately — resetUpload() will clear lastDoc
-    const newPdf     = lastDoc;
-    const newId      = newPdf?.id;
-    const isFxl      = layoutType === 'FIXED_LAYOUT';
-    const convType   = isFxl ? 'FXL' : 'REFLOW';
-
-    console.log('[PdfUpload] Upload success — pdfId:', newId, 'layoutType:', layoutType);
-
-    // Seed the PDF cache so PdfList shows it immediately
-    queryClient.setQueryData(queryKeys.pdfs.list(), (prev) => {
-      const list = Array.isArray(prev) ? prev : [];
-      if (list.some((p) => p.id === newPdf.id)) return list;
-      return [newPdf, ...list];
-    });
-
-    // Start conversion and navigate to the correct editor
-    const timer = setTimeout(async () => {
-      try {
-        let jobId = null;
-
-        if (isFxl) {
-          // FXL: start High-Fidelity conversion
-          const data = await kitabooService.startHighFidelity(newId, { zoneLevel: 'word' });
-          jobId = data?.jobId ?? data?.data?.jobId ?? data?.id;
-        } else {
-          // Reflow: start standard conversion
-          const data = await conversionService.startConversion(newId);
-          jobId = data?.jobId ?? data?.id ?? data?.conversionJobId;
-        }
-
-        console.log('[PdfUpload] Conversion started — jobId:', jobId);
-
-        // Invalidate conversions cache so the new job appears immediately
-        queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
-
-        if (jobId) {
-          // Store workflow state as single source of truth
-          dispatch(setWorkflow({
-            pdfId:          newId,
-            jobId,
-            conversionType: convType,
-            layoutType,
-          }));
-
-          // Optimistically insert the new job into the conversions cache
-          queryClient.setQueryData(queryKeys.conversions.list(), (prev = []) => {
-            const optimistic = {
-              id:            jobId,
-              jobId,
-              jobType:       convType,
-              status:        'PENDING',
-              pdfDocumentId: newId,
-              pdfId:         newId,
-              pdfFilename:   newPdf.originalFileName || '',
-              layoutType,
-              createdAt:     new Date().toISOString(),
-              updatedAt:     new Date().toISOString(),
-              progressPercentage: 0,
-            };
-            const existing = Array.isArray(prev) ? prev.filter(j => (j.id ?? j.jobId) !== jobId) : [];
-            return [optimistic, ...existing];
-          });
-
-          dispatch(resetUpload());
-
-          // Navigate to the correct editor
-          const editorRoute = isFxl
-            ? `/conversions/fxl-editor/${jobId}`
-            : `/conversions/image-editor/${jobId}`;
-          navigate(editorRoute);
-        } else {
-          // No jobId returned — fall back to conversions list
-          dispatch(resetUpload());
-          navigate('/conversions');
-        }
-      } catch (err) {
-        console.error('[PdfUpload] Failed to start conversion:', err);
-        // Conversion start failed — go to conversions page so user can retry
-        dispatch(resetUpload());
-        navigate('/conversions');
-      }
-    }, 800);
-
-    return () => clearTimeout(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadStatus, lastDoc]);
+  const handleUploadModalClose = () => {
+    setUploadModalOpen(false);
+    if (uploadStatus === 'succeeded') {
+      dispatch(resetUpload());
+      clearFile();
+      navigate('/pdfs');
+    }
+  };
 
   /* ── file helpers ── */
   const validateAndSet = (f) => {
@@ -285,9 +211,9 @@ const PdfUpload = () => {
         {/* ── Left: form ── */}
         <div className="pu-main">
           <div className="pu-main-header">
-            <h2 className="pu-main-title">Start a new conversion</h2>
+            <h2 className="pu-main-title">Upload a PDF</h2>
             <p className="pu-main-sub">
-              Drop a PDF, choose a layout, and we'll convert it to a clean, accessible EPUB.
+              Add a PDF to your library. Open <strong>My PDFs</strong> and click <strong>Convert</strong> when you are ready to start.
             </p>
             <span className="pu-encrypted-badge">
               <ShieldCheck size={14} /> Encrypted upload
@@ -483,10 +409,11 @@ const PdfUpload = () => {
       <UploadLoadingModal
         isOpen={uploadModalOpen}
         progress={progress}
-        fileName={file?.name || ''}
+        fileName={file?.name || lastDoc?.originalFileName || ''}
         status={uploadModalStatus}
         error={uploadError || ''}
-        onClose={() => setUploadModalOpen(false)}
+        onClose={handleUploadModalClose}
+        successActionLabel="Go to My PDFs"
       />
 
     </div>

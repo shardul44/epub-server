@@ -210,7 +210,6 @@ const OrgDashboard = () => {
           </span>
           <h2 className="ds-welcome-title">
             Good to see you, {firstName}
-            <span className="ds-wave" role="img" aria-label="wave">👋</span>
           </h2>
           <p className="ds-welcome-desc">
             You have <strong>{stats.inProgress} active</strong> job{stats.inProgress !== 1 ? 's' : ''} and{' '}
