@@ -13,7 +13,9 @@ export const pdfService = {
   
   getPdfById: (id) => api.get(`/pdfs/${id}`).then(res => res.data.data),
   
-  getPdfsGroupedByZip: () => api.get('/pdfs/grouped').then(res => res.data.data),
+  /** @param {{ scope?: 'own' }} [params] */
+  getPdfsGroupedByZip: (params = {}) =>
+    api.get('/pdfs/grouped', { params }).then(res => res.data.data),
   
   uploadPdf: (file, layoutType = 'REFLOWABLE') => {
     const formData = new FormData();

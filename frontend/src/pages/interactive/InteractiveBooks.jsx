@@ -16,6 +16,8 @@ import {
   X,
 } from 'lucide-react';
 import { interactiveService } from '../../services/interactiveService';
+import { useInteractiveBooksQuery } from '../../hooks/queries/useInteractiveBooksQuery';
+import { useListScope } from '../../context/ListScopeContext';
 import { useAuth } from '../../context/AuthContext';
 import ConfirmModal from '../../components/Loadingmodal';
 import './InteractiveBooks.css';
@@ -100,8 +102,8 @@ const RowMenu = ({ book, canEdit, onExport, onDelete, busyId }) => {
 /* ─── Main page ───────────────────────────────────────────── */
 export default function InteractiveBooks() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [books, setBooks] = useState([]);
+  const listScope = useListScope();
+  const { books, isLoading: loading, error: fetchError, refresh } = useInteractiveBooksQuery();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
@@ -110,27 +112,12 @@ export default function InteractiveBooks() {
   const [creating, setCreating] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, book: null, loading: false });
 
-  const canEdit = useMemo(() => user?.role === 'org_admin', [user]);
+  const canEdit = useMemo(() => user?.role === 'org_admin', [user?.role]);
 
   /* derived stats */
   const totalBooks = books.length;
   const publishedBooks = books.filter((b) => b.status === 'published').length;
   const totalInteractions = books.reduce((s, b) => s + (b.interaction_count ?? b.interactions ?? 0), 0);
-
-  async function refresh() {
-    setLoading(true);
-    setError('');
-    try {
-      const rows = await interactiveService.listBooks();
-      setBooks(rows);
-    } catch (e) {
-      setError(e?.response?.data?.error || e.message || 'Failed to load books');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { refresh(); }, []);
 
   async function createBook() {
     setError('');
@@ -200,7 +187,9 @@ export default function InteractiveBooks() {
           <div>
             <h1 className="ib-title">Interactive Books</h1>
             <p className="ib-subtitle">
-              Kotobee-like interactive content. Web reader is fully interactive; EPUB export is provided as a fallback (non-interactive).
+              {listScope === 'own'
+                ? 'Your interactive books. Web reader is fully interactive; EPUB export is a non-interactive fallback.'
+                : 'Interactive books across your organization. Web reader is fully interactive; EPUB export is a non-interactive fallback.'}
             </p>
           </div>
         </div>
@@ -217,9 +206,9 @@ export default function InteractiveBooks() {
       </div>
 
       {/* ── Error banner ── */}
-      {error && (
+      {(error || fetchError) && (
         <div className="ib-error">
-          <span>{error}</span>
+          <span>{error || fetchError}</span>
           <button className="ib-error-close" onClick={() => setError('')}><X size={14} /></button>
         </div>
       )}
@@ -317,7 +306,9 @@ export default function InteractiveBooks() {
           <div className="ib-card ib-card--table">
             <div className="ib-table-header">
               <div>
-                <div className="ib-card-title">Your books</div>
+                <div className="ib-card-title">
+                  {listScope === 'own' ? 'Your books' : 'Organization books'}
+                </div>
                 <div className="ib-card-subtitle">{filtered.length} of {totalBooks} books</div>
               </div>
               <div className="ib-search-wrap">

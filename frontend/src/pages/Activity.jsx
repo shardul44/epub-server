@@ -8,7 +8,8 @@ import {
   Search,
   Users,
 } from 'lucide-react';
-import { useAppBootstrap } from '../hooks/queries/useAppBootstrap';
+import { useActivityQuery } from '../hooks/queries/useActivityQuery';
+import { useListScope } from '../context/ListScopeContext';
 import { useAuth } from '../context/AuthContext';
 import './Activity.css';
 
@@ -51,9 +52,10 @@ function buildCsv(rows, columns) {
 
 export default function Activity() {
   const { user } = useAuth();
-  const { activities, isLoading: loading, error: bootstrapError } = useAppBootstrap();
+  const listScope = useListScope();
+  const { activities, isLoading: loading, error: activityError } = useActivityQuery();
   const rows = activities;
-  const error = bootstrapError ?? '';
+  const error = activityError ?? '';
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
@@ -70,18 +72,12 @@ export default function Activity() {
   }, []);
 
   const title =
-    user?.role === 'platform_admin'
-      ? 'Activity (all organizations)'
-      : user?.role === 'org_admin'
-        ? 'Activity (your organization)'
-        : 'Your activity';
+    listScope === 'own' ? 'Your activity' : 'Organization activity';
 
   const subtitle =
-    user?.role === 'member'
+    listScope === 'own'
       ? 'Actions you performed in this application.'
-      : user?.role === 'org_admin'
-        ? 'Actions by users in your organization.'
-        : 'Actions across tenants (platform administrator view).';
+      : 'Actions by users in your organization.';
 
   const actionOptions = useMemo(() => {
     const set = new Set();
@@ -137,9 +133,9 @@ export default function Activity() {
       if (id != null && id !== '') actors.add(String(id));
     });
     const activeUsers =
-      total === 0 ? 0 : user?.role === 'member' ? 1 : actors.size;
+      total === 0 ? 0 : listScope === 'own' ? 1 : actors.size;
     return { total, pdfUploads, activeUsers };
-  }, [filteredRows, user?.role]);
+  }, [filteredRows, listScope]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -169,9 +165,7 @@ export default function Activity() {
       { label: 'Action', value: (r) => r.action ?? '' },
       { label: 'Summary', value: (r) => r.summary ?? '' },
     ];
-    if (user?.role !== 'member') cols.push({ label: 'User', value: (r) => r.actorEmail || r.actorName || r.userId || '' });
-    if (user?.role === 'platform_admin')
-      cols.push({ label: 'Organization', value: (r) => r.organizationName || r.organizationId || '' });
+    if (listScope === 'org') cols.push({ label: 'User', value: (r) => r.actorEmail || r.actorName || r.userId || '' });
     const csv = buildCsv(filteredRows, cols);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -181,7 +175,7 @@ export default function Activity() {
     a.click();
     URL.revokeObjectURL(url);
     setExportOpen(false);
-  }, [filteredRows, user?.role]);
+  }, [filteredRows, listScope]);
 
   if (user?.role === 'platform_admin') {
     return <Navigate to="/admin/activity" replace />;
@@ -313,8 +307,7 @@ export default function Activity() {
                   <th>When</th>
                   <th>Action</th>
                   <th>Summary</th>
-                  {user?.role !== 'member' && <th>User</th>}
-                  {user?.role === 'platform_admin' && <th>Organization</th>}
+                  {listScope === 'org' && <th>User</th>}
                 </tr>
               </thead>
               <tbody>
@@ -325,11 +318,8 @@ export default function Activity() {
                       <span className="act-badge">{r.action || '—'}</span>
                     </td>
                     <td className="act-summary">{r.summary || '—'}</td>
-                    {user?.role !== 'member' && (
+                    {listScope === 'org' && (
                       <td className="act-user">{r.actorEmail || r.actorName || r.userId || '—'}</td>
-                    )}
-                    {user?.role === 'platform_admin' && (
-                      <td className="act-user">{r.organizationName || r.organizationId || '—'}</td>
                     )}
                   </tr>
                 ))}

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useListScope } from '../../context/ListScopeContext';
 import { useConversions } from '../../hooks/useConversions';
 import { useWorkflowNavigation, isFixedLayout, audioSyncPath } from '../../hooks/useWorkflowNavigation';
 import WorkflowStepper from '../../components/WorkflowStepper';
@@ -124,11 +125,15 @@ const AssPdfThumb = memo(function AssPdfThumb({ pdfId }) {
 });
 
 /* ─── Job selector ────────────────────────────────────────────── */
-const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow }) => (
+const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
   <div className="ass-selector-root">
     <div className="ass-selector-header">
       <h2 className="ass-selector-title">Audio Sync Studio</h2>
-      <p className="ass-selector-sub">Select a completed conversion job to add narration and sync audio</p>
+      <p className="ass-selector-sub">
+        {listScope === 'own'
+          ? 'Select one of your completed jobs to add narration and sync audio'
+          : 'Select a completed conversion job to add narration and sync audio'}
+      </p>
     </div>
     {loading ? (
       <div className="ass-selector-loading">
@@ -282,6 +287,7 @@ const AudioSyncStudio = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
+  const listScope = useListScope();
   const [error, setError] = useState('');
 
   const { jobs: allJobs, loading: jobsLoading, error: jobsError } = useConversions();
@@ -338,7 +344,12 @@ const AudioSyncStudio = () => {
         </div>
       )}
 
-      <JobSelector jobs={allJobs} loading={jobsLoading} primeAudioSyncWorkflow={primeAudioSyncWorkflow} />
+      <JobSelector
+        jobs={allJobs}
+        loading={jobsLoading}
+        primeAudioSyncWorkflow={primeAudioSyncWorkflow}
+        listScope={listScope}
+      />
     </div>
   );
 };

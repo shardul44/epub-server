@@ -32,10 +32,13 @@ import StudioLayout from '../layouts/StudioLayout';
 import RouteFallback from '../layouts/RouteFallback';
 import {
   RequireAuth,
+  RequireFeature,
+  RequireAnyFeature,
   RequirePlatformAdmin,
   RequireOrgAdmin,
   RequirePlanFeature,
 } from './guards';
+import { WORKFLOW_LIBRARY_FEATURES } from '../utils/features';
 
 /* ─── Eagerly-loaded "shell" pages ────────────────────────────── */
 import Dashboard from '../pages/Dashboard';
@@ -70,6 +73,7 @@ const AdminPlans              = lazy(() => import('../pages/admin/AdminPlans'));
 const UsersManagement         = lazy(() => import('../pages/admin/UsersManagement'));
 const SystemLogs              = lazy(() => import('../pages/admin/SystemLogs'));
 const PlatformSetting         = lazy(() => import('../pages/admin/PlatformSetting'));
+const PlatformTtsManagement   = lazy(() => import('../pages/admin/PlatformTtsManagement'));
 const PlatformAnalytics       = lazy(() => import('../pages/admin/PlatformAnalytics'));
 const OrgTeam                 = lazy(() => import('../pages/org/OrgTeam'));
 const MediaLibrary            = lazy(() => import('../pages/org/MediaLibrary'));
@@ -127,47 +131,66 @@ export default function AppRouter() {
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Dashboard />} />
 
-          <Route path="pdfs"                element={lazyEl(PdfList)} />
-          <Route path="pdfs/upload"         element={lazyEl(PdfUpload)} />
-          <Route path="pdfs/:pdfId"         element={lazyEl(PdfDetail)} />
-          <Route path="chapter-plan/:pdfId" element={lazyEl(ChapterSelector)} />
+          {/* PDF conversion workflow */}
+          <Route element={<RequireFeature featureKey="conversion.basic" />}>
+            <Route path="pdfs"                element={lazyEl(PdfList)} />
+            <Route path="pdfs/upload"         element={lazyEl(PdfUpload)} />
+            <Route path="pdfs/:pdfId"         element={lazyEl(PdfDetail)} />
+            <Route path="chapter-plan/:pdfId" element={lazyEl(ChapterSelector)} />
+            <Route path="conversions"                          element={lazyEl(ConversionJobs)} />
+            <Route path="conversions/download"                 element={lazyEl(DownloadEpub)} />
+            <Route path="conversions/download/:jobId"          element={lazyEl(DownloadEpub)} />
+            <Route path="conversions/image-editor/:jobId" element={lazyEl(EpubImageEditorPage)} />
+            <Route path="image-editor/:jobId"             element={lazyEl(EpubImageEditorPage)} />
+            <Route path="reader/epub/:jobId" element={lazyEl(EpubReaderPage)} />
+            <Route path="exports"          element={lazyEl(Exports)} />
+          </Route>
 
-          {/* Conversion workflow */}
-          <Route path="conversions"                          element={lazyEl(ConversionJobs)} />
-          <Route path="conversions/fxl-editor"               element={lazyEl(ImageFxlEditor)} />
-          <Route path="conversions/audio-sync"               element={lazyEl(AudioSyncStudio)} />
-          <Route path="conversions/audio-sync/:jobId"        element={lazyEl(AudioSyncStudio)} />
-          <Route path="conversions/download"                 element={lazyEl(DownloadEpub)} />
-          <Route path="conversions/download/:jobId"          element={lazyEl(DownloadEpub)} />
+          {/* Kitaboo / FXL import & studios */}
+          <Route element={<RequireFeature featureKey="kitaboo.import" />}>
+            <Route path="epub-sync-import" element={lazyEl(EpubSyncImport)} />
+            <Route path="conversions/fxl-editor"               element={lazyEl(ImageFxlEditor)} />
+            <Route path="conversions/fxl-editor/:jobId"   element={lazyEl(KitabooZoningStudio)} />
+            <Route path="fxl-studio/:jobId"               element={lazyEl(KitabooZoningStudio)} />
+            <Route path="kitaboo-studio/:jobId"           element={lazyEl(KitabooZoningStudio)} />
+          </Route>
 
-          {/* In-job studios — same shell as other org pages (sidebar + workflow chrome inside each page) */}
-          <Route path="conversions/fxl-editor/:jobId"   element={lazyEl(KitabooZoningStudio)} />
-          <Route path="conversions/image-editor/:jobId" element={lazyEl(EpubImageEditorPage)} />
-          <Route path="image-editor/:jobId"             element={lazyEl(EpubImageEditorPage)} />
-          <Route path="fxl-studio/:jobId"               element={lazyEl(KitabooZoningStudio)} />
-          <Route path="audio-sync/fxl/:jobId"           element={<LegacyFxlSyncRedirect />} />
-          <Route path="audio-sync/reflow/:jobId"        element={<LegacyReflowSyncRedirect />} />
-          <Route path="sync-studio/:jobId"              element={lazyEl(SyncStudio)} />
-          <Route path="kitaboo-studio/:jobId"           element={lazyEl(KitabooZoningStudio)} />
-          <Route path="fxl-sync-studio/:jobId"          element={lazyEl(FxlSyncStudio)} />
-          <Route path="epub-image-editor/:jobId"        element={lazyEl(EpubImageEditorPage)} />
+          {/* Sync studio & audio overlay */}
+          <Route element={<RequireFeature featureKey="sync_studio" />}>
+            <Route path="conversions/audio-sync"               element={lazyEl(AudioSyncStudio)} />
+            <Route path="conversions/audio-sync/:jobId"        element={lazyEl(AudioSyncStudio)} />
+            <Route path="audio-sync/fxl/:jobId"           element={<LegacyFxlSyncRedirect />} />
+            <Route path="audio-sync/reflow/:jobId"        element={<LegacyReflowSyncRedirect />} />
+            <Route path="sync-studio/:jobId"              element={lazyEl(SyncStudio)} />
+            <Route path="fxl-sync-studio/:jobId"          element={lazyEl(FxlSyncStudio)} />
+            <Route path="audio-script/:jobId" element={lazyEl(AudioScript)} />
+          </Route>
 
-          {/* Reader & scripts */}
-          <Route path="reader/epub/:jobId" element={lazyEl(EpubReaderPage)} />
-          <Route path="audio-script/:jobId" element={lazyEl(AudioScript)} />
+          <Route element={<RequireFeature featureKey="epub_tools" />}>
+            <Route path="epub-checker"     element={lazyEl(EpubCheckerPage)} />
+            <Route path="epub-image-editor/:jobId"        element={lazyEl(EpubImageEditorPage)} />
+          </Route>
 
-          {/* Tools */}
-          <Route path="ai-config"        element={lazyEl(AiConfig)} />
-          <Route path="tts-management"   element={lazyEl(TtsManagement)} />
+          <Route element={<RequireFeature featureKey="accessibility_tools" />}>
+            <Route path="accessibility"    element={lazyEl(Accessibility)} />
+          </Route>
+
+          <Route element={<RequireFeature featureKey="tts_management" />}>
+            <Route path="tts-management"   element={lazyEl(TtsManagement)} />
+          </Route>
+
+          <Route element={<RequireFeature featureKey="ai_config" />}>
+            <Route path="ai-config"        element={lazyEl(AiConfig)} />
+          </Route>
+
+          <Route element={<RequireAnyFeature featureKeys={WORKFLOW_LIBRARY_FEATURES} />}>
+            <Route path="media-library"    element={lazyEl(MediaLibrary)} />
+          </Route>
+
           <Route path="api-debugger"     element={lazyEl(ApiDebugger)} />
-          <Route path="accessibility"    element={lazyEl(Accessibility)} />
-          <Route path="epub-checker"     element={lazyEl(EpubCheckerPage)} />
-          <Route path="epub-sync-import" element={lazyEl(EpubSyncImport)} />
-          <Route path="exports"          element={lazyEl(Exports)} />
-
-          {/* Org */}
-          <Route path="org/media-library" element={lazyEl(MediaLibrary)} />
-          <Route path="org/usage"         element={lazyEl(Usage)} />
+          <Route path="usage"            element={lazyEl(Usage)} />
+          <Route path="org/media-library" element={<Navigate to="/media-library" replace />} />
+          <Route path="org/usage"         element={<Navigate to="/usage" replace />} />
           <Route path="activity"          element={lazyEl(Activity)} />
 
           <Route
@@ -199,6 +222,10 @@ export default function AppRouter() {
           <Route
             path="admin/conversions"
             element={<RequirePlatformAdmin>{lazyEl(PlatformConversions)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/tts-management"
+            element={<RequirePlatformAdmin>{lazyEl(PlatformTtsManagement)}</RequirePlatformAdmin>}
           />
           <Route
             path="admin/settings"

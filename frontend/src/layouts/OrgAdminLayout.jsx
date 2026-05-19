@@ -22,6 +22,7 @@ import { queryKeys } from '../lib/queryKeys';
 import { fetchAllJobs } from '../hooks/queries/useConversionsQuery';
 import { pdfService } from '../services/pdfService';
 import { listScopeQueryParams } from '../utils/listScope';
+import api from '../services/api';
 import '../components/layout/Layout.css';
 
 const ORG_SCOPE = 'org';
@@ -54,6 +55,19 @@ export default function OrgAdminLayout() {
           return data ?? [];
         },
         staleTime: 0,
+      });
+    }
+
+    const mediaKey = queryKeys.media.list(ORG_SCOPE);
+    if (queryClient.getQueryData(mediaKey) == null) {
+      void queryClient.prefetchQuery({
+        queryKey: mediaKey,
+        queryFn: async () => {
+          const res = await api.get('/media');
+          const data = res.data?.data ?? res.data ?? [];
+          return Array.isArray(data) ? data : [];
+        },
+        staleTime: 5 * 60 * 1000,
       });
     }
   }, [queryClient]);

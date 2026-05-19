@@ -11,6 +11,8 @@ import {
   Download,
 } from 'lucide-react';
 import AccessibilityWizard from '../components/AccessibilityWizard';
+import { useListScope } from '../context/ListScopeContext';
+import { useAuth } from '../context/AuthContext';
 import './Accessibility.css';
 
 /* ── Auto-fixable rule keys (mirrors wizard's AUTO_FIXED_RULES) ── */
@@ -275,16 +277,20 @@ const MetadataChecklist = ({ metadata, allViolations }) => (
 );
 
 /* ── Recent checks panel ─────────────────────────────────────────── */
-const RECENT_KEY = 'ac_recent_checks';
+const RECENT_KEY_PREFIX = 'ac_recent_checks';
 const MAX_RECENT = 7;
 
-function loadRecent() {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); }
+function recentStorageKey(userId) {
+  return userId != null ? `${RECENT_KEY_PREFIX}:${userId}` : RECENT_KEY_PREFIX;
+}
+
+function loadRecent(userId) {
+  try { return JSON.parse(localStorage.getItem(recentStorageKey(userId)) || '[]'); }
   catch { return []; }
 }
 
-function saveRecent(list) {
-  try { localStorage.setItem(RECENT_KEY, JSON.stringify(list)); }
+function saveRecent(userId, list) {
+  try { localStorage.setItem(recentStorageKey(userId), JSON.stringify(list)); }
   catch { /* ignore */ }
 }
 
@@ -396,6 +402,8 @@ const StatusIcon = ({ status }) => {
 
 /* ── Main page ───────────────────────────────────────────────── */
 const Accessibility = () => {
+  const { user } = useAuth();
+  const listScope = useListScope();
   const [wizardState, setWizardState] = useState({
     jobId: '',
     summary: { totalViolations: 0, bySeverity: { critical: 0, serious: 0, moderate: 0, minor: 0 } },
@@ -404,7 +412,7 @@ const Accessibility = () => {
     metadata: {},
   });
 
-  const [recentList, setRecentList] = useState(() => loadRecent());
+  const [recentList, setRecentList] = useState(() => loadRecent(user?.id));
 
   const { jobId, summary, allViolations, file, metadata } = wizardState;
   const hasResults = !!jobId;
@@ -472,7 +480,7 @@ const Accessibility = () => {
         { jobId, filename, score: complianceScore, checkedAt: new Date().toISOString() },
         ...filtered,
       ].slice(0, MAX_RECENT);
-      saveRecent(next);
+      saveRecent(user?.id, next);
       return next;
     });
   }, [jobId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -488,7 +496,9 @@ const Accessibility = () => {
           <span className="ac-badge ac-badge-green">NEW: AI Fix</span>
         </div>
         <p className="ac-subtitle">
-          Upload an EPUB, review violations, apply AI-assisted fixes, re-validate, and download a WCAG&nbsp;AA-compliant file.
+          {listScope === 'own'
+            ? 'Upload your EPUB, review violations, apply AI-assisted fixes, re-validate, and download a WCAG\u00a0AA-compliant file.'
+            : 'Upload an EPUB for your organization, review violations, apply AI-assisted fixes, re-validate, and download a WCAG\u00a0AA-compliant file.'}
         </p>
       </div>
 

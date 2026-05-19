@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useMediaAssetsQuery } from '../../hooks/queries/useMediaAssetsQuery';
 import { useMediaActions } from '../../hooks/useMediaActions';
+import { useListScope } from '../../context/ListScopeContext';
 import useAppDispatch from '../../hooks/useAppDispatch';
 import useAppSelector from '../../hooks/useAppSelector';
 import {
@@ -471,6 +472,7 @@ const UploadZone = ({ onUpload, uploading }) => {
 /* ─── MediaLibrary page ───────────────────────────────────────── */
 const MediaLibrary = () => {
   const dispatch = useAppDispatch();
+  const listScope = useListScope();
 
   // ── Redux UI state ────────────────────────────────────────────
   const viewMode    = useAppSelector(selectMLViewMode);
@@ -567,7 +569,11 @@ const MediaLibrary = () => {
         </div>
         <div className="ml-section-text">
           <h2 className="ml-section-title">Media Library</h2>
-          <p className="ml-section-sub">Browse and manage your uploaded assets</p>
+          <p className="ml-section-sub">
+            {listScope === 'own'
+              ? 'Browse and manage your uploaded assets'
+              : 'Browse and manage media assets across your organization'}
+          </p>
         </div>
         <button
           className="ml-upload-btn"

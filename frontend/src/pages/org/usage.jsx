@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useListScope } from '../../context/ListScopeContext';
 import { useUsageQuery, usePlansQuery } from '../../hooks/queries/useUsageQuery';
 import useAppDispatch from '../../hooks/useAppDispatch';
 import useAppSelector from '../../hooks/useAppSelector';
@@ -317,6 +318,7 @@ function AddOnsModal({ onClose }) {
 /* ─── main component ──────────────────────────────────────────── */
 export default function Usage() {
   const { user }   = useAuth();
+  const listScope  = useListScope();
   const dispatch   = useAppDispatch();
 
   // ── Redux UI state ────────────────────────────────────────────
@@ -424,7 +426,9 @@ export default function Usage() {
       <div className="usage-body">
         <h1 className="usage-heading">Usage &amp; Limits</h1>
         <p className="usage-subheading">
-          Track your organization&apos;s usage and subscription limits
+          {listScope === 'own'
+            ? 'View your organization plan and shared usage limits'
+            : 'Track your organization\u2019s usage and subscription limits'}
         </p>
 
         {/* ── current plan banner ── */}

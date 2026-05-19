@@ -16,6 +16,7 @@ import {
   Package,
   Users,
   RefreshCw,
+  Radio,
   Settings,
   CreditCard,
   Shield,
@@ -88,6 +89,7 @@ const AdminSidebar = ({ onCollapse }) => {
       plans: path.startsWith('/admin/plans'),
       users: path.startsWith('/admin/users'),
       conversions: path.startsWith('/admin/conversions'),
+      tts: path.startsWith('/admin/tts-management'),
       settings: path.startsWith('/admin/settings'),
       billing: path.startsWith('/admin/billing'),
       security: path.startsWith('/admin/security'),
@@ -169,6 +171,12 @@ const AdminSidebar = ({ onCollapse }) => {
             icon={RefreshCw}
             label="Conversions"
             isActive={active.conversions}
+          />
+          <NavRow
+            to="/admin/tts-management"
+            icon={Radio}
+            label="TTS Management"
+            isActive={active.tts}
           />
           <span className="admin-sidebar-section-label">Configuration</span>
           <NavRow

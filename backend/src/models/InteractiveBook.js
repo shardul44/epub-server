@@ -24,6 +24,18 @@ export class InteractiveBookModel {
     return rows;
   }
 
+  /** List books visible to the current viewer (member: own; org_admin: org). */
+  static async findForViewer(user) {
+    if (!user) return [];
+    const { interactiveBookWhereClause } = await import('../utils/tenantScope.js');
+    const w = interactiveBookWhereClause(user);
+    const [rows] = await pool.execute(
+      `SELECT ${cols} FROM interactive_books WHERE ${w.sql} ORDER BY created_at DESC, id DESC`,
+      w.params
+    );
+    return rows;
+  }
+
   static async create({ organizationId = null, createdByUserId = null, title, description = null, metadataJson = null }) {
     const [result] = await pool.execute(
       'INSERT INTO interactive_books (organization_id, created_by_user_id, title, description, metadata_json) VALUES (?, ?, ?, ?, ?)',

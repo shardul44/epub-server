@@ -23,7 +23,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useAppDispatch } from '../../store/hooks';
 import { logout as logoutAction } from '../../features/auth/authSlice';
-import { hasFeature } from '../../utils/features';
+import { hasAnyFeature, hasFeature, WORKFLOW_LIBRARY_FEATURES } from '../../utils/features';
 import { useSidebarBadges } from '../../hooks/useSidebarBadges';
 import { useAppBootstrap } from '../../hooks/queries/useAppBootstrap';
 
@@ -172,8 +172,8 @@ export default function UserAppSidebar({ onCollapse }) {
         path.startsWith('/fxl-sync-studio'),
       convDownload: path.startsWith('/conversions/download'),
       exports: path.startsWith('/exports'),
-      mediaLibrary: path.startsWith('/org/media-library'),
-      usage: path.startsWith('/org/usage'),
+      mediaLibrary: path.startsWith('/media-library'),
+      usage: path.startsWith('/usage'),
       accessibility: path.startsWith('/accessibility'),
       epubChecker: path.startsWith('/epub-checker'),
       interactive: path.startsWith('/interactive'),
@@ -185,11 +185,17 @@ export default function UserAppSidebar({ onCollapse }) {
   );
 
   const showConversion = hasFeature(user, 'conversion.basic');
+  const showKitaboo = hasFeature(user, 'kitaboo.import');
+  const showSyncStudio = hasFeature(user, 'sync_studio');
+  const showLibrary = hasAnyFeature(user, WORKFLOW_LIBRARY_FEATURES);
+  const showExports = showConversion;
   const showAccessibility = hasFeature(user, 'accessibility_tools');
   const showEpubTools = hasFeature(user, 'epub_tools');
   const showInteractive = hasFeature(user, 'interactive.content');
   const showTts = hasFeature(user, 'tts_management');
   const showAi = hasFeature(user, 'ai_config');
+
+  const showWorkflowNav = showConversion || showKitaboo || showSyncStudio;
 
   const showToolsSection =
     showAccessibility || showEpubTools || showTts || showInteractive;
@@ -234,60 +240,82 @@ export default function UserAppSidebar({ onCollapse }) {
           <NavRow to="/" icon={LayoutGrid} label="Dashboard" isActive={active.home} />
 
           {showConversion && (
-            <>
-              <NavRow
-                to="/pdfs/upload"
-                icon={Upload}
-                label="Upload PDF"
-                isActive={active.pdfsUpload}
-              />
-              <NavRow
-                to="/epub-sync-import"
-                icon={RefreshCw}
-                label="EPUB Sync"
-                isActive={active.epubSync}
-              />
-              <NavRow
-                to="/pdfs"
-                icon={FileText}
-                label="My PDFs"
-                isActive={active.pdfs}
-                end={<CountBadge count={pdfCount} tone="blue" />}
-              />
+            <NavRow
+              to="/pdfs/upload"
+              icon={Upload}
+              label="Upload PDF"
+              isActive={active.pdfsUpload}
+            />
+          )}
+          {showKitaboo && (
+            <NavRow
+              to="/epub-sync-import"
+              icon={RefreshCw}
+              label="EPUB Sync"
+              isActive={active.epubSync}
+            />
+          )}
+          {showConversion && (
+            <NavRow
+              to="/pdfs"
+              icon={FileText}
+              label="My PDFs"
+              isActive={active.pdfs}
+              end={<CountBadge count={pdfCount} tone="blue" />}
+            />
+          )}
 
-              <ExpandableNav
-                icon={ArrowLeftRight}
-                label="Conversions"
-                isActive={active.conversions}
-                navigateTo="/conversions"
-                end={<CountBadge count={conversionCount} tone="mint" />}
-              >
+          {showWorkflowNav && (
+            <ExpandableNav
+              icon={ArrowLeftRight}
+              label="Conversions"
+              isActive={active.conversions}
+              navigateTo={
+                showConversion
+                  ? '/conversions'
+                  : showKitaboo
+                    ? '/conversions/fxl-editor'
+                    : '/conversions/audio-sync'
+              }
+              end={<CountBadge count={conversionCount} tone="mint" />}
+            >
+              {showConversion && (
                 <SubNav to="/conversions" label="Conversion Jobs" isActive={active.convJobs} />
+              )}
+              {showKitaboo && (
                 <SubNav to="/conversions/fxl-editor" label="FXL Editor" isActive={active.convFxl} />
+              )}
+              {showSyncStudio && (
                 <SubNav
                   to="/conversions/audio-sync"
                   label="Audio Sync Studio"
                   isActive={active.convAudio}
                 />
+              )}
+              {showConversion && (
                 <SubNav
                   to="/conversions/download"
                   label="Download EPUB"
                   isActive={active.convDownload}
                 />
-              </ExpandableNav>
-            </>
+              )}
+            </ExpandableNav>
           )}
 
-          <span className="user-sidebar-section-label">Library</span>
+          {showLibrary && <span className="user-sidebar-section-label">Library</span>}
 
-          <NavRow to="/exports" icon={Film} label="Exports" isActive={active.exports} />
-          <NavRow
-            to="/org/media-library"
-            icon={FolderOpen}
-            label="Media Library"
-            isActive={active.mediaLibrary}
-          />
-          <NavRow to="/org/usage" icon={Gauge} label="Usage" isActive={active.usage} />
+          {showExports && (
+            <NavRow to="/exports" icon={Film} label="Exports" isActive={active.exports} />
+          )}
+          {showLibrary && (
+            <NavRow
+              to="/media-library"
+              icon={FolderOpen}
+              label="Media Library"
+              isActive={active.mediaLibrary}
+            />
+          )}
+          <NavRow to="/usage" icon={Gauge} label="Usage" isActive={active.usage} />
 
           {showToolsSection && (
             <span className="user-sidebar-section-label">Tools</span>

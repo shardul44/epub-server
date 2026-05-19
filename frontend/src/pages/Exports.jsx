@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
 import { useConversionsQuery } from '../hooks/queries/useConversionsQuery';
+import { useListScope } from '../context/ListScopeContext';
 import {
   Download,
   Search,
@@ -46,8 +47,8 @@ const LANGUAGE_OPTIONS = [
 const Exports = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const listScope = useListScope();
 
-  // Use React Query to fetch all jobs (replaces manual useEffect fetch)
   const { jobs, isLoading: loading, error: fetchError } = useConversionsQuery({ statusFilter: 'all' });
 
   const [error,     setError]     = useState('');
@@ -153,6 +154,10 @@ const Exports = () => {
 
   /* close dropdown on outside click */
   useEffect(() => {
+    if (listScope === 'own' && searchField === 'owner') setSearchField('all');
+  }, [listScope, searchField]);
+
+  useEffect(() => {
     if (!searchFieldOpen) return;
     const handler = (e) => {
       if (searchFieldRef.current && !searchFieldRef.current.contains(e.target))
@@ -165,7 +170,7 @@ const Exports = () => {
   const SEARCH_FIELDS = [
     { key: 'all',   label: 'Search All' },
     { key: 'title', label: 'Title'      },
-    { key: 'owner', label: 'Owner'      },
+    ...(listScope === 'org' ? [{ key: 'owner', label: 'Owner' }] : []),
   ];
 
   const activeFieldLabel = SEARCH_FIELDS.find(f => f.key === searchField)?.label ?? 'Title';
@@ -188,8 +193,14 @@ const Exports = () => {
             <Download size={20} />
           </div>
           <div className="exp-section-text">
-            <h2 className="exp-section-title">Your Exported EPUBs</h2>
-            <p className="exp-section-sub">View and download your converted EPUB files</p>
+            <h2 className="exp-section-title">
+              {listScope === 'own' ? 'Your Exported EPUBs' : 'Organization Exports'}
+            </h2>
+            <p className="exp-section-sub">
+              {listScope === 'own'
+                ? 'View and download your converted EPUB files'
+                : 'View and download EPUB exports from your organization'}
+            </p>
           </div>
         </div>
       </div>
@@ -304,7 +315,9 @@ const Exports = () => {
             <p>
               {search || activeTab !== 'All'
                 ? 'No exports match your filters'
-                : 'No exports yet — complete a conversion to see your EPUBs here'}
+                : listScope === 'own'
+                  ? 'No exports yet — complete a conversion to see your EPUBs here'
+                  : 'No exports yet — your team has not completed any conversions'}
             </p>
             {!search && activeTab === 'All' && (
               <button

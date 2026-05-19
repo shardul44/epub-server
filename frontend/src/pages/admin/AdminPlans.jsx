@@ -1,7 +1,13 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Plus } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import './AdminPlans.css';
+
+function featureLabel(featureKey, descriptionByKey) {
+  const desc = descriptionByKey.get(featureKey);
+  if (desc != null && String(desc).trim() !== '') return String(desc).trim();
+  return featureKey;
+}
 
 function planBadgeMeta(count, catalogLen, isSelected) {
   const n = Number(count) || 0;
@@ -166,12 +172,24 @@ export default function AdminPlans() {
     }
   };
 
+  const descriptionByKey = useMemo(() => {
+    const map = new Map();
+    catalog.forEach((c) => {
+      if (c?.featureKey) map.set(c.featureKey, c.description ?? '');
+    });
+    return map;
+  }, [catalog]);
+
   const keysOnPlan = new Set((detail?.features || []).map((f) => f.featureKey));
   const onPlanSorted = [...(detail?.features || [])].sort((a, b) =>
-    String(a.featureKey).localeCompare(String(b.featureKey)),
+    featureLabel(a.featureKey, descriptionByKey).localeCompare(
+      featureLabel(b.featureKey, descriptionByKey),
+    ),
   );
   const catalogSorted = [...catalog].sort((a, b) =>
-    String(a.featureKey).localeCompare(String(b.featureKey)),
+    featureLabel(a.featureKey, descriptionByKey).localeCompare(
+      featureLabel(b.featureKey, descriptionByKey),
+    ),
   );
   const availableFromCatalog = catalogSorted.filter((c) => !keysOnPlan.has(c.featureKey));
 
@@ -287,10 +305,10 @@ export default function AdminPlans() {
                           className="apl-tag apl-tag--on"
                           disabled={togglingKey === f.featureKey}
                           onClick={() => void removeFeature(f.featureKey)}
-                          title="Remove from plan"
+                          title={`${f.featureKey} — Remove from plan`}
                         >
                           <Check className="apl-tag-icon" size={14} strokeWidth={2.5} aria-hidden />
-                          {f.featureKey}
+                          {featureLabel(f.featureKey, descriptionByKey)}
                         </button>
                       ))}
                     </div>
@@ -309,10 +327,10 @@ export default function AdminPlans() {
                           className="apl-tag apl-tag--off"
                           disabled={togglingKey === c.featureKey}
                           onClick={() => void addFeatureToPlan(c.featureKey)}
-                          title="Add to plan"
+                          title={`${c.featureKey} — Add to plan`}
                         >
                           <Plus className="apl-tag-icon" size={14} strokeWidth={2.5} aria-hidden />
-                          {c.featureKey}
+                          {featureLabel(c.featureKey, descriptionByKey)}
                         </button>
                       ))}
                     </div>

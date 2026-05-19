@@ -20,6 +20,7 @@ import {
   successResponse,
   errorResponse,
 } from '../utils/responseHandler.js';
+import { mediaAssetWhereClause } from '../utils/tenantScope.js';
 
 const router = express.Router();
 router.use(authenticate);
@@ -27,20 +28,11 @@ router.use(authenticate);
 /* ─── helpers ─────────────────────────────────────────────────── */
 
 async function fetchMedia(req) {
-  const orgId  = req.user.organizationId ?? null;
-  const userId = req.user.id;
-  let rows;
-  if (orgId) {
-    [rows] = await pool.execute(
-      `SELECT * FROM media_assets WHERE organization_id = ? ORDER BY created_at DESC LIMIT 500`,
-      [orgId]
-    );
-  } else {
-    [rows] = await pool.execute(
-      `SELECT * FROM media_assets WHERE user_id = ? ORDER BY created_at DESC LIMIT 500`,
-      [userId]
-    );
-  }
+  const w = mediaAssetWhereClause(req.user);
+  const [rows] = await pool.execute(
+    `SELECT * FROM media_assets WHERE ${w.sql} ORDER BY created_at DESC LIMIT 500`,
+    w.params
+  );
   return rows.map((row) => ({
     id:            row.id,
     filename:      row.filename,

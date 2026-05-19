@@ -45,8 +45,9 @@ export const conversionService = {
       return [];
     }),
   
-  getReviewRequired: () => 
-    api.get('/conversions/review-required').then(res => res.data.data),
+  /** @param {{ scope?: 'own' }} [params] */
+  getReviewRequired: (params = {}) =>
+    api.get('/conversions/review-required', { params }).then(res => res.data.data),
   
   markAsReviewed: (jobId, reviewedBy) => 
     api.put(`/conversions/${jobId}/review`, null, { params: { reviewedBy } }).then(res => res.data.data),

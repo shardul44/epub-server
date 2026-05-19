@@ -28,6 +28,7 @@ import {
   clearError as clearOTError,
 } from '../../features/orgTeam/orgTeamSlice';
 import ConfirmModal from '../../components/Loadingmodal';
+import { phoneForApi, phoneForInput, validateOptionalPhone } from '../../utils/phoneValidation';
 import './OrgTeam.css';
 
 /* ─── Toast notification system ──────────────────────────── */
@@ -302,7 +303,7 @@ function ModalHeader({ icon, title, onClose }) {
 /* ─── Edit User Modal ─────────────────────────────────────── */
 function EditUserModal({ member, onClose, onSaved }) {
   const [name, setName]         = useState(member.name || '');
-  const [phone, setPhone]       = useState(member.phoneNumber || '');
+  const [phone, setPhone]       = useState(() => phoneForInput(member.phoneNumber));
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd]   = useState(false);
   const [saving, setSaving]     = useState(false);
@@ -311,10 +312,19 @@ function EditUserModal({ member, onClose, onSaved }) {
   async function handleSave(e) {
     e.preventDefault();
     if (!name.trim()) { setError('Name is required'); return; }
+    const phoneErr = validateOptionalPhone(phone);
+    if (phoneErr) { setError(phoneErr); return; }
+    if (password && (password.length < 6 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password))) {
+      setError('Password must be at least 6 characters and include both letters and numbers.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const body = { name: name.trim(), phoneNumber: phone.trim() || undefined };
+      const body = {
+        name: name.trim(),
+        phoneNumber: phone.trim() ? phoneForApi(phone) : null,
+      };
       if (password) body.password = password;
       await orgTeamService.updateUser(member.id, body);
       onSaved();
@@ -336,8 +346,21 @@ function EditUserModal({ member, onClose, onSaved }) {
           <input className="qa-input" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="qa-form-group">
+          <label className="qa-label">Email</label>
+          <input className="qa-input" type="email" value={member.email || ''} readOnly disabled aria-readonly="true" />
+          <p className="qa-field-hint">Login email cannot be changed here.</p>
+        </div>
+        <div className="qa-form-group">
           <label className="qa-label">Phone <span className="qa-optional">(optional)</span></label>
-          <input className="qa-input" type="tel" placeholder="+1 555 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <input
+            className="qa-input"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            placeholder="10-15 digits, e.g. 9876543210"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s()-]/g, ''))}
+          />
         </div>
         <div className="qa-form-group">
           <label className="qa-label">New Password <span className="qa-optional">(leave blank to keep current)</span></label>
@@ -820,10 +843,21 @@ export default function OrgTeam() {
       setFormError('Password must be at least 6 characters and include both letters and numbers.');
       return;
     }
+    const phoneErr = validateOptionalPhone(phoneNumber);
+    if (phoneErr) {
+      setFormError(phoneErr);
+      return;
+    }
 
     setCreating(true);
     try {
-      await orgTeamService.createUser({ name: name.trim(), email: email.trim(), password, phoneNumber: phoneNumber.trim() || undefined, role });
+      await orgTeamService.createUser({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        phoneNumber: phoneForApi(phoneNumber),
+        role,
+      });
       setName(''); setEmail(''); setPassword(''); setPhone(''); setRole('member'); setShowPwd(false);
       setCreateSuccess(`User "${name.trim()}" created successfully.`);
       setTimeout(() => setCreateSuccess(''), 4000);
@@ -1015,7 +1049,15 @@ export default function OrgTeam() {
                     </div>                  </div>
                   <div className="ot-form-group">
                     <label className="ot-label">Phone <span className="ot-optional">(optional)</span></label>
-                    <input className="ot-input" type="tel" placeholder="+1 555 000 0000" value={phoneNumber} onChange={(e) => setPhone(e.target.value)} />
+                    <input
+                      className="ot-input"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      placeholder="10-15 digits, e.g. 9876543210"
+                      value={phoneNumber}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^\d+\s()-]/g, ''))}
+                    />
                   </div>
                 </div>
                 <div className="ot-form-group">

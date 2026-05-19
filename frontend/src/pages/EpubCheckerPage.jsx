@@ -15,6 +15,8 @@ import {
 import DashboardHeader from '../components/layout/Header';
 import MainContent from '../components/layout/MainContent';
 import EpubConformanceCheck from '../components/EpubConformanceCheck';
+import { useAuth } from '../context/AuthContext';
+import { useListScope } from '../context/ListScopeContext';
 import {
   formatEpubCheckerSubtitle,
   readEpubcheckHistory,
@@ -80,6 +82,8 @@ const fmtWhen = (iso) => {
 };
 
 const EpubCheckerPage = () => {
+  const { user } = useAuth();
+  const listScope = useListScope();
   const [checkerUi, setCheckerUi] = useState({
     stepperStep: 0,
     javaStatus: null,
@@ -95,8 +99,8 @@ const EpubCheckerPage = () => {
   }, []);
 
   const refreshHistory = useCallback(() => {
-    setHistoryItems(readEpubcheckHistory());
-  }, []);
+    setHistoryItems(readEpubcheckHistory(user?.id));
+  }, [user?.id]);
 
   useEffect(() => {
     if (historyOpen) refreshHistory();
@@ -168,8 +172,9 @@ const EpubCheckerPage = () => {
         <section className="ecc-hero">
           <h1>EPUB Conformance Validator</h1>
           <p className="ecc-hero-desc">
-            Upload an EPUB, run W3C EPUBCheck, review messages, then optionally apply deterministic fixes or AI drafts,
-            re-validate, and download a repaired package — all in one flow.
+            {listScope === 'own'
+              ? 'Upload your EPUB, run W3C EPUBCheck, review messages, then optionally apply fixes or AI drafts, re-validate, and download a repaired package.'
+              : 'Upload an EPUB for your organization, run W3C EPUBCheck, review messages, then optionally apply fixes or AI drafts, re-validate, and download a repaired package.'}
           </p>
           {!javaStatus && (
             <div className="ecc-hero-badge ecc-hero-badge--loading">
@@ -297,7 +302,7 @@ const EpubCheckerPage = () => {
                   type="button"
                   className="ds-navbar-btn ds-navbar-btn--ghost"
                   onClick={() => {
-                    clearEpubcheckHistory();
+                    clearEpubcheckHistory(user?.id);
                     refreshHistory();
                   }}
                 >

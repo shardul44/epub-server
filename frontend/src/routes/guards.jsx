@@ -17,7 +17,7 @@ import {
   selectUser,
   selectAuthStatus,
 } from '../features/auth/authSlice';
-import { hasFeature } from '../utils/features';
+import { hasAnyFeature, hasFeature } from '../utils/features';
 import RouteFallback from '../layouts/RouteFallback';
 
 /**
@@ -80,6 +80,16 @@ export function RequireFeature({ featureKey, redirectTo = '/' }) {
 
   if (status === 'loading')           return <RouteFallback />;
   if (!hasFeature(user, featureKey))  return <Navigate to={redirectTo} replace />;
+  return <Outlet />;
+}
+
+/** Allow route when the user has at least one of the listed plan features. */
+export function RequireAnyFeature({ featureKeys, redirectTo = '/' }) {
+  const user   = useAppSelector(selectUser);
+  const status = useAppSelector(selectAuthStatus);
+
+  if (status === 'loading') return <RouteFallback />;
+  if (!hasAnyFeature(user, featureKeys)) return <Navigate to={redirectTo} replace />;
   return <Outlet />;
 }
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ttsConfigService } from '../services/ttsConfigService';
 import './TtsManagement.css';
 
-const TtsManagement = () => {
+const TtsManagement = ({ embedded = false }) => {
   const [config, setConfig] = useState({
     id: null,
     credentialsPath: '',
@@ -246,12 +246,12 @@ const TtsManagement = () => {
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <div className={embedded ? 'loading tts-loading--embedded' : 'loading'}>Loading...</div>;
   }
 
   return (
-    <div className="container">
-      <h1>TTS Management</h1>
+    <div className={embedded ? 'container container--embedded' : 'container'}>
+      {!embedded && <h1>TTS Management</h1>}
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}

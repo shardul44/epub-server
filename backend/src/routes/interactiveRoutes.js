@@ -13,15 +13,10 @@ import { InteractiveChapterModel } from '../models/InteractiveChapter.js';
 import { InteractiveBlockModel } from '../models/InteractiveBlock.js';
 import pool from '../config/database.js';
 import { InteractiveEpubExportService } from '../services/interactiveEpubExportService.js';
+import { canAccessInteractiveBook } from '../utils/tenantScope.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('interactive.content'));
-
-function canAccessOrgScopedRow(req, organizationId) {
-  if (req.user?.role === ROLES.PLATFORM_ADMIN) return false;
-  const myOrgId = req.user?.organizationId ?? null;
-  return myOrgId != null && Number(myOrgId) === Number(organizationId);
-}
 
 async function getBookOr404(req, res, bookId) {
   const book = await InteractiveBookModel.findById(bookId);
@@ -29,7 +24,7 @@ async function getBookOr404(req, res, bookId) {
     notFoundResponse(res, 'Book not found');
     return null;
   }
-  if (!canAccessOrgScopedRow(req, book.organization_id)) {
+  if (!canAccessInteractiveBook(req.user, book)) {
     forbiddenResponse(res, 'Forbidden');
     return null;
   }
@@ -39,7 +34,7 @@ async function getBookOr404(req, res, bookId) {
 async function getChapterWithBookOr404(req, res, chapterId) {
   const [rows] = await pool.execute(
     `SELECT c.id AS chapter_id, c.book_id, c.title AS chapter_title, c.position AS chapter_position, c.metadata_json AS chapter_metadata_json,
-            b.id AS book_id, b.organization_id, b.title AS book_title
+            b.id AS book_id, b.organization_id, b.created_by_user_id, b.title AS book_title
      FROM interactive_chapters c
      JOIN interactive_books b ON b.id = c.book_id
      WHERE c.id = ?`,
@@ -50,7 +45,7 @@ async function getChapterWithBookOr404(req, res, chapterId) {
     notFoundResponse(res, 'Chapter not found');
     return null;
   }
-  if (!canAccessOrgScopedRow(req, row.organization_id)) {
+  if (!canAccessInteractiveBook(req.user, { organization_id: row.organization_id, created_by_user_id: row.created_by_user_id })) {
     forbiddenResponse(res, 'Forbidden');
     return null;
   }
@@ -61,7 +56,7 @@ async function getBlockWithChapterBookOr404(req, res, blockId) {
   const [rows] = await pool.execute(
     `SELECT bl.id AS block_id, bl.chapter_id, bl.type, bl.content_json, bl.position AS block_position,
             c.book_id,
-            b.organization_id
+            b.organization_id, b.created_by_user_id
      FROM interactive_blocks bl
      JOIN interactive_chapters c ON c.id = bl.chapter_id
      JOIN interactive_books b ON b.id = c.book_id
@@ -73,7 +68,7 @@ async function getBlockWithChapterBookOr404(req, res, blockId) {
     notFoundResponse(res, 'Block not found');
     return null;
   }
-  if (!canAccessOrgScopedRow(req, row.organization_id)) {
+  if (!canAccessInteractiveBook(req.user, { organization_id: row.organization_id, created_by_user_id: row.created_by_user_id })) {
     forbiddenResponse(res, 'Forbidden');
     return null;
   }
@@ -88,7 +83,7 @@ router.get('/books', async (req, res) => {
     const rows =
       req.user?.role === ROLES.PLATFORM_ADMIN
         ? await InteractiveBookModel.findAll()
-        : await InteractiveBookModel.findByOrganizationId(req.user.organizationId);
+        : await InteractiveBookModel.findForViewer(req.user);
     return successResponse(res, rows);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -97,6 +92,9 @@ router.get('/books', async (req, res) => {
 
 router.post('/books', async (req, res) => {
   try {
+    if (req.user?.role === ROLES.MEMBER) {
+      return forbiddenResponse(res, 'Only organization admins can create interactive books');
+    }
     const { title, description = null, metadataJson = null, organizationId } = req.body || {};
     if (!title || !String(title).trim()) return badRequestResponse(res, 'title is required');
 

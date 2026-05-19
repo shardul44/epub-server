@@ -51,7 +51,7 @@ const Skeleton = ({ w = '100%', h = 16, radius = 6 }) => (
 );
 
 /* ── AiConfig page ───────────────────────────────────────────── */
-const AiConfig = () => {
+const AiConfig = ({ embedded = false }) => {
   const [config, setConfig] = useState({
     id: null,
     apiKey: '',
@@ -205,9 +205,10 @@ const AiConfig = () => {
 
   /* ── render ── */
   return (
-    <div className="aic-root">
+    <div className={`aic-root${embedded ? ' aic-root--embedded' : ''}`}>
 
-      {/* ── Page header ── */}
+      {/* ── Page header (hidden when embedded in platform admin Settings) ── */}
+      {!embedded && (
       <header className="aic-page-header">
         <div className="aic-page-header-left">
           <span className="aic-page-icon">
@@ -228,6 +229,22 @@ const AiConfig = () => {
           <RefreshCw size={16} className={loading ? 'aic-spin' : ''} />
         </button>
       </header>
+      )}
+
+      {embedded && (
+        <div className="aic-embedded-toolbar">
+          <button
+            type="button"
+            className="aic-refresh-btn"
+            onClick={loadConfig}
+            disabled={loading}
+            aria-label="Reload configuration"
+            title="Reload"
+          >
+            <RefreshCw size={16} className={loading ? 'aic-spin' : ''} />
+          </button>
+        </div>
+      )}
 
       {/* ── Alerts ── */}
       {error   && <Alert type="error"   onDismiss={() => setError('')}>{error}</Alert>}

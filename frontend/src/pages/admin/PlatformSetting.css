@@ -15,12 +15,12 @@
 }
 
 .pst-inner {
-  max-width: 100%; 
+  max-width: 100%;
   margin: 0 auto;
 }
 
 .pst-head {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .pst-title {
@@ -56,6 +56,54 @@
   border: 1px solid #a7f3d0;
   color: #065f46;
   font-size: 0.875rem;
+}
+
+.pst-ai-slot {
+  width: 100%;
+}
+
+.pst-ai-slot .aic-root--embedded {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 22px 24px 28px;
+  gap: 18px;
+  background: var(--pst-card);
+  border: 1px solid var(--pst-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.pst-tts-slot .container--embedded {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 22px 24px 28px;
+  background: var(--pst-card);
+  border: 1px solid var(--pst-border);
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.pst-tts-slot .container--embedded .card {
+  border: 1px solid var(--pst-border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 18px;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .pst-root {
+    padding: 10px 16px 32px;
+  }
+
+  .pst-ai-slot .aic-root--embedded,
+  .pst-tts-slot .container--embedded {
+    padding: 16px 18px 22px;
+  }
 }
 
 .pst-grid {

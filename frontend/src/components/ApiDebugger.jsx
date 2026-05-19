@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import api, { API_BASE_URL } from '../services/api';
 import { pdfService } from '../services/pdfService';
 import { conversionService } from '../services/conversionService';
+import { useListScope } from '../context/ListScopeContext';
+import { listScopeQueryParams } from '../utils/listScope';
 
 const ApiDebugger = () => {
+  const listScope = useListScope();
+  const scopeParams = listScopeQueryParams(listScope);
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState({});
 
@@ -65,13 +69,16 @@ const ApiDebugger = () => {
     await testEndpoint('health', () => api.get('/health'));
 
     // Test PDFs endpoints
-    await testEndpoint('pdfs-getAll', () => pdfService.getAllPdfs());
-    await testEndpoint('pdfs-raw', () => api.get('/pdfs'));
+    await testEndpoint('pdfs-getAll', () => pdfService.getAllPdfs(scopeParams));
+    await testEndpoint('pdfs-raw', () => api.get('/pdfs', { params: scopeParams }));
 
     // Test conversion endpoints
-    await testEndpoint('conversions-completed', () => conversionService.getConversionsByStatus('COMPLETED'));
-    await testEndpoint('conversions-in-progress', () => conversionService.getConversionsByStatus('IN_PROGRESS'));
-    await testEndpoint('conversions-failed', () => conversionService.getConversionsByStatus('FAILED'));
+    await testEndpoint('conversions-completed', () =>
+      conversionService.getConversionsByStatus('COMPLETED', scopeParams));
+    await testEndpoint('conversions-in-progress', () =>
+      conversionService.getConversionsByStatus('IN_PROGRESS', scopeParams));
+    await testEndpoint('conversions-failed', () =>
+      conversionService.getConversionsByStatus('FAILED', scopeParams));
   };
 
   const renderResult = (endpointName) => {

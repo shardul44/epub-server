@@ -6980,7 +6980,8 @@ ${bodyContent}
       organizationId: job.pdf_organization_id ?? null,
       organizationName: job.organization_name ?? null,
       userEmail: job.user_email ?? null,
-      userName: job.user_name ?? null
+      userName: job.user_name ?? null,
+      createdByName: job.user_name ?? null,
     };
   }
 

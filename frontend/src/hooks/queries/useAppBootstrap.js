@@ -16,6 +16,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/queryKeys';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
 async function fetchBootstrap() {
@@ -25,11 +26,13 @@ async function fetchBootstrap() {
 
 export function useAppBootstrap({ enabled = true } = {}) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
 
   const query = useQuery({
-    queryKey:             queryKeys.appBootstrap(),
+    queryKey:             queryKeys.appBootstrap(userId),
+    enabled:              enabled && userId != null,
     queryFn:              fetchBootstrap,
-    enabled,
     staleTime:            5 * 60 * 1000,  // 5 min — data stays fresh
     gcTime:               10 * 60 * 1000, // 10 min — keep in cache after unmount
     refetchOnWindowFocus: false,
@@ -41,7 +44,7 @@ export function useAppBootstrap({ enabled = true } = {}) {
   const data = query.data ?? {};
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrap() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrapPrefix() });
 
   return {
     // Destructured data slices

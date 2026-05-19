@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { Play, Upload } from 'lucide-react';
 import api from '../services/api';
-import { EPUBCHECK_HISTORY_KEY } from '../utils/epubCheckerMeta';
+import { epubcheckHistoryKey } from '../utils/epubCheckerMeta';
+import { useAuth } from '../context/AuthContext';
 import './AccessibilityWizard.css';
 import './EpubConformanceCheck.css';
 
@@ -165,6 +166,7 @@ const EpubConformanceCheck = ({
   onCheckerUiState,
   onFileUploaded,
 }) => {
+  const { user } = useAuth();
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
   /** 'errors' | 'errors-warnings' | 'full' — used when checkerPageLayout */
@@ -331,7 +333,8 @@ const EpubConformanceCheck = ({
       });
 
       try {
-        const raw = sessionStorage.getItem(EPUBCHECK_HISTORY_KEY);
+        const historyKey = epubcheckHistoryKey(user?.id);
+        const raw = sessionStorage.getItem(historyKey);
         const prev = JSON.parse(raw || '[]');
         const list = Array.isArray(prev) ? prev : [];
         list.unshift({
@@ -342,7 +345,7 @@ const EpubConformanceCheck = ({
           checkerVersion: data.checkerVersion ?? null,
           at: new Date().toISOString(),
         });
-        sessionStorage.setItem(EPUBCHECK_HISTORY_KEY, JSON.stringify(list.slice(0, 40)));
+        sessionStorage.setItem(historyKey, JSON.stringify(list.slice(0, 40)));
       } catch {
         /* ignore quota / private mode */
       }

@@ -3,17 +3,33 @@ export const validateEmail = (email) => {
   return emailRegex.test(email);
 };
 
-export const validatePhoneNumber = (phoneNumber) => {
-  if (phoneNumber == null) return true; // optional
+/**
+ * Normalize optional phone to digits only, or null when empty / clearly not a phone (e.g. email pasted).
+ * @returns {{ value: string|null|undefined, error: string|null }}
+ */
+export const sanitizePhoneField = (phoneNumber) => {
+  if (phoneNumber == null) return { value: undefined, error: null };
   const raw = String(phoneNumber).trim();
-  if (!raw) return true; // optional
+  if (!raw) return { value: null, error: null };
+  if (raw.includes('@')) {
+    return {
+      value: null,
+      error: 'Phone cannot be an email address. Enter 10-15 digits or leave blank.',
+    };
+  }
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) {
+    return { value: null, error: 'Phone number must be 10-15 digits' };
+  }
+  if (digits.length < 10 || digits.length > 15) {
+    return { value: null, error: 'Phone number must be 10-15 digits' };
+  }
+  return { value: digits, error: null };
+};
 
-  // Numeric only (digits). Optional field, but if present it must be 10-15 digits.
-  // (E.164 typically maxes at 15 digits; we intentionally disallow '+'.)
-  const numericOnly = /^[0-9]{10,15}$/;
-  if (!numericOnly.test(raw)) return false;
-
-  return true;
+export const validatePhoneNumber = (phoneNumber) => {
+  const { error } = sanitizePhoneField(phoneNumber);
+  return !error;
 };
 
 export const validatePassword = (password) => {
@@ -42,10 +58,12 @@ export const validateUserDTO = (userDTO) => {
     errors.push('Password must be at least 6 characters and include letters and numbers');
   }
 
-  // phoneNumber is optional, but if provided it must be valid.
+  const phoneKey = userDTO.phoneNumber !== undefined ? 'phoneNumber' : 'phone_number';
   const phone = userDTO.phoneNumber ?? userDTO.phone_number;
-  if (!validatePhoneNumber(phone)) {
-    errors.push('Phone number must be 10-15 digits (optionally starting with +)');
+  if (phone !== undefined && phone !== null && String(phone).trim() !== '') {
+    const sanitized = sanitizePhoneField(phone);
+    if (sanitized.error) errors.push(sanitized.error);
+    else userDTO[phoneKey] = sanitized.value;
   }
 
   return {
@@ -75,9 +93,16 @@ export const validateUserUpdateDTO = (userDTO) => {
     }
   }
 
+  const phoneKey = userDTO.phoneNumber !== undefined ? 'phoneNumber' : 'phone_number';
   const phone = userDTO.phoneNumber ?? userDTO.phone_number;
-  if (phone !== undefined && phone !== null && String(phone).trim() !== '' && !validatePhoneNumber(phone)) {
-    errors.push('Phone number must be 10-15 digits');
+  if (phone !== undefined) {
+    if (phone === null || String(phone).trim() === '') {
+      userDTO[phoneKey] = null;
+    } else {
+      const sanitized = sanitizePhoneField(phone);
+      if (sanitized.error) errors.push(sanitized.error);
+      else userDTO[phoneKey] = sanitized.value;
+    }
   }
 
   return {

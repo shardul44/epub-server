@@ -108,7 +108,7 @@ export default function UsersManagement() {
 
   const invalidateAll = async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrap() });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrapPrefix() });
   };
 
   const createMutation = useMutation({

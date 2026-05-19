@@ -1,19 +1,13 @@
 /**
  * useMediaActions — encapsulates all media asset mutations.
- *
- * Extracts upload / delete / download logic from MediaLibrary.jsx
- * so the page component only handles rendering.
- *
- * Uses:
- *   - Redux dispatch for UI state (uploadError, showUpload)
- *   - useMediaAssetsQuery.refresh() to invalidate the shared cache
- *   - useQueryClient for optimistic delete
  */
 
 import { useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { queryKeys } from '../lib/queryKeys';
+import { useListScope } from '../context/ListScopeContext';
+import { removeMediaFromListCache } from '../lib/syncMediaCaches';
 import { useMediaAssetsQuery } from './queries/useMediaAssetsQuery';
 import useAppDispatch from './useAppDispatch';
 import {
@@ -23,11 +17,11 @@ import {
 } from '../features/mediaLibrary/mediaLibrarySlice';
 
 export function useMediaActions() {
-  const dispatch     = useAppDispatch();
-  const queryClient  = useQueryClient();
-  const { refresh }  = useMediaAssetsQuery({ enabled: false }); // don't auto-fetch here
+  const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
+  const listScope = useListScope();
+  const { refresh } = useMediaAssetsQuery({ enabled: false });
 
-  /* ── Upload ── */
   const handleUpload = useCallback(async (files) => {
     dispatch(clearUploadError());
     try {
@@ -50,31 +44,25 @@ export function useMediaActions() {
     }
   }, [dispatch, refresh]);
 
-  /* ── Delete ── */
   const handleDelete = useCallback(async (asset) => {
     dispatch(clearUploadError());
     try {
       await api.delete(`/media/${asset.id}`);
-      // Optimistic update — remove from cache immediately
-      queryClient.setQueryData(queryKeys.media.list(), (prev) =>
-        Array.isArray(prev) ? prev.filter((a) => a.id !== asset.id) : prev
-      );
-      // Then invalidate so next navigation gets fresh data
-      queryClient.invalidateQueries({ queryKey: queryKeys.media.list() });
+      removeMediaFromListCache(queryClient, listScope, asset.id);
+      queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
     } catch (err) {
       dispatch(setUploadError(err.message || 'Failed to delete asset'));
     }
-  }, [dispatch, queryClient]);
+  }, [dispatch, queryClient, listScope]);
 
-  /* ── Download ── */
   const handleDownload = useCallback((asset) => {
     const url = asset.url || asset.thumbnailUrl;
     if (!url) return;
     const a = document.createElement('a');
-    a.href     = url;
+    a.href = url;
     a.download = asset.filename || asset.name || 'asset';
-    a.target   = '_blank';
-    a.rel      = 'noreferrer';
+    a.target = '_blank';
+    a.rel = 'noreferrer';
     a.click();
   }, []);
 

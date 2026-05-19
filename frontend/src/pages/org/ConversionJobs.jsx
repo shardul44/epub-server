@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Mic2,
 } from 'lucide-react';
+import { useListScope } from '../../context/ListScopeContext';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import { useConversionActions, resolveJobType, isFixedLayout } from '../../hooks/useConversionActions';
 import useAppDispatch from '../../hooks/useAppDispatch';
@@ -229,6 +230,7 @@ const ConversionJobs = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const listScope = useListScope();
 
   // ── Redux UI state ────────────────────────────────────────────
   const focusedJobId   = useAppSelector(selectFocusedJobId);
@@ -390,7 +392,9 @@ const ConversionJobs = () => {
 
         {/* ── Job list ── */}
         <div className="cj-list-header">
-          <span className="cj-list-label">ALL JOBS · {jobs.length}</span>
+          <span className="cj-list-label">
+            {listScope === 'own' ? 'YOUR JOBS' : 'ALL JOBS'} · {jobs.length}
+          </span>
           {loading && <span className="cj-refreshing">Refreshing…</span>}
         </div>
 

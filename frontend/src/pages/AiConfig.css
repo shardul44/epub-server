@@ -13,6 +13,19 @@
   gap: 20px;
 }
 
+.aic-root--embedded {
+  max-width: none;
+  margin: 0;
+  padding: 14px 18px 20px;
+  gap: 14px;
+}
+
+.aic-embedded-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
 /* ── Page header ──────────────────────────────────────────────── */
 .aic-page-header {
   display: flex;

@@ -9,6 +9,7 @@ import { useMemo, memo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, FileText, Layers, Image, ChevronRight } from 'lucide-react';
 import WorkflowStepper from '../../components/WorkflowStepper';
+import { useListScope } from '../../context/ListScopeContext';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import { isFixedLayout, useWorkflowNavigation } from '../../hooks/useWorkflowNavigation';
 import PdfThumbnail from '../../components/PdfThumbnail';
@@ -123,7 +124,7 @@ const IfePdfThumb = memo(function IfePdfThumb({ pdfId }) {
 });
 
 /* ─── Job selector grid ───────────────────────────────────────── */
-const JobSelector = ({ jobs, onSelect, loading }) => {
+const JobSelector = ({ jobs, onSelect, loading, listScope }) => {
   const [tab, setTab] = useState('FXL');
 
   const fxlJobs    = jobs.filter(j => isFixedLayout(j));
@@ -135,7 +136,9 @@ const JobSelector = ({ jobs, onSelect, loading }) => {
       <div className="ife-selector-header">
         <h2 className="ife-selector-title">Image Editor &amp; FXL Studio</h2>
         <p className="ife-selector-sub">
-          Select a completed FXL job to view zones overlaid on the PDF.
+          {listScope === 'own'
+            ? 'Select one of your completed jobs to view zones overlaid on the PDF.'
+            : 'Select a completed FXL job to view zones overlaid on the PDF.'}{' '}
           Reflow jobs are also available but do not have zone data.
         </p>
       </div>
@@ -337,6 +340,7 @@ const JobSelector = ({ jobs, onSelect, loading }) => {
 const ImageFxlEditor = () => {
   const navigate = useNavigate();
   const { goToEditor } = useWorkflowNavigation();
+  const listScope = useListScope();
 
   const { jobs: allJobs, isLoading: jobsLoading } = useConversionsQuery({
     statusFilter: 'COMPLETED',
@@ -361,7 +365,7 @@ const ImageFxlEditor = () => {
 
       <WorkflowStepper activeStep={1} jobId={null} onStepClick={(s) => navigate(s.path)} />
 
-      <JobSelector jobs={allJobs} onSelect={handleSelect} loading={jobsLoading} />
+      <JobSelector jobs={allJobs} onSelect={handleSelect} loading={jobsLoading} listScope={listScope} />
     </div>
   );
 };

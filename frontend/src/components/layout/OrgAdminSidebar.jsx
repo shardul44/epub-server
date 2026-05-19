@@ -203,8 +203,8 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
         path.startsWith('/fxl-sync-studio'),
       convDownload:   path.startsWith('/conversions/download'),
       exports:        path.startsWith('/exports'),
-      mediaLibrary:   path.startsWith('/org/media-library'),
-      usage:          path.startsWith('/org/usage'),
+      mediaLibrary:   path.startsWith('/media-library'),
+      usage:          path.startsWith('/usage'),
       accessibility:  path.startsWith('/accessibility'),
       epubChecker:    path.startsWith('/epub-checker'),
       interactive:    path.startsWith('/interactive'),
@@ -322,13 +322,13 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
             isActive={active.exports}
           />
           <NavRow
-            to="/org/media-library"
+            to="/media-library"
             icon={FolderOpen}
             label="Media Library"
             isActive={active.mediaLibrary}
           />
           <NavRow
-            to="/org/usage"
+            to="/usage"
             icon={Gauge}
             label="Usage"
             isActive={active.usage}

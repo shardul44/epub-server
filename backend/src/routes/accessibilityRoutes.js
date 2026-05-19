@@ -7,7 +7,13 @@ import { exec } from 'child_process';
 import puppeteer from 'puppeteer';
 import AdmZip from 'adm-zip';
 import mimeTypes from 'mime-types';
-import { successResponse, errorResponse, badRequestResponse } from '../utils/responseHandler.js';
+import {
+  successResponse,
+  errorResponse,
+  badRequestResponse,
+  forbiddenResponse,
+} from '../utils/responseHandler.js';
+import { canAccessAccessibilityJob } from '../utils/tenantScope.js';
 import { RemedyEngine } from '../utils/RemedyEngine.js';
 import { AiRemediationService } from '../services/AiRemediationService.js';
 import { fileURLToPath } from 'url';
@@ -95,6 +101,27 @@ const getAceCommand = (reportDir, epubPath) => {
 
   return `npx @daisy/ace --no-sandbox -o "${reportDir}" "${epubPath}"`;
 };
+
+async function loadJobContext(jobId) {
+  const reportDir = path.join(reportsRoot, jobId);
+  const epubPathFile = path.join(reportDir, 'epubPath.json');
+  if (!(await fs.pathExists(epubPathFile))) return null;
+  const meta = await fs.readJson(epubPathFile);
+  return { reportDir, meta, epubPath: meta.epubPath };
+}
+
+async function requireJobAccess(req, res, jobId) {
+  const ctx = await loadJobContext(jobId);
+  if (!ctx) {
+    errorResponse(res, 'Job not found or has expired.', 404);
+    return null;
+  }
+  if (!canAccessAccessibilityJob(req.user, ctx.meta)) {
+    forbiddenResponse(res, 'You do not have permission to access this job');
+    return null;
+  }
+  return ctx;
+}
 
 const getAceExecCommand = (reportDir, epubPath) => {
   const base = getAceCommand(reportDir, epubPath);
@@ -201,7 +228,11 @@ router.post('/check', upload.single('file'), async (req, res) => {
 
     // Persist epubPath so later remediation/re-validation requests can re-run Ace.
     const epubPathFile = path.join(reportDir, 'epubPath.json');
-    await fs.writeJson(epubPathFile, { epubPath });
+    await fs.writeJson(epubPathFile, {
+      epubPath,
+      userId: req.user.id,
+      organizationId: req.user.organizationId ?? null,
+    });
 
     // Preflight: apply best-effort malformed EPUB normalization before the first Ace run.
     // This reduces cases where Ace can't load one or more content documents.
@@ -370,7 +401,9 @@ router.post('/check', upload.single('file'), async (req, res) => {
 router.get('/report/:jobId/pdf', async (req, res) => {
   try {
     const { jobId } = req.params;
-    const reportDir = path.join(reportsRoot, jobId);
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const reportDir = jobCtx.reportDir;
     const htmlPath = path.join(reportDir, 'report.html');
 
     if (!(await fs.pathExists(htmlPath))) {
@@ -475,7 +508,9 @@ router.get('/report/:jobId/pdf', async (req, res) => {
 router.get('/report/:jobId/json', async (req, res) => {
   try {
     const { jobId } = req.params;
-    const reportDir = path.join(reportsRoot, jobId);
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const reportDir = jobCtx.reportDir;
     const reportJsonPath = path.join(reportDir, 'report.json');
 
     if (!(await fs.pathExists(reportJsonPath))) {
@@ -529,13 +564,9 @@ router.get('/:jobId/image', async (req, res) => {
       return badRequestResponse(res, '`src` query parameter is required');
     }
 
-    const reportDir = path.join(reportsRoot, jobId);
-    const epubPathFile = path.join(reportDir, 'epubPath.json');
-    if (!(await fs.pathExists(epubPathFile))) {
-      return errorResponse(res, 'EPUB not found for this job.', 404);
-    }
-
-    const { epubPath } = await fs.readJson(epubPathFile);
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const epubPath = jobCtx.epubPath;
     if (!epubPath || !(await fs.pathExists(epubPath))) {
       return errorResponse(res, 'EPUB not found on disk.', 404);
     }
@@ -571,13 +602,9 @@ router.get('/:jobId/image', async (req, res) => {
 router.get('/:jobId/download-epub', async (req, res) => {
   try {
     const { jobId } = req.params;
-    const reportDir = path.join(reportsRoot, jobId);
-    const epubPathFile = path.join(reportDir, 'epubPath.json');
-    if (!(await fs.pathExists(epubPathFile))) {
-      return errorResponse(res, 'EPUB not found for this job.', 404);
-    }
-
-    const { epubPath } = await fs.readJson(epubPathFile);
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const epubPath = jobCtx.epubPath;
     if (!epubPath || !(await fs.pathExists(epubPath))) {
       return errorResponse(res, 'EPUB not found on disk.', 404);
     }
@@ -597,13 +624,10 @@ router.post('/:jobId/remediate', async (req, res) => {
     const { jobId } = req.params;
     const { imageAltUpdates, headingLevelUpdates, approvedCodeRepairs } = req.body || {};
 
-    const reportDir = path.join(reportsRoot, jobId);
-    const epubPathFile = path.join(reportDir, 'epubPath.json');
-    if (!(await fs.pathExists(epubPathFile))) {
-      return errorResponse(res, 'EPUB not found for this job.', 404);
-    }
-
-    const { epubPath } = await fs.readJson(epubPathFile);
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const reportDir = jobCtx.reportDir;
+    const epubPath = jobCtx.epubPath;
     if (!epubPath || !(await fs.pathExists(epubPath))) {
       return errorResponse(res, 'EPUB not found on disk.', 404);
     }
@@ -758,14 +782,11 @@ router.post('/:jobId/remediate', async (req, res) => {
 router.post('/:jobId/recheck', async (req, res) => {
   try {
     const { jobId } = req.params;
-    const reportDir = path.join(reportsRoot, jobId);
-    const epubPathFile = path.join(reportDir, 'epubPath.json');
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const reportDir = jobCtx.reportDir;
+    const epubPath = jobCtx.epubPath;
     const reportJsonPath = path.join(reportDir, 'report.json');
-
-    if (!(await fs.pathExists(epubPathFile))) {
-      return errorResponse(res, 'EPUB not found for this job.', 404);
-    }
-    const { epubPath } = await fs.readJson(epubPathFile);
     if (!epubPath || !(await fs.pathExists(epubPath))) {
       return errorResponse(res, 'EPUB not found on disk.', 404);
     }
@@ -881,19 +902,17 @@ router.post('/:jobId/ai/suggest', async (req, res) => {
 
   try {
     const { jobId } = req.params;
-    const reportDir = path.join(reportsRoot, jobId);
+    const jobCtx = await requireJobAccess(req, res, jobId);
+    if (!jobCtx) return;
+    const reportDir = jobCtx.reportDir;
     const reportJsonPath = path.join(reportDir, 'report.json');
-    const epubPathFile = path.join(reportDir, 'epubPath.json');
 
     if (!(await fs.pathExists(reportJsonPath))) {
       return errorResponse(res, 'Report not found or has expired.', 404);
     }
-    if (!(await fs.pathExists(epubPathFile))) {
-      return errorResponse(res, 'EPUB not found for this job.', 404);
-    }
 
     const reportJson = await fs.readJson(reportJsonPath);
-    const { epubPath } = await fs.readJson(epubPathFile);
+    const epubPath = jobCtx.epubPath;
     if (!epubPath || !(await fs.pathExists(epubPath))) {
       return errorResponse(res, 'EPUB not found on disk.', 404);
     }

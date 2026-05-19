@@ -8,7 +8,8 @@
 
 export const queryKeys = {
   // ── App Bootstrap (bundled: media + license + activities + users + health) ──
-  appBootstrap: () => ['app-bootstrap'],
+  appBootstrap: (userId) => ['app-bootstrap', userId ?? 'anon'],
+  appBootstrapPrefix: () => ['app-bootstrap'],
 
   // ── Conversions (jobs) ─────────────────────────────────────────
   // All consumers MUST use conversions.list() as their queryKey.
@@ -58,7 +59,19 @@ export const queryKeys = {
   // ── Media Assets ──────────────────────────────────────────────
   media: {
     all:  () => ['media'],
-    list: () => ['media', 'list'],
+    list: (scope = 'org') => ['media', 'list', scope],
+  },
+
+  // ── Activity feed ─────────────────────────────────────────────
+  activities: {
+    all:  () => ['activities'],
+    list: (scope = 'org') => ['activities', 'list', scope],
+  },
+
+  // ── Interactive books ───────────────────────────────────────────
+  interactive: {
+    all:  () => ['interactive'],
+    list: (scope = 'org') => ['interactive', 'list', scope],
   },
 
   // ── Platform admin directory ───────────────────────────────────

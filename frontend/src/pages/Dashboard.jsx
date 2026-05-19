@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useListScope } from '../context/ListScopeContext';
 import { useConversionsQuery } from '../hooks/queries/useConversionsQuery';
+import { hasFeature } from '../utils/features';
 import OrgDashboard from './org/OrgDashboard';
 import AdminDashboard from './admin/AdminDashboard';
 import UserDashboard from './user/UserDashboard';
@@ -15,7 +16,7 @@ const Dashboard = () => {
   const isOrgOrPlatform = user?.role === 'org_admin' || user?.role === 'platform_admin';
 
   useConversionsQuery({
-    enabled: !isOrgOrPlatform && !!user,
+    enabled: !isOrgOrPlatform && !!user && hasFeature(user, 'conversion.basic'),
     scope: listScope,
   });
 

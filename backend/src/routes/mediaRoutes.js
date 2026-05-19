@@ -1,6 +1,6 @@
 /**
  * Media Library routes
- * GET    /media          — list assets for the authenticated user's org
+ * GET    /media          — list assets (member: own uploads; org_admin: org library)
  * POST   /media/upload   — upload a new asset
  * DELETE /media/:id      — delete an asset
  */
@@ -19,6 +19,7 @@ import {
   badRequestResponse,
   forbiddenResponse,
 } from '../utils/responseHandler.js';
+import { canAccessMediaAsset, mediaAssetWhereClause } from '../utils/tenantScope.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -81,27 +82,14 @@ function toDto(row, req) {
 /* ─────────────────────────────────────────────────────────────── */
 router.get('/', async (req, res) => {
   try {
-    const orgId  = req.user.organizationId ?? null;
-    const userId = req.user.id;
-
-    let rows;
-    if (orgId) {
-      [rows] = await pool.execute(
-        `SELECT * FROM media_assets
-         WHERE organization_id = ?
-         ORDER BY created_at DESC
-         LIMIT 500`,
-        [orgId]
-      );
-    } else {
-      [rows] = await pool.execute(
-        `SELECT * FROM media_assets
-         WHERE user_id = ?
-         ORDER BY created_at DESC
-         LIMIT 500`,
-        [userId]
-      );
-    }
+    const w = mediaAssetWhereClause(req.user);
+    const [rows] = await pool.execute(
+      `SELECT * FROM media_assets
+       WHERE ${w.sql}
+       ORDER BY created_at DESC
+       LIMIT 500`,
+      w.params
+    );
 
     return successResponse(res, rows.map((r) => toDto(r, req)));
   } catch (err) {
@@ -214,9 +202,7 @@ router.post('/upload', async (req, res) => {
 /* DELETE /media/:id                                                */
 /* ─────────────────────────────────────────────────────────────── */
 router.delete('/:id', async (req, res) => {
-  const id     = parseInt(req.params.id, 10);
-  const orgId  = req.user.organizationId ?? null;
-  const userId = req.user.id;
+  const id = parseInt(req.params.id, 10);
 
   if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
 
@@ -229,10 +215,7 @@ router.delete('/:id', async (req, res) => {
 
     const asset = rows[0];
 
-    // Ownership check: must belong to same org (or same user if no org)
-    const ownedByOrg  = orgId  && asset.organization_id === orgId;
-    const ownedByUser = !orgId && asset.user_id === userId;
-    if (!ownedByOrg && !ownedByUser) {
+    if (!canAccessMediaAsset(req.user, asset)) {
       return forbiddenResponse(res, 'You do not have permission to delete this asset');
     }
 

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useListScope } from '../../context/ListScopeContext';
+import { hasFeature } from '../../utils/features';
 import { useDashboardQuery } from '../../hooks/queries/useDashboardQuery';
 import { usePdfsQuery } from '../../hooks/queries/usePdfsQuery';
 import { conversionService } from '../../services/conversionService';
@@ -105,7 +106,19 @@ const CHART_DAY_SHORT = {
 export default function UserDashboard() {
   const { user } = useAuth();
   const listScope = useListScope();
-  const { pdfs, isLoading: pdfsLoading } = usePdfsQuery({ enabled: !!user, scope: listScope });
+
+  const showConversion = hasFeature(user, 'conversion.basic');
+  const showKitaboo = hasFeature(user, 'kitaboo.import');
+  const showSyncStudio = hasFeature(user, 'sync_studio');
+  const showEpubTools = hasFeature(user, 'epub_tools');
+  const showAccessibility = hasFeature(user, 'accessibility_tools');
+  const showAi = hasFeature(user, 'ai_config');
+  const showInteractive = hasFeature(user, 'interactive.content');
+
+  const { pdfs, isLoading: pdfsLoading } = usePdfsQuery({
+    enabled: !!user && showConversion,
+    scope: listScope,
+  });
 
   const {
     stats,
@@ -117,7 +130,7 @@ export default function UserDashboard() {
     isRefreshing: refreshing,
     refetch: loadData,
   } = useDashboardQuery({
-    enabled: !!user,
+    enabled: !!user && showConversion,
     includeTeamUsers: false,
     scope: listScope,
   });
@@ -127,17 +140,18 @@ export default function UserDashboard() {
   const aiConfigQuery = useQuery({
     queryKey: ['user-dashboard', 'ai-config'],
     queryFn: () => aiConfigService.getCurrentConfig(),
-    enabled: Boolean(user),
+    enabled: Boolean(user) && showAi,
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-  const loading = dashLoading || pdfsLoading;
+  const loading = showConversion && (dashLoading || pdfsLoading);
 
   const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
   const orgName =
     user?.organizationName || user?.organization?.name || 'Your organization';
-  const planName = user?.planName || user?.plan || 'Pro';
+  const planName =
+    user?.license?.planName || user?.planName || user?.plan || 'Your plan';
 
   const queuedCount = useMemo(
     () => stats.totalConversions > 0 ? recentJobs.filter((j) => j.status === 'QUEUED').length : 0,
@@ -271,6 +285,8 @@ export default function UserDashboard() {
         </div>
         <div className="ds-topnav-right ud-page-header-actions">
           <span className="ud-page-header-divider" aria-hidden="true" />
+          {showConversion && (
+          <>
           <Link
             to="/conversions"
             className="ud-icon-btn"
@@ -291,6 +307,8 @@ export default function UserDashboard() {
             <span className="ds-navbar-btn-plus">+</span>
             New conversion
           </Link>
+          </>
+          )}
         </div>
       </nav>
 
@@ -306,22 +324,46 @@ export default function UserDashboard() {
           <h1 className="ud-hero-title">
             Good to see you, {firstName}
           </h1>
-          <p className="ud-hero-desc">
-            You have <strong>{activeJobs}</strong> active job{activeJobs !== 1 ? 's' : ''} and{' '}
-            <strong>{queuedCount}</strong> queued across <strong>{pdfList.length}</strong> PDF
-            {pdfList.length !== 1 ? 's' : ''} in your library. Pick up where you left off or start a new conversion.
-          </p>
+          {showConversion ? (
+            <p className="ud-hero-desc">
+              You have <strong>{activeJobs}</strong> active job{activeJobs !== 1 ? 's' : ''} and{' '}
+              <strong>{queuedCount}</strong> queued across <strong>{pdfList.length}</strong> PDF
+              {pdfList.length !== 1 ? 's' : ''} in your library. Pick up where you left off or start a new conversion.
+            </p>
+          ) : (
+            <p className="ud-hero-desc">
+              Your organization is on the <strong>{planName}</strong> plan. Open only the tools
+              included with your plan from the sidebar.
+            </p>
+          )}
           <div className="ud-hero-actions">
-            <Link to="/conversions" className="ud-btn ud-btn--solid">
-              Resume work
-              <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
-            </Link>
-            <Link to="/pdfs" className="ud-btn ud-btn--ghost">
-              <FileText size={16} strokeWidth={2} aria-hidden />
-              Browse PDFs
-            </Link>
+            {showConversion && (
+              <>
+                <Link to="/conversions" className="ud-btn ud-btn--solid">
+                  Resume work
+                  <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
+                </Link>
+                <Link to="/pdfs" className="ud-btn ud-btn--ghost">
+                  <FileText size={16} strokeWidth={2} aria-hidden />
+                  Browse PDFs
+                </Link>
+              </>
+            )}
+            {!showConversion && (
+              <>
+                <Link to="/usage" className="ud-btn ud-btn--solid">
+                  View usage
+                  <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
+                </Link>
+                <Link to="/activity" className="ud-btn ud-btn--ghost">
+                  <BarChart2 size={16} strokeWidth={2} aria-hidden />
+                  Activity
+                </Link>
+              </>
+            )}
           </div>
         </div>
+        {showConversion && (
         <div className="ud-hero-stats" aria-label="Quick stats">
           {loading ? (
             [1, 2, 3, 4].map((k) => (
@@ -383,8 +425,11 @@ export default function UserDashboard() {
             </>
           )}
         </div>
+        )}
       </section>
 
+      {showConversion && (
+      <>
       {/* Your workspace (scoped to logged-in member) */}
       <section className="ud-strip">
         <div>
@@ -651,48 +696,63 @@ export default function UserDashboard() {
             </div>
             <p className="ud-card-sub">Jump into common workflows</p>
             <div className="ud-qa-grid">
+              {showConversion && (
               <Link to="/pdfs/upload" className="ud-qa-item">
                 <span className="ud-qa-icon" aria-hidden>
                   <CloudUpload size={20} strokeWidth={2} />
                 </span>
                 Upload PDF
               </Link>
+              )}
+              {showKitaboo && (
               <Link to="/conversions/fxl-editor" className="ud-qa-item">
                 <span className="ud-qa-icon" aria-hidden>
                   <Image size={20} strokeWidth={2} />
                 </span>
-                Image Editor
+                FXL Editor
               </Link>
+              )}
+              {showSyncStudio && (
               <Link to="/conversions/audio-sync" className="ud-qa-item">
                 <span className="ud-qa-icon" aria-hidden>
                   <Music size={20} strokeWidth={2} />
                 </span>
                 Audio Sync
               </Link>
+              )}
+              {showConversion && (
               <Link to="/conversions/download" className="ud-qa-item">
                 <span className="ud-qa-icon" aria-hidden>
                   <Download size={20} strokeWidth={2} />
                 </span>
                 Download EPUB
               </Link>
+              )}
+              {showEpubTools && (
               <Link to="/epub-checker" className="ud-qa-item">
                 <span className="ud-qa-icon" aria-hidden>
                   <ShieldCheck size={20} strokeWidth={2} />
                 </span>
                 EPUB Checker
               </Link>
+              )}
+              {showAccessibility && (
               <Link to="/accessibility" className="ud-qa-item">
                 <span className="ud-qa-icon" aria-hidden>
                   <Accessibility size={20} strokeWidth={2} />
                 </span>
                 Accessibility
               </Link>
+              )}
             </div>
           </div>
         </aside>
       </div>
+      </>
+      )}
 
       {/* Insights grid — dynamic from jobs, throughput, credits, PDFs, AI config */}
+      {showConversion && (
       <section className="ud-insights" aria-label="Dashboard insights">
         <div className="ud-insights-grid">
           {/* 1 — Needs attention */}
@@ -959,6 +1019,7 @@ export default function UserDashboard() {
           </article>
 
           {/* 6 — AI config */}
+          {showAi && (
           <article className="ud-insight-card">
             <div className="ud-insight-head">
               <div className="ud-insight-head-left">
@@ -1008,8 +1069,11 @@ export default function UserDashboard() {
               </Link>
             </div>
           </article>
+          )}
         </div>
       </section>
+      )}
+
       </div>
       </MainContent>
     </div>

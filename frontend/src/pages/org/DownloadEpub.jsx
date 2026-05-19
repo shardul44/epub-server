@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { conversionApi, kitabooApi } from '../../api';
+import { useListScope } from '../../context/ListScopeContext';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import useAppDispatch from '../../hooks/useAppDispatch';
 import useAppSelector from '../../hooks/useAppSelector';
@@ -132,6 +133,7 @@ const DownloadEpub = () => {
   const location = useLocation();
   const params = useParams();
   const dispatch = useAppDispatch();
+  const listScope = useListScope();
   const { goToAudioSync } = useWorkflowNavigation();
 
   // jobId priority: URL param → navigation state → Redux state
@@ -280,7 +282,11 @@ const DownloadEpub = () => {
       {!job ? (
         <div className="de-empty">
           <FileText size={40} />
-          <p>No completed jobs available for download.</p>
+          <p>
+            {listScope === 'own'
+              ? 'You have no completed jobs ready for download yet.'
+              : 'No completed jobs available for download.'}
+          </p>
           <button
             className="de-btn de-btn-primary"
             style={{ width: 'auto', marginTop: 8 }}

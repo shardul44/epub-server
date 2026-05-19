@@ -1,14 +1,13 @@
 /**
  * useMediaAssetsQuery — single source of truth for media assets.
  *
- * Fetches GET /media and caches under queryKeys.media.list().
- * All consumers share the same cache entry — no duplicate requests.
- *
- * @returns {{ assets, isLoading, error, refresh, invalidate }}
+ * Scope from useListScope(): members see own uploads; org_admin sees org library.
+ * Cache key: ['media', 'list', scope]
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/queryKeys';
+import { useListScope } from '../../context/ListScopeContext';
 import api from '../../services/api';
 
 async function fetchMediaAssets() {
@@ -17,27 +16,34 @@ async function fetchMediaAssets() {
   return Array.isArray(data) ? data : [];
 }
 
-export function useMediaAssetsQuery({ enabled = true } = {}) {
+/**
+ * @param {{ enabled?: boolean, scope?: 'own'|'org' }} [options]
+ */
+export function useMediaAssetsQuery({ enabled = true, scope: scopeOverride } = {}) {
   const queryClient = useQueryClient();
+  const contextScope = useListScope();
+  const scope = scopeOverride ?? contextScope;
+  const listKey = queryKeys.media.list(scope);
 
   const query = useQuery({
-    queryKey:             queryKeys.media.list(),
-    queryFn:              fetchMediaAssets,
+    queryKey: listKey,
+    queryFn: fetchMediaAssets,
     enabled,
-    staleTime:            5 * 60 * 1000,  // 5 min — media changes infrequently
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnReconnect:   false,
-    refetchOnMount:       true,
+    refetchOnReconnect: false,
+    refetchOnMount: true,
   });
 
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.media.list() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.media.all() });
 
   return {
-    assets:    query.data ?? [],
+    assets: query.data ?? [],
+    scope,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
-    error:     query.error?.message ?? '',
+    error: query.error?.message ?? '',
     refresh,
   };
 }
