@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setWorkflow } from '../features/conversionWorkflow/conversionWorkflowSlice';
 import { setSelectedJobId as setDownloadJobId } from '../features/downloadEpub/downloadEpubSlice';
+import { conversionJobListKey } from '../utils/conversionJobKey';
 import { setSelectedJobId as setAudioJobId }    from '../features/audioSync/audioSyncSlice';
 
 /* ─── Pure helpers (no hooks — safe to import anywhere) ──────── */
@@ -117,7 +118,7 @@ export function useWorkflowNavigation() {
     const layoutType = job.layoutType ?? (conversionType === 'FXL' ? 'FIXED_LAYOUT' : 'REFLOWABLE');
 
     dispatch(setWorkflow({ pdfId, jobId, conversionType, layoutType }));
-    dispatch(setDownloadJobId(String(jobId)));
+    dispatch(setDownloadJobId(conversionJobListKey(job)));
     navigate(downloadPath(jobId));
   }, [navigate, dispatch]);
 

@@ -484,6 +484,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             in_word = False
             prev_line_bottom = None
             prev_line_max_size = None
+            prev_line_text = ""
             for block in raw_blocks:
                 if block.get("type") != 0 or "lines" not in block:
                     continue
@@ -513,15 +514,24 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     full_line_text = "".join(line_chars)
                     full_line_word_count = len(full_line_text.strip().split())
                     line_max_size = max(line_sizes) if line_sizes else 12
-                    # New sentence when a line is far below the previous (image / layout gap) or font size jumps (heading vs body).
+                    # New sentence on paragraph breaks (large gap / heading) — not normal wrapped lines.
                     if prev_line_bottom is not None and line_y0 is not None and full_line_text.strip():
                         gap = line_y0 - prev_line_bottom
-                        gap_thresh = max(prev_line_max_size or 12, line_max_size, 12) * 1.05
-                        if gap > gap_thresh:
+                        base_size = max(prev_line_max_size or 12, line_max_size, 12)
+                        gap_thresh = base_size * 1.75
+                        prev_stripped = (prev_line_text or "").strip()
+                        cur_stripped = full_line_text.strip()
+                        prev_ended = bool(prev_stripped) and prev_stripped[-1] in ".?!"
+                        continuation = (
+                            cur_stripped
+                            and cur_stripped[0].islower()
+                            and not prev_ended
+                        )
+                        if gap > gap_thresh and not continuation:
                             sentence_id += 1
-                        elif prev_line_max_size and line_max_size:
+                        elif prev_line_max_size and line_max_size and not continuation:
                             ratio = line_max_size / prev_line_max_size
-                            if ratio >= 1.22 or ratio <= 0.82:
+                            if ratio >= 1.28 or ratio <= 0.78:
                                 sentence_id += 1
 
                     for span in line["spans"]:
@@ -607,6 +617,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     if line_y1 is not None:
                         prev_line_bottom = line_y1
                         prev_line_max_size = line_max_size
+                        prev_line_text = full_line_text
         elif extraction_level == "word":
             # Word-level: use get_text("words") and attach font/size from overlapping span in dict
             extracted_items = []

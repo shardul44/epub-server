@@ -64,7 +64,7 @@ const HealthCheck = ({ showDetails = false }) => {
         intervalRef.current = null;
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — run once on mount
+  }, []);  
 
   const getStatusColor = (status) => {
     switch (status) {

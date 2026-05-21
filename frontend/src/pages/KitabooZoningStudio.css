@@ -198,15 +198,35 @@
   min-height: 0;
 }
 
-.kitaboo-pages-sidebar h3 {
+.kitaboo-pages-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border-bottom: 1px solid var(--kz-border);
+  flex-shrink: 0;
+}
+
+.kitaboo-pages-sidebar-header h3 {
   margin: 0;
-  padding: 12px 10px 10px;
+  padding: 0;
   font-size: 10px;
   font-weight: 700;
   color: var(--kz-muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  border-bottom: 1px solid var(--kz-border);
+}
+
+.kitaboo-pages-pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.kitaboo-pages-pager .kz-pager-label {
+  font-size: 11px;
 }
 
 .kitaboo-pages-list {
@@ -298,19 +318,6 @@
   flex-shrink: 0;
   gap: 8px;
   overflow-x: auto;
-}
-
-.kz-toolbar-pager {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.kz-toolbar-pager--sidebar {
-  padding: 8px;
-  border-top: 1px solid var(--kz-border);
-  justify-content: center;
 }
 
 .kz-pager-btn {
@@ -710,6 +717,19 @@
   color: var(--kz-muted);
 }
 
+.word-style-btn {
+  border: 1px solid var(--kz-border);
+  border-radius: 6px;
+  background: var(--kz-white);
+  color: var(--kz-text);
+}
+
+.word-style-btn--active {
+  border-color: var(--kz-blue);
+  background: rgba(33, 150, 243, 0.12);
+  color: var(--kz-blue);
+}
+
 /* ── Empty state ───────────────────────────────────────────────── */
 .empty-state {
   display: flex;
@@ -789,4 +809,40 @@
 .kitaboo-studio-body .kitaboo-workspace {
   flex: 1;
   min-height: 0;
+}
+
+/* ── Save toast (non-blocking) ─────────────────────────────────── */
+.kz-save-toast {
+  position: fixed;
+  top: 72px;
+  right: 20px;
+  z-index: 10050;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  animation: kz-save-toast-in 0.2s ease-out;
+}
+
+.kz-save-toast--success {
+  background: #059669;
+}
+
+.kz-save-toast--error {
+  background: #dc2626;
+}
+
+@keyframes kz-save-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

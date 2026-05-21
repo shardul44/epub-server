@@ -112,7 +112,7 @@ export default function UserDashboard() {
   const showSyncStudio = hasFeature(user, 'sync_studio');
   const showEpubTools = hasFeature(user, 'epub_tools');
   const showAccessibility = hasFeature(user, 'accessibility_tools');
-  const showAi = hasFeature(user, 'ai_config');
+  const showAi = false; // AI settings — org admin only (not shown to members)
   const showInteractive = hasFeature(user, 'interactive.content');
 
   const { pdfs, isLoading: pdfsLoading } = usePdfsQuery({

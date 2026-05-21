@@ -20,7 +20,54 @@
 }
 
 .pst-head {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+
+/* Tab bar — Configuration settings | TTS Management */
+.pst-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.pst-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--pst-border);
+  background: var(--pst-card);
+  color: var(--pst-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.pst-tab:hover:not(.pst-tab--active) {
+  color: var(--pst-text);
+  border-color: #d1d5db;
+  background: #fafafa;
+}
+
+.pst-tab--active {
+  background: var(--pst-blue);
+  border-color: var(--pst-blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+}
+
+.pst-tab--active:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.pst-panel {
+  width: 100%;
 }
 
 .pst-title {
@@ -58,11 +105,7 @@
   font-size: 0.875rem;
 }
 
-.pst-ai-slot {
-  width: 100%;
-}
-
-.pst-ai-slot .aic-root--embedded {
+.pst-panel .aic-root--embedded {
   width: 100%;
   max-width: none;
   margin: 0;
@@ -100,7 +143,7 @@
     padding: 10px 16px 32px;
   }
 
-  .pst-ai-slot .aic-root--embedded,
+  .pst-panel .aic-root--embedded,
   .pst-tts-slot .container--embedded {
     padding: 16px 18px 22px;
   }

@@ -427,7 +427,7 @@ const AccessibilityWizard = ({ onStateChange }) => {
     if (onStateChange) {
       onStateChange({ jobId, summary, allViolations, file, metadata });
     }
-  }, [jobId, summary, allViolations, file, metadata]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [jobId, summary, allViolations, file, metadata]);  
 
   const handleRunCheck = async (event) => {
     if (event) event.preventDefault();

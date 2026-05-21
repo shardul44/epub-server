@@ -197,9 +197,17 @@
 .ulm-backdrop { cursor: default; }
 
 .ulm-panel {
+  position: relative;
   max-width: 400px;
   padding: 0;
   text-align: center;
+}
+
+.ulm-panel-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
 }
 
 /* ── Icon area ── */

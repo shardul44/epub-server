@@ -590,6 +590,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.pld-preview-meta {
+  font-weight: 500;
+  color: #6b7280;
 }
 
 .pld-preview-close {

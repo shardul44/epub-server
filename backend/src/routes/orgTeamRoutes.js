@@ -25,7 +25,6 @@ function requireOrgAssigned(req, res, next) {
 }
 
 // GET /org/license — org members and admins may read their org's subscription / usage.
-// (Team management routes below remain org_admin only.)
 router.get(
   '/license',
   requireRole(ROLES.ORG_ADMIN, ROLES.MEMBER),
@@ -40,26 +39,32 @@ router.get(
   }
 );
 
+// GET /org/plans — read-only catalog for upgrade modal (members may view, not change subscription).
+router.get(
+  '/plans',
+  requireRole(ROLES.ORG_ADMIN, ROLES.MEMBER),
+  requireOrgAssigned,
+  async (_req, res) => {
+    try {
+      const { PlanModel } = await import('../models/Plan.js');
+      const rows = await PlanModel.findAll();
+      const plans = rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        description: row.description || '',
+        seatLimit: row.seat_limit != null ? Number(row.seat_limit) : null,
+        monthlyPageLimit: row.monthly_page_limit != null ? Number(row.monthly_page_limit) : null,
+      }));
+      return successResponse(res, plans);
+    } catch (error) {
+      return errorResponse(res, error.message, 500);
+    }
+  }
+);
+
+// Team management — org_admin only
 router.use(requireRole(ROLES.ORG_ADMIN));
 router.use(requireOrgAssigned);
-
-// GET /org/plans — list all available plans (for upgrade modal)
-router.get('/plans', async (_req, res) => {
-  try {
-    const { PlanModel } = await import('../models/Plan.js');
-    const rows = await PlanModel.findAll();
-    const plans = rows.map((row) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description || '',
-      seatLimit: row.seat_limit != null ? Number(row.seat_limit) : null,
-      monthlyPageLimit: row.monthly_page_limit != null ? Number(row.monthly_page_limit) : null,
-    }));
-    return successResponse(res, plans);
-  } catch (error) {
-    return errorResponse(res, error.message, 500);
-  }
-});
 
 // GET /org/users — list all members in the same org
 router.get('/users', async (req, res) => {
@@ -155,7 +160,7 @@ router.put('/users/:id/role', async (req, res) => {
     }
 
     const { role } = req.body || {};
-    const allowed = [ROLES.ORG_ADMIN, ROLES.MEMBER, 'editor', 'viewer'];
+    const allowed = [ROLES.ORG_ADMIN, ROLES.MEMBER];
     if (!role || !allowed.includes(role)) {
       return badRequestResponse(res, `Invalid role. Allowed: ${allowed.join(', ')}`);
     }

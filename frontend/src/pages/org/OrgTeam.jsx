@@ -143,9 +143,7 @@ const StatCard = ({ icon, label, value, accent, subtitle }) => (
 /* ─── Role badge ──────────────────────────────────────────── */
 const ROLE_META = {
   org_admin: { label: 'Org Admin', bg: '#fff7ed', color: '#ea580c', border: '#fed7aa', Icon: ShieldCheck },
-  editor:    { label: 'Editor',    bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', Icon: Pencil },
   member:    { label: 'Member',    bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', Icon: Users },
-  viewer:    { label: 'Viewer',    bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe', Icon: Eye },
 };
 
 const RoleBadge = ({ role }) => {
@@ -208,9 +206,7 @@ const RowMenu = ({ member, currentUserId, onEdit, onDelete, onChangeRole, onRese
   const isSelf = member.id === currentUserId;
   const roleOptions = [
     { value: 'org_admin', label: 'Set as Org Admin' },
-    { value: 'editor',    label: 'Set as Editor' },
     { value: 'member',    label: 'Set as Member' },
-    { value: 'viewer',    label: 'Set as Viewer' },
   ].filter((r) => r.value !== member.role);
 
   function close() { setOpen(false); }
@@ -405,7 +401,9 @@ function BulkInviteModal({ onClose, onDone }) {
     const rows = hasHeader ? lines.slice(1) : lines;
     return rows.map((line) => {
       const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-      return { name: cols[0] || '', email: cols[1] || '', role: cols[2] || 'member', password: cols[3] || generatePassword() };
+      const rawRole = (cols[2] || 'member').toLowerCase();
+      const role = ['org_admin', 'member'].includes(rawRole) ? rawRole : 'member';
+      return { name: cols[0] || '', email: cols[1] || '', role, password: cols[3] || generatePassword() };
     }).filter((r) => r.email.includes('@'));
   }
 
@@ -445,7 +443,7 @@ function BulkInviteModal({ onClose, onDone }) {
   }
 
   function downloadTemplate() {
-    const csv = 'name,email,role,password\nJane Doe,jane@example.com,member,\nJohn Smith,john@example.com,editor,';
+    const csv = 'name,email,role,password\nJane Doe,jane@example.com,member,\nJohn Smith,john@example.com,org_admin,';
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'bulk_invite_template.csv'; a.click();
@@ -475,7 +473,7 @@ function BulkInviteModal({ onClose, onDone }) {
             </div>
             {file && <div className="qa-file-chip"><ClipboardList size={14} />{file.name}</div>}
             <textarea className="qa-textarea" rows={6}
-              placeholder={"Jane Doe,jane@example.com,member\nJohn Smith,john@example.com,editor"}
+              placeholder={"Jane Doe,jane@example.com,member\nJohn Smith,john@example.com,org_admin"}
               value={csvText} onChange={(e) => handleTextChange(e.target.value)} />
 
             {preview.length > 0 && (
@@ -714,16 +712,16 @@ function SSOModal({ onClose }) {
 
 /* ─── Permissions Modal ───────────────────────────────────── */
 const PERM_MATRIX = [
-  { action: 'Upload PDFs',          org_admin: true,  editor: true,  member: true,  viewer: false },
-  { action: 'Start conversions',    org_admin: true,  editor: true,  member: true,  viewer: false },
-  { action: 'Edit EPUB / FXL',      org_admin: true,  editor: true,  member: false, viewer: false },
-  { action: 'Audio sync',           org_admin: true,  editor: true,  member: false, viewer: false },
-  { action: 'Download EPUB',        org_admin: true,  editor: true,  member: true,  viewer: true  },
-  { action: 'View conversions',     org_admin: true,  editor: true,  member: true,  viewer: true  },
-  { action: 'Manage team members',  org_admin: true,  editor: false, member: false, viewer: false },
-  { action: 'View usage & billing', org_admin: true,  editor: false, member: false, viewer: false },
-  { action: 'Configure AI / TTS',   org_admin: true,  editor: false, member: false, viewer: false },
-  { action: 'Delete PDFs',          org_admin: true,  editor: false, member: false, viewer: false },
+  { action: 'Upload PDFs',          org_admin: true,  member: true  },
+  { action: 'Start conversions',    org_admin: true,  member: true  },
+  { action: 'Edit EPUB / FXL',      org_admin: true,  member: true  },
+  { action: 'Audio sync',           org_admin: true,  member: true  },
+  { action: 'Download EPUB',        org_admin: true,  member: true  },
+  { action: 'View conversions',     org_admin: true,  member: true  },
+  { action: 'Manage team members',  org_admin: true,  member: false },
+  { action: 'View usage & billing', org_admin: true,  member: false },
+  { action: 'Configure AI / TTS',   org_admin: true,  member: false },
+  { action: 'Delete PDFs',          org_admin: true,  member: false },
 ];
 
 function PermissionsModal({ onClose }) {
@@ -738,16 +736,14 @@ function PermissionsModal({ onClose }) {
               <tr>
                 <th>Action</th>
                 <th><span className="qa-perm-role qa-perm-role--admin">Org Admin</span></th>
-                <th><span className="qa-perm-role qa-perm-role--editor">Editor</span></th>
                 <th><span className="qa-perm-role qa-perm-role--member">Member</span></th>
-                <th><span className="qa-perm-role qa-perm-role--viewer">Viewer</span></th>
               </tr>
             </thead>
             <tbody>
               {PERM_MATRIX.map((row) => (
                 <tr key={row.action}>
                   <td className="qa-perm-action">{row.action}</td>
-                  {['org_admin','editor','member','viewer'].map((r) => (
+                  {['org_admin', 'member'].map((r) => (
                     <td key={r} className="qa-perm-cell">
                       {row[r]
                         ? <CheckCircle size={18} className="qa-perm-yes" />
@@ -814,8 +810,7 @@ export default function OrgTeam() {
   const totalMembers  = members.length;
   const admins        = members.filter((m) => m.role === 'org_admin').length;
   const activeMembers = members.filter((m) => m.status === 'active' || !m.status).length;
-  const editors       = members.filter((m) => m.role === 'editor').length;
-  const viewers       = members.filter((m) => m.role === 'viewer').length;
+  const memberCount   = members.filter((m) => m.role === 'member').length;
 
   // Form-level validation error (shown inline near the button)
   const [formError, setFormError] = useState('');
@@ -1065,9 +1060,7 @@ export default function OrgTeam() {
                   <div className="ot-role-selector">
                     {[
                       { value: 'org_admin', label: 'Org Admin', desc: 'Full access to settings, billing & members', Icon: ShieldCheck },
-                      { value: 'member',    label: 'Member',    desc: 'Standard workspace access',                  Icon: Users },
-                      { value: 'editor',    label: 'Editor',    desc: 'Can create and edit conversions',             Icon: Pencil },
-                      { value: 'viewer',    label: 'Viewer',    desc: 'Read-only access to projects',               Icon: Eye },
+                      { value: 'member',    label: 'Member',    desc: 'Standard workspace access (plan features)',  Icon: Users },
                     ].map(({ value, label, desc, Icon }) => (
                       <label key={value} className={`ot-role-option${role === value ? ' ot-role-option--selected' : ''}`}>
                         <input type="radio" name="role" value={value} checked={role === value} onChange={(e) => setRole(e.target.value)} />
@@ -1126,9 +1119,7 @@ export default function OrgTeam() {
                 <select className="ot-role-filter" value={roleFilter} onChange={(e) => dispatch(setRoleFilter(e.target.value))}>
                   <option value="all">All roles</option>
                   <option value="org_admin">Org Admin</option>
-                  <option value="editor">Editor</option>
                   <option value="member">Member</option>
-                  <option value="viewer">Viewer</option>
                 </select>
               </div>
             </div>
@@ -1220,18 +1211,12 @@ export default function OrgTeam() {
               <>
                 <div className="ot-role-chart-bar">
                   <div className="ot-role-chart-segment ot-role-chart-admin"   style={{ width: `${(admins/totalMembers)*100}%` }} title={`Org Admin: ${admins}`} />
-                  <div className="ot-role-chart-segment ot-role-chart-editor"  style={{ width: `${(editors/totalMembers)*100}%` }} title={`Editor: ${editors}`} />
-                  <div className="ot-role-chart-segment ot-role-chart-member"  style={{ width: `${((totalMembers-admins-editors-viewers)/totalMembers)*100}%` }} />
-                  <div className="ot-role-chart-segment ot-role-chart-viewer"  style={{ width: `${(viewers/totalMembers)*100}%` }} title={`Viewer: ${viewers}`} />
+                  <div className="ot-role-chart-segment ot-role-chart-member" style={{ width: `${(memberCount/totalMembers)*100}%` }} title={`Member: ${memberCount}`} />
                 </div>
                 <div className="ot-role-chart-legend">
                   <div className="ot-role-chart-row">
                     <div className="ot-role-chart-item"><span className="ot-role-chart-dot ot-role-chart-dot-admin" /><span className="ot-role-chart-label">Org Admin</span><span className="ot-role-chart-value">{admins}</span></div>
-                    <div className="ot-role-chart-item"><span className="ot-role-chart-dot ot-role-chart-dot-editor" /><span className="ot-role-chart-label">Editor</span><span className="ot-role-chart-value">{editors}</span></div>
-                  </div>
-                  <div className="ot-role-chart-row">
-                    <div className="ot-role-chart-item"><span className="ot-role-chart-dot ot-role-chart-dot-member" /><span className="ot-role-chart-label">Member</span><span className="ot-role-chart-value">{totalMembers-admins-editors-viewers}</span></div>
-                    <div className="ot-role-chart-item"><span className="ot-role-chart-dot ot-role-chart-dot-viewer" /><span className="ot-role-chart-label">Viewer</span><span className="ot-role-chart-value">{viewers}</span></div>
+                    <div className="ot-role-chart-item"><span className="ot-role-chart-dot ot-role-chart-dot-member" /><span className="ot-role-chart-label">Member</span><span className="ot-role-chart-value">{memberCount}</span></div>
                   </div>
                 </div>
               </>

@@ -24,7 +24,7 @@ export default function AudioBlockEditor({ value, onChange }) {
     if (start !== '') payload.start = Number(start);
     if (end !== '') payload.end = Number(end);
     onChange(payload);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [src, start, end]);
 
   return (

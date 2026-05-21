@@ -29,7 +29,7 @@ export default function TextBlockEditor({ value, onChange }) {
     if (current !== html) {
       editor.commands.setContent(html || '<p></p>', false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [editor, html]);
 
   if (!editor) return <div style={{ color: '#666' }}>Loading editor…</div>;

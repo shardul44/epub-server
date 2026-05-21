@@ -17,6 +17,12 @@ import { noCache } from '../middlewares/httpCache.js';
 import { resolveListScope } from '../utils/tenantScope.js';
 import { PdfService } from '../services/pdfService.js';
 import { ffprobeBin, getAugmentedEnv } from '../utils/ffmpegPath.js';
+import {
+  assertPdfSourceForKitabooPipeline,
+  isEpubImportStubDocument,
+  epubImportStubMessage
+} from '../utils/pdfDocumentSource.js';
+import { resolveKitabooEpubDownload } from '../utils/kitabooEpubDownload.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('kitaboo.import'));
@@ -422,6 +428,11 @@ router.post('/process/:pdfId', async (req, res) => {
     if (!pdfDoc) {
       return errorResponse(res, 'PDF document not found', 404);
     }
+    try {
+      await assertPdfSourceForKitabooPipeline(pdfDoc);
+    } catch (e) {
+      return errorResponse(res, e.message, e.statusCode || 400);
+    }
 
     const jobId = Date.now().toString();
     kitabooFxlJobStore.start(pdfId, jobId);
@@ -469,6 +480,11 @@ router.post('/process-layout-only', async (req, res) => {
     if (!pdfId) return errorResponse(res, 'pdfId is required', 400);
     const pdfDoc = await PdfDocumentModel.findById(pdfId);
     if (!pdfDoc) return errorResponse(res, 'PDF document not found', 404);
+    try {
+      await assertPdfSourceForKitabooPipeline(pdfDoc);
+    } catch (e) {
+      return errorResponse(res, e.message, e.statusCode || 400);
+    }
 
     const jobId = Date.now().toString();
     kitabooFxlJobStore.start(pdfId, jobId);
@@ -515,6 +531,15 @@ router.post('/process-high-fidelity', async (req, res) => {
     if (!pdfId) return errorResponse(res, 'pdfId is required', 400);
     const pdfDoc = await PdfDocumentModel.findById(pdfId);
     if (!pdfDoc) return errorResponse(res, 'PDF document not found', 404);
+
+    if (isEpubImportStubDocument(pdfDoc)) {
+      return errorResponse(res, epubImportStubMessage(), 400);
+    }
+    try {
+      await assertPdfSourceForKitabooPipeline(pdfDoc);
+    } catch (e) {
+      return errorResponse(res, e.message, e.statusCode || 400);
+    }
 
     console.log(
       `[KitabooFXL] High-Fidelity request: pdfId=${pdfId} file="${pdfDoc.original_file_name || pdfDoc.file_name}" disk=${path.basename(pdfDoc.file_path || '')}`
@@ -582,6 +607,34 @@ router.post('/split-zones-by-level/:jobId/:pageNumber', async (req, res) => {
     return successResponse(res, result);
   } catch (error) {
     console.error('[KitabooRoute] Split zones error:', error);
+    return errorResponse(res, error.message, 500);
+  }
+});
+
+/**
+ * POST /api/kitaboo/auto-fix-zones/:jobId/:pageNumber
+ * Merge fragmented word/line zones into sentence-level zones (deterministic, no AI).
+ * Body: { zones: Array }
+ */
+router.post('/auto-fix-zones/:jobId/:pageNumber', async (req, res) => {
+  try {
+    const pageNumber = parseInt(req.params.pageNumber, 10);
+    const { zones } = req.body;
+    if (!Array.isArray(zones)) {
+      return errorResponse(res, 'zones array is required', 400);
+    }
+    const textZones = zones.filter((z) => z.type === 'text' || z.type === 'header');
+    const otherZones = zones.filter((z) => z.type !== 'text' && z.type !== 'header');
+    let fixed = KitabooFxlService.clusterAndDeduplicateSpans(textZones, { extractionLevel: 'sentence' });
+    fixed = KitabooFxlService.mergeConsecutiveUrlZones(fixed);
+    fixed = KitabooFxlService.normalizeSentenceLevelZones(fixed, pageNumber);
+    fixed = fixed.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+    const merged = [...otherZones, ...fixed].sort(
+      (a, b) => (a.readingOrder ?? 999) - (b.readingOrder ?? 999)
+    );
+    return successResponse(res, { zones: merged, before: zones.length, after: merged.length });
+  } catch (error) {
+    console.error('[KitabooRoute] Auto-fix zones error:', error);
     return errorResponse(res, error.message, 500);
   }
 });
@@ -989,17 +1042,20 @@ router.post('/publish/:jobId', async (req, res) => {
 router.get('/download/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
-    const outputDir = path.join(getEpubOutputDir(), `fxl_${jobId}`);
-    const epubFileName = `fxl_${jobId}.epub`;
-    const epubPath = path.join(outputDir, epubFileName);
-    try {
-      await fs.access(epubPath);
-    } catch {
-      return errorResponse(res, 'EPUB not found. Export FXL EPUB 3 first.', 404);
+    const resolved = await resolveKitabooEpubDownload(jobId);
+    if (!resolved) {
+      return errorResponse(
+        res,
+        'EPUB not found. Export FXL EPUB 3 from Zoning Studio after adding narration in Sync Studio, or re-import the EPUB.',
+        404
+      );
+    }
+    if (resolved.source === 'import_stub') {
+      console.log(`[KitabooRoute] Download job ${jobId}: serving EPUB import source (not yet published with audio).`);
     }
     res.setHeader('Content-Type', 'application/epub+zip');
-    res.setHeader('Content-Disposition', `attachment; filename="${epubFileName}"`);
-    res.sendFile(path.resolve(epubPath));
+    res.setHeader('Content-Disposition', `attachment; filename="${resolved.filename}"`);
+    res.sendFile(path.resolve(resolved.absPath));
   } catch (error) {
     console.error('[KitabooRoute] Download Error:', error);
     return errorResponse(res, error.message, 500);

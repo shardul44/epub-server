@@ -1,17 +1,23 @@
 import express from 'express';
 import { AiConfigService } from '../services/aiConfigService.js';
-import { GeminiService, normalizeGeminiModelName } from '../services/geminiService.js';
+import { normalizeGeminiModelName } from '../services/geminiService.js';
 import { successResponse, errorResponse, badRequestResponse } from '../utils/responseHandler.js';
 import multer from 'multer';
-import fs from 'fs/promises';
-import { authenticate, requireFeature } from '../middlewares/auth.js';
+import { authenticate, requireFeature, requireRole } from '../middlewares/auth.js';
+import { ROLES } from '../constants/roles.js';
 
 const router = express.Router();
-router.use(authenticate, requireFeature('ai_config'));
 const upload = multer({ storage: multer.memoryStorage() });
 
-// GET /ai/config/current — 200 + data:null when nothing saved yet (avoid 404 in clients / Network tab)
-router.get('/config/current', async (req, res) => {
+/** Platform super-admin only — manage AI configuration UI. */
+const platformAiAdmin = [
+  authenticate,
+  requireRole(ROLES.PLATFORM_ADMIN),
+  requireFeature('ai_config'),
+];
+
+// GET /ai/config/current
+router.get('/config/current', ...platformAiAdmin, async (req, res) => {
   try {
     const config = await AiConfigService.getCurrentConfiguration();
     return successResponse(res, config ?? null);
@@ -20,8 +26,22 @@ router.get('/config/current', async (req, res) => {
   }
 });
 
-// POST /api/ai/config - Save AI configuration
-router.post('/config', async (req, res) => {
+/** Read-only active model for job cards / dashboards (any signed-in user; no API key). */
+router.get('/config/active-model', authenticate, async (req, res) => {
+  try {
+    const status = await AiConfigService.getStatus();
+    return successResponse(res, {
+      modelName: status.model ?? null,
+      enabled: status.enabled,
+      configured: status.configured,
+    });
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+});
+
+// POST /api/ai/config
+router.post('/config', ...platformAiAdmin, async (req, res) => {
   try {
     const config = await AiConfigService.saveConfiguration(req.body);
     return successResponse(res, config);
@@ -33,8 +53,8 @@ router.post('/config', async (req, res) => {
   }
 });
 
-// GET /api/ai/status - Get AI status
-router.get('/status', async (req, res) => {
+// GET /api/ai/status
+router.get('/status', ...platformAiAdmin, async (req, res) => {
   try {
     const status = await AiConfigService.getStatus();
     return successResponse(res, status);
@@ -43,8 +63,8 @@ router.get('/status', async (req, res) => {
   }
 });
 
-// GET /api/ai/models - Get available models
-router.get('/models', async (req, res) => {
+// GET /api/ai/models
+router.get('/models', ...platformAiAdmin, async (req, res) => {
   try {
     const models = AiConfigService.getAvailableModels();
     return successResponse(res, models);
@@ -53,8 +73,8 @@ router.get('/models', async (req, res) => {
   }
 });
 
-// POST /api/ai/test - Test AI connection
-router.post('/test', async (req, res) => {
+// POST /api/ai/test
+router.post('/test', ...platformAiAdmin, async (req, res) => {
   try {
     const { apiKey, modelName } = req.body;
 
@@ -62,28 +82,22 @@ router.post('/test', async (req, res) => {
       return badRequestResponse(res, 'Invalid API key format. API key must be at least 20 characters.');
     }
 
-    // Check if it's a masked key
     if (apiKey.includes('****')) {
       return badRequestResponse(res, 'Invalid API key format. Please enter a valid API key.');
     }
 
-    // Try to make an actual API call to test the connection
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(apiKey.trim());
       const testModelName = normalizeGeminiModelName(modelName || '');
       const model = genAI.getGenerativeModel({ model: testModelName });
 
-      // Make a simple test call and measure response time
       const startTime = Date.now();
       const result = await model.generateContent('Test');
       const response = await result.response;
       const responseTime = Date.now() - startTime;
-
-      // Get response text to verify it's working
       const responseText = await response.text();
 
-      // Mask API key for response
       const maskedApiKey = apiKey.length > 8
         ? apiKey.substring(0, 4) + '****' + apiKey.substring(apiKey.length - 4)
         : '****';
@@ -96,12 +110,11 @@ router.post('/test', async (req, res) => {
           apiKey: maskedApiKey,
           responseTime: `${responseTime}ms`,
           responseReceived: responseText ? 'Yes' : 'No',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
-        summary: `Successfully connected to ${testModelName} model. API key is valid and working. Response time: ${responseTime}ms.`
+        summary: `Successfully connected to ${testModelName} model. API key is valid and working. Response time: ${responseTime}ms.`,
       });
     } catch (apiError) {
-      // If API call fails, return error with details
       const errorMessage = apiError.message || 'Unknown error';
       let userFriendlyMessage = 'Connection test failed. ';
 
@@ -122,8 +135,8 @@ router.post('/test', async (req, res) => {
   }
 });
 
-// POST /api/ai/describe-image - Describe an image using Gemini Vision
-router.post('/describe-image', upload.single('image'), async (req, res) => {
+// POST /api/ai/describe-image — workflow feature (any authenticated user)
+router.post('/describe-image', authenticate, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return badRequestResponse(res, 'Image file is required');
@@ -132,7 +145,6 @@ router.post('/describe-image', upload.single('image'), async (req, res) => {
     const imageBuffer = req.file.buffer;
     const imageMimeType = req.file.mimetype || 'image/png';
 
-    // Check if AI is configured
     const config = await AiConfigService.getActiveConfiguration();
     if (!config || !config.apiKey) {
       return errorResponse(res, 'AI service is not configured. Please configure AI settings first.', 400);
@@ -157,9 +169,9 @@ Provide a clear, concise description that would be useful for accessibility and 
         {
           inlineData: {
             data: imageBuffer.toString('base64'),
-            mimeType: imageMimeType
-          }
-        }
+            mimeType: imageMimeType,
+          },
+        },
       ]);
 
       const response = await result.response;
@@ -168,7 +180,7 @@ Provide a clear, concise description that would be useful for accessibility and 
       return successResponse(res, {
         description: description.trim(),
         model: modelName,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     } catch (apiError) {
       console.error('Error describing image with Gemini:', apiError);
@@ -176,11 +188,11 @@ Provide a clear, concise description that would be useful for accessibility and 
 
       if (errorMessage.includes('API_KEY_INVALID') || errorMessage.includes('401')) {
         return errorResponse(res, 'Invalid API key. Please check your AI configuration.', 401);
-      } else if (errorMessage.includes('QUOTA') || errorMessage.includes('429')) {
-        return errorResponse(res, 'API quota exceeded. Please try again later.', 429);
-      } else {
-        return errorResponse(res, `Failed to describe image: ${errorMessage}`, 500);
       }
+      if (errorMessage.includes('QUOTA') || errorMessage.includes('429')) {
+        return errorResponse(res, 'API quota exceeded. Please try again later.', 429);
+      }
+      return errorResponse(res, `Failed to describe image: ${errorMessage}`, 500);
     }
   } catch (error) {
     return errorResponse(res, error.message, 500);
@@ -188,7 +200,3 @@ Provide a clear, concise description that would be useful for accessibility and 
 });
 
 export default router;
-
-
-
-

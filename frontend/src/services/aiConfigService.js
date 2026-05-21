@@ -17,7 +17,18 @@ export const aiConfigService = {
       const res = await api.get('/ai/config/current');
       return unwrapSuccess(res);
     } catch (err) {
-      if (err.response?.status === 404) return null;
+      if (err.response?.status === 404 || err.response?.status === 403) return null;
+      throw err;
+    }
+  },
+
+  /** Platform AI model name for display (members + admins; no API key). */
+  getActiveModel: async () => {
+    try {
+      const res = await api.get('/ai/config/active-model');
+      return unwrapSuccess(res);
+    } catch (err) {
+      if (err.response?.status === 404 || err.response?.status === 403) return null;
       throw err;
     }
   },

@@ -3737,7 +3737,6 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       openCodeViewer:         (...a) => openCodeViewerRef.current(...a),
       setEditMode:            (...a) => setEditModeRef.current(...a),
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, modified, saving, regenerating]);
 
   if (loading) {

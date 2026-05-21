@@ -465,14 +465,14 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       let zonesToCluster = zones;
       if (zoneLevel === 'sentence' && !isCoverPage && zones.length > 0) {
         let before = zones.length;
-        zonesToCluster = K.splitMultiSentenceZones(zones, img.pageNumber);
+        zonesToCluster = K.mergeFragmentedSentenceZones(zones, img.pageNumber);
         if (zonesToCluster.length !== before) {
-          console.log(`[KitabooFXL] Page ${img.pageNumber}: split multi-sentence zones ${before} -> ${zonesToCluster.length}.`);
+          console.log(`[KitabooFXL] Page ${img.pageNumber}: merged sentence fragments ${before} -> ${zonesToCluster.length}.`);
         }
         before = zonesToCluster.length;
-        zonesToCluster = K.splitZonesByVerticalGaps(zonesToCluster, img.pageNumber);
+        zonesToCluster = K.splitMultiSentenceZones(zonesToCluster, img.pageNumber);
         if (zonesToCluster.length !== before) {
-          console.log(`[KitabooFXL] Page ${img.pageNumber}: split vertical-gap zones ${before} -> ${zonesToCluster.length}.`);
+          console.log(`[KitabooFXL] Page ${img.pageNumber}: split multi-sentence zones ${before} -> ${zonesToCluster.length}.`);
         }
       }
       // New: Cluster and Deduplicate Spans to fix character overlap and redundant PDF layers.
@@ -485,10 +485,10 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       // Rule: one single-line zone for URLs (merge "http://www." + "tcmpub." + "com" into one zone at extraction/grouping).
       if (effectiveExtractionLevel === 'sentence' && clusteredZones.length > 0) {
         clusteredZones = K.mergeConsecutiveUrlZones(clusteredZones);
-        const beforeGap = clusteredZones.length;
-        clusteredZones = K.splitZonesByVerticalGaps(clusteredZones, img.pageNumber);
-        if (clusteredZones.length !== beforeGap) {
-          console.log(`[KitabooFXL] Page ${img.pageNumber}: post-cluster vertical-gap split ${beforeGap} -> ${clusteredZones.length}.`);
+        const beforeMerge = clusteredZones.length;
+        clusteredZones = K.mergeFragmentedSentenceZones(clusteredZones, img.pageNumber);
+        if (clusteredZones.length !== beforeMerge) {
+          console.log(`[KitabooFXL] Page ${img.pageNumber}: post-cluster merge fragments ${beforeMerge} -> ${clusteredZones.length}.`);
         }
       }
 

@@ -319,7 +319,7 @@ const AudioSyncStudio = () => {
     if (found) {
       handleSelectJob(found);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [jobsLoading, allJobs, location.state, params?.jobId]);
 
   return (

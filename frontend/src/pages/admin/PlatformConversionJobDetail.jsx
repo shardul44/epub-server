@@ -1,21 +1,14 @@
 import { useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import { conversionService } from '../../services/conversionService';
 import { kitabooService } from '../../services/kitabooService';
-import { isFixedLayout } from '../../hooks/useConversionActions';
 import './PlatformConversions.css';
 
 function jobIdOf(job) {
   return job?.id ?? job?.jobId;
-}
-
-function editorPath(job) {
-  const id = jobIdOf(job);
-  if (id == null || id === '') return '/conversions';
-  return isFixedLayout(job) ? `/conversions/fxl-editor/${id}` : `/conversions/image-editor/${id}`;
 }
 
 function formatWhen(iso) {
@@ -98,12 +91,6 @@ export default function PlatformConversionJobDetail() {
   const waitingList = listLoading && !listJob;
   const waitingDetail = !listJob && detailQuery.isPending;
 
-  const openEditor = () => {
-    if (!merged) return;
-    const path = editorPath(merged);
-    window.open(path, '_blank', 'noopener,noreferrer');
-  };
-
   if (waitingList || waitingDetail) {
     return (
       <div className="pcv-root">
@@ -168,10 +155,6 @@ export default function PlatformConversionJobDetail() {
             <h1 className="pcv-title">Job #{id}</h1>
             <p className="pcv-sub">Platform conversion record — read-only details.</p>
           </div>
-          <button type="button" className="pcv-btn-export" onClick={openEditor}>
-            <ExternalLink size={16} aria-hidden />
-            Open in editor
-          </button>
         </header>
 
         {err ? <div className="pcv-err">{err}</div> : null}

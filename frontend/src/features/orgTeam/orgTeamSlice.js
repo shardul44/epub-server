@@ -4,7 +4,7 @@
  * Server data (members, activities) lives in React Query (useOrgTeamQuery).
  * This slice owns only UI state:
  *   - search          — member search string
- *   - roleFilter      — 'all' | 'org_admin' | 'editor' | 'member' | 'viewer'
+ *   - roleFilter      — 'all' | 'org_admin' | 'member'
  *   - activeModal     — null | 'editUser' | 'bulkInvite' | 'auditLog' | 'sso' | 'permissions'
  *   - editingMemberId — id of the member being edited
  *   - error           — last mutation error

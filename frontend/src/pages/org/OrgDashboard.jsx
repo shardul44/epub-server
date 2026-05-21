@@ -21,7 +21,6 @@ import {
   BarChart2,
   Sparkles,
   Upload,
-  Zap,
 } from 'lucide-react';
 import DashboardHeader from '../../components/layout/Header';
 import MainContent from '../../components/layout/MainContent';
@@ -186,7 +185,7 @@ const OrgDashboard = () => {
   const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const todayName = DAY_NAMES[new Date().getDay()];
 
-  const orgName = user?.organizationName || 'Your Organization'; // eslint-disable-line no-unused-vars
+  const orgName = user?.organizationName || 'Your Organization';  
   const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
   return (
@@ -609,12 +608,6 @@ const OrgDashboard = () => {
                 <RefreshCw size={20} />
               </span>
               <span className="ds-qa-label">EPUB Sync</span>
-            </Link>
-            <Link to="/ai-config" className="ds-qa-item">
-              <span className="ds-qa-icon ds-qa-icon--gray">
-                <Zap size={20} />
-              </span>
-              <span className="ds-qa-label">AI Config</span>
             </Link>
           </div>
         </div>

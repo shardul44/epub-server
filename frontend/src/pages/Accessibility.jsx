@@ -483,7 +483,7 @@ const Accessibility = () => {
       saveRecent(user?.id, next);
       return next;
     });
-  }, [jobId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [jobId]);  
 
   return (
     <div className="ac-root">

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { queryClient } from '../lib/queryClient';
 
 // Switch API base URL manually by commenting/uncommenting.
 // Backend routes are mounted at the server root (example: POST /auth/login).
@@ -57,6 +58,7 @@ api.interceptors.response.use(
 
     if (status === 401) {
       localStorage.removeItem('token');
+      queryClient.clear();
       const path = window.location?.pathname || '';
       // Avoid forcing a full page reload if user is already on the auth screen.
       if (path !== '/login' && path !== '/register') {

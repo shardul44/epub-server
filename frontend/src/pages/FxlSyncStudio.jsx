@@ -3,7 +3,6 @@
  * Loads pages/zones, single-book audio, and alignment; waveform + regions; edit timings; Run alignment; Save.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { flushSync } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import WaveSurfer from 'wavesurfer.js';
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js';
@@ -343,7 +342,8 @@ export default function FxlSyncStudio() {
   // This prevents the effect from clearing and redrawing over the user's drag/resize. We always read latest from segmentsRef in the timeout.
   }, [isReady, currentPage?.pageNumber, usePerPageAudioForWaveform, zoneIdToPageMap]);
 
-  const handleRunAlignment = async (useManual = false, config = null) => {
+  const handleRunAlignment = async (useManual = false, config = null, opts = {}) => {
+    const { closeModal = true } = opts;
     setAligning(true);
     setError('');
     try {
@@ -366,39 +366,59 @@ export default function FxlSyncStudio() {
           bumpAudioCache: true,
         });
       }
-      setSuccess('Alignment complete and saved.');
-      setShowManualConfig(false);
+      setSuccess('Alignment complete. Waveform and segments updated.');
+      if (closeModal) setShowManualConfig(false);
     } catch (e) {
       setError(e.response?.data?.message || e.message || 'Alignment failed');
+      setSuccess('');
     } finally {
       setAligning(false);
     }
   };
 
-  const handlePerPageUploadAndAlign = async () => {
+  const handlePerPageUploadAndAlign = () => {
     const filesToUpload = Object.entries(perPageFiles).filter(([, file]) => file instanceof File);
-    const skipPages = manualConfig.skipPages || [];
-    flushSync(() => {
-      setUploadingPerPage(true);
-      setAligning(true);
-    });
-    setError('');
-    try {
-      for (const [pageNum, file] of filesToUpload) {
-        const form = new FormData();
-        form.append('audio', file);
-        await api.post(`/kitaboo/human-audio/${jobId}/${pageNum}`, form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 120000
-        });
-      }
-      await handleRunAlignment(true, { skipPages, usePerPageAudio: true });
-    } catch (e) {
-      setError(e.response?.data?.message || e.message || 'Upload or alignment failed');
-    } finally {
-      setUploadingPerPage(false);
-      setAligning(false);
+    const skipPages = [...(manualConfig.skipPages || [])];
+    const hasExistingPerPageAudio = pagesWithPerPageAudio.length > 0;
+
+    if (!hasExistingPerPageAudio && filesToUpload.length === 0) {
+      setError('Choose at least one MP3 file for a page.');
+      return;
     }
+
+    setShowManualConfig(false);
+    setPerPageFiles({});
+    setError('');
+    setSuccess(
+      filesToUpload.length > 0
+        ? 'Uploading audio and running alignment… You can keep working; this page will update when finished.'
+        : 'Running alignment… You can keep working; this page will update when finished.'
+    );
+    setUploadingPerPage(true);
+    setAligning(true);
+
+    void (async () => {
+      try {
+        for (const [pageNum, file] of filesToUpload) {
+          const form = new FormData();
+          form.append('audio', file);
+          await api.post(`/kitaboo/human-audio/${jobId}/${pageNum}`, form, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 120000,
+          });
+        }
+        await handleRunAlignment(
+          true,
+          { skipPages, usePerPageAudio: true },
+          { closeModal: false }
+        );
+      } catch (e) {
+        setError(e.response?.data?.message || e.message || 'Upload or alignment failed');
+        setSuccess('');
+      } finally {
+        setUploadingPerPage(false);
+      }
+    })();
   };
 
   const openManualConfig = async () => {
@@ -636,11 +656,18 @@ export default function FxlSyncStudio() {
         <button
           type="button"
           onClick={openManualConfig}
-          disabled={!pages.length}
+          disabled={!pages.length || aligning || uploadingPerPage}
           className="btn-align btn-manual-config"
           title="Configure page boundaries or upload MP3 per page"
         >
-          Configure page boundaries
+          {aligning || uploadingPerPage ? (
+            <>
+              <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+              {uploadingPerPage ? 'Uploading…' : 'Aligning…'}
+            </>
+          ) : (
+            'Configure page boundaries'
+          )}
         </button>
         <button type="button" onClick={handleSave} disabled={saving || !segments.length} className="btn-save">
           {saving ? <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden /> : <Save size={18} {...fxlIc} />}
@@ -667,10 +694,21 @@ export default function FxlSyncStudio() {
           <span>{error}</span>
         </div>
       )}
-      {success && (
-        <div className="success-banner">
-          <Check size={18} {...fxlIc} />
-          <span>{success}</span>
+      {(success || aligning || uploadingPerPage) && (
+        <div
+          className={`success-banner${aligning || uploadingPerPage ? ' success-banner--progress' : ''}`}
+          role="status"
+        >
+          {aligning || uploadingPerPage ? (
+            <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
+          ) : (
+            <Check size={18} {...fxlIc} />
+          )}
+          <span>
+            {aligning || uploadingPerPage
+              ? success || 'Processing audio alignment…'
+              : success}
+          </span>
         </div>
       )}
 
@@ -912,25 +950,11 @@ export default function FxlSyncStudio() {
               <button
                 type="button"
                 className="btn-align"
-                disabled={aligning || uploadingPerPage || (pagesWithPerPageAudio.length === 0 && !Object.values(perPageFiles).some(f => f instanceof File))}
+                disabled={pagesWithPerPageAudio.length === 0 && !Object.values(perPageFiles).some(f => f instanceof File)}
                 onClick={handlePerPageUploadAndAlign}
               >
-                {uploadingPerPage ? (
-                  <>
-                    <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
-                    Uploading…
-                  </>
-                ) : aligning ? (
-                  <>
-                    <Loader2 size={18} strokeWidth={2.25} className="fxl-lucide-spin" aria-hidden />
-                    Aligning…
-                  </>
-                ) : (
-                  <>
-                    <Upload size={18} {...fxlIc} />
-                    Upload & run alignment
-                  </>
-                )}
+                <Upload size={18} {...fxlIc} />
+                Upload & run alignment
               </button>
             </div>
           </div>

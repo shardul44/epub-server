@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useListScope } from '../../context/ListScopeContext';
 import { useUsageQuery, usePlansQuery } from '../../hooks/queries/useUsageQuery';
@@ -107,7 +107,7 @@ function PlanLimitItem({ icon, label, value }) {
 }
 
 /* ─── UpgradeModal ────────────────────────────────────────────── */
-function UpgradeModal({ currentPlanName, plans, loading, error, onClose }) {
+function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMember }) {
   // Close on backdrop click
   const handleBackdrop = (e) => {
     if (e.target === e.currentTarget) onClose();
@@ -129,7 +129,9 @@ function UpgradeModal({ currentPlanName, plans, loading, error, onClose }) {
 
         <p className="modal-subtitle">
           You are currently on the <strong>{String(currentPlanName).toUpperCase()}</strong> plan.
-          Choose a plan below to unlock more capacity.
+          {isMember
+            ? ' Ask your organization admin to upgrade, or contact support below.'
+            : ' Choose a plan below to unlock more capacity.'}
         </p>
 
         {loading && <div className="modal-loading">Loading plans…</div>}
@@ -320,6 +322,7 @@ export default function Usage() {
   const { user }   = useAuth();
   const listScope  = useListScope();
   const dispatch   = useAppDispatch();
+  const isMember   = user?.role === 'member';
 
   // ── Redux UI state ────────────────────────────────────────────
   const showUpgrade = useAppSelector(selectShowUpgrade);
@@ -445,7 +448,9 @@ export default function Usage() {
                 </span>
               </div>
               <div className="usage-plan-banner__hint">
-                Upgrade to unlock more capacity
+                {isMember
+                  ? 'Contact your organization admin to change your plan'
+                  : 'Upgrade to unlock more capacity'}
               </div>
             </div>
           </div>
@@ -503,6 +508,7 @@ export default function Usage() {
           plans={plans}
           loading={plansLoading}
           error={plansError}
+          isMember={isMember}
           onClose={() => dispatch(closeUpgradeModal())}
         />
       )}

@@ -108,13 +108,15 @@ const PdfUpload = () => {
     return undefined;
   }, [uploadStatus, lastDoc, dispatch, queryClient, listScope]);
 
-  const handleUploadModalClose = () => {
+  const dismissUploadModal = () => {
     setUploadModalOpen(false);
-    if (uploadStatus === 'succeeded') {
-      dispatch(resetUpload());
-      clearFile();
-      navigate('/pdfs');
-    }
+    dispatch(resetUpload());
+    clearFile();
+  };
+
+  const goToMyPdfsFromUpload = () => {
+    dismissUploadModal();
+    navigate('/pdfs');
   };
 
   /* ── file helpers ── */
@@ -167,7 +169,7 @@ const PdfUpload = () => {
     if (tickerRef.current) clearInterval(tickerRef.current);
     tickerRef.current = setInterval(() => {
       dispatch(setUploadProgress(
-        // eslint-disable-next-line no-shadow
+         
         Math.min(85, (uploadProgress || 0) + Math.random() * 12)
       ));
     }, 300);
@@ -412,7 +414,9 @@ const PdfUpload = () => {
         fileName={file?.name || lastDoc?.originalFileName || ''}
         status={uploadModalStatus}
         error={uploadError || ''}
-        onClose={handleUploadModalClose}
+        onClose={dismissUploadModal}
+        onDismiss={dismissUploadModal}
+        onSuccessAction={goToMyPdfsFromUpload}
         successActionLabel="Go to My PDFs"
       />
 

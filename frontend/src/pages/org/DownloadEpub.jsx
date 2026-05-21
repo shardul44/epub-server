@@ -13,8 +13,14 @@ import {
   clearError,
 } from '../../features/downloadEpub/downloadEpubSlice';
 import { useWorkflowNavigation, isFixedLayout } from '../../hooks/useWorkflowNavigation';
+import { selectWorkflowConversionType } from '../../features/conversionWorkflow/conversionWorkflowSlice';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import { buildEpubReaderPath } from '../../utils/epubReaderUrl';
+import {
+  conversionJobListKey,
+  findJobByListKey,
+  isEpubSourceJob,
+} from '../../utils/conversionJobKey';
 import PdfThumbnail from '../../components/PdfThumbnail';
 import {
   Download,
@@ -93,16 +99,16 @@ function buildPdfViewUrl(pdfDocumentId) {
   }
 }
 
-/** First-page PDF preview for ready-download cards */
-const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId }) {
+/** First-page PDF preview for ready-download cards (skipped for EPUB imports). */
+const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId, epubSource }) {
   const url = useMemo(() => buildPdfViewUrl(pdfId), [pdfId]);
   const cacheKey =
     pdfId != null && pdfId !== '' ? `pdf-thumb-card-${String(pdfId)}` : null;
 
-  if (!url) {
+  if (epubSource || !url) {
     return (
       <div className="de-ready-pdf-thumb-fallback" aria-hidden>
-        <FileText size={28} />
+        {epubSource ? <BookOpen size={28} /> : <FileText size={28} />}
       </div>
     );
   }
@@ -143,6 +149,7 @@ const DownloadEpub = () => {
 
   // ── Redux UI state ────────────────────────────────────────────
   const selectedJobId = useAppSelector(selectDESelectedJobId);
+  const workflowConversionType = useAppSelector(selectWorkflowConversionType);
   const error = useAppSelector(selectDEError);
 
   // ── Local UI state (ephemeral) ────────────────────────────────
@@ -160,23 +167,22 @@ const DownloadEpub = () => {
     if (fetchError) dispatch(setError(fetchError));
   }, [fetchError, dispatch]);
 
-  // Auto-select once jobs are loaded
+  // Auto-select once jobs are loaded (composite key FXL-121 / REFLOW-121 when ids collide)
   useEffect(() => {
     if (loading || jobs.length === 0) return;
     const targetId = preselectedJobId ?? selectedJobId;
     if (targetId) {
-      const found = jobs.find(j => String(j.id ?? j.jobId) === String(targetId));
-      const resolved = found ?? jobs[0] ?? null;
-      if (resolved) dispatch(setSelectedJobId(String(resolved.id ?? resolved.jobId)));
+      const resolved =
+        findJobByListKey(jobs, targetId, workflowConversionType) ?? jobs[0] ?? null;
+      if (resolved) dispatch(setSelectedJobId(conversionJobListKey(resolved)));
     } else if (!selectedJobId) {
       const first = jobs[0];
-      if (first) dispatch(setSelectedJobId(String(first.id ?? first.jobId)));
+      if (first) dispatch(setSelectedJobId(conversionJobListKey(first)));
     }
-  }, [loading, jobs, preselectedJobId, selectedJobId, dispatch]);
+  }, [loading, jobs, preselectedJobId, selectedJobId, workflowConversionType, dispatch]);
 
-  // Derive the selected job object from the Redux-stored ID
   const selectedJob = selectedJobId
-    ? jobs.find(j => String(j.id ?? j.jobId) === String(selectedJobId)) ?? null
+    ? findJobByListKey(jobs, selectedJobId, workflowConversionType)
     : null;
 
   /* ── Download ── */
@@ -187,7 +193,9 @@ const DownloadEpub = () => {
     setDownloadStatus('Downloading…');
     try {
       if (selectedJob.jobType === 'FXL') {
-        await kitabooApi.downloadFxlEpub(jid, null, (status) => setDownloadStatus(status));
+        await kitabooApi.downloadFxlEpub(jid, null, (status) => setDownloadStatus(status), {
+          skipAutoPublish: isEpubSourceJob(selectedJob),
+        });
       } else {
         await conversionApi.downloadEpub(jid);
       }
@@ -199,14 +207,17 @@ const DownloadEpub = () => {
     }
   }, [selectedJob, dispatch]);
 
-  const handleQuickDownload = useCallback(async (jid) => {
-    if (jid == null) return;
+  const handleQuickDownload = useCallback(async (job) => {
+    if (!job) return;
+    const jid = job.id ?? job.jobId;
+    const listKey = conversionJobListKey(job);
     dispatch(clearError());
-    setQuickDownloadId(jid);
+    setQuickDownloadId(listKey);
     try {
-      const job = jobs.find(j => String(j.id ?? j.jobId) === String(jid));
-      if (job?.jobType === 'FXL') {
-        await kitabooApi.downloadFxlEpub(jid);
+      if (job.jobType === 'FXL') {
+        await kitabooApi.downloadFxlEpub(jid, null, null, {
+          skipAutoPublish: isEpubSourceJob(job),
+        });
       } else {
         await conversionApi.downloadEpub(jid);
       }
@@ -215,7 +226,7 @@ const DownloadEpub = () => {
     } finally {
       setQuickDownloadId(null);
     }
-  }, [jobs, dispatch]);
+  }, [dispatch]);
 
   const handleStepClick = useCallback((step) => navigate(step.path), [navigate]);
 
@@ -394,9 +405,11 @@ const DownloadEpub = () => {
               <div className="de-ready-card-grid">
                 {jobs.map((j) => {
                   const jid = j.id ?? j.jobId;
-                  const isSel = job && String(jid) === String(jobId);
+                  const listKey = conversionJobListKey(j);
+                  const isSel = selectedJobId === listKey;
                   const isFxlJ = isFixedLayout(j);
                   const pid = j.pdfDocumentId ?? j.pdfId;
+                  const epubSource = isEpubSourceJob(j);
                   const pdfLabel = j.pdfFilename || (pid != null ? `PDF #${pid}` : 'Document');
                   const pagesJ = j.totalPages ?? j.pageCount ?? null;
                   const sizeJ = fmtSize(j.fileSizeBytes ?? j.fileSize ?? null);
@@ -406,7 +419,7 @@ const DownloadEpub = () => {
 
                   return (
                     <article
-                      key={jid}
+                      key={listKey}
                       className={[
                         'de-ready-pdf-card',
                         isFxlJ ? 'de-ready-pdf-card--fxl' : 'de-ready-pdf-card--reflow',
@@ -419,11 +432,11 @@ const DownloadEpub = () => {
                         className="de-ready-pdf-card-hit"
                         role="button"
                         tabIndex={0}
-                        onClick={() => dispatch(setSelectedJobId(String(j.id ?? j.jobId)))}
+                        onClick={() => dispatch(setSelectedJobId(listKey))}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            dispatch(setSelectedJobId(String(j.id ?? j.jobId)));
+                            dispatch(setSelectedJobId(listKey));
                           }
                         }}
                       >
@@ -439,10 +452,10 @@ const DownloadEpub = () => {
                         <div className="de-ready-pdf-card-pdf-panel">
                           <div className="de-ready-pdf-card-pdf-thumb-col">
                             <span className="de-ready-pdf-card-pdf-badge" aria-hidden>
-                              PDF
+                              {epubSource ? 'EPUB' : 'PDF'}
                             </span>
                             <div className="de-ready-pdf-thumb">
-                              <DeReadyPdfThumb pdfId={pid} />
+                              <DeReadyPdfThumb pdfId={pid} epubSource={epubSource} />
                             </div>
                           </div>
                           <div className="de-ready-pdf-card-pdf-meta">
@@ -501,12 +514,12 @@ const DownloadEpub = () => {
                           disabled={!!quickDownloadId || downloading}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleQuickDownload(jid);
+                            handleQuickDownload(j);
                           }}
                           title={`Download job-${jid}.epub`}
                         >
                           <Download size={16} aria-hidden />
-                          {quickDownloadId === jid ? 'Downloading…' : 'Download EPUB'}
+                          {quickDownloadId === listKey ? 'Downloading…' : 'Download EPUB'}
                           <ChevronRight size={18} aria-hidden />
                         </button>
                       </div>

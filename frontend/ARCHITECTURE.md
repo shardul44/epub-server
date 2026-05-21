@@ -110,7 +110,7 @@ frontend/src/
 ```javascript
 {
   search:          '',      // member search string
-  roleFilter:      'all',   // 'all' | 'org_admin' | 'editor' | 'member' | 'viewer'
+  roleFilter:      'all',   // 'all' | 'org_admin' | 'member'
   activeModal:     null,    // null | 'editUser' | 'bulkInvite' | 'auditLog' | 'sso' | 'permissions'
   editingMemberId: null,    // ID of member being edited
 }

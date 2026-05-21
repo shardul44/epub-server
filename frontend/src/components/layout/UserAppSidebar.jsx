@@ -13,16 +13,13 @@ import {
   ClipboardCheck,
   BookOpen,
   Activity,
-  Settings,
-  Mic,
   SlidersVertical,
   Menu,
   X,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAppDispatch } from '../../store/hooks';
-import { logout as logoutAction } from '../../features/auth/authSlice';
+import useLogout from '../../hooks/useLogout';
 import { hasAnyFeature, hasFeature, WORKFLOW_LIBRARY_FEATURES } from '../../utils/features';
 import { useSidebarBadges } from '../../hooks/useSidebarBadges';
 import { useAppBootstrap } from '../../hooks/queries/useAppBootstrap';
@@ -124,8 +121,8 @@ function formatUserRole(role) {
 export default function UserAppSidebar({ onCollapse }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const { user } = useAuth();
+  const onLogout = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pdfCount, conversionCount } = useSidebarBadges();
   const { activities } = useAppBootstrap();
@@ -139,11 +136,6 @@ export default function UserAppSidebar({ onCollapse }) {
   useEffect(() => {
     onCollapse?.(false);
   }, [onCollapse]);
-
-  const handleLogout = () => {
-    dispatch(logoutAction());
-    navigate('/login', { replace: true });
-  };
 
   const path = location.pathname;
 
@@ -177,9 +169,7 @@ export default function UserAppSidebar({ onCollapse }) {
       accessibility: path.startsWith('/accessibility'),
       epubChecker: path.startsWith('/epub-checker'),
       interactive: path.startsWith('/interactive'),
-      tts: path.startsWith('/tts-management'),
       activity: path.startsWith('/activity'),
-      aiConfig: path.startsWith('/ai-config'),
     }),
     [path],
   );
@@ -192,13 +182,11 @@ export default function UserAppSidebar({ onCollapse }) {
   const showAccessibility = hasFeature(user, 'accessibility_tools');
   const showEpubTools = hasFeature(user, 'epub_tools');
   const showInteractive = hasFeature(user, 'interactive.content');
-  const showTts = hasFeature(user, 'tts_management');
-  const showAi = hasFeature(user, 'ai_config');
 
   const showWorkflowNav = showConversion || showKitaboo || showSyncStudio;
 
   const showToolsSection =
-    showAccessibility || showEpubTools || showTts || showInteractive;
+    showAccessibility || showEpubTools || showInteractive;
 
   return (
     <>
@@ -337,14 +325,6 @@ export default function UserAppSidebar({ onCollapse }) {
               isActive={active.epubChecker}
             />
           )}
-          {showTts && (
-            <NavRow
-              to="/tts-management"
-              icon={Mic}
-              label="TTS Management"
-              isActive={active.tts}
-            />
-          )}
           {showInteractive && (
             <NavRow
               to="/interactive"
@@ -363,14 +343,6 @@ export default function UserAppSidebar({ onCollapse }) {
             isActive={active.activity}
             end={<CountBadge count={activityCount} tone="rose" />}
           />
-          {showAi && (
-            <NavRow
-              to="/ai-config"
-              icon={Settings}
-              label="Settings"
-              isActive={active.aiConfig}
-            />
-          )}
         </nav>
 
         <div className="user-sidebar-footer">
@@ -396,7 +368,7 @@ export default function UserAppSidebar({ onCollapse }) {
           <button
             type="button"
             className="navbar-logout-btn user-sidebar-logout"
-            onClick={handleLogout}
+            onClick={onLogout}
           >
             <LogOut size={16} strokeWidth={2} aria-hidden />
             <span>Logout</span>

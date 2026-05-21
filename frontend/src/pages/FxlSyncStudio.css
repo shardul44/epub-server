@@ -303,6 +303,12 @@
   border-bottom: 1px solid #bbf7d0;
 }
 
+.fxl-sync-studio .success-banner--progress {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-bottom-color: #bfdbfe;
+}
+
 .fxl-sync-studio .studio-layout {
   display: grid;
   grid-template-columns: minmax(200px, 280px) minmax(0, 1fr) minmax(200px, 320px);

@@ -93,7 +93,8 @@ export class UserService {
    * Org admin creates a user in their tenant.
    */
   static async createOrgMember(organizationId, { name, email, password, phoneNumber, role = ROLES.MEMBER }) {
-    if (role === ROLES.PLATFORM_ADMIN) {
+    const allowedRoles = [ROLES.ORG_ADMIN, ROLES.MEMBER];
+    if (!allowedRoles.includes(role)) {
       throw new Error('Invalid role');
     }
     if (await UserModel.existsByEmail(email)) {

@@ -186,6 +186,9 @@ const FabricImageEditor = ({
       canvas.clear();
       // Set background color directly (Fabric.js v5+ API)
       canvas.backgroundColor = '#f5f5f5';
+      // Avoid viewportTransform / pan accumulation across image loads (setZoom uses zoomToPoint).
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      canvas.setZoom(1);
       canvas.renderAll();
     } catch (error) {
       console.error('[FabricImageEditor] Error clearing canvas:', error);
@@ -729,8 +732,9 @@ const FabricImageEditor = ({
 
     const canvas = canvasInstanceRef.current;
     const zoom = canvas.getZoom();
-    const newZoom = zoom * factor;
-    canvas.setZoom(Math.max(0.1, Math.min(5, newZoom)));
+    const newZoom = Math.max(0.1, Math.min(5, zoom * factor));
+    canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    canvas.setZoom(newZoom);
     canvas.renderAll();
   }, []);
 
@@ -739,8 +743,8 @@ const FabricImageEditor = ({
     if (!canvasInstanceRef.current) return;
 
     const canvas = canvasInstanceRef.current;
-    canvas.setZoom(1);
     canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+    canvas.setZoom(1);
     canvas.renderAll();
   }, []);
 

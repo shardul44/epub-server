@@ -22,7 +22,7 @@ export default function QuizBlockEditor({ value, onChange }) {
 
   useEffect(() => {
     onChange({ question, options, answer: Number(answer) || 0 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [question, options, answer]);
 
   return (

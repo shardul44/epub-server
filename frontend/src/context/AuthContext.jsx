@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (status === 'succeeded' || status === 'failed') return;
     dispatch(refreshUserThunk());
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally run once on mount
+  }, []);  
 
   // Stable reference so Layout's useEffect dependency never changes identity.
   const refreshUser   = useCallback(() => dispatch(refreshUserThunk()), [dispatch]);

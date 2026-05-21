@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Trash2,
   Image,
@@ -9,6 +10,7 @@ import {
 import styles from './JobCard.module.css';
 import { isFixedLayout } from '../hooks/useConversionActions';
 import PdfThumbnail from './PdfThumbnail';
+import { aiConfigService } from '../services/aiConfigService';
 
 const MAX_RETRIES = 3;
 
@@ -77,13 +79,28 @@ const jobDurationMs = (job) => {
   return new Date(end).getTime() - new Date(start).getTime();
 };
 
-const resolveAiModel = (job) =>
-  job.aiModel ||
-  job.ai_model ||
-  job.modelName ||
-  job.model ||
-  job.llmModel ||
-  null;
+const resolveAiModel = (job) => {
+  if (!job) return null;
+  const direct =
+    job.aiModel ||
+    job.ai_model ||
+    job.modelName ||
+    job.model ||
+    job.llmModel ||
+    null;
+  if (direct) return direct;
+  try {
+    const raw = job.intermediateData ?? job.intermediate_data;
+    if (raw) {
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (data?.modelName) return data.modelName;
+      if (data?.aiModel) return data.aiModel;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+};
 
 function buildPdfViewUrl(pdfDocumentId) {
   if (pdfDocumentId == null || pdfDocumentId === '') return null;
@@ -129,6 +146,14 @@ const JobCard = ({
   const pdfDocumentId = job.pdfDocumentId ?? job.pdfId;
   const pdfViewUrl = useMemo(() => buildPdfViewUrl(pdfDocumentId), [pdfDocumentId]);
 
+  const { data: activeAi } = useQuery({
+    queryKey: ['ai-config', 'active-model'],
+    queryFn: () => aiConfigService.getActiveModel(),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const configuredAiModel = activeAi?.modelName ?? null;
+
   const displayName =
     job.pdfFilename ||
     job.filename ||
@@ -141,7 +166,7 @@ const JobCard = ({
   const subMeta = [pagesPart, sizeStr].filter(Boolean).join(' · ') || (pagesPart || '—');
 
   const metrics = useMemo(() => {
-    const ai = resolveAiModel(job);
+    const ai = resolveAiModel(job) || configuredAiModel;
     const durMs = jobDurationMs(job);
     if (job.status === 'COMPLETED') {
       return {
@@ -171,7 +196,7 @@ const JobCard = ({
       c3Label: 'AI model',
       c3Val: ai || '—',
     };
-  }, [job]);
+  }, [job, configuredAiModel]);
 
   const progressFillClass =
     job.status === 'COMPLETED'

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
@@ -23,9 +23,13 @@ import {
   Check,
   Loader2,
   Info,
+  Download,
 } from 'lucide-react';
 import { kitabooService } from '../services/kitabooService';
+import { pdfService } from '../services/pdfService';
 import PdfCard, { formatFileSize, getGradient } from '../components/PdfCard';
+import { mediaUrl } from '../utils/mediaUrl';
+import { isEpubImportStub } from '../utils/pdfDocumentSource';
 import './PdfList.css';
 
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -49,8 +53,9 @@ const StatCard = ({ icon, label, value, accent }) => (
 /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    PdfRow (list view)
 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-const PdfRow = ({ pdf, onConvert, onHifi, onDelete, onPreview, isHighlight, rowRef }) => {
+const PdfRow = ({ pdf, onConvert, onHifi, onOpenEpubImport, onDelete, onPreview, onDownload, isHighlight, rowRef }) => {
   const isFixed = pdf.layoutType === 'FIXED_LAYOUT';
+  const isEpubStub = isEpubImportStub(pdf);
   return (
     <tr
       ref={rowRef}
@@ -81,16 +86,29 @@ const PdfRow = ({ pdf, onConvert, onHifi, onDelete, onPreview, isHighlight, rowR
             type="button"
             className="pld-action-btn"
             onClick={() => onPreview?.(pdf)}
-            title="Open PDF"
+            title="Preview PDF"
           >
             <Eye size={13} />
+          </button>
+          <button
+            type="button"
+            className="pld-action-btn"
+            onClick={() => onDownload?.(pdf)}
+            title="Download PDF"
+          >
+            <Download size={13} />
           </button>
           {!isFixed && (
             <button className="pld-action-btn pld-action-convert" onClick={() => onConvert(pdf)}>
               <Play size={13} /> Convert
             </button>
           )}
-          {isFixed && (
+          {isEpubStub && (
+            <button className="pld-action-btn pld-action-hifi" onClick={() => onOpenEpubImport?.(pdf)}>
+              <Sparkles size={13} /> FXL Studio
+            </button>
+          )}
+          {isFixed && !isEpubStub && (
             <button className="pld-action-btn pld-action-hifi" onClick={() => onHifi(pdf)}>
               <Sparkles size={13} /> Hi-Fi FXL
             </button>
@@ -197,6 +215,7 @@ const PdfList = () => {
   const [hifiTocEndPage, setHifiTocEndPage] = useState('');
   const [hifiSubmitting, setHifiSubmitting] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null });
+  const [previewPdf, setPreviewPdf] = useState(null);
 
   // â”€â”€ Single source of truth for PDFs â€” no duplicate API calls â”€â”€
   const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf, deleteMutation } = usePdfs();
@@ -286,11 +305,70 @@ const PdfList = () => {
 
   const handleConvert = (pdf) => navigate(`/chapter-plan/${pdf.id}`);
   const handleHifi = (pdf) => {
+    if (isEpubImportStub(pdf)) {
+      handleOpenEpubImport(pdf);
+      return;
+    }
     setHifiModalPdf(pdf);
     setHifiZoneLevel('word');
     setHifiTocEndPage('');
   };
-  const handlePreview = (pdf) => navigate(`/pdfs/${pdf.id}`);
+
+  const handleOpenEpubImport = useCallback(
+    (pdf) => {
+      if (!pdf?.id) return;
+      const jobs = queryClient.getQueryData(queryKeys.conversions.list(listScope)) || [];
+      const match = Array.isArray(jobs)
+        ? jobs.find(
+            (j) =>
+              String(j.pdfDocumentId ?? j.pdfId) === String(pdf.id) &&
+              (j.jobType === 'FXL' || j.status === 'COMPLETED')
+          )
+        : null;
+      if (match) {
+        const jobId = match.id ?? match.jobId;
+        navigate(`/fxl-sync-studio/${jobId}`);
+        return;
+      }
+      setError(
+        'This is an imported EPUB (not a PDF). Open it from Conversions → Image Editor / FXL Studio, or re-import via EPUB Sync.'
+      );
+      setTimeout(() => setError(''), 8000);
+      navigate('/conversions');
+    },
+    [queryClient, listScope, navigate]
+  );
+  const handlePreview = useCallback((pdf) => {
+    if (pdf?.id) setPreviewPdf(pdf);
+  }, []);
+
+  const handleDownload = useCallback(async (pdf) => {
+    if (!pdf?.id) return;
+    setError('');
+    try {
+      await pdfService.downloadPdf(pdf.id, pdf.originalFileName || pdf.fileName);
+    } catch (e) {
+      const msg = e.response?.data?.message || e.message || 'Download failed. Please try again.';
+      setError(msg);
+      setTimeout(() => setError(''), 6000);
+    }
+  }, []);
+
+  const closePreview = useCallback(() => setPreviewPdf(null), []);
+
+  const previewSrc = useMemo(
+    () => (previewPdf?.id ? mediaUrl(`/api/pdfs/${previewPdf.id}/view`) : ''),
+    [previewPdf?.id],
+  );
+
+  useEffect(() => {
+    if (!previewPdf) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') closePreview();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewPdf, closePreview]);
 
   useEffect(() => {
     if (!hifiModalPdf || hifiSubmitting) return undefined;
@@ -411,6 +489,8 @@ const PdfList = () => {
                 onHifi={handleHifi}
                 onDelete={handleDelete}
                 onPreview={handlePreview}
+                onDownload={handleDownload}
+                onOpenEpubImport={handleOpenEpubImport}
                 onFileNotFound={() => {
                   // File is gone from disk â€” silently remove the orphaned card
                   // without a confirm modal (there's nothing to delete on disk).
@@ -449,6 +529,8 @@ const PdfList = () => {
                     onHifi={handleHifi}
                     onDelete={handleDelete}
                     onPreview={handlePreview}
+                    onDownload={handleDownload}
+                    onOpenEpubImport={handleOpenEpubImport}
                   />
                 );
               })}
@@ -629,6 +711,46 @@ const PdfList = () => {
           </div>
         </div>
       )}
+      {previewPdf && (
+        <div
+          className="pld-preview-overlay"
+          onClick={closePreview}
+          role="presentation"
+        >
+          <div
+            className="pld-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pld-preview-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="pld-preview-header">
+              <span id="pld-preview-title" className="pld-preview-title" title={previewPdf.originalFileName}>
+                {previewPdf.originalFileName || 'Unnamed PDF'}
+                <span className="pld-preview-meta">
+                  {' '}
+                  · ID #{previewPdf.id}
+                  {previewPdf.totalPages ? ` · ${previewPdf.totalPages} pages` : ''}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="pld-preview-close"
+                onClick={closePreview}
+                aria-label="Close preview"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <iframe
+              className="pld-preview-iframe"
+              src={previewSrc}
+              title={`Preview: ${previewPdf.originalFileName || 'PDF'}`}
+            />
+          </div>
+        </div>
+      )}
+
       {/* â”€â”€ Delete confirmation modal â”€â”€ */}
       <ConfirmModal
         isOpen={deleteModal.open}

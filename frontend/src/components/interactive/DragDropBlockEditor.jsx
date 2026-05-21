@@ -27,7 +27,7 @@ export default function DragDropBlockEditor({ value, onChange }) {
 
   useEffect(() => {
     onChange({ question, items, targets, correct });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [question, items, targets, correct]);
 
   return (

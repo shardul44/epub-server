@@ -177,16 +177,22 @@ MoreMenu.displayName = 'MoreMenu';
 /* ─────────────────────────────────────────────
    PdfCard
 ───────────────────────────────────────────── */
-const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload, onFileNotFound }) => {
+const PdfCard = memo(({ pdf, onConvert, onHifi, onOpenEpubImport, onDelete, onPreview, onDownload, onFileNotFound }) => {
   if (!pdf) return null;
 
   const isFixed  = pdf.layoutType === 'FIXED_LAYOUT';
+  const isEpubStub =
+    (pdf.originalFileName || pdf.fileName || '').toLowerCase().endsWith('.epub');
   const gradient = getGradient(pdf.id);
 
   const handlePrimaryAction = useCallback(() => {
+    if (isEpubStub && onOpenEpubImport) {
+      onOpenEpubImport(pdf);
+      return;
+    }
     if (isFixed) onHifi && onHifi(pdf);
     else onConvert && onConvert(pdf);
-  }, [isFixed, onHifi, onConvert, pdf]);
+  }, [isEpubStub, isFixed, onHifi, onConvert, onOpenEpubImport, pdf]);
 
   const formattedDate = new Date(pdf.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -247,7 +253,16 @@ const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload,
         <div className="pdc-hover-overlay" onClick={(e) => e.stopPropagation()}>
           <div className="pdc-overlay-actions">
             {/* Primary CTA */}
-            {!isFixed ? (
+            {isEpubStub ? (
+              <button
+                className="pdc-overlay-primary pdc-overlay-hifi"
+                onClick={(e) => { e.stopPropagation(); onOpenEpubImport && onOpenEpubImport(pdf); }}
+                title="Open FXL Sync Studio for this imported EPUB"
+              >
+                <Sparkles size={13} aria-hidden="true" />
+                FXL Studio
+              </button>
+            ) : !isFixed ? (
               <button
                 className="pdc-overlay-primary"
                 onClick={(e) => { e.stopPropagation(); onConvert && onConvert(pdf); }}
@@ -260,7 +275,7 @@ const PdfCard = memo(({ pdf, onConvert, onHifi, onDelete, onPreview, onDownload,
               <button
                 className="pdc-overlay-primary pdc-overlay-hifi"
                 onClick={(e) => { e.stopPropagation(); onHifi && onHifi(pdf); }}
-                title="High-Fidelity FXL"
+                title="High-Fidelity FXL (requires a PDF source file)"
               >
                 <Sparkles size={13} aria-hidden="true" />
                 Hi-Fi FXL

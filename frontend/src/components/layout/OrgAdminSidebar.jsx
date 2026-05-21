@@ -35,8 +35,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAppDispatch } from '../../store/hooks';
-import { logout as logoutAction } from '../../features/auth/authSlice';
+import useLogout from '../../hooks/useLogout';
 import { hasFeature } from '../../utils/features';
 
 import './Layout.css';
@@ -148,8 +147,8 @@ function SubNav({ to, label, isActive }) {
 const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const { user } = useAuth();
+  const onLogout = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isOrgAdmin = user?.role === 'org_admin';
@@ -170,11 +169,6 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   useEffect(() => {
     onCollapse?.(false);
   }, [onCollapse]);
-
-  const handleLogout = () => {
-    dispatch(logoutAction());
-    navigate('/login', { replace: true });
-  };
 
   const path = location.pathname;
 
@@ -405,7 +399,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
           <button
             type="button"
             className="navbar-logout-btn admin-sidebar-logout"
-            onClick={handleLogout}
+            onClick={onLogout}
           >
             <LogOut size={16} />
             <span>Logout</span>

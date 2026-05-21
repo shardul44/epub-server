@@ -42,7 +42,7 @@ export const kitabooService = {
    * @param {(msg: string) => void} [onStatus]
    * @returns {Promise<{ blob: Blob, suggestedFilename: string }>}
    */
-  fetchFxlEpubBlob: async (jobId, onStatus = null) => {
+  fetchFxlEpubBlob: async (jobId, onStatus = null, options = {}) => {
     const getBlob = () =>
       api.get(`/kitaboo/download/${jobId}`, {
         responseType: 'blob',
@@ -50,7 +50,8 @@ export const kitabooService = {
       });
 
     let downloadRes = await getBlob();
-    if (downloadRes.status === 404) {
+    const skipAutoPublish = options.skipAutoPublish === true;
+    if (downloadRes.status === 404 && !skipAutoPublish) {
       if (onStatus) onStatus('Publishing EPUB…');
       await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });
       if (onStatus) onStatus('Loading EPUB…');
@@ -67,7 +68,9 @@ export const kitabooService = {
       } catch (_) { /* ignore */ }
       throw new Error(
         downloadRes.status === 404
-          ? `${detail} Run Export FXL EPUB 3 (Publish) from Zoning Studio, or ensure kitaboo_${jobId} output still exists on the server.`
+          ? skipAutoPublish
+            ? `${detail} For imported EPUBs, add narration in FXL Sync Studio, then export from Zoning Studio.`
+            : `${detail} Run Export FXL EPUB 3 (Publish) from Zoning Studio, or ensure kitaboo_${jobId} output still exists on the server.`
           : detail,
       );
     }
@@ -79,8 +82,8 @@ export const kitabooService = {
   /** Download FXL EPUB file (blob) and trigger browser download.
    * If the EPUB hasn't been published yet, publishes it first then downloads.
    */
-  downloadFxlEpub: async (jobId, filename = null, onStatus = null) => {
-    const { blob, suggestedFilename } = await kitabooService.fetchFxlEpubBlob(jobId, onStatus);
+  downloadFxlEpub: async (jobId, filename = null, onStatus = null, options = {}) => {
+    const { blob, suggestedFilename } = await kitabooService.fetchFxlEpubBlob(jobId, onStatus, options);
     const name = filename || suggestedFilename;
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');

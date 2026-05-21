@@ -49,7 +49,7 @@ const EpubImageEditorPage = () => {
     loadPages();
 
     // No cleanup interval needed here — loadPages is a one-shot async call
-  }, [jobId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [jobId]);  
 
   const loadPages = async () => {
     if (!mountedRef.current) return;

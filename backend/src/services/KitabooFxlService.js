@@ -921,10 +921,19 @@ export class KitabooFxlService {
         let subStyleRuns = null;
 
         if (lines && lines.length > 0) {
-          const lineStart = Math.floor(i * lines.length / sentences.length);
-          const lineEnd = Math.floor((i + 1) * lines.length / sentences.length);
-          if (lineEnd > lineStart) {
-            subLines = lines.slice(lineStart, lineEnd);
+          // Map lines to this sentence by matching line text to sentence (not equal chunk counts).
+          const sentLower = sent.toLowerCase();
+          subLines = lines.filter((ln) => {
+            const lt = (ln.text || '').trim().toLowerCase();
+            if (!lt) return false;
+            return sentLower.includes(lt) || lt.includes(sentLower.slice(0, Math.min(12, sentLower.length)));
+          });
+          if (subLines.length === 0) {
+            const lineStart = Math.floor(i * lines.length / sentences.length);
+            const lineEnd = Math.floor((i + 1) * lines.length / sentences.length);
+            if (lineEnd > lineStart) subLines = lines.slice(lineStart, lineEnd);
+          }
+          if (subLines.length > 0) {
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
             for (const ln of subLines) {
               if (ln.bbox && ln.bbox.length >= 4) {
@@ -1147,16 +1156,11 @@ export class KitabooFxlService {
           groups[groups.length - 1].push(cur);
         }
       }
-      const firstTop = sorted[0].bbox?.[1] ?? sorted[0].origin?.[1] ?? 0;
-      const lastBottom = sorted[sorted.length - 1].bbox?.[3]
-        ?? ((sorted[sorted.length - 1].origin?.[1] ?? 0) + lineH);
-      const forcePerLine = groups.length <= 1 && (lastBottom - firstTop) > lineH * 3.0
-        && sorted.length >= 2;
-      if (groups.length <= 1 && !forcePerLine) {
+      if (groups.length <= 1) {
         out.push(z);
         continue;
       }
-      const lineGroups = forcePerLine ? sorted.map((ln) => [ln]) : groups;
+      const lineGroups = groups;
       for (const grp of lineGroups) {
         out.push(KitabooFxlService.zoneFromLineSubset(z, grp, pageNumber, out.length));
       }
@@ -1169,10 +1173,105 @@ export class KitabooFxlService {
    * @param {Array} zones
    * @param {number} pageNumber
    */
+  /**
+   * Merge adjacent text zones that are fragments of the same sentence (wrapped lines / PDF span splits).
+   */
+  static mergeFragmentedSentenceZones(zones, pageNumber) {
+    if (!zones || zones.length === 0) return zones || [];
+    const endsSentence = (t) => /[.!?]\s*$/.test((t || '').trim());
+    const isShortLabel = (t) => {
+      const s = (t || '').trim();
+      return s.length > 0 && s.length <= 16 && !s.includes(' ') && !/[.!?]/.test(s);
+    };
+    const mergeTwo = (a, b) => {
+      const curTrimmed = (a.content || a.text || '').replace(/\s+$/, '').trim();
+      const zTrimmed = (b.content || b.text || '').trim();
+      const sep = curTrimmed && zTrimmed && !curTrimmed.endsWith(' ') ? ' ' : '';
+      const content = (curTrimmed + sep + zTrimmed).replace(/\s+/g, ' ').trim();
+      const left = Math.min(a.x ?? 0, b.x ?? 0);
+      const top = Math.min(a.y ?? 0, b.y ?? 0);
+      const right = Math.max((a.x ?? 0) + (a.w ?? 0), (b.x ?? 0) + (b.w ?? 0));
+      const bottom = Math.max((a.y ?? 0) + (a.h ?? 0), (b.y ?? 0) + (b.h ?? 0));
+      const aLines = Array.isArray(a.lines) && a.lines.length > 0
+        ? a.lines
+        : [{ text: curTrimmed, bbox: [a.x, a.y, a.x + (a.w || 0), a.y + (a.h || 0)], origin: [a.x, a.y] }];
+      const bLines = Array.isArray(b.lines) && b.lines.length > 0
+        ? b.lines
+        : [{ text: zTrimmed, bbox: [b.x, b.y, b.x + (b.w || 0), b.y + (b.h || 0)], origin: [b.x, b.y] }];
+      const lines = aLines.concat(bLines);
+      const merged = {
+        ...a,
+        content,
+        text: content,
+        x: left,
+        y: top,
+        w: Math.max(1, right - left),
+        h: Math.max(1, bottom - top),
+        lines,
+      };
+      if (lines.length > 1) {
+        merged.points = KitabooFxlService.linesToOutlinePoints(lines, {
+          defaultW: merged.w / lines.length,
+          defaultH: (merged.fontSize || 12) * 1.2,
+        });
+      } else {
+        merged.points = KitabooFxlService.bboxToPoints(merged.x, merged.y, merged.w, merged.h);
+      }
+      return merged;
+    };
+
+    const sorted = [...zones].sort((a, b) => {
+      const ay = a.y ?? a.origin?.[1] ?? 0;
+      const by = b.y ?? b.origin?.[1] ?? 0;
+      if (Math.abs(ay - by) > 1.5) return ay - by;
+      const ax = a.x ?? a.origin?.[0] ?? 0;
+      const bx = b.x ?? b.origin?.[0] ?? 0;
+      return ax - bx;
+    });
+
+    const out = [];
+    let current = null;
+    for (const z of sorted) {
+      const text = (z.content || z.text || '').trim();
+      if (!text) continue;
+      if (!current) {
+        current = { ...z, content: text, text };
+        continue;
+      }
+      const curText = (current.content || current.text || '').trim();
+      const fsize = Math.max(current.fontSize || 12, z.fontSize || 12);
+      const gap = (z.y ?? 0) - ((current.y ?? 0) + (current.h ?? 0));
+      const maxGap = endsSentence(curText) ? fsize * 2.8 : fsize * 5.5;
+      const fontOk = Math.abs((current.fontSize || 12) - (z.fontSize || 12)) <= 2.5;
+      const newSentenceStart = endsSentence(curText) && /^[A-Z]/.test(text);
+      const shouldMerge =
+        fontOk &&
+        !isShortLabel(curText) &&
+        !isShortLabel(text) &&
+        !newSentenceStart &&
+        gap < maxGap &&
+        gap > -fsize * 0.5 &&
+        (curText.length + text.length + 1) <= 320 &&
+        !endsSentence(curText);
+
+      if (shouldMerge) {
+        current = mergeTwo(current, z);
+      } else {
+        out.push(current);
+        current = { ...z, content: text, text };
+      }
+    }
+    if (current) out.push(current);
+    return out.map((zone, i) => ({ ...zone, id: `p${pageNumber}_s${i}`, readingOrder: i + 1 }));
+  }
+
   static normalizeSentenceLevelZones(zones, pageNumber) {
     if (!zones || zones.length === 0) return zones;
-    let out = KitabooFxlService.splitMultiSentenceZones(zones, pageNumber);
+    let out = KitabooFxlService.mergeFragmentedSentenceZones(zones, pageNumber);
+    out = KitabooFxlService.splitMultiSentenceZones(out, pageNumber);
+    out = KitabooFxlService.mergeFragmentedSentenceZones(out, pageNumber);
     out = KitabooFxlService.splitZonesByVerticalGaps(out, pageNumber);
+    out = KitabooFxlService.splitMultiSentenceZones(out, pageNumber);
     return out;
   }
 
@@ -1328,7 +1427,7 @@ export class KitabooFxlService {
       // Don't merge into oversized zones (e.g. full paragraph / TOC block)
       const currentHeight = current.origin ? (current.h || 0) : (current.h || 0);
       const wouldBeTooTall = currentHeight > 0 && (zY + z.h - (current.origin ? current.origin[1] : current.y)) > (current.fontSize * 2.5);
-      const wouldBeTooLong = ((current.content || '').length + (z.content || '').length) > 180;
+      const wouldBeTooLong = ((current.content || '').length + (z.content || '').length) > 320;
       // Diagram/glossary labels like "ear", "mane", "withers", "tail" are short single words far apart.
       // When both zones are short single words with no punctuation and far apart, never merge them,
       // even if baseline clustering says they are on the same "line".

@@ -35,15 +35,18 @@ export const pdfService = {
     }).then(res => res.data.data);
   },
   
-  downloadPdf: (id) => {
-    return api.get(`/pdfs/${id}/download`, { responseType: 'blob' }).then(res => {
+  downloadPdf: (id, preferredFileName) => {
+    return api.get(`/pdfs/${id}/download`, { responseType: 'blob' }).then((res) => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `document_${id}.pdf`);
+      let name = (preferredFileName || '').trim() || `document_${id}.pdf`;
+      if (!/\.pdf$/i.test(name)) name = `${name}.pdf`;
+      link.setAttribute('download', name);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     });
   },
   

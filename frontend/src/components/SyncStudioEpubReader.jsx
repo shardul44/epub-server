@@ -992,7 +992,7 @@ export default function SyncStudioEpubReader({
                     // Walk up the DOM until we find an element with an id
                     let node = target;
                     let clickedId = null;
-                    // eslint-disable-next-line no-constant-condition
+                     
                     while (node && node !== doc) {
                       const idAttr =
                         node.id ||

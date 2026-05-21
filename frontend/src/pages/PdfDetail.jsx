@@ -17,6 +17,7 @@ import usePdfs from '../hooks/usePdfs';
 import ConfirmModal from '../components/Loadingmodal';
 import { formatFileSize } from '../components/PdfCard';
 import { mediaUrl } from '../utils/mediaUrl';
+import { isEpubImportStub } from '../utils/pdfDocumentSource';
 import { pdfService } from '../services/pdfService';
 import './PdfList.css';
 
@@ -36,6 +37,7 @@ export default function PdfDetail() {
   );
 
   const isFixed = pdf?.layoutType === 'FIXED_LAYOUT';
+  const isEpubStub = isEpubImportStub(pdf);
   const status = error?.response?.status;
   const forbidden = status === 403;
   const notFound = status === 404;
@@ -131,6 +133,10 @@ export default function PdfDetail() {
           {!isFixed ? (
             <button type="button" className="pld-upload-btn" onClick={handleConvert}>
               <Play size={16} /> Convert
+            </button>
+          ) : isEpubStub ? (
+            <button type="button" className="pld-upload-btn" onClick={() => navigate('/conversions')}>
+              <Sparkles size={16} /> Open in Conversions
             </button>
           ) : (
             <button type="button" className="pld-upload-btn" onClick={handleHifi}>

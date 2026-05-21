@@ -94,7 +94,9 @@ export default ConfirmModal;
  *   fileName  {string}   — name of the file being uploaded
  *   status    {string}   — "uploading" | "success" | "error"
  *   error     {string}   — error message when status === "error"
- *   onClose   {function} — called when user dismisses after success/error
+ *   onClose   {function} — error "Close" button (and fallback dismiss)
+ *   onDismiss {function} — top-right X: close without success navigation
+ *   onSuccessAction {function} — primary button on success (e.g. go to My PDFs)
  *   successActionLabel {string} — primary button on success (default: "Go to My PDFs")
  */
 export const UploadLoadingModal = ({
@@ -104,6 +106,8 @@ export const UploadLoadingModal = ({
   status = 'uploading',
   error = '',
   onClose,
+  onDismiss,
+  onSuccessAction,
   successActionLabel = 'Go to My PDFs',
 }) => {
   if (!isOpen) return null;
@@ -111,10 +115,22 @@ export const UploadLoadingModal = ({
   const isUploading = status === 'uploading';
   const isSuccess   = status === 'success';
   const isError     = status === 'error';
+  const handleDismiss = onDismiss ?? onClose;
+  const handleSuccessAction = onSuccessAction ?? onClose;
 
   return (
     <div className="cm-backdrop ulm-backdrop" role="dialog" aria-modal="true" aria-labelledby="ulm-title">
       <div className="cm-panel ulm-panel">
+        {(isSuccess || isError) && handleDismiss ? (
+          <button
+            type="button"
+            className="cm-close ulm-panel-close"
+            onClick={handleDismiss}
+            aria-label="Close"
+          >
+            <X size={22 } style={{ color:'black' }} />
+          </button>
+        ) : null}
 
         {/* ── Icon area ── */}
         <div className="ulm-icon-area">
@@ -176,7 +192,11 @@ export const UploadLoadingModal = ({
               <p className="ulm-hint ulm-hint--success">
                 Your PDF is in My PDFs. Start conversion from there when you are ready.
               </p>
-              <button type="button" className="cm-btn cm-btn-confirm cm-btn-confirm--info ulm-close-btn" onClick={onClose}>
+              <button
+                type="button"
+                className="cm-btn cm-btn-confirm cm-btn-confirm--info ulm-close-btn"
+                onClick={handleSuccessAction}
+              >
                 {successActionLabel}
               </button>
             </>

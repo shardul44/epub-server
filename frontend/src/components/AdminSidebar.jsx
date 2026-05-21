@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
   Activity,
@@ -16,7 +16,6 @@ import {
   Package,
   Users,
   RefreshCw,
-  Radio,
   Settings,
   CreditCard,
   Shield,
@@ -27,6 +26,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import useLogout from '../hooks/useLogout';
 import { useAppBootstrap } from '../hooks/queries/useAppBootstrap';
 import { adminService } from '../services/adminService';
 
@@ -52,8 +52,8 @@ function CountBadge({ count, tone = 'mint' }) {
 
 const AdminSidebar = ({ onCollapse }) => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
+  const onLogout = useLogout();
   const { activities, users } = useAppBootstrap();
 
   const { data: organizations = [] } = useQuery({
@@ -72,11 +72,6 @@ const AdminSidebar = ({ onCollapse }) => {
     onCollapse?.(false);
   }, [onCollapse]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    navigate('/login');
-  };
 
   const path = location.pathname;
 
@@ -89,8 +84,7 @@ const AdminSidebar = ({ onCollapse }) => {
       plans: path.startsWith('/admin/plans'),
       users: path.startsWith('/admin/users'),
       conversions: path.startsWith('/admin/conversions'),
-      tts: path.startsWith('/admin/tts-management'),
-      settings: path.startsWith('/admin/settings'),
+      settings: path.startsWith('/admin/settings') || path.startsWith('/admin/tts-management'),
       billing: path.startsWith('/admin/billing'),
       security: path.startsWith('/admin/security'),
       logs: path.startsWith('/admin/system-logs'),
@@ -132,13 +126,7 @@ const AdminSidebar = ({ onCollapse }) => {
         <nav className="sidebar-nav">
           <span className="admin-sidebar-section-label">Overview</span>
           <NavRow to="/" icon={Home} label="Dashboard" isActive={active.home} />
-          <NavRow
-            to="/admin/activity"
-            icon={Activity}
-            label="Activity"
-            isActive={active.activity}
-            end={<CountBadge count={activityCount} tone="mint" />}
-          />
+          
           <NavRow
             to="/admin/analytics"
             icon={BarChart3}
@@ -172,13 +160,15 @@ const AdminSidebar = ({ onCollapse }) => {
             label="Conversions"
             isActive={active.conversions}
           />
-          <NavRow
-            to="/admin/tts-management"
-            icon={Radio}
-            label="TTS Management"
-            isActive={active.tts}
-          />
           <span className="admin-sidebar-section-label">Configuration</span>
+          <NavRow
+            to="/admin/activity"
+            icon={Activity}
+            label="Activity"
+            isActive={active.activity}
+            end={<CountBadge count={activityCount} tone="mint" />}
+          />
+
           <NavRow
             to="/admin/billing"
             icon={CreditCard}
@@ -228,7 +218,7 @@ const AdminSidebar = ({ onCollapse }) => {
           <button
             type="button"
             className="navbar-logout-btn admin-sidebar-logout"
-            onClick={handleLogout}
+            onClick={onLogout}
           >
             <LogOut size={16} />
             <span>Logout</span>

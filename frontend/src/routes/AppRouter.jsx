@@ -44,6 +44,7 @@ import { WORKFLOW_LIBRARY_FEATURES } from '../utils/features';
 import Dashboard from '../pages/Dashboard';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import NotFound from '../pages/NotFound';
 
 /* ─── Lazy-loaded pages (one chunk per page) ──────────────────── */
 const PdfList                 = lazy(() => import('../pages/PdfList'));
@@ -57,8 +58,6 @@ const DownloadEpub            = lazy(() => import('../pages/org/DownloadEpub'));
 const SyncStudio              = lazy(() => import('../pages/SyncStudio'));
 const MediaOverlaySyncEditor  = lazy(() => import('../pages/MediaOverlaySyncEditor'));
 const AudioScript             = lazy(() => import('../pages/AudioScript'));
-const AiConfig                = lazy(() => import('../pages/AiConfig'));
-const TtsManagement           = lazy(() => import('../pages/TtsManagement'));
 const EpubImageEditorPage     = lazy(() => import('../pages/EpubImageEditorPage'));
 const KitabooZoningStudio     = lazy(() => import('../pages/KitabooZoningStudio'));
 const FxlSyncStudio           = lazy(() => import('../pages/FxlSyncStudio'));
@@ -73,7 +72,6 @@ const AdminPlans              = lazy(() => import('../pages/admin/AdminPlans'));
 const UsersManagement         = lazy(() => import('../pages/admin/UsersManagement'));
 const SystemLogs              = lazy(() => import('../pages/admin/SystemLogs'));
 const PlatformSetting         = lazy(() => import('../pages/admin/PlatformSetting'));
-const PlatformTtsManagement   = lazy(() => import('../pages/admin/PlatformTtsManagement'));
 const PlatformAnalytics       = lazy(() => import('../pages/admin/PlatformAnalytics'));
 const OrgTeam                 = lazy(() => import('../pages/org/OrgTeam'));
 const MediaLibrary            = lazy(() => import('../pages/org/MediaLibrary'));
@@ -175,17 +173,12 @@ export default function AppRouter() {
             <Route path="accessibility"    element={lazyEl(Accessibility)} />
           </Route>
 
-          <Route element={<RequireFeature featureKey="tts_management" />}>
-            <Route path="tts-management"   element={lazyEl(TtsManagement)} />
-          </Route>
-
-          <Route element={<RequireFeature featureKey="ai_config" />}>
-            <Route path="ai-config"        element={lazyEl(AiConfig)} />
-          </Route>
-
           <Route element={<RequireAnyFeature featureKeys={WORKFLOW_LIBRARY_FEATURES} />}>
             <Route path="media-library"    element={lazyEl(MediaLibrary)} />
           </Route>
+
+          <Route path="tts-management" element={<Navigate to="/" replace />} />
+          <Route path="ai-config" element={<Navigate to="/" replace />} />
 
           <Route path="api-debugger"     element={lazyEl(ApiDebugger)} />
           <Route path="usage"            element={lazyEl(Usage)} />
@@ -225,7 +218,7 @@ export default function AppRouter() {
           />
           <Route
             path="admin/tts-management"
-            element={<RequirePlatformAdmin>{lazyEl(PlatformTtsManagement)}</RequirePlatformAdmin>}
+            element={<Navigate to="/admin/settings?tab=tts" replace />}
           />
           <Route
             path="admin/settings"
@@ -287,6 +280,8 @@ export default function AppRouter() {
               </RequireOrgAdmin>
             }
           />
+
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
     </Routes>

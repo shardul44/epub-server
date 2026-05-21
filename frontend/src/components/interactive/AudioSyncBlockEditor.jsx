@@ -26,7 +26,7 @@ export default function AudioSyncBlockEditor({ value, onChange }) {
 
   useEffect(() => {
     onChange({ audio, words });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [audio, words]);
 
   function addWord() {
