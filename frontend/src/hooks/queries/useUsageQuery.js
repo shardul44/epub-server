@@ -11,9 +11,22 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/queryKeys';
 import api from '../../services/api';
 
+function apiErrorMessage(err, fallback) {
+  return (
+    err?.response?.data?.error ||
+    err?.response?.data?.message ||
+    err?.message ||
+    fallback
+  );
+}
+
 async function fetchLicense() {
-  const res = await api.get('/org/license');
-  return res.data?.data ?? res.data ?? null;
+  try {
+    const res = await api.get('/org/license');
+    return res.data?.data ?? res.data ?? null;
+  } catch (err) {
+    throw new Error(apiErrorMessage(err, 'Failed to load usage data'));
+  }
 }
 
 async function fetchPlans() {
@@ -41,10 +54,14 @@ export function useUsageQuery({ enabled = true } = {}) {
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.usage.license() });
 
+  const errorMessage = query.error
+    ? apiErrorMessage(query.error, 'Failed to load usage data')
+    : '';
+
   return {
     license:   query.data ?? null,
     isLoading: query.isLoading,
-    error:     query.error?.message ?? '',
+    error:     errorMessage,
     refresh,
   };
 }

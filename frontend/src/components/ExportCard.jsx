@@ -6,8 +6,13 @@ import {
   Trash2,
   Eye,
   AlertTriangle,
+  Copy,
+  Share2,
+  Pencil,
+  ExternalLink,
 } from 'lucide-react';
 import ThumbnailImage from './ThumbnailImage';
+import { buildEpubReaderPath } from '../utils/epubReaderUrl';
 import styles from './ExportCard.module.css';
 
 /* ─── Status config ───────────────────────────────────────────── */
@@ -51,15 +56,18 @@ const pickGradient = (id) => GRADIENTS[(id ?? 0) % GRADIENTS.length];
 
 const fmtSize = (bytes) => {
   if (!bytes) return null;
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(0)} MB`;
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${bytes} B`;
 };
 
-/** "Apr 3" style for secondary meta row (matches reference card). */
-const fmtDateShort = (d) => {
-  if (!d) return null;
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const fmtDateTime = (d) => {
+  if (!d) return { date: null, time: null };
+  const t = new Date(d);
+  return {
+    date: t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+  };
 };
 
 /** Short clock for thumb badge (e.g. 3:32) — uses completion/update time when no audio duration. */
@@ -91,10 +99,18 @@ const ProgressBar = ({ pct, status }) => {
 };
 
 /* ─── Dot menu ────────────────────────────────────────────────── */
-const MENU_WIDTH  = 160;
-const MENU_HEIGHT = 120; // approx
+const MENU_WIDTH  = 188;
+const MENU_HEIGHT = 220;
 
-const DotMenu = ({ onDownload, onPreview, onDelete, canDownload }) => {
+const DotMenu = ({
+  onDownload,
+  onPreview,
+  onViewDetails,
+  onShare,
+  onCopyJobId,
+  onDelete,
+  canDownload,
+}) => {
   const [open,        setOpen]        = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [pos,         setPos]         = useState({ top: 0, left: 0 });
@@ -170,7 +186,16 @@ const DotMenu = ({ onDownload, onPreview, onDelete, canDownload }) => {
                 }
               }}
             >
-              <Download size={14} /> {downloading ? 'Downloading…' : 'Download'}
+              <Download size={14} /> {downloading ? 'Downloading…' : 'Download EPUB'}
+            </button>
+          )}
+          {onViewDetails && (
+            <button
+              className={styles.dotMenuItem}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onViewDetails?.(); }}
+            >
+              <ExternalLink size={14} /> View Details
             </button>
           )}
           {onPreview && (
@@ -179,7 +204,25 @@ const DotMenu = ({ onDownload, onPreview, onDelete, canDownload }) => {
               role="menuitem"
               onClick={(e) => { e.stopPropagation(); setOpen(false); onPreview?.(); }}
             >
-              <Eye size={14} /> Preview
+              <Eye size={14} /> Preview EPUB
+            </button>
+          )}
+          {onShare && (
+            <button
+              className={styles.dotMenuItem}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onShare?.(); }}
+            >
+              <Share2 size={14} /> Share
+            </button>
+          )}
+          {onCopyJobId && (
+            <button
+              className={styles.dotMenuItem}
+              role="menuitem"
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onCopyJobId?.(); }}
+            >
+              <Pencil size={14} /> Copy job ID
             </button>
           )}
           <button
@@ -222,7 +265,16 @@ const DeleteConfirmModal = ({ jobId, onConfirm, onCancel }) =>
   );
 
 /* ─── ExportCard ──────────────────────────────────────────────── */
-const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration }) => {
+const ExportCard = ({
+  job,
+  onClick,
+  onDownload,
+  onPreview,
+  onViewDetails,
+  onCopyJobId,
+  onDelete,
+  duration,
+}) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDeleteClick = () => setShowDeleteModal(true);
@@ -244,14 +296,25 @@ const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration })
 
   const pdfId     = job.pdfDocumentId ?? job.pdfId;
 
-  const title     = job.pdfFilename?.replace(/\.pdf$/i, '') || `Job #${jobId}`;
+  const rawName   = job.pdfFilename || job.originalFileName || '';
+  const title     = rawName.replace(/\.(pdf|epub)$/i, '') || `Job #${jobId}`;
+  const subtitle  = job.bookSubtitle ?? job.subtitle ?? null;
   const typeLabel = isFxl ? 'FXL EPUB' : 'Reflow EPUB';
-  const pages     = job.totalPages ? `${job.totalPages} pages` : null;
   const size      = fmtSize(job.fileSizeBytes ?? job.fileSize);
-  const dateLine  = fmtDateShort(job.completedAt ?? job.updatedAt ?? job.createdAt);
+  const { date: dateLine, time: timeLine } = fmtDateTime(
+    job.completedAt ?? job.updatedAt ?? job.createdAt,
+  );
   const timeThumb =
     duration ??
     (canDownload ? fmtTimeShort(job.completedAt ?? job.updatedAt) : null);
+
+  const handleShare = () => {
+    const url = `${window.location.origin}${buildEpubReaderPath(jobId, {
+      source: isFxl ? 'kitaboo' : 'conversion',
+      fixedLayout: isFxl,
+    })}`;
+    navigator.clipboard?.writeText(url).catch(() => {});
+  };
   const lang      = job.language ?? 'English';
   const version   = job.version ?? 'v1';
   const userName  = job.createdByName ?? 'You';
@@ -297,19 +360,43 @@ const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration })
       <div className={styles.body}>
         {/* Title + dot menu on same row */}
         <div className={styles.titleRow}>
-          <span className={styles.title} title={title}>{title}</span>
+          <div className={styles.titleBlock}>
+            <span className={styles.title} title={title}>{title}</span>
+            {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
+          </div>
           <DotMenu
             onDownload={canDownload ? onDownload : undefined}
             onPreview={onPreview}
+            onViewDetails={onViewDetails}
+            onShare={handleShare}
+            onCopyJobId={onCopyJobId}
             onDelete={handleDeleteClick}
             canDownload={canDownload}
           />
         </div>
 
-        {/* Type · pages */}
+        <div className={styles.jobRow}>
+          <span className={styles.jobId}>Job #{jobId}</span>
+          {onCopyJobId && (
+            <button
+              type="button"
+              className={styles.jobCopy}
+              onClick={(e) => { e.stopPropagation(); onCopyJobId(); }}
+              aria-label={`Copy job ID ${jobId}`}
+            >
+              <Copy size={13} />
+            </button>
+          )}
+        </div>
+
         <div className={styles.metaRow}>
           <span className={styles.metaType}>{typeLabel}</span>
-          {pages && <><span className={styles.metaDot}>·</span><span className={styles.metaText}>{pages}</span></>}
+          {size && (
+            <>
+              <span className={styles.metaDot}>·</span>
+              <span className={styles.metaText}>{size}</span>
+            </>
+          )}
         </div>
 
         {/* Active: show current step */}
@@ -328,12 +415,10 @@ const ExportCard = ({ job, onClick, onDownload, onPreview, onDelete, duration })
           </div>
         )}
 
-        {/* Apr 3 · 35 MB */}
-        {!isActive && (dateLine || size) && (
-          <div className={styles.metaRow}>
+        {!isActive && (dateLine || timeLine) && (
+          <div className={styles.dateRow}>
             {dateLine && <span className={styles.metaText}>{dateLine}</span>}
-            {dateLine && size && <span className={styles.metaDot}>·</span>}
-            {size && <span className={styles.metaText}>{size}</span>}
+            {timeLine && <span className={styles.metaTime}>{timeLine}</span>}
           </div>
         )}
 

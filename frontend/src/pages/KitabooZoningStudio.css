@@ -730,6 +730,21 @@
   color: var(--kz-blue);
 }
 
+/* Preview tokens: system UI fonts often drop bold when italic is also set unless synthesis is enabled */
+.word-style-token {
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: weight style;
+}
+
+.word-style-token--bold {
+  font-weight: 700 !important;
+}
+
+.word-style-token--italic {
+  font-style: italic !important;
+}
+
 /* ── Empty state ───────────────────────────────────────────────── */
 .empty-state {
   display: flex;

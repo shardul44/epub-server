@@ -17,6 +17,7 @@ import {
   Package,
   Activity,
   UserCog,
+  Inbox,
   Users,
   CloudUpload,
   RefreshCw,
@@ -121,6 +122,13 @@ export default function AdminDashboard() {
     queryKey: ['admin', 'organizations'],
     queryFn: () => adminService.getOrganizations(),
     staleTime: 60 * 1000,
+  });
+
+  const { data: pendingPlanRequests = 0 } = useQuery({
+    queryKey: ['admin', 'plan-requests', 'pending-count'],
+    queryFn: () => adminService.getPlanRequestsPendingCount(),
+    staleTime: 30 * 1000,
+    retry: false,
   });
 
   const orgUsersQueries = useQueries({
@@ -254,11 +262,14 @@ export default function AdminDashboard() {
           </span>
           Organizations &amp; clients
         </Link>
-        <Link to="/admin/plans" className="adm-nav-card">
+        <Link to="/admin/plan-requests" className="adm-nav-card">
           <span className="adm-nav-icon" aria-hidden>
-            <Package size={22} />
+            <Inbox size={22} />
           </span>
-          Plans &amp; features
+          Plan requests
+          {pendingPlanRequests > 0 && (
+            <span className="adm-nav-badge">{pendingPlanRequests > 99 ? '99+' : pendingPlanRequests}</span>
+          )}
         </Link>
         <Link to="/admin/activity" className="adm-nav-card">
           <span className="adm-nav-icon" aria-hidden>

@@ -43,7 +43,6 @@ const buildValidationItems = (job) => {
     { icon: '📄', label: 'EPUB structure valid', ok: true },
     { icon: '🖼', label: imageCount != null ? `All images embedded (${imageCount})` : 'All images embedded', ok: true },
     { icon: '🎵', label: audioCount != null ? `Audio tracks synced (${audioCount} / ${audioCount})` : 'Audio tracks synced', ok: true },
-    { icon: '♿', label: 'Accessibility AA passed', ok: true },
   ];
 };
 

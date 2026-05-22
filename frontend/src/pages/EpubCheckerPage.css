@@ -1,15 +1,20 @@
 /* EPUB Checker page — content & stepper (header uses shared Dashboard styles) */
 
-/* Full main column width (no 1400px cap); modest horizontal gutters */
+/* Full main column width (no 1400px cap); uses shared .ds-container gutters */
 .ds-container.ecc-page-shell {
-  padding-left: 16px;
-  padding-right: 16px;
+  padding: 28px 32px 0;
 }
 
-@media (min-width: 768px) {
+@media (max-width: 768px) {
   .ds-container.ecc-page-shell {
-    padding-left: 24px;
-    padding-right: 24px;
+    padding: 28px 16px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .ds-container.ecc-page-shell {
+    padding: 16px 16px 0;
+    gap: 16px;
   }
 }
 

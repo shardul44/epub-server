@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useListScope } from '../../context/ListScopeContext';
 import { useUsageQuery, usePlansQuery } from '../../hooks/queries/useUsageQuery';
@@ -28,7 +28,10 @@ import {
   Star,
   ShoppingCart,
   Zap,
+  Loader2,
+  CheckCircle2,
 } from 'lucide-react';
+import { planRequestService } from '../../services/planRequestService';
 import './usage.css';
 
 /* ─── helpers ─────────────────────────────────────────────────── */
@@ -107,10 +110,29 @@ function PlanLimitItem({ icon, label, value }) {
 }
 
 /* ─── UpgradeModal ────────────────────────────────────────────── */
-function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMember }) {
-  // Close on backdrop click
+function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMember, onRequestSent }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
+
   const handleBackdrop = (e) => {
     if (e.target === e.currentTarget) onClose();
+  };
+
+  const requestUpgrade = async (plan) => {
+    setSubmitError('');
+    setSubmitSuccess('');
+    setSubmitting(true);
+    try {
+      await planRequestService.submitUpgrade(plan.id);
+      const msg = 'Your upgrade request was sent to the platform admin. You will be notified when it is reviewed.';
+      setSubmitSuccess(msg);
+      onRequestSent?.();
+    } catch (e) {
+      setSubmitError(planRequestErrorMessage(e, 'Failed to submit request'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -130,9 +152,17 @@ function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMembe
         <p className="modal-subtitle">
           You are currently on the <strong>{String(currentPlanName).toUpperCase()}</strong> plan.
           {isMember
-            ? ' Ask your organization admin to upgrade, or contact support below.'
-            : ' Choose a plan below to unlock more capacity.'}
+            ? ' Select a plan below to send an upgrade request to the platform administrator.'
+            : ' Select a plan below to request an upgrade from the platform administrator.'}
         </p>
+
+        {submitSuccess && (
+          <div className="modal-success" role="status">
+            <CheckCircle2 size={18} />
+            {submitSuccess}
+          </div>
+        )}
+        {submitError && <div className="modal-error">{submitError}</div>}
 
         {loading && <div className="modal-loading">Loading plans…</div>}
         {error   && <div className="modal-error">{error}</div>}
@@ -175,18 +205,23 @@ function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMembe
                     </li>
                   </ul>
                   <button
+                    type="button"
                     className={`plan-card__btn${isCurrent ? ' plan-card__btn--disabled' : ''}`}
-                    disabled={isCurrent}
+                    disabled={isCurrent || submitting || !!submitSuccess}
                     onClick={() => {
-                      if (!isCurrent) {
-                        window.open(
-                          `mailto:support@kodeit.digital?subject=Upgrade request: ${plan.name} plan`,
-                          '_blank'
-                        );
-                      }
+                      if (!isCurrent) void requestUpgrade(plan);
                     }}
                   >
-                    {isCurrent ? 'Current Plan' : `Upgrade to ${plan.name}`}
+                    {isCurrent ? (
+                      'Current Plan'
+                    ) : submitting ? (
+                      <>
+                        <Loader2 size={14} className="usage-btn-spin" aria-hidden />
+                        Sending…
+                      </>
+                    ) : (
+                      `Request ${plan.name}`
+                    )}
                   </button>
                 </div>
               );
@@ -195,9 +230,7 @@ function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMembe
         )}
 
         <p className="modal-contact-note">
-          To upgrade, contact us at{' '}
-          <a href="mailto:support@kodeit.digital">support@kodeit.digital</a> or reach out to your
-          account manager.
+          Requests are reviewed by the platform administrator. Limits update after approval.
         </p>
       </div>
     </div>
@@ -237,20 +270,50 @@ const ADD_ONS = [
   },
 ];
 
-function AddOnsModal({ onClose }) {
+function planRequestErrorMessage(e, fallback) {
+  return (
+    e?.response?.data?.error ||
+    e?.response?.data?.message ||
+    e?.message ||
+    fallback
+  );
+}
+
+function AddOnsModal({ onClose, onRequestSent, canSubmit }) {
   const [selected, setSelected] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
 
   const handleBackdrop = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
 
-  const handleRequest = () => {
-    if (!selected) return;
-    const addon = ADD_ONS.find((a) => a.id === selected);
-    window.open(
-      `mailto:support@kodeit.digital?subject=Add-On Request: ${addon?.name}`,
-      '_blank'
-    );
+  const handleRequest = async () => {
+    if (!canSubmit) {
+      setSubmitError(
+        'Your account must belong to an organization before you can request add-ons.',
+      );
+      return;
+    }
+    if (!selected) {
+      setSubmitError('Please select an add-on.');
+      return;
+    }
+    setSubmitError('');
+    setSubmitSuccess('');
+    setSubmitting(true);
+    try {
+      await planRequestService.submitAddon(selected);
+      setSubmitSuccess(
+        'Your add-on request was sent to the platform admin. Limits will update after approval.',
+      );
+      onRequestSent?.();
+    } catch (e) {
+      setSubmitError(planRequestErrorMessage(e, 'Failed to submit request'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -268,8 +331,17 @@ function AddOnsModal({ onClose }) {
         </div>
 
         <p className="modal-subtitle">
-          Extend your current plan with additional resources without changing your subscription.
+          Extend your current plan with additional resources. Your request goes to the platform
+          administrator for approval.
         </p>
+
+        {submitSuccess && (
+          <div className="modal-success" role="status">
+            <CheckCircle2 size={18} />
+            {submitSuccess}
+          </div>
+        )}
+        {submitError && <div className="modal-error">{submitError}</div>}
 
         <div className="addons-grid">
           {ADD_ONS.map((addon) => (
@@ -295,20 +367,29 @@ function AddOnsModal({ onClose }) {
 
         <div className="modal-footer">
           <p className="modal-contact-note">
-            Pricing is available on request.{' '}
-            <a href="mailto:support@kodeit.digital">Contact us</a> to get a quote.
+            Approved add-ons are applied to your organization&apos;s quotas automatically.
           </p>
           <div className="modal-footer__actions">
-            <button className="modal-btn modal-btn--ghost" onClick={onClose}>
-              Cancel
+            <button type="button" className="modal-btn modal-btn--ghost" onClick={onClose}>
+              {submitSuccess ? 'Close' : 'Cancel'}
             </button>
             <button
+              type="button"
               className="modal-btn modal-btn--primary"
-              disabled={!selected}
-              onClick={handleRequest}
+              disabled={!selected || submitting || !!submitSuccess}
+              onClick={() => void handleRequest()}
             >
-              <ShoppingCart size={14} />
-              Request Add-On
+              {submitting ? (
+                <>
+                  <Loader2 size={14} className="usage-btn-spin" aria-hidden />
+                  Sending…
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={14} />
+                  Request Add-On
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -323,15 +404,42 @@ export default function Usage() {
   const listScope  = useListScope();
   const dispatch   = useAppDispatch();
   const isMember   = user?.role === 'member';
+  const isOrgUser  = user?.role === 'member' || user?.role === 'org_admin';
+  const hasOrg     = user?.organizationId != null && user?.organizationId !== '';
+  const canUseUsage = isOrgUser && hasOrg;
 
   // ── Redux UI state ────────────────────────────────────────────
   const showUpgrade = useAppSelector(selectShowUpgrade);
   const showAddOns  = useAppSelector(selectShowAddOns);
 
   // ── React Query (server state) ────────────────────────────────
-  const { license, isLoading: loading, error } = useUsageQuery();
+  const { license, isLoading: loading, error, refresh: refreshLicense } = useUsageQuery({
+    enabled: canUseUsage,
+  });
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+
+  const loadMyRequests = async () => {
+    setRequestsLoading(true);
+    try {
+      const data = await planRequestService.listMine();
+      setMyRequests(Array.isArray(data) ? data.slice(0, 5) : []);
+    } catch (e) {
+      console.warn('Could not load plan requests:', planRequestErrorMessage(e, ''));
+      setMyRequests([]);
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!canUseUsage) return;
+    void loadMyRequests();
+  }, [canUseUsage]);
   // Plans are fetched lazily — only when the upgrade modal is open
-  const { plans, isLoading: plansLoading, error: plansError } = usePlansQuery({ enabled: showUpgrade });
+  const { plans, isLoading: plansLoading, error: plansError } = usePlansQuery({
+    enabled: showUpgrade && canUseUsage,
+  });
 
   /* ── derived values ── */
   const pagesUsed  = license?.usage?.used   ?? 0;
@@ -449,8 +557,8 @@ export default function Usage() {
               </div>
               <div className="usage-plan-banner__hint">
                 {isMember
-                  ? 'Contact your organization admin to change your plan'
-                  : 'Upgrade to unlock more capacity'}
+                  ? 'Request a plan change — sent to the platform administrator for approval'
+                  : 'Request upgrades from the platform administrator'}
               </div>
             </div>
           </div>
@@ -469,10 +577,18 @@ export default function Usage() {
         </div>
 
         {/* ── loading / error ── */}
-        {loading && <div className="usage-loading">Loading usage data…</div>}
-        {error   && <div className="usage-error">{error}</div>}
+        {!canUseUsage && (
+          <div className="usage-error" role="alert">
+            {user?.role === 'platform_admin'
+              ? 'Usage and add-on requests are for organization members and org admins. Open an organization account to use this page.'
+              : 'No organization is assigned to your account. Contact your administrator before requesting add-ons or upgrades.'}
+          </div>
+        )}
 
-        {!loading && !error && (
+        {canUseUsage && loading && <div className="usage-loading">Loading usage data…</div>}
+        {canUseUsage && error && <div className="usage-error">{error}</div>}
+
+        {canUseUsage && !loading && !error && (
           <>
             {/* ── resource usage ── */}
             <section className="usage-section">
@@ -482,10 +598,19 @@ export default function Usage() {
                   <UsageCard key={card.label} {...card} />
                 ))}
               </div>
-              <button className="usage-addons-btn" onClick={() => dispatch(openAddOnsModal())}>
-                <ShoppingCart size={15} />
-                Buy Add-Ons
-              </button>
+              <div className="usage-section-actions">
+                <button
+                  type="button"
+                  className="usage-addons-btn"
+                  onClick={() => dispatch(openAddOnsModal())}
+                >
+                  <ShoppingCart size={16} strokeWidth={2} aria-hidden />
+                  Buy Add-Ons
+                </button>
+                <p className="usage-section-actions-hint">
+                  Request extra pages, seats, or TTS minutes — approved by the platform administrator.
+                </p>
+              </div>
             </section>
 
             {/* ── plan limits ── */}
@@ -497,6 +622,33 @@ export default function Usage() {
                 ))}
               </div>
             </section>
+
+            {(myRequests.length > 0 || requestsLoading) && (
+              <section className="usage-section">
+                <h3 className="usage-section__title">Your requests</h3>
+                {requestsLoading ? (
+                  <p className="usage-requests-loading">Loading requests…</p>
+                ) : (
+                  <ul className="usage-requests-list">
+                    {myRequests.map((r) => (
+                      <li key={r.id} className={`usage-request-item usage-request-item--${r.status}`}>
+                        <span className="usage-request-label">{r.requestLabel}</span>
+                        <span className="usage-request-status">{r.status}</span>
+                        <span className="usage-request-date">
+                          {r.createdAt
+                            ? new Date(r.createdAt).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })
+                            : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
           </>
         )}
       </div>
@@ -510,12 +662,22 @@ export default function Usage() {
           error={plansError}
           isMember={isMember}
           onClose={() => dispatch(closeUpgradeModal())}
+          onRequestSent={() => {
+            void loadMyRequests();
+          }}
         />
       )}
 
       {/* ── Add-Ons modal ── */}
       {showAddOns && (
-        <AddOnsModal onClose={() => dispatch(closeAddOnsModal())} />
+        <AddOnsModal
+          canSubmit={canUseUsage}
+          onClose={() => dispatch(closeAddOnsModal())}
+          onRequestSent={() => {
+            void loadMyRequests();
+            void refreshLicense();
+          }}
+        />
       )}
     </div>
   );

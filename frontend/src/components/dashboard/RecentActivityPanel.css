@@ -1,0 +1,839 @@
+/* ═══════════════════════════════════════════════════════════════
+   Recent activity — ds-panel.ds-activity (reference layout)
+═══════════════════════════════════════════════════════════════ */
+
+.ds-panel.ds-activity {
+  padding: 42px 24px 15px;
+  background: var(--app-bg, #fff);
+  border: 1px solid var(--app-border, #e5e7eb);
+  border-radius: var(--app-radius-md, 12px);
+  box-shadow: var(--app-shadow-card);
+  transition: box-shadow var(--app-duration) var(--app-ease);
+}
+
+.layout--user .ds-panel.ds-activity:hover {
+  box-shadow: var(--app-shadow-card-hover);
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+
+.ds-activity-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.ds-activity-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.ds-activity-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.ds-activity-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.ds-activity-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ds-activity-refresh:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.ds-activity-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-activity-refresh:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.ds-activity-refresh--spinning svg {
+  animation: ds-activity-spin 0.7s linear infinite;
+}
+
+@keyframes ds-activity-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ds-activity-view-all {
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b82f6;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.ds-activity-view-all:hover {
+  color: #2563eb;
+}
+
+.ds-activity-view-all:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.ds-activity-content {
+  min-height: 0;
+  padding: 0px;
+}
+
+.ds-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Job card ─────────────────────────────────────────────────── */
+
+.ds-activity-job {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.ds-activity-job:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.ds-activity-job-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #9ca3af;
+  border-radius: 12px 0 0 12px;
+  pointer-events: none;
+}
+
+.ds-activity-job--completed .ds-activity-job-accent {
+  background: #10b981;
+}
+
+.ds-activity-job--in-progress .ds-activity-job-accent,
+.ds-activity-job--processing .ds-activity-job-accent {
+  background: #f59e0b;
+}
+
+.ds-activity-job--failed .ds-activity-job-accent,
+.ds-activity-job--cancelled .ds-activity-job-accent {
+  background: #ef4444;
+}
+
+.ds-activity-job-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px 18px 14px 20px;
+}
+
+/* Thumbnail */
+.ds-activity-job-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 92px;
+}
+
+.ds-activity-job-thumb {
+  width: 92px;
+  height: 120px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds-activity-job-thumb .pdf-thumb,
+.ds-activity-job-thumb .pdf-thumb--ready,
+.ds-activity-job-thumb .pdf-thumb--loading,
+.ds-activity-job-thumb .pdf-thumb--error {
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.ds-activity-job-thumb-fallback {
+  color: #d1d5db;
+}
+
+.ds-activity-job-thumb:has(.pdf-thumb--ready) .ds-activity-job-thumb-fallback,
+.ds-activity-job-thumb:has(.pdf-thumb--loading) .ds-activity-job-thumb-fallback {
+  display: none;
+}
+
+.ds-activity-job-pdf-badge {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+}
+
+/* Content column */
+.ds-activity-job-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ds-activity-job-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.ds-activity-job-info {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.ds-activity-job-name {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-activity-job-id {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #9ca3af;
+  line-height: 1.3;
+}
+
+.ds-activity-job-action {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.35;
+}
+
+.ds-activity-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.ds-activity-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1;
+}
+
+.ds-activity-meta-item svg {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.ds-activity-format-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+/* Status column (right) */
+.ds-activity-job-status-col {
+  flex-shrink: 0;
+  width: 200px;
+  max-width: 36%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 2px;
+}
+
+.ds-activity-job-status-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ds-activity-job-status-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.ds-activity-status-icon--ok {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.ds-activity-status-icon--err {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.ds-activity-status-icon--muted {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.ds-activity-status-icon--spin {
+  color: #f59e0b;
+  flex-shrink: 0;
+  animation: ds-activity-spin 0.9s linear infinite;
+}
+
+.ds-activity-job-pct-lg {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.ds-activity-job-bar-track {
+  height: 5px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.ds-activity-job-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.ds-activity-job-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.ds-activity-job-pill--completed {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.ds-activity-job-pill--in-progress,
+.ds-activity-job-pill--processing {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.ds-activity-job-pill--queued,
+.ds-activity-job-pill--pending {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.ds-activity-job-pill--failed,
+.ds-activity-job-pill--cancelled {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Actions — bottom right */
+.ds-activity-job-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.ds-activity-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ds-activity-btn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ds-activity-btn:active:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.ds-activity-btn:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.ds-activity-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.ds-activity-btn--icon {
+  min-width: 36px;
+  width: 36px;
+  padding: 0;
+}
+
+.ds-activity-menu-wrap {
+  flex-shrink: 0;
+}
+
+/* Dropdown (portal) */
+.ds-activity-menu {
+  z-index: 1200;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+}
+
+.ds-activity-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ds-activity-menu-item:hover {
+  background: #f3f4f6;
+}
+
+.ds-activity-menu-item:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+}
+
+.ds-activity-menu-item--danger {
+  color: #dc2626;
+}
+
+.ds-activity-menu-item--danger:hover {
+  background: #fef2f2;
+}
+
+/* Skeleton */
+.ds-activity-job--skel {
+  pointer-events: none;
+}
+
+.ds-activity-job--skel:hover {
+  box-shadow: none;
+  border-color: #e5e7eb;
+}
+
+.ds-activity-skel-thumb {
+  width: 92px;
+  height: 120px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.ds-activity-skel-status {
+  width: 200px;
+  max-width: 36%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ds-activity-skel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ── Empty state ──────────────────────────────────────────────── */
+
+.ds-activity-empty {
+  padding: 34px 10px 30px 10px;
+}
+
+.ds-activity-empty--drag .ds-activity-empty-card {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.ds-activity-empty-card {
+  border: 1px dashed #e5e7eb;
+  border-radius: 14px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.ds-activity-empty-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 34px 48px 34px;
+}
+
+.ds-activity-empty-art {
+  position: relative;
+  width: 200px;
+  height: 120px;
+  margin-bottom: 16px;
+}
+
+.ds-activity-empty-glow {
+  position: absolute;
+  inset: 20% 10%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.ds-activity-empty-spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c7d2fe;
+}
+
+.ds-activity-empty-spark--1 { top: 8px; left: 24px; }
+.ds-activity-empty-spark--2 { top: 20px; right: 18px; }
+.ds-activity-empty-spark--3 { bottom: 36px; left: 12px; }
+.ds-activity-empty-spark--4 { bottom: 18px; right: 28px; }
+
+.ds-activity-empty-doc {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-58%);
+  width: 64px;
+  height: 82px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.ds-activity-empty-pdf-badge {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.ds-activity-empty-cloud {
+  position: absolute;
+  right: 18px;
+  top: 6px;
+  color: #a5b4fc;
+}
+
+.ds-activity-empty-cloud-shape {
+  width: 56px;
+  height: 40px;
+  display: block;
+}
+
+.ds-activity-empty-cloud-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -42%);
+  color: #6366f1;
+}
+
+.ds-activity-empty-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.ds-activity-empty-desc {
+  margin: 0 0 18px;
+  max-width: 420px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.ds-activity-file-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ds-activity-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 9px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.ds-activity-upload-btn:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.ds-activity-empty-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+  margin-top: 16px;
+}
+
+.ds-activity-empty-or-line {
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.ds-activity-empty-or-text {
+  font-size: 12.5px;
+  color: #9ca3af;
+  white-space: nowrap;
+}
+
+.ds-activity-empty-drop-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ds-activity-empty-drop-link:hover {
+  color: #1d4ed8;
+}
+
+.ds-activity-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+}
+
+.ds-activity-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 18px;
+  border-right: 1px solid #f3f4f6;
+}
+
+.ds-activity-feature:last-child {
+  border-right: none;
+}
+
+.ds-activity-feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ds-activity-feature-icon--green {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.ds-activity-feature-icon--purple {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.ds-activity-feature-icon--orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.ds-activity-feature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ds-activity-feature-text strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.ds-activity-feature-text span {
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .ds-activity-job-top {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .ds-activity-job-status-col,
+  .ds-activity-skel-status {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ds-panel.ds-activity {
+    padding: 18px 16px 20px;
+  }
+
+  .ds-activity-header {
+    flex-wrap: wrap;
+  }
+
+  .ds-activity-job-inner {
+    flex-direction: column;
+    padding: 14px 14px 12px 18px;
+  }
+
+  .ds-activity-job-thumb-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .ds-activity-job-actions {
+    justify-content: stretch;
+  }
+
+  .ds-activity-btn:not(.ds-activity-btn--icon) {
+    flex: 1;
+  }
+
+  .ds-activity-features {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-activity-feature {
+    border-right: none;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .ds-activity-feature:last-child {
+    border-bottom: none;
+  }
+}

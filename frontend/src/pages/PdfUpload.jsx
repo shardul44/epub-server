@@ -7,6 +7,7 @@ import { queryKeys } from '../lib/queryKeys';
 import { upsertPdfInListCache } from '../lib/syncPdfCaches';
 import { useListScope } from '../context/ListScopeContext';
 import { UploadLoadingModal } from '../components/Loadingmodal';
+import UploadedPdfsList from '../components/UploadedPdfsList';
 import {
   uploadPdf as uploadPdfThunk,
   selectUploadStatus,
@@ -77,6 +78,7 @@ const PdfUpload = () => {
   const [localError, setLocalError] = useState('');
   const [dragOver, setDragOver]     = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [highlightPdf, setHighlightPdf] = useState({ id: null, name: '' });
   const fileInputRef                = useRef(null);
   const navigate                    = useNavigate();
   const dispatch                    = useAppDispatch();
@@ -105,6 +107,10 @@ const PdfUpload = () => {
     if (uploadStatus !== 'succeeded' || !lastDoc) return undefined;
     upsertPdfInListCache(queryClient, listScope, lastDoc);
     dispatch(setUploadProgress(100));
+    setHighlightPdf({
+      id: lastDoc.id,
+      name: lastDoc.originalFileName || lastDoc.fileName || '',
+    });
     return undefined;
   }, [uploadStatus, lastDoc, dispatch, queryClient, listScope]);
 
@@ -405,6 +411,14 @@ const PdfUpload = () => {
         </aside>
 
       </div>{/* pu-body */}
+
+      <div className="pu-pdfs-section">
+        <UploadedPdfsList
+          highlightId={highlightPdf.id}
+          highlightName={highlightPdf.name}
+        />
+      </div>
+
       </div>{/* pu-content */}
 
       {/* ── Upload loading modal ── */}

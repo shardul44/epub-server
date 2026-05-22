@@ -1,6 +1,15 @@
 import api from './api';
 
 export const adminService = {
+  getPlanRequests: (params = {}) =>
+    api.get('/admin/plan-requests', { params }).then((r) => r.data.data),
+  getPlanRequestsPendingCount: () =>
+    api.get('/admin/plan-requests/pending-count').then((r) => r.data.data?.count ?? 0),
+  approvePlanRequest: (id, adminNote) =>
+    api.post(`/admin/plan-requests/${id}/approve`, { adminNote }).then((r) => r.data.data),
+  rejectPlanRequest: (id, adminNote) =>
+    api.post(`/admin/plan-requests/${id}/reject`, { adminNote }).then((r) => r.data.data),
+
   getOrganizations: () => api.get('/admin/organizations').then((r) => r.data.data),
   createOrganization: (body) => api.post('/admin/organizations', body).then((r) => r.data.data),
   getOrganization: (id) => api.get(`/admin/organizations/${id}`).then((r) => r.data.data),

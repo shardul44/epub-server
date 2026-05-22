@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   RefreshCw,
@@ -17,6 +16,9 @@ import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import { adminService } from '../../services/adminService';
 import { conversionService } from '../../services/conversionService';
 import { queryKeys } from '../../lib/queryKeys';
+import ThumbnailImage from '../../components/ThumbnailImage';
+import ConversionJobSummaryModal from '../../components/admin/ConversionJobSummaryModal';
+import { jobIdOf } from '../../hooks/useMergedConversionJob';
 import './PlatformConversions.css';
 
 const MAX_RETRIES = 3;
@@ -65,10 +67,6 @@ function etaHint(job) {
   if (left < 1500) return '~1s left';
   if (left < 60000) return `~${Math.round(left / 1000)}s left`;
   return `~${Math.round(left / 60000)}m left`;
-}
-
-function jobIdOf(job) {
-  return job.id ?? job.jobId;
 }
 
 function StatusBadge({ status }) {
@@ -148,9 +146,19 @@ function JobCardView({ job, onDownload, onRetry, onStop, onDetails, busyId, down
         <StatusBadge status={job.status} />
       </div>
 
-      <div className="pcv-file-row">
-        <FileText className="pcv-file-icon" size={22} strokeWidth={2} aria-hidden />
-        <div>
+      <div className="pcv-file-block">
+        <div className="pcv-card-thumb">
+          <ThumbnailImage
+            pdfId={job.pdfDocumentId ?? job.pdfId}
+            alt=""
+            fallback={(
+              <div className="pcv-card-thumb-fallback">
+                <FileText size={24} strokeWidth={1.75} aria-hidden />
+              </div>
+            )}
+          />
+        </div>
+        <div className="pcv-file-info">
           <div className="pcv-file-name">{job.pdfFilename || `PDF #${job.pdfDocumentId ?? job.pdfId ?? '—'}`}</div>
           <div className="pcv-file-pages">{pages}</div>
         </div>
@@ -237,7 +245,6 @@ function JobCardView({ job, onDownload, onRetry, onStop, onDetails, busyId, down
 }
 
 export default function PlatformConversions() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { allJobs, isLoading, error: fetchError } = useConversionsQuery({ enabled: true });
   const [orgFilter, setOrgFilter] = useState('');
@@ -246,6 +253,7 @@ export default function PlatformConversions() {
   const [pageError, setPageError] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [downloadBusy, setDownloadBusy] = useState(null);
+  const [summaryJob, setSummaryJob] = useState(null);
 
   const orgsQuery = useQuery({
     queryKey: ['admin', 'organizations', 'platform-conversions'],
@@ -306,13 +314,9 @@ export default function PlatformConversions() {
     return { total, completed, failed, processing, okPct, badPct };
   }, [filteredJobs]);
 
-  const onDetails = useCallback(
-    (job) => {
-      const id = jobIdOf(job);
-      if (id != null) navigate(`/admin/conversions/job/${id}`);
-    },
-    [navigate],
-  );
+  const onDetails = useCallback((job) => {
+    if (jobIdOf(job) != null) setSummaryJob(job);
+  }, []);
 
   const invalidateJobs = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.conversions.list() });
@@ -567,10 +571,7 @@ export default function PlatformConversions() {
                             type="button"
                             className="pcv-card-btn pcv-card-btn--primary"
                             style={{ marginRight: 6 }}
-                            onClick={() => {
-                              const jid = jobIdOf(job);
-                              if (jid != null) navigate(`/admin/conversions/job/${jid}`);
-                            }}
+                            onClick={() => onDetails(job)}
                           >
                             Details
                           </button>
@@ -609,6 +610,14 @@ export default function PlatformConversions() {
           )}
         </section>
       </div>
+
+      {summaryJob && (
+        <ConversionJobSummaryModal
+          job={summaryJob}
+          onClose={() => setSummaryJob(null)}
+          onDownload={onDownload}
+        />
+      )}
     </div>
   );
 }

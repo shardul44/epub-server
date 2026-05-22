@@ -12,14 +12,20 @@ import {
   BookOpen,
   Calculator,
   Check,
+  CheckCircle2,
   ChevronLeft,
+  ChevronRight,
   Download,
   ExternalLink,
   FileText,
   Loader2,
+  Maximize2,
+  Minus,
   MousePointerClick,
   Pause,
+  Pencil,
   Play,
+  Plus,
   Save,
   Trash2,
   Upload,
@@ -34,6 +40,20 @@ import { useWorkflowNavigation } from '../hooks/useWorkflowNavigation';
 import './FxlSyncStudio.css';
 
 const fxlIc = { strokeWidth: 2, 'aria-hidden': true };
+
+const FXL_ZONE_COLORS = [
+  { bar: '#3b82f6', chip: '#2563eb', region: 'rgba(59, 130, 246, 0.45)' },
+  { bar: '#8b5cf6', chip: '#7c3aed', region: 'rgba(139, 92, 246, 0.45)' },
+  { bar: '#ec4899', chip: '#db2777', region: 'rgba(236, 72, 153, 0.45)' },
+  { bar: '#f59e0b', chip: '#d97706', region: 'rgba(245, 158, 11, 0.45)' },
+  { bar: '#14b8a6', chip: '#0d9488', region: 'rgba(20, 184, 166, 0.45)' },
+  { bar: '#22c55e', chip: '#16a34a', region: 'rgba(34, 197, 94, 0.45)' },
+];
+
+function zonePaletteIndex(zoneId, zones) {
+  const i = zones.findIndex((z) => z.id === zoneId);
+  return i >= 0 ? i % FXL_ZONE_COLORS.length : 0;
+}
 
 const backendOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
 const apiBaseEndsWithApi = /\/api\/?$/.test(API_BASE_URL);
@@ -83,6 +103,7 @@ export default function FxlSyncStudio() {
   const [uploadingPerPage, setUploadingPerPage] = useState(false);
   /** Bumped after per-page upload/align so WaveSurfer reloads the same URL (browser cache bust). */
   const [audioStreamNonce, setAudioStreamNonce] = useState(0);
+  const [zoneNotes, setZoneNotes] = useState({});
   const tapSyncStartRef = useRef(null);
   const segmentsRef = useRef(segments);
   const selectedZoneIdRef = useRef(selectedZoneId);
@@ -323,11 +344,12 @@ export default function FxlSyncStudio() {
           end = Math.max(start + 0.05, end - pageOffset);
         }
         if (end <= start) return;
+        const ci = zonePaletteIndex(seg.id, currentPageZones);
         plugin.addRegion({
           id: seg.id,
           start,
           end,
-          color: 'rgba(74, 123, 84, 0.5)',
+          color: FXL_ZONE_COLORS[ci].region,
           drag: true,
           resize: true
         });
@@ -480,21 +502,66 @@ export default function FxlSyncStudio() {
 
   const getCurrentTime = () => wavesurferRef.current?.getCurrentTime() ?? 0;
 
+  const waveformDuration = wavesurferRef.current?.getDuration?.() || audioDuration || 0;
+
+  const refreshWaveformRegion = useCallback((zoneId, startTime, endTime) => {
+    const plugin = regionsPluginRef.current;
+    if (!plugin || !isReady) return;
+    const isPerPage = usePerPageAudioForWaveform && currentPage?.pageNumber != null;
+    let start = Number(startTime) || 0;
+    let end = Number(endTime) || start + 0.2;
+    if (!isPerPage && displaySegments.length) {
+      const pageOffset = Math.min(...displaySegments.map((s) => Number(s.startTime) || 0));
+      start = Math.max(0, start - pageOffset);
+      end = Math.max(start + 0.05, end - pageOffset);
+    }
+    skipRegionsRefreshRef.current = true;
+    const existing = plugin.getRegions?.().find((r) => r.id === zoneId);
+    if (existing?.remove) existing.remove();
+    const ci = zonePaletteIndex(zoneId, currentPageZones);
+    plugin.addRegion({
+      id: zoneId,
+      start,
+      end,
+      color: FXL_ZONE_COLORS[ci].region,
+      drag: true,
+      resize: true,
+    });
+  }, [isReady, usePerPageAudioForWaveform, currentPage?.pageNumber, displaySegments, currentPageZones]);
+
+  const applySegmentTimes = useCallback((zoneId, startTime, endTime) => {
+    const MIN_DUR = 0.2;
+    let st = Number(startTime) || 0;
+    let en = Number(endTime) ?? st + MIN_DUR;
+    if (en <= st) en = st + MIN_DUR;
+    const prev = segmentsRef.current;
+    const existing = prev.find((s) => s.id === zoneId);
+    const next = existing
+      ? prev.map((s) => (s.id === zoneId ? { ...s, startTime: st, endTime: en } : s))
+      : [...prev, { id: zoneId, startTime: st, endTime: en }];
+    segmentsRef.current = next;
+    setSegments(next);
+    refreshWaveformRegion(zoneId, st, en);
+  }, [refreshWaveformRegion]);
+
+  const nudgeSegmentTime = (zoneId, field, delta) => {
+    const seg = segmentsRef.current.find((s) => s.id === zoneId);
+    if (!seg) return;
+    const st = Number(seg.startTime) || 0;
+    const en = Number(seg.endTime) || st + 0.2;
+    if (field === 'start') applySegmentTimes(zoneId, Math.max(0, st + delta), en);
+    else applySegmentTimes(zoneId, st, Math.max(st + 0.2, en + delta));
+  };
+
   const setStartAtPlayhead = () => {
     if (!selectedZoneId || !effectiveAudioUrl) return;
     const t = getCurrentTime();
-    const prev = segmentsRef.current;
-    const existing = prev.find(s => s.id === selectedZoneId);
+    const existing = segmentsRef.current.find((s) => s.id === selectedZoneId);
     const MIN_DUR = 0.2;
-    const next = existing
-      ? prev.map(s =>
-          s.id === selectedZoneId
-            ? { ...s, startTime: t, endTime: Math.max(Number(s.endTime) || t + MIN_DUR, t + MIN_DUR) }
-            : s
-        )
-      : [...prev, { id: selectedZoneId, startTime: t, endTime: t + 2 }];
-    segmentsRef.current = next;
-    setSegments(next);
+    const end = existing
+      ? Math.max(Number(existing.endTime) || t + MIN_DUR, t + MIN_DUR)
+      : t + 2;
+    applySegmentTimes(selectedZoneId, t, end);
     setSuccess(`Start set to ${t.toFixed(2)}s for ${selectedZoneId}`);
     tapSyncStartRef.current = null;
   };
@@ -502,21 +569,29 @@ export default function FxlSyncStudio() {
   const setEndAtPlayhead = () => {
     if (!selectedZoneId || !effectiveAudioUrl) return;
     const t = getCurrentTime();
-    const prev = segmentsRef.current;
-    const existing = prev.find(s => s.id === selectedZoneId);
+    const existing = segmentsRef.current.find((s) => s.id === selectedZoneId);
     const MIN_DUR = 0.2;
-    const next = existing
-      ? prev.map(s =>
-          s.id === selectedZoneId
-            ? { ...s, endTime: t, startTime: Math.min(Number(s.startTime) ?? 0, Math.max(0, t - MIN_DUR)) }
-            : s
-        )
-      : [...prev, { id: selectedZoneId, startTime: Math.max(0, t - 2), endTime: t }];
-    segmentsRef.current = next;
-    setSegments(next);
+    const start = existing
+      ? Math.min(Number(existing.startTime) ?? 0, Math.max(0, t - MIN_DUR))
+      : Math.max(0, t - 2);
+    applySegmentTimes(selectedZoneId, start, t);
     setSuccess(`End set to ${t.toFixed(2)}s for ${selectedZoneId}`);
     tapSyncStartRef.current = null;
   };
+
+  const selectedZone = currentPageZones.find((z) => z.id === selectedZoneId) || null;
+  const selectedSegment = selectedZoneId ? alignmentMap[selectedZoneId] : null;
+  const selectedDisplayOffset = usePerPageAudioForWaveform ? 0 : currentPageTimeOffset;
+  const selectedStartDisp = selectedSegment
+    ? (Number(selectedSegment.startTime) || 0) - selectedDisplayOffset
+    : 0;
+  const selectedEndDisp = selectedSegment
+    ? (Number(selectedSegment.endTime) || 0) - selectedDisplayOffset
+    : 0;
+  const selectedDuration = Math.max(0, selectedEndDisp - selectedStartDisp);
+  const overviewDuration = waveformDuration || audioDuration || 1;
+  const overviewPlayheadPct = Math.min(100, Math.max(0, (currentTime / overviewDuration) * 100));
+  const overviewViewPct = Math.min(100, Math.max(12, (50 / Math.max(zoom, 10)) * 100));
 
   const handleManualTap = useCallback(() => {
     const zoneId = selectedZoneIdRef.current;
@@ -713,26 +788,29 @@ export default function FxlSyncStudio() {
       )}
 
       <div className="studio-layout">
-        <aside className="viewer-panel left-panel">
-          <div className="panel-header fxl-left-panel-header">
-            <h3><FileText size={18} {...fxlIc} /> Pages</h3>
+        <aside className="fxl-col fxl-col--left viewer-panel left-panel">
+          <div className="fxl-panel-top">
+            <h3 className="fxl-panel-title">
+              <FileText size={18} {...fxlIc} />
+              Pages
+            </h3>
             <div className="fxl-reader-actions">
               <button
                 type="button"
                 className="fxl-reader-toggle"
-                title="Open EPUB reader on a full page. Requires Export FXL EPUB 3 in Zoning Studio first (Save & continue does not build the EPUB file)."
+                title="Open EPUB reader (requires Export FXL EPUB 3 in Zoning Studio first)"
                 onClick={() => {
                   const spine = currentPage ? `page${currentPage.pageNumber}.xhtml` : 'page1.xhtml';
                   navigate(buildEpubReaderPath(jobId, { source: 'kitaboo', fixedLayout: true, spine }));
                 }}
               >
-                <BookOpen size={16} {...fxlIc} />
+                <BookOpen size={15} {...fxlIc} />
                 Reader
               </button>
               <button
                 type="button"
                 className="fxl-reader-toggle fxl-reader-newtab"
-                title="Open reader in a new tab (requires Export FXL EPUB 3 in Zoning Studio first)"
+                title="Open reader in a new tab"
                 aria-label="Open reader in a new browser tab"
                 onClick={() => {
                   const spine = currentPage ? `page${currentPage.pageNumber}.xhtml` : 'page1.xhtml';
@@ -740,12 +818,12 @@ export default function FxlSyncStudio() {
                   window.open(`${window.location.origin}${path}`, '_blank', 'noopener,noreferrer');
                 }}
               >
-                <ExternalLink size={16} {...fxlIc} />
+                <ExternalLink size={15} {...fxlIc} />
               </button>
             </div>
           </div>
           <div className="page-selector">
-            <label htmlFor="page-select">Jump to Page</label>
+            <label htmlFor="page-select">Jump to page</label>
             <select
               id="page-select"
               value={currentPageIndex}
@@ -761,18 +839,25 @@ export default function FxlSyncStudio() {
           </div>
           {currentPage && (
             <div className="fxl-zones-scroll">
-              <div className="panel-header zones-header">Zones (Page {currentPage.pageNumber}) — click to select for manual sync</div>
+              <div className="fxl-zones-heading">
+                Zones (Page {currentPage.pageNumber})
+              </div>
               <ul className="zone-list">
-                {currentPageZones.map(z => {
-                  const seg = (segments || []).find(s => s.id === z.id);
+                {currentPageZones.map((z) => {
+                  const seg = alignmentMap[z.id];
+                  const ci = zonePaletteIndex(z.id, currentPageZones);
+                  const palette = FXL_ZONE_COLORS[ci];
                   return (
                     <li
                       key={z.id}
-                      className={`zone-item ${selectedZoneId === z.id ? 'selected' : ''}`}
+                      className={`zone-item${selectedZoneId === z.id ? ' selected' : ''}`}
+                      style={{ '--zone-bar': palette.bar, '--zone-chip': palette.chip }}
                       onClick={() => {
                         const selecting = selectedZoneId !== z.id;
-                        setSelectedZoneId(prev => prev === z.id ? null : z.id);
-                        if (selecting && seg && wavesurferRef.current && effectiveAudioUrl) playSegment(seg.id);
+                        setSelectedZoneId((prev) => (prev === z.id ? null : z.id));
+                        if (selecting && seg && wavesurferRef.current && effectiveAudioUrl) {
+                          playSegment(seg.id);
+                        }
                       }}
                       role="button"
                       tabIndex={0}
@@ -780,86 +865,316 @@ export default function FxlSyncStudio() {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
                           const selecting = selectedZoneId !== z.id;
-                          setSelectedZoneId(prev => prev === z.id ? null : z.id);
-                          if (selecting && seg && wavesurferRef.current && effectiveAudioUrl) playSegment(seg.id);
+                          setSelectedZoneId((prev) => (prev === z.id ? null : z.id));
+                          if (selecting && seg && wavesurferRef.current && effectiveAudioUrl) {
+                            playSegment(seg.id);
+                          }
                         }
                       }}
                     >
-                      <span className="zone-id">{z.id}</span>
-                      <span className="zone-text">{String(z.content || '').trim().slice(0, 40)}{(z.content || '').length > 40 ? '…' : ''}</span>
+                      <span className="zone-item-bar" aria-hidden />
+                      <div className="zone-item-body">
+                        <span className="zone-id">{z.id}</span>
+                        <span className="zone-text">
+                          {String(z.content || '').trim().slice(0, 48)}
+                          {(z.content || '').length > 48 ? '…' : ''}
+                        </span>
+                      </div>
                     </li>
                   );
                 })}
               </ul>
             </div>
           )}
+          <div className="fxl-left-foot">
+            <button
+              type="button"
+              className="fxl-open-tab-btn"
+              onClick={() => {
+                const spine = currentPage ? `page${currentPage.pageNumber}.xhtml` : 'page1.xhtml';
+                const path = buildEpubReaderPath(jobId, { source: 'kitaboo', fixedLayout: true, spine });
+                window.open(`${window.location.origin}${path}`, '_blank', 'noopener,noreferrer');
+              }}
+            >
+              <Plus size={14} aria-hidden />
+              Open in new tab
+            </button>
+          </div>
         </aside>
 
-        <main className="waveform-panel">
-          <div className="waveform-panel-header">
-            <span className="waveform-panel-title">Timeline</span>
-            <div className="waveform-toolbar">
-              <div className="playback-controls">
-                <button type="button" onClick={() => wavesurferRef.current?.play()} disabled={!effectiveAudioUrl || !isReady || isPlaying} className="btn-playback" title="Play">
-                  <Play size={20} {...fxlIc} />
-                </button>
-                <button type="button" onClick={() => wavesurferRef.current?.pause()} disabled={!effectiveAudioUrl || !isReady || !isPlaying} className="btn-playback" title="Pause">
-                  <Pause size={20} {...fxlIc} />
-                </button>
-                <span className="playback-time" title="Current position">
-                  {typeof currentTime === 'number' ? currentTime.toFixed(2) : '0.00'} s
-                </span>
-              </div>
-              <div className="zoom-controls">
-                <button type="button" onClick={() => setZoom(z => Math.max(10, z - 20))} disabled={!effectiveAudioUrl || zoom <= 10} className="btn-zoom" title="Zoom out">
-                  <ZoomOut size={18} {...fxlIc} />
-                </button>
-                <span className="zoom-label">{zoom}×</span>
-                <button type="button" onClick={() => setZoom(z => Math.min(200, z + 20))} disabled={!effectiveAudioUrl || zoom >= 200} className="btn-zoom" title="Zoom in">
-                  <ZoomIn size={18} {...fxlIc} />
-                </button>
+        <main className="fxl-col fxl-col--center waveform-panel">
+          <section className="fxl-card fxl-timeline-card">
+            <div className="waveform-panel-header">
+              <span className="waveform-panel-title">Timeline</span>
+              <div className="waveform-toolbar">
+                <div className="playback-controls">
+                  <button
+                    type="button"
+                    onClick={() => wavesurferRef.current?.play()}
+                    disabled={!effectiveAudioUrl || !isReady || isPlaying}
+                    className="btn-playback btn-playback--primary"
+                    title="Play"
+                  >
+                    <Play size={18} {...fxlIc} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => wavesurferRef.current?.pause()}
+                    disabled={!effectiveAudioUrl || !isReady || !isPlaying}
+                    className="btn-playback"
+                    title="Pause"
+                  >
+                    <Pause size={18} {...fxlIc} />
+                  </button>
+                  <span className="playback-time">
+                    {typeof currentTime === 'number' ? currentTime.toFixed(2) : '0.00'} s
+                  </span>
+                </div>
+                <div className="zoom-controls">
+                  <button
+                    type="button"
+                    onClick={() => setZoom((z) => Math.max(10, z - 20))}
+                    disabled={!effectiveAudioUrl || zoom <= 10}
+                    className="btn-zoom"
+                    title="Zoom out"
+                  >
+                    <ZoomOut size={16} {...fxlIc} />
+                  </button>
+                  <span className="zoom-label">{zoom}×</span>
+                  <button
+                    type="button"
+                    onClick={() => setZoom((z) => Math.min(200, z + 20))}
+                    disabled={!effectiveAudioUrl || zoom >= 200}
+                    className="btn-zoom"
+                    title="Zoom in"
+                  >
+                    <ZoomIn size={16} {...fxlIc} />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-zoom"
+                    title="Reset zoom"
+                    onClick={() => setZoom(50)}
+                    disabled={!effectiveAudioUrl}
+                  >
+                    <Maximize2 size={16} {...fxlIc} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="waveform-panel-body">
-            {effectiveAudioUrl ? (
-              <>
-                <div ref={waveformRef} className="waveform-container" />
-                <div className="fxl-timeline-placeholder">
-                  <p className="fxl-timeline-placeholder-title">Audio timeline</p>
-                  <p className="fxl-timeline-placeholder-text">
-                    The waveform stays above. This area is not a broken preview — FXL Sync Studio focuses on timing here. To see the full fixed-layout page while you work, open <strong>Reader</strong> (top left) or use the <strong>Open in new tab</strong> button beside it.
-                  </p>
+            <div className="waveform-panel-body">
+              {effectiveAudioUrl ? (
+                <>
+                  <div ref={waveformRef} className="waveform-container" />
+                  {displaySegments.length > 0 && (
+                    <div className="fxl-region-chips" aria-hidden>
+                      {displaySegments.map((seg) => {
+                        const ci = zonePaletteIndex(seg.id, currentPageZones);
+                        const p = FXL_ZONE_COLORS[ci];
+                        return (
+                          <span
+                            key={seg.id}
+                            className="fxl-region-chip"
+                            style={{ background: p.chip }}
+                          >
+                            {seg.id}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="no-audio">
+                  Upload narration in Zoning Studio or use Configure page boundaries → MP3 per page.
                 </div>
-              </>
-            ) : (
-              <div className="no-audio">Upload narration.mp3 in Zoning Studio or use Configure page boundaries → MP3 per page to see waveform.</div>
-            )}
-          </div>
+              )}
+            </div>
+          </section>
+
+          {selectedZone && (
+            <section className="fxl-card fxl-zone-detail-card">
+              <div className="fxl-zone-detail-head">
+                <h4 className="fxl-zone-detail-title">
+                  {selectedZone.id}
+                  <button type="button" className="fxl-icon-ghost" aria-label="Edit zone label">
+                    <Pencil size={14} />
+                  </button>
+                </h4>
+              </div>
+              <div className="fxl-zone-detail-grid">
+                <div className="fxl-time-fields">
+                  <div className="fxl-time-field">
+                    <label>Start time</label>
+                    <div className="fxl-time-stepper">
+                      <button
+                        type="button"
+                        className="fxl-step-btn"
+                        disabled={!selectedSegment}
+                        onClick={() => nudgeSegmentTime(selectedZone.id, 'start', -0.05)}
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="fxl-time-value">{selectedStartDisp.toFixed(2)} s</span>
+                      <button
+                        type="button"
+                        className="fxl-step-btn"
+                        disabled={!selectedSegment}
+                        onClick={() => nudgeSegmentTime(selectedZone.id, 'start', 0.05)}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="fxl-time-field">
+                    <label>End time</label>
+                    <div className="fxl-time-stepper">
+                      <button
+                        type="button"
+                        className="fxl-step-btn"
+                        disabled={!selectedSegment}
+                        onClick={() => nudgeSegmentTime(selectedZone.id, 'end', -0.05)}
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="fxl-time-value">{selectedEndDisp.toFixed(2)} s</span>
+                      <button
+                        type="button"
+                        className="fxl-step-btn"
+                        disabled={!selectedSegment}
+                        onClick={() => nudgeSegmentTime(selectedZone.id, 'end', 0.05)}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="fxl-time-field fxl-time-field--duration">
+                    <label>Duration</label>
+                    <span className="fxl-duration-value">{selectedDuration.toFixed(2)} s</span>
+                  </div>
+                </div>
+                <div className="fxl-zone-preview">
+                  <span className="fxl-zone-preview-label">Waveform preview</span>
+                  <div className="fxl-zone-preview-bars" aria-hidden>
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="fxl-zone-preview-bar"
+                        style={{ height: `${30 + ((i * 17) % 55)}%` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="fxl-notes-block">
+                  <label htmlFor={`zone-note-${selectedZone.id}`}>Notes</label>
+                  <textarea
+                    id={`zone-note-${selectedZone.id}`}
+                    className="fxl-notes-input"
+                    rows={3}
+                    maxLength={200}
+                    placeholder="Optional notes for this zone…"
+                    value={zoneNotes[selectedZone.id] || ''}
+                    onChange={(e) =>
+                      setZoneNotes((prev) => ({ ...prev, [selectedZone.id]: e.target.value }))
+                    }
+                  />
+                  <span className="fxl-notes-count">
+                    {(zoneNotes[selectedZone.id] || '').length}/200
+                  </span>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <section className="fxl-card fxl-overview-card">
+            <div className="fxl-overview-head">
+              <span className="fxl-overview-title">Audio overview</span>
+              <button
+                type="button"
+                className="fxl-fit-btn"
+                onClick={() => setZoom(50)}
+                disabled={!effectiveAudioUrl}
+              >
+                Fit to selection
+              </button>
+            </div>
+            <div className="fxl-overview-track" aria-hidden>
+              <div className="fxl-overview-wave">
+                {Array.from({ length: 80 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="fxl-overview-bar"
+                    style={{ height: `${22 + ((i * 13) % 68)}%` }}
+                  />
+                ))}
+              </div>
+              <div
+                className="fxl-overview-window"
+                style={{ width: `${overviewViewPct}%`, left: `${Math.min(overviewPlayheadPct, 100 - overviewViewPct)}%` }}
+              />
+              <div
+                className="fxl-overview-playhead"
+                style={{ left: `${overviewPlayheadPct}%` }}
+              />
+            </div>
+          </section>
         </main>
 
-        <aside className="right-panel">
-          <div className="panel-header">Segments {currentPage ? `(Page ${currentPage.pageNumber})` : ''}</div>
+        <aside className="fxl-col fxl-col--right right-panel">
+          <div className="fxl-segments-head">
+            <h3 className="fxl-panel-title">
+              Segments {currentPage ? `(Page ${currentPage.pageNumber})` : ''}
+            </h3>
+            <span className="fxl-segments-count">{displaySegments.length} total</span>
+          </div>
           <div className="segment-list">
             {displaySegments.length === 0 ? (
               <p className="no-segments">
-                {currentPage && (currentPage.zones?.length > 0) && usePerPageAudioForWaveform
-                  ? `No alignment for Page ${currentPage.pageNumber}. Run "Run alignment" with per-page audio (ensure page_${currentPage.pageNumber}.mp3 exists).`
+                {currentPage && currentPage.zones?.length > 0 && usePerPageAudioForWaveform
+                  ? `No alignment for Page ${currentPage.pageNumber}. Configure page boundaries and run alignment.`
                   : 'No segments. Run alignment first.'}
               </p>
             ) : (
-              displaySegments.map(seg => {
-                // Per-page: stored times are 0→duration; show as-is. Single audio: subtract page start.
+              displaySegments.map((seg) => {
                 const displayOffset = usePerPageAudioForWaveform ? 0 : currentPageTimeOffset;
                 const start = (Number(seg.startTime) || 0) - displayOffset;
                 const end = (Number(seg.endTime) || 0) - displayOffset;
+                const dur = Math.max(0, end - start);
+                const ci = zonePaletteIndex(seg.id, currentPageZones);
+                const palette = FXL_ZONE_COLORS[ci];
                 return (
-                  <div key={seg.id} className="segment-row">
-                    <span className="segment-id" title={seg.id}>{seg.id}</span>
-                    <span className="segment-time">
-                      {start.toFixed(2)}s – {end.toFixed(2)}s
+                  <div
+                    key={seg.id}
+                    className={`segment-row${selectedZoneId === seg.id ? ' segment-row--active' : ''}`}
+                    onClick={() => setSelectedZoneId(seg.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedZoneId(seg.id);
+                      }
+                    }}
+                  >
+                    <span className="segment-dot" style={{ background: palette.bar }} aria-hidden />
+                    <div className="segment-main">
+                      <span className="segment-id">{seg.id}</span>
+                      <span className="segment-time">
+                        {start.toFixed(2)}s → {end.toFixed(2)}s
+                      </span>
+                    </div>
+                    <span className="segment-dur-badge" style={{ color: palette.chip, borderColor: `${palette.bar}33`, background: `${palette.bar}14` }}>
+                      {dur.toFixed(2)}s
                     </span>
-                    <button type="button" className="btn-play-segment" onClick={() => playSegment(seg.id)} title="Play">
+                    <button
+                      type="button"
+                      className="btn-play-segment"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        playSegment(seg.id);
+                      }}
+                      title="Play segment"
+                    >
                       <Play size={14} {...fxlIc} />
                     </button>
                   </div>
@@ -869,6 +1184,50 @@ export default function FxlSyncStudio() {
           </div>
         </aside>
       </div>
+
+      <footer className="fxl-studio-footer">
+        <div className="fxl-footer-status">
+          {saveSuccess ? (
+            <>
+              <CheckCircle2 size={16} className="fxl-footer-status-icon" />
+              All changes saved
+            </>
+          ) : saving ? (
+            <>
+              <Loader2 size={16} className="fxl-lucide-spin" />
+              Saving…
+            </>
+          ) : (
+            <span className="fxl-footer-status-muted">Unsaved changes — use Save alignment</span>
+          )}
+        </div>
+        <div className="fxl-footer-pagination">
+          <button
+            type="button"
+            className="fxl-page-nav"
+            disabled={currentPageIndex <= 0}
+            onClick={() => setCurrentPageIndex((i) => Math.max(0, i - 1))}
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span className="fxl-page-label">
+            Page {currentPage?.pageNumber ?? '—'} of {pages.length || '—'}
+          </span>
+          <button
+            type="button"
+            className="fxl-page-nav"
+            disabled={currentPageIndex >= pages.length - 1}
+            onClick={() => setCurrentPageIndex((i) => Math.min(pages.length - 1, i + 1))}
+            aria-label="Next page"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <div className="fxl-footer-utils" aria-hidden>
+          <span className="fxl-footer-hint">⌘ K</span>
+        </div>
+      </footer>
 
       {showManualConfig && (
         <div className="manual-config-overlay" onClick={() => setShowManualConfig(false)}>

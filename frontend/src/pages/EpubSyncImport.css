@@ -2,31 +2,35 @@
    EpubSyncImport — EPUB → Audio Sync page
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Page shell ────────────────────────────────────────────────── */
+/* ── Page shell (matches .pld-page) ─────────────────────────────── */
 .esi-page {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
   background: #f7f7f2;
-  font-family: inherit;
+  padding: 0 0 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-x: clip;
 }
 
-/* ── Top bar ───────────────────────────────────────────────────── */
+/* ── Top bar (matches .pld-navbar) ──────────────────────────────── */
 .esi-topbar {
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 32px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
-  padding: 0 24px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 50;
 }
 
 .esi-topbar-left {
@@ -49,11 +53,11 @@
 }
 
 .esi-topbar-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #000000;
   margin: 0;
-  letter-spacing: -0.1px;
+  letter-spacing: -0.2px;
 }
 
 .esi-skip-badge {
@@ -95,10 +99,19 @@
   display: grid;
   grid-template-columns: 1fr 310px;
   gap: 20px;
-  padding: 24px;
+  padding: 28px 32px 0;
   align-items: start;
   width: 100%;
+  min-width: 0;
   margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.esi-epubs-section {
+  width: 100%;
+  min-width: 0;
+  margin: 24px 32px 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -663,7 +676,6 @@
 @media (max-width: 900px) {
   .esi-body {
     grid-template-columns: 1fr;
-    padding: 16px;
   }
   .esi-sidebar {
     position: static;
@@ -674,9 +686,14 @@
   .esi-tip-card { grid-column: 1 / -1; }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .esi-topbar { padding: 0 16px; }
-  .esi-body { padding: 12px; gap: 12px; }
+  .esi-body { padding: 28px 16px 0; }
+  .esi-epubs-section { margin-left: 16px; margin-right: 16px; }
+}
+
+@media (max-width: 640px) {
+  .esi-body { padding: 16px 16px 0; gap: 12px; }
   .esi-layout-grid { grid-template-columns: 1fr; }
   .esi-hero-card { flex-direction: column; gap: 12px; }
   .esi-section-footer { flex-direction: column; align-items: stretch; }

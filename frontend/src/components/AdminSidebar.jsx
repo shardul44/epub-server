@@ -21,6 +21,7 @@ import {
   Shield,
   Terminal,
   FileText,
+  Inbox,
   LogOut,
   Menu,
   X,
@@ -62,6 +63,13 @@ const AdminSidebar = ({ onCollapse }) => {
     staleTime: 60 * 1000,
   });
 
+  const { data: pendingPlanRequests = 0 } = useQuery({
+    queryKey: ['admin', 'plan-requests', 'pending-count'],
+    queryFn: () => adminService.getPlanRequestsPendingCount(),
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -81,6 +89,7 @@ const AdminSidebar = ({ onCollapse }) => {
       activity: path.startsWith('/admin/activity') || path.startsWith('/activity'),
       analytics: path.startsWith('/admin/analytics'),
       orgs: path.startsWith('/admin/organizations'),
+      planRequests: path.startsWith('/admin/plan-requests'),
       plans: path.startsWith('/admin/plans'),
       users: path.startsWith('/admin/users'),
       conversions: path.startsWith('/admin/conversions'),
@@ -140,6 +149,13 @@ const AdminSidebar = ({ onCollapse }) => {
             label="Organizations"
             isActive={active.orgs}
             end={<CountBadge count={orgCount} tone="blue" />}
+          />
+          <NavRow
+            to="/admin/plan-requests"
+            icon={Inbox}
+            label="Plan requests"
+            isActive={active.planRequests}
+            end={<CountBadge count={pendingPlanRequests} tone="amber" />}
           />
           <NavRow
             to="/admin/plans"

@@ -15,9 +15,14 @@ const DashboardHeader = ({
   subtitle,
   healthStatus: _healthStatus,
   actions,
+  className = '',
+  actionsClassName = '',
 }) => {
+  const headerClass = ['ds-topnav', className].filter(Boolean).join(' ');
+  const actionsClass = ['ds-topnav-right', actionsClassName].filter(Boolean).join(' ');
+
   return (
-    <header className="ds-topnav">
+    <header className={headerClass}>
       <div className="ds-topnav-left">
         <div className="ds-topnav-title-block">
           <h1 className="ds-topnav-title">{title}</h1>
@@ -27,7 +32,7 @@ const DashboardHeader = ({
         </div>
       </div>
 
-      <div className="ds-topnav-right">
+      <div className={actionsClass}>
         {actions ?? (
           <>
             <Link to="/pdfs/upload" className="ds-navbar-btn ds-navbar-btn--ghost">

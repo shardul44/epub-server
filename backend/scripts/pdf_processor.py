@@ -1,43 +1,12 @@
 
 import argparse
 import re
-import sys
+import fitz  # PyMuPDF
+import cv2   # OpenCV
+import numpy as np
+from pathlib import Path
 import json
 import os
-from pathlib import Path
-
-# ── Structured error output helper ──────────────────────────────────────────
-def _fatal(message, code="PYTHON_ERROR", details=None):
-    """Print a structured JSON error to stderr and exit with code 1."""
-    payload = {"success": False, "error": {"code": code, "message": message}}
-    if details:
-        payload["error"]["details"] = details
-    print(json.dumps(payload), file=sys.stderr)
-    sys.exit(1)
-
-# ── Required: PyMuPDF ────────────────────────────────────────────────────────
-try:
-    import fitz  # PyMuPDF
-except ImportError:
-    _fatal(
-        "PyMuPDF is not installed. Run: pip install PyMuPDF",
-        code="MISSING_DEPENDENCY",
-        details={"package": "PyMuPDF", "import_name": "fitz"}
-    )
-
-# ── Optional: OpenCV + NumPy (only needed for cleanup/image-processing modes) ─
-_CV2_AVAILABLE = False
-cv2 = None
-np = None
-try:
-    import cv2 as _cv2
-    import numpy as _np
-    cv2 = _cv2
-    np = _np
-    _CV2_AVAILABLE = True
-except ImportError:
-    # cv2 is only required for --mode cleanup. render/extract/extract-images work without it.
-    pass
 
 # Line grouping: max y-distance (points) to treat two spans as same baseline. Scale with font size for tight/loose PDFs.
 LINE_THRESHOLD_FACTOR = 0.3   # fraction of font size
@@ -50,43 +19,47 @@ def _line_threshold_for_font(font_size):
         font_size = 12
     return max(LINE_THRESHOLD_MIN_PT, min(float(font_size) * LINE_THRESHOLD_FACTOR, LINE_THRESHOLD_MAX_PT))
 
-def render_pages(pdf_path, output_dir, dpi=150, page_from=1, page_to=None):
-    """
-    Phase 1: Render PDF pages to images.
-    Default DPI is 150 — good balance of quality vs. speed/file-size.
-    Use 300 only when pixel-perfect accuracy is required.
-    page_from / page_to are 1-based inclusive indices; page_to=None renders through last page.
-    """
-    try:
-        doc = fitz.open(pdf_path)
-    except Exception as e:
-        _fatal(f"Cannot open PDF: {e}", code="PDF_OPEN_ERROR", details={"path": pdf_path})
 
+def _resolve_page_range(doc, page_from=None, page_to=None):
+    """
+    Return 0-based page indices to process.
+    page_from / page_to are 1-based inclusive (CLI --page-from / --page-to).
+    """
+    total = doc.page_count
+    start = 1 if page_from is None else max(1, int(page_from))
+    end = total if page_to is None else min(total, int(page_to))
+    if start > end or total <= 0:
+        return []
+    return list(range(start - 1, end))
+
+
+def render_pages(pdf_path, output_dir, dpi=300, page_from=None, page_to=None):
+    """
+    Phase 1: Render PDF pages to images (optional 1-based inclusive page range).
+    """
+    doc = fitz.open(pdf_path)
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-
-    total = len(doc)
-    pf = max(1, int(page_from or 1))
-    if page_to is None:
-        pt = total
-    else:
-        pt = min(total, max(pf, int(page_to)))
 
     rendered_files = []
     zoom = dpi / 72  # 72 points per inch is standard PDF resolution
     mat = fitz.Matrix(zoom, zoom)
+    page_indices = _resolve_page_range(doc, page_from, page_to)
+    if not page_indices:
+        print("Warning: no pages in requested range.")
+        doc.close()
+        return rendered_files
+    if page_from is not None or page_to is not None:
+        print(f"Rendering pages {page_indices[0] + 1}–{page_indices[-1] + 1} of {doc.page_count}")
 
-    for page_index in range(pf - 1, pt):
-        page = doc[page_index]
-        page_num = page_index + 1
-        try:
-            pix = page.get_pixmap(matrix=mat, alpha=False)
-            output_file = Path(output_dir) / f"page_{page_num}.png"
-            pix.save(str(output_file))
-            rendered_files.append(str(output_file))
-            print(f"Rendered page {page_num} to {output_file}", flush=True)
-        except Exception as e:
-            print(f"Warning: failed to render page {page_num}: {e}", file=sys.stderr, flush=True)
+    for page_num in page_indices:
+        page = doc[page_num]
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        output_file = Path(output_dir) / f"page_{page_num + 1}.png"
+        pix.save(str(output_file))
+        rendered_files.append(str(output_file))
+        print(f"Rendered page {page_num + 1} to {output_file}")
 
+    doc.close()
     return rendered_files
 
 def extract_fonts(pdf_path, output_dir):
@@ -431,19 +404,34 @@ def _join_sentence_text(parts_texts):
     return re.sub(r"\s+", " ", combined).strip()
 
 
-def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list=None):
+def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list=None, page_from=None, page_to=None):
     """
     Phase 2: Extract text coordinates at sentence, word or glyph level.
     - sentence: proper sentences — only end at . ? ! (not at every capital, so "Horses Up" stays one segment until . ? !).
     - word:     one item per word using PyMuPDF word bboxes.
     - glyph:    one item per PDF character (span["chars"]) so Absolute HTML can replay glyph-level layout exactly.
+    Optional page_from / page_to: 1-based inclusive range (merges into existing coords.json when present).
     """
     import math
     doc = fitz.open(pdf_path)
     pages_data = []
     font_map = font_list or {}
+    page_indices = _resolve_page_range(doc, page_from, page_to)
 
-    for page_num, page in enumerate(doc):
+    out_path = Path(output_json)
+    if page_from is not None or page_to is not None:
+        if out_path.exists():
+            try:
+                existing = json.loads(out_path.read_text(encoding="utf-8"))
+                if isinstance(existing, list):
+                    pages_data = [p for p in existing if p.get("page") not in {i + 1 for i in page_indices}]
+                elif isinstance(existing, dict) and isinstance(existing.get("pages"), list):
+                    pages_data = [p for p in existing["pages"] if p.get("page") not in {i + 1 for i in page_indices}]
+            except Exception as e:
+                print(f"Warning: could not merge existing coords.json: {e}")
+
+    for page_num in page_indices:
+        page = doc[page_num]
         width = page.rect.width
         height = page.rect.height
         # Use "rawdict" so we get character-level "chars" per span — preserves leader dots and exact PDF text as-is.
@@ -482,9 +470,6 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             word_id = 0
             sentence_id = 0
             in_word = False
-            prev_line_bottom = None
-            prev_line_max_size = None
-            prev_line_text = ""
             for block in raw_blocks:
                 if block.get("type") != 0 or "lines" not in block:
                     continue
@@ -494,45 +479,11 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     rotation = round(math.atan2(direction[1], direction[0]) * 180 / math.pi, 2)
                     # Precompute full line text so we can distinguish true single-word labels
                     line_chars = []
-                    line_sizes = []
-                    line_y0 = None
-                    line_y1 = None
                     for _span in line["spans"]:
-                        sz = _span.get("size", 12)
-                        if sz:
-                            line_sizes.append(sz)
-                        sb = _span.get("bbox")
-                        if sb and len(sb) >= 4:
-                            line_y0 = sb[1] if line_y0 is None else min(line_y0, sb[1])
-                            line_y1 = sb[3] if line_y1 is None else max(line_y1, sb[3])
                         for ch in _span.get("chars", []):
                             line_chars.append(ch.get("c", ""))
-                            cb = ch.get("bbox")
-                            if cb and len(cb) >= 4:
-                                line_y0 = cb[1] if line_y0 is None else min(line_y0, cb[1])
-                                line_y1 = cb[3] if line_y1 is None else max(line_y1, cb[3])
                     full_line_text = "".join(line_chars)
                     full_line_word_count = len(full_line_text.strip().split())
-                    line_max_size = max(line_sizes) if line_sizes else 12
-                    # New sentence on paragraph breaks (large gap / heading) — not normal wrapped lines.
-                    if prev_line_bottom is not None and line_y0 is not None and full_line_text.strip():
-                        gap = line_y0 - prev_line_bottom
-                        base_size = max(prev_line_max_size or 12, line_max_size, 12)
-                        gap_thresh = base_size * 1.75
-                        prev_stripped = (prev_line_text or "").strip()
-                        cur_stripped = full_line_text.strip()
-                        prev_ended = bool(prev_stripped) and prev_stripped[-1] in ".?!"
-                        continuation = (
-                            cur_stripped
-                            and cur_stripped[0].islower()
-                            and not prev_ended
-                        )
-                        if gap > gap_thresh and not continuation:
-                            sentence_id += 1
-                        elif prev_line_max_size and line_max_size and not continuation:
-                            ratio = line_max_size / prev_line_max_size
-                            if ratio >= 1.28 or ratio <= 0.78:
-                                sentence_id += 1
 
                     for span in line["spans"]:
                         font_name = span.get("font", "")
@@ -614,10 +565,6 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                                 sentence_id += 1
                         if is_page_number_span or is_label_span:
                             sentence_id += 1
-                    if line_y1 is not None:
-                        prev_line_bottom = line_y1
-                        prev_line_max_size = line_max_size
-                        prev_line_text = full_line_text
         elif extraction_level == "word":
             # Word-level: use get_text("words") and attach font/size from overlapping span in dict
             extracted_items = []
@@ -824,6 +771,8 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             "items": extracted_items
         })
 
+    doc.close()
+    pages_data.sort(key=lambda p: p.get("page", 0))
     with open(output_json, "w", encoding="utf-8") as f:
         json.dump(pages_data, f, indent=2, ensure_ascii=False)
     print(f"Extracted coordinates to {output_json} (level={extraction_level})")
@@ -832,10 +781,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
 def get_dominant_color(img, x0, y0, x1, y1):
     """
     Sample pixels VERY close to the bbox to find the local background.
-    Requires OpenCV (cv2). Returns white if cv2 is unavailable.
     """
-    if not _CV2_AVAILABLE:
-        return (255, 255, 255)
     h, w = img.shape[:2]
     samples = []
     # Tight 10px border to avoid hitting distant banners/graphics
@@ -965,15 +911,7 @@ def cleanup_images(image_dir, coords_json, output_dir=None, cleanup_threshold=10
     Remove only coords.json text boxes. Page 1 (cover) is never cleaned — original
     kept intact, text overlaid in FXL. Other pages: wide banners use gradient copy,
     small regions use inpaint.
-    Requires OpenCV (cv2). Skips cleanup gracefully if cv2 is unavailable.
     """
-    if not _CV2_AVAILABLE:
-        print(
-            "Warning: OpenCV (cv2) is not installed — image cleanup skipped. "
-            "Install with: pip install opencv-python-headless",
-            file=sys.stderr, flush=True
-        )
-        return
     if not output_dir:
         output_dir = image_dir
     Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -1087,9 +1025,7 @@ def main():
     parser.add_argument("--pdf", required=True, help="Path to PDF file")
     parser.add_argument("--output-dir", required=True, help="Output directory")
     parser.add_argument("--mode", choices=["render", "extract", "cleanup", "extract-images", "all"], default="all")
-    parser.add_argument("--dpi", type=int, default=150, help="DPI for rendering (default: 150)")
-    parser.add_argument("--page-from", type=int, default=1, help="1-based first page to render (inclusive, default: 1)")
-    parser.add_argument("--page-to", type=int, default=None, help="1-based last page to render (inclusive); omit for all pages")
+    parser.add_argument("--dpi", type=int, default=300, help="DPI for rendering")
     parser.add_argument("--coords-json", help="Path to JSON file for coordinates (required for cleanup)")
     parser.add_argument("--extraction-level", choices=["sentence", "word", "glyph"], default="sentence",
                         help="Coordinate extraction level: sentence (end at .?!), word, or glyph (one item per character)")
@@ -1097,73 +1033,52 @@ def main():
                         help="Color difference threshold for text mask; lower = tighter mask (default 10)")
     parser.add_argument("--cleanup-dilate", type=int, default=5,
                         help="Dilation kernel size for contour bubble; larger = more expansion (default 5)")
-
+    parser.add_argument("--page-from", type=int, default=None,
+                        help="First page to process (1-based, inclusive). Omit to start at page 1.")
+    parser.add_argument("--page-to", type=int, default=None,
+                        help="Last page to process (1-based, inclusive). Omit to process through last page.")
+    
     args = parser.parse_args()
+    
+    pdf_path = args.pdf
+    output_dir = args.output_dir
+    
+    page_from = getattr(args, "page_from", None)
+    page_to = getattr(args, "page_to", None)
 
-    # Validate cleanup mode requires cv2
-    if args.mode in ["cleanup", "all"] and not _CV2_AVAILABLE:
-        print(
-            "Warning: OpenCV (cv2) not installed — cleanup step will be skipped. "
-            "To enable: pip install opencv-python-headless",
-            file=sys.stderr, flush=True
+    if args.mode in ["render", "all"]:
+        print("Starting Render Phase...")
+        render_pages(pdf_path, output_dir, args.dpi, page_from=page_from, page_to=page_to)
+        
+    if args.mode in ["extract", "all"]:
+        print("Starting Extraction Phase...")
+        json_path = args.coords_json or str(Path(output_dir) / "coords.json")
+        font_mapping = extract_fonts(pdf_path, output_dir)
+        level = getattr(args, "extraction_level", "sentence") or "sentence"
+        extract_coords(
+            pdf_path, json_path, extraction_level=level, font_list=font_mapping,
+            page_from=page_from, page_to=page_to,
+        )
+        # If running 'all', pass this json to next step
+        args.coords_json = json_path
+        
+    if args.mode in ["cleanup", "all"]:
+        print("Starting Cleanup Phase...")
+        if not args.coords_json:
+            args.coords_json = str(Path(output_dir) / "coords.json")
+            if not Path(args.coords_json).exists():
+                print("Error: Coordinates JSON not found. Run extract first.")
+                return
+        cleanup_images(
+            output_dir,
+            args.coords_json,
+            cleanup_threshold=getattr(args, "cleanup_threshold", 10),
+            cleanup_dilate=getattr(args, "cleanup_dilate", 5),
         )
 
-    pdf_path = args.pdf
+    if args.mode in ["extract-images"]:
+        print("Starting Embedded Images Extraction Phase...")
+        extract_embedded_images(pdf_path, output_dir)
 
-    # Validate PDF exists
-    if not Path(pdf_path).exists():
-        _fatal(f"PDF file not found: {pdf_path}", code="FILE_NOT_FOUND", details={"path": pdf_path})
-
-    output_dir = args.output_dir
-
-    try:
-        if args.mode in ["render", "all"]:
-            print("Starting Render Phase...", flush=True)
-            render_pages(
-                pdf_path,
-                output_dir,
-                args.dpi,
-                page_from=args.page_from,
-                page_to=args.page_to,
-            )
-
-        if args.mode in ["extract", "all"]:
-            print("Starting Extraction Phase...", flush=True)
-            json_path = args.coords_json or str(Path(output_dir) / "coords.json")
-            font_mapping = extract_fonts(pdf_path, output_dir)
-            level = getattr(args, "extraction_level", "sentence") or "sentence"
-            extract_coords(pdf_path, json_path, extraction_level=level, font_list=font_mapping)
-            # If running 'all', pass this json to next step
-            args.coords_json = json_path
-
-        if args.mode in ["cleanup", "all"]:
-            print("Starting Cleanup Phase...", flush=True)
-            if not args.coords_json:
-                args.coords_json = str(Path(output_dir) / "coords.json")
-                if not Path(args.coords_json).exists():
-                    print("Warning: Coordinates JSON not found. Skipping cleanup.", file=sys.stderr, flush=True)
-                else:
-                    cleanup_images(
-                        output_dir,
-                        args.coords_json,
-                        cleanup_threshold=getattr(args, "cleanup_threshold", 10),
-                        cleanup_dilate=getattr(args, "cleanup_dilate", 5),
-                    )
-            else:
-                cleanup_images(
-                    output_dir,
-                    args.coords_json,
-                    cleanup_threshold=getattr(args, "cleanup_threshold", 10),
-                    cleanup_dilate=getattr(args, "cleanup_dilate", 5),
-                )
-
-        if args.mode in ["extract-images"]:
-            print("Starting Embedded Images Extraction Phase...", flush=True)
-            extract_embedded_images(pdf_path, output_dir)
-
-    except SystemExit:
-        raise
-    except Exception as e:
-        _fatal(str(e), code="PROCESSING_ERROR", details={"mode": args.mode, "pdf": pdf_path})
 if __name__ == "__main__":
     main()

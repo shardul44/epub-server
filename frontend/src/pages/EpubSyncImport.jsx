@@ -17,6 +17,7 @@ import {
   RefreshCw,
   LayoutGrid,
 } from 'lucide-react';
+import UploadedPdfsList from '../components/UploadedPdfsList';
 import './EpubSyncImport.css';
 
 /* ─── Sidebar info panels ─────────────────────────────────────── */
@@ -87,6 +88,7 @@ const EpubSyncImport = () => {
   const [busy, setBusy]       = useState(false);
   const [error, setError]     = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [highlightEpub, setHighlightEpub] = useState({ id: null, name: '' });
   const fileInputRef          = useRef(null);
   const navigate              = useNavigate();
   const queryClient           = useQueryClient();
@@ -166,6 +168,10 @@ const EpubSyncImport = () => {
             : [];
           return [optimistic, ...filtered];
         });
+      }
+
+      if (pdfId) {
+        setHighlightEpub({ id: pdfId, name: file.name });
       }
 
       if (kind === 'fxl' && result.fxlSyncStudioPath) {
@@ -391,6 +397,14 @@ const EpubSyncImport = () => {
           </div>
 
         </aside>
+      </div>
+
+      <div className="esi-epubs-section">
+        <UploadedPdfsList
+          epubOnly
+          highlightId={highlightEpub.id}
+          highlightName={highlightEpub.name}
+        />
       </div>
     </div>
   );

@@ -397,20 +397,6 @@ const JobCard = ({
           <span className="cj-card-waiting">Waiting to start…</span>
         )}
 
-        {job.status === 'IN_PROGRESS' && (
-          <button
-            type="button"
-            className="cj-btn cj-btn-details"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelect?.(job);
-            }}
-          >
-            View Details
-            <ChevronRight size={16} aria-hidden />
-          </button>
-        )}
-
         {job.status !== 'IN_PROGRESS' && (
           <button
             type="button"

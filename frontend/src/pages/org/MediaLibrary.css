@@ -2,28 +2,42 @@
    MediaLibrary.css
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Root ──────────────────────────────────────────────────────── */
+/* ── Root (matches .pld-page) ───────────────────────────────────── */
 .ml-root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: #f7f7f2;
+  padding: 0 0 48px;
   display: flex;
   flex-direction: column;
-  background: #f7f7f2;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  gap: 0;
+  overflow-x: clip;
 }
 
-/* ── Page header ───────────────────────────────────────────────── */
+/* ── Page header (matches .pld-navbar) ───────────────────────────── */
 .ml-page-header {
+  width: 100%;
   height: 70px;
-  padding: 0 24px;
-  background: #ffffff;
+  min-height: 70px;
+  padding: 0 32px;
+  background: #fff;
   display: flex;
   align-items: center;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-sizing: border-box;
 }
 
 .ml-page-title {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: #000000;
   margin: 0;
   letter-spacing: -0.2px;
 }
@@ -33,7 +47,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 28px 16px;
+  padding: 28px 32px 16px;
 }
 
 .ml-section-icon {
@@ -89,7 +103,7 @@
 
 /* ── Upload panel ──────────────────────────────────────────────── */
 .ml-upload-panel {
-  margin: 0 28px 4px;
+  margin: 0 32px 4px;
 }
 
 .ml-upload-zone {
@@ -141,15 +155,16 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 28px;
+  padding: 12px 32px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   flex-wrap: wrap;
   width: 95%;
-  margin-left: 28px;
+  margin-left: 32px;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Search */
@@ -313,7 +328,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 14px 28px 0;
+  margin: 14px 32px 0;
   padding: 12px 18px;
   background: #fef2f2;
   border: 1px solid #fca5a5;
@@ -337,11 +352,13 @@
 
 /* ── Body ──────────────────────────────────────────────────────── */
 .ml-body {
-  padding: 20px 28px 40px;
+  padding: 0 32px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* ── Count label ───────────────────────────────────────────────── */
@@ -1046,12 +1063,18 @@
   .ml-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
+@media (max-width: 768px) {
+  .ml-page-header { padding: 0 16px; }
+  .ml-section-inner { padding: 28px 16px 16px; }
+  .ml-upload-panel { margin: 0 16px 4px; }
+  .ml-toolbar { padding: 10px 16px; margin-left: 16px; }
+  .ml-error { margin-left: 16px; margin-right: 16px; }
+  .ml-body { padding: 0 16px; }
+}
+
 @media (max-width: 900px) {
-  .ml-toolbar      { padding: 10px 18px; gap: 8px; }
-  .ml-body         { padding: 16px 18px 32px; }
-  .ml-section-inner { padding: 14px 18px; }
-  .ml-upload-panel { margin: 0 18px 4px; }
-  .ml-grid         { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .ml-toolbar { gap: 8px; }
+  .ml-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
 }
 
 @media (max-width: 700px) {
@@ -1066,9 +1089,12 @@
   .ml-row-date     { display: none; }
 }
 
+@media (max-width: 640px) {
+  .ml-section-inner { padding: 16px 16px 12px; flex-wrap: wrap; }
+  .ml-body { gap: 16px; }
+}
+
 @media (max-width: 480px) {
-  .ml-section-inner { flex-wrap: wrap; }
-  .ml-upload-btn   { width: 100%; justify-content: center; }
-  .ml-grid         { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .ml-body         { padding: 12px 14px 24px; }
+  .ml-upload-btn { width: 100%; justify-content: center; }
+  .ml-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
 }

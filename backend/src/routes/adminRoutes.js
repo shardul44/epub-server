@@ -11,6 +11,7 @@ import { PlatformApiKeyModel } from '../models/PlatformApiKey.js';
 import { UserModel } from '../models/User.js';
 import { UserActivityModel } from '../models/UserActivity.js';
 import { UserService } from '../services/userService.js';
+import { PlanRequestService } from '../services/planRequestService.js';
 import { validateUserDTO, validateUserUpdateDTO } from '../utils/validation.js';
 import {
   successResponse,
@@ -183,6 +184,13 @@ function activityLogCategory(action, entityType) {
   return 'system';
 }
 
+function formatLogEventCode(action, entityType) {
+  const a = (action || '').trim();
+  if (a.includes('.')) return a.replace(/\./g, '_').toUpperCase();
+  if (entityType) return `${String(entityType).replace(/_/g, '_')}_EVENT`.toUpperCase();
+  return 'SYSTEM';
+}
+
 function buildActivityLogMessage(row) {
   const meta = parseActivityMetadata(row.metadata);
   const parts = [];
@@ -194,6 +202,26 @@ function buildActivityLogMessage(row) {
   if (pages != null && Number.isFinite(Number(pages))) parts.push(`${pages} pages`);
   const msg = parts.join(' ').replace(/\s+/g, ' ').trim();
   return msg || row.action || 'Event';
+}
+
+function buildActivityLogFields(row) {
+  const meta = parseActivityMetadata(row.metadata);
+  const summary = row.summary ? String(row.summary).trim() : '';
+  const detailParts = [];
+  const actor = row.actor_email || row.actor_name;
+  if (actor) detailParts.push(`by ${actor}`);
+  const pages = meta && (meta.totalPages ?? meta.pages ?? meta.pageCount);
+  if (pages != null && Number.isFinite(Number(pages))) {
+    detailParts.push(`${pages} pages`);
+  }
+  return {
+    event: formatLogEventCode(row.action, row.entity_type),
+    title: summary || row.action || 'Event',
+    detail: detailParts.join(' · ') || 'Platform activity recorded',
+    organizationName: row.organization_name || null,
+    ipAddress: meta?.ipAddress ?? meta?.ip ?? null,
+    host: meta?.hostname ?? meta?.host ?? meta?.source ?? 'web-01'
+  };
 }
 
 // --- Platform settings (single row) ---
@@ -273,13 +301,19 @@ router.get('/system-logs', async (req, res) => {
     const fromActivities = rows.map((r) => {
       const aid = typeof r.id === 'bigint' ? Number(r.id) : r.id;
       const ts = r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at;
+      const fields = buildActivityLogFields(r);
       return {
         id: `a-${aid}`,
-        source: 'activity',
+        source: fields.host,
         ts,
         level: inferActivityLogLevel(r.action, r.summary),
         category: activityLogCategory(r.action, r.entity_type),
-        message: buildActivityLogMessage(r)
+        message: buildActivityLogMessage(r),
+        event: fields.event,
+        title: fields.title,
+        detail: fields.detail,
+        organizationName: fields.organizationName,
+        ipAddress: fields.ipAddress
       };
     });
 
@@ -303,11 +337,16 @@ router.get('/system-logs', async (req, res) => {
       const ts = j.ts instanceof Date ? j.ts.toISOString() : j.ts;
       return {
         id: `j-${jid}`,
-        source: 'conversion',
+        source: 'api',
         ts,
         level: 'ERROR',
         category: 'conversion',
-        message: `Job #${jobTag} failed: ${err} on ${pdf}${org}`
+        message: `Job #${jobTag} failed: ${err} on ${pdf}${org}`,
+        event: 'CONVERSION_FAILED',
+        title: `Job #${jobTag} failed`,
+        detail: `${err} on ${pdf}`,
+        organizationName: j.org_name || null,
+        ipAddress: null
       };
     });
 
@@ -647,6 +686,94 @@ router.put('/organizations/:id/subscription', async (req, res) => {
     return successResponse(res, toSubDto(sub));
   } catch (e) {
     return errorResponse(res, e.message, 500);
+  }
+});
+
+// --- Plan requests (member upgrade / add-on → platform admin) ---
+router.get('/plan-requests/pending-count', async (_req, res) => {
+  try {
+    const count = await PlanRequestService.pendingCount();
+    return successResponse(res, { count });
+  } catch (e) {
+    const msg = e?.message || String(e);
+    if (e?.errno === 1146 || /plan_requests/i.test(msg)) {
+      return errorResponse(
+        res,
+        'Table plan_requests is missing. Run: backend/database/migrations/014_plan_requests.sql',
+        503,
+      );
+    }
+    return errorResponse(res, msg, 500);
+  }
+});
+
+router.get('/plan-requests', async (req, res) => {
+  try {
+    const status = req.query.status ? String(req.query.status) : undefined;
+    const list = await PlanRequestService.listForAdmin({ status });
+    return successResponse(res, list);
+  } catch (e) {
+    const msg = e?.message || String(e);
+    if (e?.errno === 1146 || /plan_requests/i.test(msg)) {
+      return errorResponse(
+        res,
+        'Table plan_requests is missing. Run: backend/database/migrations/014_plan_requests.sql',
+        503,
+      );
+    }
+    return errorResponse(res, msg, 500);
+  }
+});
+
+router.post('/plan-requests/:id/approve', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!id || Number.isNaN(id)) return badRequestResponse(res, 'Invalid request id');
+    const { adminNote } = req.body || {};
+    const dto = await PlanRequestService.approve(id, {
+      reviewerUserId: req.user.id,
+      adminNote: adminNote ? String(adminNote).slice(0, 2000) : null,
+    });
+    return successResponse(res, dto);
+  } catch (e) {
+    if (e.code === 'NOT_FOUND') return notFoundResponse(res, e.message);
+    if (e.code === 'INVALID_STATE' || e.code === 'INVALID_ADDON') {
+      return badRequestResponse(res, e.message);
+    }
+    const msg = e?.message || String(e);
+    if (e?.errno === 1146 || /plan_requests/i.test(msg)) {
+      return errorResponse(
+        res,
+        'Table plan_requests is missing. Run: backend/database/migrations/014_plan_requests.sql',
+        503,
+      );
+    }
+    return errorResponse(res, msg, 500);
+  }
+});
+
+router.post('/plan-requests/:id/reject', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (!id || Number.isNaN(id)) return badRequestResponse(res, 'Invalid request id');
+    const { adminNote } = req.body || {};
+    const dto = await PlanRequestService.reject(id, {
+      reviewerUserId: req.user.id,
+      adminNote: adminNote ? String(adminNote).slice(0, 2000) : null,
+    });
+    return successResponse(res, dto);
+  } catch (e) {
+    if (e.code === 'NOT_FOUND') return notFoundResponse(res, e.message);
+    if (e.code === 'INVALID_STATE') return badRequestResponse(res, e.message);
+    const msg = e?.message || String(e);
+    if (e?.errno === 1146 || /plan_requests/i.test(msg)) {
+      return errorResponse(
+        res,
+        'Table plan_requests is missing. Run: backend/database/migrations/014_plan_requests.sql',
+        503,
+      );
+    }
+    return errorResponse(res, msg, 500);
   }
 });
 

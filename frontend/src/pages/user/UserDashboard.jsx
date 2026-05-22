@@ -12,7 +12,6 @@ import {
   Image,
   Music,
   Download,
-  Sparkles,
   Bell,
   Search,
   CloudUpload,
@@ -34,18 +33,11 @@ import { useDashboardQuery } from '../../hooks/queries/useDashboardQuery';
 import { usePdfsQuery } from '../../hooks/queries/usePdfsQuery';
 import { conversionService } from '../../services/conversionService';
 import { aiConfigService } from '../../services/aiConfigService';
+import DashboardHeader from '../../components/layout/Header';
 import MainContent from '../../components/layout/MainContent';
+import RecentActivityPanel from '../../components/dashboard/RecentActivityPanel';
 import '../Dashboard.css';
 import './UserDashboard.css';
-
-const timeAgo = (dateStr) => {
-  if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-};
 
 const fmtStorage = (mb) =>
   mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
@@ -148,8 +140,6 @@ export default function UserDashboard() {
   const loading = showConversion && (dashLoading || pdfsLoading);
 
   const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
-  const orgName =
-    user?.organizationName || user?.organization?.name || 'Your organization';
   const planName =
     user?.license?.planName || user?.planName || user?.plan || 'Your plan';
 
@@ -271,46 +261,40 @@ export default function UserDashboard() {
   const aiCfg = aiConfigQuery.data;
   const chartMax = Math.max(1, ...throughputData.map((d) => d.count));
 
-  return (
-    <div className="ds-root">
-      <nav
-        className="navbar ud-page-header ds-topnav"
-        role="navigation"
-        aria-label="Dashboard"
+  const headerActions = showConversion ? (
+    <>
+      <span className="ud-page-header-divider" aria-hidden="true" />
+      <Link
+        to="/conversions"
+        title="Activity"
+        aria-label="Activity"
+        className={`ui-icon-btn ud-icon-btn${notifyAttention ? ' ud-icon-btn--notify' : ''}`}
       >
-        <div className="ds-topnav-left">
-          <div className="ds-topnav-title-block">
-            <h1 className="ds-topnav-title">Dashboard</h1>
-          </div>
-        </div>
-        <div className="ds-topnav-right ud-page-header-actions">
-          <span className="ud-page-header-divider" aria-hidden="true" />
-          {showConversion && (
-          <>
-          <Link
-            to="/conversions"
-            className="ud-icon-btn"
-            title="Activity"
-            aria-label="Conversion activity and notifications"
-          >
-            <Bell size={18} strokeWidth={2} aria-hidden />
-            {notifyAttention ? <span className="ud-icon-btn-dot" aria-hidden /> : null}
-          </Link>
-          <Link to="/pdfs" className="ud-icon-btn" title="Search library" aria-label="Search PDF library">
-            <Search size={18} strokeWidth={2} aria-hidden />
-          </Link>
-          <Link to="/pdfs/upload" className="ds-navbar-btn ds-navbar-btn--ghost">
-            <CloudUpload size={16} strokeWidth={2} aria-hidden />
-            Upload PDF
-          </Link>
-          <Link to="/conversions" className="ds-navbar-btn ds-navbar-btn--primary">
-            <span className="ds-navbar-btn-plus">+</span>
-            New conversion
-          </Link>
-          </>
-          )}
-        </div>
-      </nav>
+        <Bell size={18} strokeWidth={2} aria-hidden />
+        {notifyAttention ? <span className="ud-icon-btn-dot" aria-hidden /> : null}
+      </Link>
+      <Link to="/pdfs" title="Search library" aria-label="Search library" className="ui-icon-btn ud-icon-btn">
+        <Search size={18} strokeWidth={2} aria-hidden />
+      </Link>
+      <Link to="/pdfs/upload" className="ds-navbar-btn ds-navbar-btn--ghost">
+        <CloudUpload size={16} strokeWidth={2} aria-hidden className="ds-navbar-btn-icon" />
+        Upload PDF
+      </Link>
+      <Link to="/conversions" className="ds-navbar-btn ds-navbar-btn--primary">
+        <span className="ds-navbar-btn-plus">+</span>
+        New conversion
+      </Link>
+    </>
+  ) : null;
+
+  return (
+    <div className="ds-root ui-page">
+      <DashboardHeader
+        title="Dashboard"
+        className="navbar ud-page-header"
+        actionsClassName={headerActions ? 'ud-page-header-actions' : undefined}
+        actions={headerActions}
+      />
 
       <MainContent>
       <div className="ud-root">
@@ -430,54 +414,6 @@ export default function UserDashboard() {
 
       {showConversion && (
       <>
-      {/* Your workspace (scoped to logged-in member) */}
-      <section className="ud-strip">
-        <div>
-          <div className="ud-strip-label">Your workspace</div>
-          <div className="ud-strip-org-name">{user?.name || user?.email?.split('@')[0] || 'You'}</div>
-          <div className="ud-strip-plan">
-            <Sparkles size={12} aria-hidden />
-            {orgName} · {planName}
-          </div>
-        </div>
-        <div>
-          <div className="ud-strip-label">Your PDFs</div>
-          {loading ? (
-            <div className="ds-skel ds-skel--lg" style={{ maxWidth: 140 }} />
-          ) : (
-            <>
-              <div className="ud-strip-credits-num">{pdfList.length}</div>
-              <div className="ud-strip-credits-sub">
-                {totalPdfPages > 0 ? `${totalPdfPages.toLocaleString()} pages total` : 'No uploads yet'}
-              </div>
-            </>
-          )}
-        </div>
-        <div>
-          <div className="ud-strip-label">Your conversion jobs</div>
-          <div className="ud-strip-bar-wrap">
-            {loading ? (
-              <div className="ds-skel ds-skel--lg" style={{ height: 48 }} />
-            ) : (
-              <>
-                <div className="ud-strip-credits-num">{stats.totalConversions}</div>
-                <div className="ud-strip-credits-sub">
-                  {stats.completed} completed · {activeJobs} in progress · {stats.failed} failed
-                </div>
-                <div className="ud-strip-bar-meta" style={{ marginTop: 10 }}>
-                  <span>
-                    Success <strong>{stats.totalConversions ? `${successRate}%` : '—'}</strong>
-                  </span>
-                  <span>
-                    Storage <strong>{totalPdfPages > 0 ? fmtStorage(storageMb) : '—'}</strong>
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
       {/* Metric tiles */}
       <div className="ds-stat-row ud-stat-row-spaced">
         {loading ? (
@@ -539,126 +475,12 @@ export default function UserDashboard() {
       </div>
 
       <div className="ud-split">
-        <div className="ds-panel ds-activity">
-          <div className="ds-ra-header">
-            <div>
-              <h2 className="ds-panel-title">Recent activity</h2>
-              <p className="ds-panel-sub">Latest conversion jobs from your library</p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                type="button"
-                className={`ds-refresh-btn${refreshing ? ' ds-refresh-btn--spinning' : ''}`}
-                onClick={() => loadData()}
-                disabled={refreshing}
-                title="Refresh"
-                aria-label="Refresh activity"
-              >
-                <RefreshCw size={15} />
-              </button>
-              <Link to="/conversions" className="ds-ra-view-all">
-                View all →
-              </Link>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="ds-ra-list">
-              {[1, 2, 3].map((k) => (
-                <div key={k} className="ds-ra-card">
-                  <div className="ds-skel ds-skel--icon" style={{ borderRadius: 8 }} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div className="ds-skel ds-skel--md" />
-                    <div className="ds-skel ds-skel--sm" />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-                    <div className="ds-skel" style={{ width: 120, height: 10 }} />
-                    <div className="ds-skel" style={{ width: 120, height: 5, borderRadius: 3 }} />
-                  </div>
-                  <div className="ds-skel ds-skel--pill" />
-                </div>
-              ))}
-            </div>
-          ) : recentJobs.length === 0 ? (
-            <div className="ds-empty">
-              <FileText className="ds-empty-icon" />
-              <p>
-                No conversions yet.{' '}
-                <Link to="/pdfs/upload">Upload a PDF</Link> to get started.
-              </p>
-            </div>
-          ) : (
-            <div className="ds-ra-list">
-              {recentJobs.map((job) => {
-                const pct =
-                  job.status === 'COMPLETED' || job.status === 'FAILED'
-                    ? 100
-                    : job.progressPercentage ?? job.progress ?? 0;
-                const pdfName =
-                  job.pdfDocument?.originalName ||
-                  job.pdfDocument?.filename ||
-                  `Job #${job.id}`;
-                const pages = job.pdfDocument?.pageCount ?? job.totalPages ?? null;
-                const ago = timeAgo(job.updatedAt || job.createdAt);
-                const rawStep = job.currentStep || job.conversionType || '';
-                const stage = rawStep
-                  ? String(rawStep)
-                      .replace(/STEP_\d+_/, '')
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, (c) => c.toUpperCase())
-                  : 'Conversion';
-                const isActive = job.status === 'IN_PROGRESS' || job.status === 'QUEUED';
-                const barColor =
-                  job.status === 'COMPLETED'
-                    ? '#16a34a'
-                    : job.status === 'FAILED'
-                      ? '#ef4444'
-                      : job.status === 'IN_PROGRESS'
-                        ? '#d97706'
-                        : '#9ca3af';
-                const pillClass = `ds-ra-pill--${job.status.toLowerCase().replace('_', '-')}`;
-
-                return (
-                  <div key={job.id} className="ds-ra-card">
-                    <span className="ds-ra-icon">
-                      <FileText size={16} />
-                    </span>
-                    <div className="ds-ra-info">
-                      <span className={`ds-ra-name${isActive ? ' ds-ra-name--active' : ''}`}>{pdfName}</span>
-                      <span className="ds-ra-meta">
-                        #{job.id}
-                        {pages ? <>&nbsp;·&nbsp;{pages} pages</> : ''}
-                        &nbsp;·&nbsp;
-                        <Clock size={12} className="ds-ra-clock" />
-                        {ago}
-                      </span>
-                    </div>
-                    <div className="ds-ra-progress">
-                      <div className="ds-ra-progress-top">
-                        <span className="ds-ra-stage">{stage}</span>
-                        <span className="ds-ra-pct">{Math.round(pct)}%</span>
-                      </div>
-                      <div className="ds-ra-bar-track">
-                        <div
-                          className="ds-ra-bar-fill"
-                          style={{ width: `${pct}%`, background: barColor }}
-                        />
-                      </div>
-                    </div>
-                    <span className={`ds-ra-pill ${pillClass}`}>
-                      {Math.round(pct)}%{' '}
-                      {job.status === 'IN_PROGRESS'
-                        ? 'IN PROGRESS'
-                        : job.status === 'QUEUED'
-                          ? 'QUEUED'
-                          : job.status}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <RecentActivityPanel
+          loading={loading}
+          refreshing={refreshing}
+          recentJobs={recentJobs}
+          onRefresh={loadData}
+        />
 
         <aside className="ud-aside">
           <div className="ud-card">

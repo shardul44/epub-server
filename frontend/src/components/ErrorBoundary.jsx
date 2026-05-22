@@ -14,6 +14,11 @@
  * `componentDidCatch` / `getDerivedStateFromError` in React 18.
  */
 import React from 'react';
+import { LayoutGrid, RefreshCw } from 'lucide-react';
+import './ErrorBoundary.css';
+
+const SUPPORT_MAILTO =
+  'mailto:support@kodeit.digital?subject=Application%20Error%20Report';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -31,9 +36,6 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    // Auto-reset when the parent passes a new `resetKey` (e.g. pathname).
-    // Without this, a single render bug locks the entire app on a fallback
-    // screen until the user manually refreshes.
     if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
       this.reset();
     }
@@ -56,90 +58,110 @@ class ErrorBoundary extends React.Component {
     const isDev = !!import.meta.env?.DEV;
 
     return (
-      <div
-        role="alert"
-        style={{
-          padding: 24,
-          margin: 24,
-          border: '1px solid #fecaca',
-          borderRadius: 12,
-          background: '#fff5f5',
-          maxWidth: 720,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          fontFamily: 'system-ui, -apple-system, Segoe UI, sans-serif',
-        }}
-      >
-        <h2 style={{ color: '#b91c1c', marginTop: 0, marginBottom: 8 }}>
-          Something went wrong
-        </h2>
-        <p style={{ color: '#475569', marginTop: 0 }}>
-          An unexpected error occurred while rendering this page. You can try
-          again, go back to the dashboard, or refresh the browser.
-        </p>
+      <div className="eb-page" role="alert">
+        <span className="eb-bg-deco eb-bg-deco--dots" aria-hidden="true" />
+        <span className="eb-bg-deco eb-bg-deco--x" aria-hidden="true">
+          ×
+        </span>
+        <span className="eb-bg-deco eb-bg-deco--ring" aria-hidden="true" />
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            onClick={this.reset}
-            style={btnStyle('#2563eb')}
-          >
-            Try again
-          </button>
-          <button
-            type="button"
-            onClick={this.goHome}
-            style={btnStyle('#0f766e')}
-          >
-            Go to dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            style={btnStyle('#475569')}
-          >
-            Refresh page
-          </button>
-        </div>
+        <div className="eb-card">
+          <div className="eb-illustration" aria-hidden="true">
+            <div className="eb-illustration-glow" />
+            <span className="eb-deco eb-deco--plus">+</span>
+            <span className="eb-deco eb-deco--dot" />
+            <span className="eb-deco eb-deco--grid">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <span key={i} />
+              ))}
+            </span>
+            <div className="eb-browser">
+              <div className="eb-browser-bar">
+                <span className="eb-browser-dot eb-browser-dot--red" />
+                <span className="eb-browser-dot eb-browser-dot--yellow" />
+                <span className="eb-browser-dot eb-browser-dot--green" />
+              </div>
+              <div className="eb-browser-face">
+                <div className="eb-browser-eyes">
+                  <span />
+                  <span />
+                </div>
+                <div className="eb-browser-mouth" />
+              </div>
+            </div>
+            <span className="eb-badge">!</span>
+          </div>
 
-        {isDev && this.state.error && (
-          <details style={{ marginTop: 20, textAlign: 'left' }}>
-            <summary style={{ cursor: 'pointer', color: '#b91c1c' }}>
-              Error details (development only)
-            </summary>
-            <pre
-              style={{
-                background: '#f8fafc',
-                padding: 12,
-                borderRadius: 6,
-                overflow: 'auto',
-                fontSize: 12,
-                marginTop: 8,
-                color: '#0f172a',
-              }}
+          <h1 className="eb-title">
+            Something <span className="eb-title-accent">went wrong</span>
+          </h1>
+          <p className="eb-desc">
+            An unexpected error occurred while rendering this page. You can try
+            again, go back to the dashboard, or refresh the browser.
+          </p>
+
+          <div className="eb-actions">
+            <button
+              type="button"
+              className="eb-btn eb-btn--primary"
+              onClick={this.reset}
             >
-              {String(this.state.error)}
-              {'\n'}
-              {this.state.errorInfo?.componentStack}
-            </pre>
-          </details>
-        )}
+              <span className="eb-btn-icon">
+                <RefreshCw size={14} strokeWidth={2.5} />
+              </span>
+              Try again
+            </button>
+            <button
+              type="button"
+              className="eb-btn eb-btn--dashboard"
+              onClick={this.goHome}
+            >
+              <span className="eb-btn-icon">
+                <LayoutGrid size={14} strokeWidth={2.5} />
+              </span>
+              Go to dashboard
+            </button>
+            <button
+              type="button"
+              className="eb-btn eb-btn--ghost"
+              onClick={() => window.location.reload()}
+            >
+              <span className="eb-btn-icon">
+                <RefreshCw size={14} strokeWidth={2.5} />
+              </span>
+              Refresh page
+            </button>
+          </div>
+
+          <footer className="eb-footer">
+            <div className="eb-help">
+              <span className="eb-help-icon" aria-hidden="true">
+                ?
+              </span>
+              <p className="eb-help-text">
+                <strong>Need help?</strong>
+                If the problem persists, please contact support.{' '}
+                <a className="eb-help-link" href={SUPPORT_MAILTO}>
+                  Contact support →
+                </a>
+              </p>
+            </div>
+          </footer>
+
+          {isDev && this.state.error && (
+            <details className="eb-dev-details">
+              <summary>Error details (development only)</summary>
+              <pre>
+                {String(this.state.error)}
+                {'\n'}
+                {this.state.errorInfo?.componentStack}
+              </pre>
+            </details>
+          )}
+        </div>
       </div>
     );
   }
-}
-
-function btnStyle(bg) {
-  return {
-    padding: '8px 16px',
-    background: bg,
-    color: '#fff',
-    border: 0,
-    borderRadius: 6,
-    cursor: 'pointer',
-    fontSize: 14,
-    fontWeight: 500,
-  };
 }
 
 export default ErrorBoundary;

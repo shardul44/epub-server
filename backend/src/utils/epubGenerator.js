@@ -31,6 +31,40 @@ export function normalizeSpaces(s) {
   return s.replace(/\s+/g, ' ').trim();
 }
 
+/** Character style at index from Studio/PDF styleRuns. */
+function styleAtCharIndex(styleRuns, pos, zoneFallback = {}) {
+  const runs =
+    Array.isArray(styleRuns) && styleRuns.length > 0
+      ? styleRuns
+      : [
+          {
+            start: 0,
+            end: Number.MAX_SAFE_INTEGER,
+            bold: !!zoneFallback.bold,
+            italic: !!zoneFallback.italic,
+            color: zoneFallback.color || '#000000',
+          },
+        ];
+  const r = runs.find((run) => pos >= run.start && pos < run.end);
+  return r
+    ? { bold: !!r.bold, italic: !!r.italic, color: r.color || zoneFallback.color || '#000000' }
+    : {
+        bold: !!zoneFallback.bold,
+        italic: !!zoneFallback.italic,
+        color: zoneFallback.color || '#000000',
+      };
+}
+
+function inlineTextStyleDecl({ bold, italic, color, transparentText, baseColor }) {
+  const parts = [];
+  const fill = color || baseColor;
+  if (!transparentText && fill && fill !== '#000000') parts.push(`color: ${escapeXml(fill)}`);
+  if (bold) parts.push('font-weight:700');
+  if (italic) parts.push('font-style:italic');
+  if (bold && italic) parts.push('font-synthesis:weight style');
+  return parts.length ? parts.join('; ') + ';' : '';
+}
+
 /** Fix abbreviation corruption (Ph.DD. -> Ph.D., M.AA. -> M.A.) from glyph/word boundaries or PDF layers.
  *  Also fix "Ph. -" / "Ph.—" (OCR or PDF em dash) so it displays as Ph.D. instead of "Ph._". */
 export function normalizeAbbreviationCorruption(text) {
@@ -621,7 +655,19 @@ function coordToClassSuffix(coord) {
  * @returns {string} XHTML string
  */
 export function generateFxlPage(pageData, zonesOrFragments, options = {}) {
-  const { syncLevel = 'sentence', classicLayout = false, transparentText = false, fontMap = {}, renderMode, extractedFonts = [], extractionLevel, pageCssHref, fxlBodyFontFamily } = options;
+  const {
+    syncLevel = 'sentence',
+    classicLayout = false,
+    transparentText = false,
+    fontMap = {},
+    renderMode,
+    extractedFonts = [],
+    extractionLevel,
+    pageCssHref,
+    fxlBodyFontFamily,
+    wordStylesInOrder = [],
+    zoneStyleById = {},
+  } = options;
   const width = pageData.width || 1200;
   const height = pageData.height || 1600;
   const imageName = pageData.imageName || 'page_1.webp';
@@ -705,18 +751,33 @@ export function generateFxlPage(pageData, zonesOrFragments, options = {}) {
         } else {
           const text = normalizeSpaces((z.content || z.text || '').trim());
           if (text.length > 0) {
-            fragments.push({
-              x: Number(z.x ?? z.left ?? 0),
-              y: Number(z.y ?? z.top ?? 0),
-              text,
-              id: zoneId,
-              zoneId,
-              fs,
-              ff,
-              color: z.color,
-              wordId: z.word_id ?? z.wordId ?? null,
-              sentenceId: z.sentence_id ?? z.sentenceId ?? null
-            });
+            const runs = Array.isArray(z.styleRuns) && z.styleRuns.length > 0 ? z.styleRuns : null;
+            const pushFrag = (segText, runStart) => {
+              if (!segText) return;
+              const at = styleAtCharIndex(runs, runStart, z);
+              fragments.push({
+                x: Number(z.x ?? z.left ?? 0),
+                y: Number(z.y ?? z.top ?? 0),
+                text: segText,
+                id: zoneId,
+                zoneId,
+                fs,
+                ff,
+                color: at.color || z.color,
+                bold: at.bold,
+                italic: at.italic,
+                wordId: z.word_id ?? z.wordId ?? null,
+                sentenceId: z.sentence_id ?? z.sentenceId ?? null,
+              });
+            };
+            if (runs) {
+              runs.forEach((run) => {
+                const seg = text.slice(run.start, run.end);
+                if (seg) pushFrag(seg, run.start);
+              });
+            } else {
+              pushFrag(text, 0);
+            }
           }
         }
       }
@@ -773,13 +834,20 @@ export function generateFxlPage(pageData, zonesOrFragments, options = {}) {
     });
 
     // Step 3 — One .t per fragment. In glyph mode: wrap each word's glyphs inside the SMIL target so active class turns text blue.
-    const renderGlyph = (f, relX, relY) => {
+    const renderGlyph = (f, relX, relY, runStyle = null) => {
       const text = normalizeSpaces((f.text != null ? String(f.text) : '').trim());
       if (text.length === 0) return '';
       const fsClass = 'fs' + coordToClassSuffix(f.fs);
       const ffClass = 'ff' + ffIndex[f.ff];
-      const colorStyle = !transparentText && f.color && f.color !== '#000000' ? ` color: ${escapeXml(f.color)};` : '';
-      const styleAttr = `left:${Number(relX).toFixed(2)}px;top:${Number(relY).toFixed(2)}px;${colorStyle}`;
+      const at = runStyle || { bold: !!f.bold, italic: !!f.italic, color: f.color };
+      const inlineStyle = inlineTextStyleDecl({
+        bold: at.bold,
+        italic: at.italic,
+        color: at.color,
+        transparentText,
+        baseColor: f.color,
+      });
+      const styleAttr = `left:${Number(relX).toFixed(2)}px;top:${Number(relY).toFixed(2)}px;${inlineStyle}`;
       return `        <div class="t ${ffClass} ${fsClass}" style="${styleAttr}"><span class="glyph">${escapeXml(text)}</span></div>`;
     };
     const renderStandaloneDiv = (f) => {
@@ -789,9 +857,15 @@ export function generateFxlPage(pageData, zonesOrFragments, options = {}) {
       const yClass = 'y' + coordToClassSuffix(f.y);
       const fsClass = 'fs' + coordToClassSuffix(f.fs);
       const ffClass = 'ff' + ffIndex[f.ff];
-      const colorStyle = !transparentText && f.color && f.color !== '#000000' ? ` color: ${escapeXml(f.color)};` : '';
+      const inlineStyle = inlineTextStyleDecl({
+        bold: !!f.bold,
+        italic: !!f.italic,
+        color: f.color,
+        transparentText,
+        baseColor: f.color,
+      });
       const classList = `t ${xClass} ${yClass} ${ffClass} ${fsClass}`;
-      const styleAttr = colorStyle ? ` style="${colorStyle}"` : '';
+      const styleAttr = inlineStyle ? ` style="${inlineStyle}"` : '';
       return `      <div class="${classList}"${styleAttr}><span class="glyph">${escapeXml(text)}</span></div>`;
     };
 
@@ -835,7 +909,19 @@ export function generateFxlPage(pageData, zonesOrFragments, options = {}) {
         const w = Math.max(1, x1 - x0);
         const h = Math.max(1, y1 - y0);
         const wordIdx = bl.wordIdx;
-        const inner = frags.map(f => renderGlyph(f, f.x - x0, f.y - y0)).filter(Boolean).join('\n');
+        const zoneStyle = wordStylesInOrder[wordIdx] || null;
+        let charPos = 0;
+        const inner = frags
+          .map((f) => {
+            const text = normalizeSpaces((f.text != null ? String(f.text) : '').trim());
+            const at = zoneStyle
+              ? styleAtCharIndex(zoneStyle.styleRuns, charPos, zoneStyle)
+              : { bold: !!f.bold, italic: !!f.italic, color: f.color };
+            charPos += text.length;
+            return renderGlyph(f, f.x - x0, f.y - y0, at);
+          })
+          .filter(Boolean)
+          .join('\n');
         bodyBlocks.push(`      <span id="${prefix}${wordIdx}" class="smil-target word-wrapper" style="left:${Number(x0).toFixed(2)}px;top:${Number(y0).toFixed(2)}px;width:${Number(w).toFixed(2)}px;height:${Number(h).toFixed(2)}px;">
 ${inner}
       </span>`);
@@ -870,12 +956,19 @@ ${inner}
             const yClass = 'y' + coordToClassSuffix(f.y);
             const fsClass = 'fs' + coordToClassSuffix(f.fs);
             const ffClass = 'ff' + ffIndex[f.ff];
-            const colorStyle = !transparentText && f.color && f.color !== '#000000' ? ` color: ${escapeXml(f.color)};` : '';
-            return `      <div class="t ${xClass} ${yClass} ${ffClass} ${fsClass}"${colorStyle ? ` style="${colorStyle}"` : ''}><span class="glyph">${escapeXml(text)}</span></div>`;
+            const inlineStyle = inlineTextStyleDecl({
+              bold: !!f.bold,
+              italic: !!f.italic,
+              color: f.color,
+              transparentText,
+              baseColor: f.color,
+            });
+            return `      <div class="t ${xClass} ${yClass} ${ffClass} ${fsClass}"${inlineStyle ? ` style="${inlineStyle}"` : ''}><span class="glyph">${escapeXml(text)}</span></div>`;
           }
           const group = bl.group;
           const first = group[0];
           const zoneId = (first.zoneId || '').replace(/"/g, '&quot;');
+          const zoneStyle = zoneStyleById[first.zoneId] || zoneStyleById[zoneId] || null;
           // True content bbox: union of all glyph bounds (not just origin). Wrapper width/height must match so highlight covers full text.
           const bounds = group.map(g => {
             if (g.bbox && g.bbox.length >= 4) {
@@ -890,6 +983,7 @@ ${inner}
           const y1 = Math.max(...bounds.map(b => b.bottom));
           const w = Math.max(1, x1 - x0);
           const h = Math.max(1, y1 - y0);
+          let charPos = 0;
           const inner = group.map(g => {
             const text = normalizeSpaces((g.text != null ? String(g.text) : '').trim());
             if (text.length === 0) return '';
@@ -897,8 +991,18 @@ ${inner}
             const relY = g.y - y0;
             const fsClass = 'fs' + coordToClassSuffix(g.fs);
             const ffClass = 'ff' + ffIndex[g.ff];
-            const colorStyle = !transparentText && g.color && g.color !== '#000000' ? ` color: ${escapeXml(g.color)};` : '';
-            return `        <div class="t ${ffClass} ${fsClass}" style="left:${Number(relX).toFixed(2)}px;top:${Number(relY).toFixed(2)}px;${colorStyle}"><span class="glyph">${escapeXml(text)}</span></div>`;
+            const at = zoneStyle
+              ? styleAtCharIndex(zoneStyle.styleRuns, charPos, zoneStyle)
+              : { bold: !!g.bold, italic: !!g.italic, color: g.color };
+            charPos += text.length;
+            const inlineStyle = inlineTextStyleDecl({
+              bold: at.bold,
+              italic: at.italic,
+              color: at.color,
+              transparentText,
+              baseColor: g.color,
+            });
+            return `        <div class="t ${ffClass} ${fsClass}" style="left:${Number(relX).toFixed(2)}px;top:${Number(relY).toFixed(2)}px;${inlineStyle}"><span class="glyph">${escapeXml(text)}</span></div>`;
           }).filter(Boolean).join('');
           return `      <span id="${zoneId}" class="smil-target sentence-wrapper" style="left:${Number(x0).toFixed(2)}px;top:${Number(y0).toFixed(2)}px;width:${Number(w).toFixed(2)}px;height:${Number(h).toFixed(2)}px;">
 ${inner}

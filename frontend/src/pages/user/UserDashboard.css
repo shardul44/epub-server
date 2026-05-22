@@ -1,14 +1,4 @@
-/* User dashboard — same shell as org dashboard: `ds-root` + `ds-topnav` + `ds-container` (MainContent). */
-
-/* Override global Layout.css `.navbar` when combined with org topnav inside user shell */
-.layout--user .main-content--user .user-app-scroll .ds-root > .navbar.ud-page-header.ds-topnav {
-  position: sticky;
-  top: 0;
-  left: auto;
-  right: auto;
-  width: 100%;
-  box-sizing: border-box;
-}
+/* User dashboard — page shell via shared `.ds-root` in Dashboard.css */
 
 /* Extra actions on the right (bell, search) — keep height aligned with ds-topnav */
 .ds-topnav-right.ud-page-header-actions {
@@ -28,25 +18,36 @@
   flex-shrink: 0;
 }
 
+.ui-icon-btn,
 .ud-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  flex-shrink: 0;
   border: 1px solid #e5e7eb;
-  background: #fff;
+  border-radius: 10px;
+  background: #ffffff;
   color: #4b5563;
   text-decoration: none;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  position: relative;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
+.ui-icon-btn:hover,
 .ud-icon-btn:hover {
   background: #f9fafb;
   border-color: #d1d5db;
   color: #111827;
+}
+
+.layout--user .ud-page-header-actions .ui-icon-btn,
+.layout--user .ud-page-header-actions .ud-icon-btn {
+  position: relative;
 }
 
 .ud-icon-btn-dot {
@@ -91,19 +92,27 @@
   box-sizing: border-box;
 }
 
-/* ── Hero: white card, welcome + metric tiles (user reference) ── */
+/* ── Hero: white card, welcome + metric tiles ── */
 .ud-hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 28px;
   flex-wrap: wrap;
-  background: #fff;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 24px 26px;
+  border-radius: 14px;
+  padding: 24px 28px;
   color: #111827;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.15s ease;
+}
+
+.ud-hero:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .ud-hero-left {
@@ -120,12 +129,12 @@
   gap: 8px;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #6d28d9;
-  background: #ede9fe;
-  border: 1px solid #ddd6fe;
-  border-radius: 999px;
+  color: #15803d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 20px;
   padding: 5px 12px 5px 10px;
   width: fit-content;
 }
@@ -134,7 +143,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: #22c55e;
   flex-shrink: 0;
 }
 
@@ -207,13 +216,13 @@
 
 /* Hero-only button styles (green primary, outlined secondary) */
 .ud-hero .ud-btn--solid {
-  background: #15803d;
+  background: #16a34a;
   color: #fff;
   box-shadow: 0 1px 2px rgba(21, 128, 61, 0.2);
 }
 
 .ud-hero .ud-btn--solid:hover {
-  background: #166534;
+  background: #15803d;
   color: #fff;
   transform: translateY(-1px);
 }
@@ -331,98 +340,6 @@
   }
 }
 
-/* ── Org + credits strip ── */
-.ud-strip {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.2fr;
-  gap: 20px;
-  align-items: start;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 18px 22px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.ud-strip-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9ca3af;
-  margin-bottom: 6px;
-}
-
-.ud-strip-org-name {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.ud-strip-plan {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1d4ed8;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 999px;
-  padding: 4px 10px;
-  width: fit-content;
-}
-
-.ud-strip-credits-num {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: #111827;
-  letter-spacing: -0.02em;
-}
-
-.ud-strip-credits-num span {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.ud-strip-credits-sub {
-  font-size: 12px;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-.ud-strip-bar-wrap {
-  margin-top: 10px;
-}
-
-.ud-strip-bar-track {
-  height: 10px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
-}
-
-.ud-strip-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #2563eb, #60a5fa);
-  transition: width 0.35s ease;
-}
-
-.ud-strip-bar-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #6b7280;
-}
-
-.ud-strip-bar-meta strong {
-  color: #111827;
-}
-
 /* ── Main / aside split ── */
 .ud-split {
   display: grid;
@@ -451,10 +368,6 @@
 
   .ud-hero-stat {
     max-width: none;
-  }
-
-  .ud-strip {
-    grid-template-columns: 1fr;
   }
 }
 

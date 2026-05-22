@@ -625,7 +625,9 @@ router.post('/auto-fix-zones/:jobId/:pageNumber', async (req, res) => {
     }
     const textZones = zones.filter((z) => z.type === 'text' || z.type === 'header');
     const otherZones = zones.filter((z) => z.type !== 'text' && z.type !== 'header');
-    let fixed = KitabooFxlService.clusterAndDeduplicateSpans(textZones, { extractionLevel: 'sentence' });
+    let fixed = KitabooFxlService.detectTocOrFrontMatterFromZones(textZones)
+      ? KitabooFxlService.mergeTocPageSentenceZones(textZones, pageNumber)
+      : KitabooFxlService.clusterAndDeduplicateSpans(textZones, { extractionLevel: 'sentence' });
     fixed = KitabooFxlService.mergeConsecutiveUrlZones(fixed);
     fixed = KitabooFxlService.normalizeSentenceLevelZones(fixed, pageNumber);
     fixed = fixed.map((z, i) => ({ ...z, readingOrder: i + 1 }));

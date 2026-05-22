@@ -2,31 +2,35 @@
    PdfUpload — modern SaaS upload page
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Page shell ────────────────────────────────────────────────── */
+/* ── Page shell (matches .pld-page) ─────────────────────────────── */
 .pu-page {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
+  min-height: 100vh;
+  background: #f7f7f2;
+  padding: 0 0 48px;
   display: flex;
   flex-direction: column;
   gap: 0;
-   min-height: 100vh;
-  background: #f7f7f2;
+  overflow-x: clip;
 }
 
-/* ── Top bar ───────────────────────────────────────────────────── */
+/* ── Top bar (matches .pld-navbar) ──────────────────────────────── */
 .pu-topbar {
+  width: 100%;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 32px;
+  height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
-  padding: 0 20px;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 50;
 }
 
 .pu-topbar-left {
@@ -38,7 +42,7 @@
 .pu-topbar-title {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: #000000;
   margin: 0;
   letter-spacing: -0.2px;
 }
@@ -57,11 +61,14 @@
 
 /* ── Content area (below topbar) ──────────────────────────────── */
 .pu-content {
-  padding: 20px 20px;
+  padding: 28px 32px 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   flex: 1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* ── Body layout ───────────────────────────────────────────────── */
@@ -70,6 +77,12 @@
   grid-template-columns: 1fr 280px;
   gap: 24px;
   align-items: start;
+}
+
+/* Uploaded PDFs table (below upload form) */
+.pu-pdfs-section {
+  width: 100%;
+  min-width: 0;
 }
 
 /* ── Main form card ────────────────────────────────────────────── */
@@ -649,7 +662,13 @@
   }
 }
 
+@media (max-width: 768px) {
+  .pu-topbar { padding: 0 16px; }
+  .pu-content { padding: 28px 16px 0; }
+}
+
 @media (max-width: 640px) {
+  .pu-content { padding: 16px 16px 0; gap: 16px; }
   .pu-main {
     padding: 20px 18px;
   }

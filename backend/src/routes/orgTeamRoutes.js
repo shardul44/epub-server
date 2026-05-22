@@ -12,6 +12,8 @@ import {
   forbiddenResponse
 } from '../utils/responseHandler.js';
 import { LicenseService } from '../services/licenseService.js';
+import { PlanRequestService } from '../services/planRequestService.js';
+import { PlanRequestModel } from '../models/PlanRequest.js';
 
 const router = express.Router();
 
@@ -60,6 +62,92 @@ router.get(
       return errorResponse(res, error.message, 500);
     }
   }
+);
+
+// Plan upgrade / add-on requests → platform admin (members and org admins)
+router.post(
+  '/plan-requests',
+  requireRole(ROLES.ORG_ADMIN, ROLES.MEMBER),
+  requireOrgAssigned,
+  async (req, res) => {
+    try {
+      await PlanRequestModel.ensureSchema();
+
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const requestType = String(body.requestType || '')
+        .trim()
+        .toLowerCase();
+      const planId = body.planId;
+      const addonKey =
+        body.addonKey != null && body.addonKey !== ''
+          ? String(body.addonKey).trim()
+          : '';
+      const memberNote = body.memberNote
+        ? String(body.memberNote).slice(0, 2000)
+        : null;
+      const orgId = req.user.organizationId;
+      const userId = req.user.id;
+
+      if (requestType === 'upgrade') {
+        const pid = parseInt(planId, 10);
+        if (!pid || Number.isNaN(pid)) {
+          return badRequestResponse(res, 'planId is required for upgrade requests');
+        }
+        const dto = await PlanRequestService.createUpgradeRequest({
+          organizationId: orgId,
+          userId,
+          planId: pid,
+          memberNote,
+        });
+        return successResponse(res, dto, 201);
+      }
+
+      if (requestType === 'addon') {
+        if (!addonKey) {
+          return badRequestResponse(res, 'addonKey is required for add-on requests');
+        }
+        const dto = await PlanRequestService.createAddonRequest({
+          organizationId: orgId,
+          userId,
+          addonKey: addonKey.slice(0, 64),
+          memberNote,
+        });
+        return successResponse(res, dto, 201);
+      }
+
+      return badRequestResponse(res, 'requestType must be upgrade or addon');
+    } catch (error) {
+      if (error.code === 'DUPLICATE') return badRequestResponse(res, error.message);
+      if (error.code === 'NOT_FOUND' || error.code === 'INVALID_ADDON') {
+        return badRequestResponse(res, error.message);
+      }
+      if (error?.errno === 1146 || /plan_requests/i.test(String(error?.message || ''))) {
+        return badRequestResponse(
+          res,
+          'Plan requests are not set up on the server. Run migration 014_plan_requests.sql or restart the API.',
+        );
+      }
+      return errorResponse(res, error.message, 500);
+    }
+  },
+);
+
+router.get(
+  '/plan-requests',
+  requireRole(ROLES.ORG_ADMIN, ROLES.MEMBER),
+  requireOrgAssigned,
+  async (req, res) => {
+    try {
+      await PlanRequestModel.ensureSchema();
+      const list = await PlanRequestService.listForOrg(req.user.organizationId);
+      return successResponse(res, list);
+    } catch (error) {
+      if (error?.errno === 1146 || /plan_requests/i.test(String(error?.message || ''))) {
+        return successResponse(res, []);
+      }
+      return errorResponse(res, error.message, 500);
+    }
+  },
 );
 
 // Team management — org_admin only

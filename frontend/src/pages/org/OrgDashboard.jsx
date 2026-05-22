@@ -24,18 +24,10 @@ import {
 } from 'lucide-react';
 import DashboardHeader from '../../components/layout/Header';
 import MainContent from '../../components/layout/MainContent';
+import RecentActivityPanel from '../../components/dashboard/RecentActivityPanel';
 import '../Dashboard.css';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
-
-const timeAgo = (dateStr) => {
-  if (!dateStr) return '';
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-};
 
 const fmtStorage = (mb) =>
   mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
@@ -332,121 +324,14 @@ const OrgDashboard = () => {
       {/* ── Bottom Grid: Recent Activity + Throughput ── */}
       <div className="ds-bottom-grid">
 
-        {/* Recent Activity — org-wide */}
-        <div className="ds-panel ds-activity">
-          <div className="ds-ra-header">
-            <div>
-              <h3 className="ds-panel-title">Recent activity</h3>
-              <p className="ds-panel-sub">Latest conversion jobs across your library</p>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <button
-                className={`ds-refresh-btn${refreshing ? ' ds-refresh-btn--spinning' : ''}`}
-                onClick={() => loadData(true)}
-                disabled={refreshing}
-                title="Refresh"
-                aria-label="Refresh activity"
-              >
-                <RefreshCw size={15} />
-              </button>
-              <Link to="/conversions" className="ds-ra-view-all">
-                View all ↗
-              </Link>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="ds-ra-list">
-              {[1, 2, 3].map((k) => (
-                <div key={k} className="ds-ra-card">
-                  <div className="ds-skel ds-skel--icon" style={{ borderRadius: 8 }} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div className="ds-skel ds-skel--md" />
-                    <div className="ds-skel ds-skel--sm" />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-                    <div className="ds-skel" style={{ width: 120, height: 10 }} />
-                    <div className="ds-skel" style={{ width: 120, height: 5, borderRadius: 3 }} />
-                  </div>
-                  <div className="ds-skel ds-skel--pill" />
-                </div>
-              ))}
-            </div>
-          ) : recentJobs.length === 0 ? (
-            <div className="ds-empty">
-              <FileText className="ds-empty-icon" />
-              <p>No conversions yet. <Link to="/pdfs/upload">Upload a PDF</Link> to get started.</p>
-            </div>
-          ) : (
-            <div className="ds-ra-list">
-              {recentJobs.map((job) => {
-                const pct =
-                  job.status === 'COMPLETED' || job.status === 'FAILED'
-                    ? 100
-                    : job.progressPercentage ?? job.progress ?? 0;
-                const pdfName =
-                  job.pdfDocument?.originalName ||
-                  job.pdfDocument?.filename ||
-                  `Job #${job.id}`;
-                const pages = job.pdfDocument?.pageCount ?? job.totalPages ?? null;
-                const ago   = timeAgo(job.updatedAt || job.createdAt);
-                const rawStep = job.currentStep || job.conversionType || '';
-                const stage = rawStep
-                  ? String(rawStep).replace(/STEP_\d+_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-                  : 'Conversion';
-                const isActive = job.status === 'IN_PROGRESS' || job.status === 'QUEUED';
-
-                const barColor =
-                  job.status === 'COMPLETED' ? '#16a34a'
-                  : job.status === 'FAILED'   ? '#ef4444'
-                  : job.status === 'IN_PROGRESS' ? '#d97706'
-                  : '#9ca3af';
-
-                return (
-                  <div key={job.id} className="ds-ra-card">
-                    {/* icon */}
-                    <span className="ds-ra-icon">
-                      <FileText size={16} />
-                    </span>
-
-                    {/* name + meta */}
-                    <div className="ds-ra-info">
-                      <span className={`ds-ra-name${isActive ? ' ds-ra-name--active' : ''}`}>
-                        {pdfName}
-                      </span>
-                      <span className="ds-ra-meta">
-                        #{job.id}
-                        {pages ? <>&nbsp;·&nbsp;{pages} pages</> : ''}
-                        &nbsp;·&nbsp;
-                        <Clock size={12} className="ds-ra-clock" />
-                        {ago}
-                      </span>
-                    </div>
-
-                    {/* progress */}
-                    <div className="ds-ra-progress">
-                      <div className="ds-ra-progress-top">
-                        <span className="ds-ra-stage">{stage}</span>
-                        <span className="ds-ra-pct">{pct}%</span>
-                      </div>
-                      <div className="ds-ra-bar-track">
-                        <div
-                          className="ds-ra-bar-fill"
-                          style={{ width: `${pct}%`, background: barColor }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* status pill */}
-                    <span className={`ds-ra-pill ds-ra-pill--${job.status.toLowerCase().replace('_', '-')}`}>
-                      {job.status === 'IN_PROGRESS' ? 'IN PROGRESS' : job.status}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <RecentActivityPanel
+          loading={loading}
+          refreshing={refreshing}
+          recentJobs={recentJobs}
+          onRefresh={() => loadData(true)}
+          titleTag="h3"
+          subtitle="Latest conversion jobs across your library"
+        />
 
         {/* Weekly Throughput */}
         <div className="ds-panel ds-throughput">

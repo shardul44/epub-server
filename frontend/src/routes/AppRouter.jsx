@@ -85,6 +85,7 @@ const ActivityPage            = lazy(() => import('../pages/admin/ActivityPage')
 const PlatformConversions     = lazy(() => import('../pages/admin/PlatformConversions'));
 const PlatformConversionJobDetail = lazy(() => import('../pages/admin/PlatformConversionJobDetail'));
 const PlatformBilling         = lazy(() => import('../pages/admin/PlatformBilling'));
+const AdminPlanRequests       = lazy(() => import('../pages/admin/AdminPlanRequests'));
 const PlatformSecurity        = lazy(() => import('../pages/admin/PlatformSecurity'));
 const ApiDebugger             = lazy(() => import('../components/ApiDebugger'));
 
@@ -195,6 +196,10 @@ export default function AppRouter() {
           <Route
             path="admin/organizations"
             element={<RequirePlatformAdmin>{lazyEl(AdminOrganizations)}</RequirePlatformAdmin>}
+          />
+          <Route
+            path="admin/plan-requests"
+            element={<RequirePlatformAdmin>{lazyEl(AdminPlanRequests)}</RequirePlatformAdmin>}
           />
           <Route
             path="admin/plans"

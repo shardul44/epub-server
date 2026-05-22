@@ -204,6 +204,12 @@ async function startServer(retryCount = 0) {
   } catch (e) {
     console.warn('[bootstrap] ensurePlatformApiKeys failed:', e.message);
   }
+  try {
+    const { ensurePlanRequests } = await import('./src/bootstrap/ensurePlanRequests.js');
+    await ensurePlanRequests();
+  } catch (e) {
+    console.warn('[bootstrap] ensurePlanRequests failed:', e.message);
+  }
 
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

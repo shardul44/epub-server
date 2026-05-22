@@ -68,10 +68,10 @@ export default function DefaultLayout() {
   }, [queryClient, user]);
 
   return (
-    <div className="layout layout--user">
+    <div className="layout layout--user app-ds">
       <UserAppSidebar />
       <main className="main-content main-content--user">
-        <div className="user-app-scroll">
+        <div className="user-app-scroll app-ds">
           <Outlet />
         </div>
       </main>

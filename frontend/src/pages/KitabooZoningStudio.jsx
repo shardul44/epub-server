@@ -307,6 +307,24 @@ function getZoneTextContent(data) {
   return data.content != null ? String(data.content) : '';
 }
 
+/** Normalize bold flag from styleRuns (DB/PDF may use is_bold or fontWeight). */
+function runIsBold(run, zoneFallback = {}) {
+  if (!run) return !!zoneFallback.bold;
+  if (run.bold != null) return !!run.bold;
+  if (run.is_bold != null) return !!run.is_bold;
+  const fw = run.fontWeight;
+  if (fw === 'bold' || fw === 700 || fw === '700' || fw === 800 || fw === '800') return true;
+  return !!zoneFallback.bold;
+}
+
+function runIsItalic(run, zoneFallback = {}) {
+  if (!run) return !!zoneFallback.italic;
+  if (run.italic != null) return !!run.italic;
+  if (run.is_italic != null) return !!run.is_italic;
+  if (run.fontStyle === 'italic' || run.fontStyle === 'oblique') return true;
+  return !!zoneFallback.italic;
+}
+
 /** Character style at index (styleRuns from Studio bold/italic/color). */
 function getStyleAtIndex(styleRuns, pos, zoneFallback = {}) {
   const runs =
@@ -323,7 +341,11 @@ function getStyleAtIndex(styleRuns, pos, zoneFallback = {}) {
         ];
   const r = runs.find((run) => pos >= run.start && pos < run.end);
   return r
-    ? { bold: !!r.bold, italic: !!r.italic, color: r.color || '#000000' }
+    ? {
+        bold: runIsBold(r, zoneFallback),
+        italic: runIsItalic(r, zoneFallback),
+        color: r.color || '#000000',
+      }
     : {
         bold: !!zoneFallback.bold,
         italic: !!zoneFallback.italic,
@@ -334,8 +356,9 @@ function getStyleAtIndex(styleRuns, pos, zoneFallback = {}) {
 function tokenStyleFromRuns(styleRuns, token, zoneData = {}) {
   const at = getStyleAtIndex(styleRuns, token.start, zoneData);
   return {
-    fontWeight: at.bold ? 'bold' : 'normal',
+    fontWeight: at.bold ? 700 : 400,
     fontStyle: at.italic ? 'italic' : 'normal',
+    fontSynthesis: 'weight style',
     color: at.color,
   };
 }
@@ -1229,7 +1252,7 @@ const KitabooZoningStudio = () => {
 
   const savePageZones = async ({ showSuccessAlert = true } = {}) => {
     try {
-      if (!fabricCanvas) return;
+      if (!fabricCanvas) return false;
       setSaving(true);
 
       const currentZones = getKitabooZoneShapes(fabricCanvas)
@@ -1311,6 +1334,11 @@ const KitabooZoningStudio = () => {
   const publishEpub = async () => {
     try {
       setExporting(true);
+      const saved = await savePageZones({ showSuccessAlert: false });
+      if (!saved) {
+        alert('Save zones for this page before publishing, then try again.');
+        return;
+      }
       const voicePayload = ttsVoice
         ? { languageCode: ttsLanguageCode, name: ttsVoice.name, ssmlGender: ttsVoice.gender }
         : undefined;
@@ -2408,9 +2436,17 @@ const KitabooZoningStudio = () => {
                             const selected = hasSelection && t.start >= sel.start && t.end <= sel.end;
                             const runStyle = tokenStyleFromRuns(selectedZoneData.styleRuns, t, selectedZoneData);
                             const isWhitespace = !/\S/.test(t.text);
+                            const tokenClass = [
+                              'word-style-token',
+                              runStyle.fontWeight >= 700 ? 'word-style-token--bold' : '',
+                              runStyle.fontStyle === 'italic' ? 'word-style-token--italic' : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ');
                             return (
                               <span
                                 key={i}
+                                className={isWhitespace ? undefined : tokenClass}
                                 role={isWhitespace ? undefined : 'button'}
                                 tabIndex={isWhitespace ? undefined : 0}
                                 onClick={
@@ -2435,6 +2471,7 @@ const KitabooZoningStudio = () => {
                                   background: selected ? 'rgba(33, 150, 243, 0.3)' : 'transparent',
                                   fontWeight: runStyle.fontWeight,
                                   fontStyle: runStyle.fontStyle,
+                                  fontSynthesis: runStyle.fontSynthesis,
                                   color: runStyle.color,
                                 }}
                               >

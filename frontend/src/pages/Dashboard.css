@@ -2,28 +2,37 @@
    Dashboard — clean SaaS style (Stripe / Linear inspired)
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Dashboard root wrapper ────────────────────────────────────── */
+/* ── Dashboard root wrapper (matches .pld-page) ─────────────────── */
 .ds-root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: #f7f7f2;
+  padding: 0 0 48px;
   display: flex;
   flex-direction: column;
-  background: #f7f7f2;
-
+  gap: 0;
+  overflow-x: clip;
 }
 
-/* ── Top Navbar ────────────────────────────────────────────────── */
+/* ── Top Navbar (matches .pld-navbar) ────────────────────────────── */
 .ds-topnav {
+  width: 100%;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 70px;
   min-height: 70px;
-  font-size: 18px;
-  padding: 10px 20px;
-  background: #ffffff;
+  padding: 0 32px;
+  background: #fff;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .ds-topnav-left {
@@ -43,7 +52,7 @@
 .ds-topnav-title {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: #000000;
   margin: 0;
   letter-spacing: -0.2px;
   white-space: nowrap;
@@ -51,9 +60,9 @@
 
 .ds-topnav-subtitle {
   margin: 0;
-  font-size: 11px;
-  font-weight: 500;
-  color: #6b7280;
+  font-size: var(--app-text-xs, 11px);
+  font-weight: var(--app-weight-medium, 500);
+  color: var(--app-text-muted, #6b7280);
   letter-spacing: 0;
   line-height: 1.25;
   white-space: nowrap;
@@ -158,10 +167,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 11px 15px;
-  font-size: 13px;
-  font-weight: 600;
-  border-radius: 8px;
+  padding: 0 14px;
+  height: 40px;
+  font-size: var(--app-text-sm, 13px);
+  font-weight: var(--app-weight-semibold, 600);
+  font-family: var(--app-font, inherit);
+  border-radius: var(--app-radius-md, 12px);
   text-decoration: none;
   transition: all 0.15s ease;
   white-space: nowrap;
@@ -193,12 +204,12 @@
 }
 
 .ds-navbar-btn--primary {
-  background: #1a7a3c;
+  background: var(--app-primary, #2563eb);
   color: #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+  box-shadow: var(--app-shadow-xs, 0 1px 2px rgba(0,0,0,0.12));
 }
 .ds-navbar-btn--primary:hover {
-  background: #1f2937;
+  background: var(--app-primary-hover, #1d4ed8);
   color: #fff;
 }
 
@@ -213,16 +224,33 @@
 }
 
 /* ── Container ─────────────────────────────────────────────────── */
-/* Centered content column — same rhythm as org dashboard / EPUB Checker / shell pages */
+/* Centered content column — same rhythm as PDF Library / upload pages */
 .ds-container {
   width: 100%;
-  min-width: 100%;
-  padding: 20px 20px;
+  min-width: 0;
+  padding: 28px 32px 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .ds-topnav {
+    padding: 0 16px;
+  }
+
+  .ds-container {
+    padding: 28px 16px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .ds-container {
+    padding: 16px 16px 0;
+    gap: 16px;
+  }
 }
 
 /* Optional: true edge-to-edge within main (no max-width cap) */
@@ -446,16 +474,16 @@
 }
 
 .ds-stat-tile {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: var(--app-bg, #fff);
+  border: 1px solid var(--app-border, #e5e7eb);
+  border-radius: var(--app-radius-lg, 14px);
   padding: 20px 22px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: var(--app-shadow-card);
+  transition: transform var(--app-duration) var(--app-ease), box-shadow var(--app-duration) var(--app-ease);
 }
 .ds-stat-tile:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.07);
+  box-shadow: var(--app-shadow-card-hover);
 }
 .ds-stat-tile--skel { pointer-events: none; }
 
@@ -510,11 +538,11 @@
 
 /* ── Panel base ────────────────────────────────────────────────── */
 .ds-panel {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: var(--app-bg, #fff);
+  border: 1px solid var(--app-border, #e5e7eb);
+  border-radius: var(--app-radius-md, 12px);
   padding: 22px 24px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: var(--app-shadow-card);
 }
 
 .ds-panel-header {
