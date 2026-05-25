@@ -17,6 +17,7 @@ import {
   setUploadProgress,
   resetUpload,
 } from '../features/epub/epubSlice';
+import { getApiBase } from '../services/api';
 import {
   Upload,
   FileText,
@@ -186,8 +187,7 @@ const PdfUpload = () => {
       // navigates to the PDF list. Fire-and-forget — don't block the upload flow.
       if (result?.id) {
         const token = localStorage.getItem('token');
-        const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-        fetch(`${base}/pdfs/${result.id}/thumbnail`, {
+        fetch(`${getApiBase()}/pdfs/${result.id}/thumbnail`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         }).catch(() => {/* ignore — thumbnail will be generated on first view */});
       }

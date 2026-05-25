@@ -5,6 +5,7 @@ import { useConversions } from '../../hooks/useConversions';
 import { useWorkflowNavigation, isFixedLayout, audioSyncPath } from '../../hooks/useWorkflowNavigation';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import PdfThumbnail from '../../components/PdfThumbnail';
+import { pdfViewUrl } from '../../services/api';
 import { ArrowLeft, FileText, X, Mic2, ChevronRight } from 'lucide-react';
 import './AudioSyncStudio.css';
 
@@ -68,10 +69,7 @@ const formatFileSize = (bytes) => {
 function buildPdfViewUrl(pdfDocumentId) {
   if (pdfDocumentId == null || pdfDocumentId === '') return null;
   try {
-    const token = localStorage.getItem('token');
-    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-    const id = String(pdfDocumentId);
-    return `${base}/pdfs/${id}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    return pdfViewUrl(pdfDocumentId);
   } catch {
     return null;
   }

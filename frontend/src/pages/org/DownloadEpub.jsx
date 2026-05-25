@@ -22,6 +22,7 @@ import {
   isEpubSourceJob,
 } from '../../utils/conversionJobKey';
 import PdfThumbnail from '../../components/PdfThumbnail';
+import { pdfViewUrl } from '../../services/api';
 import {
   Download,
   ArrowLeft,
@@ -89,10 +90,7 @@ const jobDurationMs = (job) => {
 function buildPdfViewUrl(pdfDocumentId) {
   if (pdfDocumentId == null || pdfDocumentId === '') return null;
   try {
-    const token = localStorage.getItem('token');
-    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-    const id = String(pdfDocumentId);
-    return `${base}/pdfs/${id}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    return pdfViewUrl(pdfDocumentId);
   } catch {
     return null;
   }

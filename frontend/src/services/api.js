@@ -1,14 +1,42 @@
 import axios from 'axios';
 import { queryClient } from '../lib/queryClient';
 
-// Switch API base URL manually by commenting/uncommenting.
-// Backend routes are mounted at the server root (example: POST /auth/login).
-// Using `/api` here will cause 404s in development.
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8082';
-//const API_BASE_URL = 'https://epub.kodeit.digital/api';
+// Single source of truth for API origin (axios + <img>/<iframe>/pdf.js direct fetches).
+// Prod nginx serves the API under /api; local backend listens without that prefix.
+const PRODUCTION_API = 'https://epub.kodeit.digital/api';
+const DEVELOPMENT_API = 'http://localhost:8082';
 
-// Optional: environment override (uncomment if you want)
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://epub.kodeit.digital/api';
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || (import.meta.env.PROD ? PRODUCTION_API : DEVELOPMENT_API)
+).replace(/\/+$/, '');
+
+/** Normalized base (no trailing slash) — use for manual fetch/img/iframe URLs. */
+export function getApiBase() {
+  return API_BASE_URL;
+}
+
+/**
+ * Absolute URL for protected assets (PDF view, thumbnails, etc.).
+ * Browser elements cannot send Authorization headers, so JWT is appended as ?token=.
+ */
+export function apiAssetUrl(path, { hash = '' } = {}) {
+  const segment = path.startsWith('/') ? path : `/${path}`;
+  let url = `${getApiBase()}${segment}`;
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
+  if (token) {
+    url += `${url.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
+  }
+  if (hash) {
+    url += hash.startsWith('#') ? hash : `#${hash}`;
+  }
+  return url;
+}
+
+/** Authenticated PDF inline-view URL for iframes and pdf.js. */
+export function pdfViewUrl(pdfId, page = 1) {
+  const hash = page > 1 ? `#page=${page}` : '';
+  return apiAssetUrl(`/pdfs/${pdfId}/view`, { hash });
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -85,7 +113,6 @@ api.interceptors.response.use(
 );
 
 export default api;
-export { API_BASE_URL };
 
 
 

@@ -38,7 +38,7 @@ import {
 import { audioSyncService } from '../services/audioSyncService';
 import { conversionService } from '../services/conversionService';
 import { useWorkflowNavigation } from '../hooks/useWorkflowNavigation';
-import api from '../services/api';
+import api, { API_BASE_URL } from '../services/api';
 import { withAuthImageQuery } from '../utils/authImageUrl';
 import { xhtmlFragmentForDivViewer } from '../utils/xhtmlViewerFragment';
 import './SyncStudio.css';
@@ -2123,7 +2123,7 @@ const SyncStudio = () => {
 
         if (sectionsData && sectionsData.length > 0) {
           // Convert relative image paths to absolute URLs for browser preview
-          const baseURL = api.defaults.baseURL || 'http://localhost:8081/api';
+          const baseURL = api.defaults.baseURL || API_BASE_URL;
           const processedSections = sectionsData.map((section, idx) => {
             let processedXhtml = section.xhtml || section.content || '';
 

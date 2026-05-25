@@ -1,4 +1,4 @@
-import api from './api';
+import api, { API_BASE_URL } from './api';
 
 export const conversionService = {
   /**
@@ -65,7 +65,6 @@ export const conversionService = {
    * @param {{ jobType?: string, preferKitaboo?: boolean }} [opts]
    */
   downloadEpub: async (jobId, opts = {}) => {
-    const { API_BASE_URL } = await import('./api');
     const token = localStorage.getItem('token');
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 

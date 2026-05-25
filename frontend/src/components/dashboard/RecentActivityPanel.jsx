@@ -27,6 +27,7 @@ import { useWorkflowNavigation } from '../../hooks/useWorkflowNavigation';
 import { useConversionActions } from '../../hooks/useConversionActions';
 import useAppDispatch from '../../hooks/useAppDispatch';
 import { setFocusedJobId } from '../../features/conversions/conversionsSlice';
+import { pdfViewUrl } from '../../services/api';
 
 const RECENT_ACTIVITY_LIMIT = 3;
 
@@ -51,10 +52,7 @@ const formatFileSize = (bytes) => {
 function buildPdfViewUrl(pdfDocumentId) {
   if (pdfDocumentId == null || pdfDocumentId === '') return null;
   try {
-    const token = localStorage.getItem('token');
-    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-    const id = String(pdfDocumentId);
-    return `${base}/pdfs/${id}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    return pdfViewUrl(pdfDocumentId);
   } catch {
     return null;
   }

@@ -12,6 +12,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import PdfThumbnail from './PdfThumbnail';
+import { pdfViewUrl } from '../services/api';
 import './PdfCard.css';
 
 /* ─────────────────────────────────────────────
@@ -49,12 +50,7 @@ const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
 
   const cacheKey = idKey ? `pdf-thumb-card-${idKey}` : null;
 
-  const pdfUrl = useMemo(() => {
-    if (!idKey) return null;
-    const token = localStorage.getItem('token');
-    const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-    return `${base}/pdfs/${idKey}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
-  }, [idKey]);
+  const pdfUrl = useMemo(() => (idKey ? pdfViewUrl(idKey) : null), [idKey]);
 
   const handleAbsent = useCallback(() => {
     if (absentHandledRef.current) return;

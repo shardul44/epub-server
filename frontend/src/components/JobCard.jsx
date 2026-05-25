@@ -11,6 +11,7 @@ import styles from './JobCard.module.css';
 import { isFixedLayout } from '../hooks/useConversionActions';
 import PdfThumbnail from './PdfThumbnail';
 import { aiConfigService } from '../services/aiConfigService';
+import { pdfViewUrl } from '../services/api';
 
 const MAX_RETRIES = 3;
 
@@ -105,10 +106,7 @@ const resolveAiModel = (job) => {
 function buildPdfViewUrl(pdfDocumentId) {
   if (pdfDocumentId == null || pdfDocumentId === '') return null;
   try {
-    const token = localStorage.getItem('token');
-    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-    const id = String(pdfDocumentId);
-    return `${base}/pdfs/${id}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    return pdfViewUrl(pdfDocumentId);
   } catch {
     return null;
   }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Component } from 'react';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import api from '../services/api';
+import api, { API_BASE_URL } from '../services/api';
 import { conversionService } from '../services/conversionService';
 import { injectImageIntoXhtml, applyReflowableCss } from '../utils/xhtmlUtils';
 import { saveLocalImages, getLocalImages, deleteLocalImages } from '../utils/localImageStorage';
@@ -1144,7 +1144,7 @@ const EpubImageEditor = ({ jobId, pageNumber, onSave, onStateChange, onRequestPa
       
       // Get auth token for image URLs if needed
       const token = localStorage.getItem('token');
-      const baseURL = api.defaults.baseURL || 'http://localhost:8081/api';
+      const baseURL = api.defaults.baseURL || API_BASE_URL;
       console.log('[EpubImageEditor] API baseURL:', baseURL);
       
       // Convert relative URLs to absolute API URLs

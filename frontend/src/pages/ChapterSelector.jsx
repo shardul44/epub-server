@@ -19,24 +19,8 @@ import {
 } from 'lucide-react';
 import { pdfService } from '../services/pdfService';
 import { conversionService } from '../services/conversionService';
-import { API_BASE_URL } from '../services/api';
+import { pdfViewUrl } from '../services/api';
 import './ChapterSelector.css';
-
-/* ─────────────────────────────────────────────
-   Build an absolute, authenticated URL for
-   <iframe src> — browser elements can't send
-   Authorization headers, so the JWT goes as
-   a query param. Must be absolute so the iframe
-   hits the backend directly, not the Vite proxy.
-───────────────────────────────────────────── */
-const pdfViewUrl = (pdfId, page = 1) => {
-  const base  = String(API_BASE_URL || 'http://localhost:8082').replace(/\/+$/, '');
-  const token = localStorage.getItem('token');
-  const hash  = page > 1 ? `#page=${page}` : '';
-  return token
-    ? `${base}/pdfs/${pdfId}/view?token=${encodeURIComponent(token)}${hash}`
-    : `${base}/pdfs/${pdfId}/view${hash}`;
-};
 
 /* ─────────────────────────────────────────────
    Helpers

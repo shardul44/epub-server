@@ -13,6 +13,7 @@ import { formatFileSize } from './PdfCard';
 import { kitabooService } from '../services/kitabooService';
 import { pdfService } from '../services/pdfService';
 import { mediaUrl } from '../utils/mediaUrl';
+import { pdfViewUrl } from '../services/api';
 import { isEpubImportStub } from '../utils/pdfDocumentSource';
 import {
   Search,
@@ -85,12 +86,7 @@ function formatUploaded(createdAt) {
 const RowThumbnail = memo(({ pdfId }) => {
   const idKey = pdfId != null ? String(pdfId) : '';
   const cacheKey = idKey ? `pdf-thumb-card-${idKey}` : null;
-  const pdfUrl = useMemo(() => {
-    if (!idKey) return null;
-    const token = localStorage.getItem('token');
-    const base = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
-    return `${base}/pdfs/${idKey}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
-  }, [idKey]);
+  const pdfUrl = useMemo(() => (idKey ? pdfViewUrl(idKey) : null), [idKey]);
 
   if (!pdfUrl) {
     return (

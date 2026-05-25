@@ -15,12 +15,11 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+import { getApiBase } from '../services/api';
 
 async function fetchThumbnailBlob(pdfId) {
   const token = localStorage.getItem('token');
-  const url   = `${API_BASE}/pdfs/${pdfId}/thumbnail`;
+  const url   = `${getApiBase()}/pdfs/${pdfId}/thumbnail`;
 
   const res = await fetch(url, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
