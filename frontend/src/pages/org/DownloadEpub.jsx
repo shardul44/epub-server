@@ -157,6 +157,7 @@ const DownloadEpub = () => {
   // ── React Query (server state — COMPLETED jobs only) ──────────
   const { jobs, isLoading: loading, error: fetchError } = useConversionsQuery({
     statusFilter: 'COMPLETED',
+    excludeEpubImports: true,
   });
 
   // Propagate fetch error into Redux

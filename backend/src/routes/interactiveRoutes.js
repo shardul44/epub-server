@@ -14,9 +14,24 @@ import { InteractiveBlockModel } from '../models/InteractiveBlock.js';
 import pool from '../config/database.js';
 import { InteractiveEpubExportService } from '../services/interactiveEpubExportService.js';
 import { canAccessInteractiveBook } from '../utils/tenantScope.js';
+import { ActivityService } from '../services/activityService.js';
 
 const router = express.Router();
 router.use(authenticate, requireFeature('interactive.content'));
+
+// Truncate a string for use inside an activity summary.
+function trunc(s, n = 80) {
+  if (s == null) return '';
+  const str = String(s);
+  return str.length > n ? `${str.slice(0, n - 1)}…` : str;
+}
+
+// Fire-and-forget activity log. Never blocks or breaks the route on failure.
+// The ActivityService uses req.user.organizationId, so a member's edit is
+// automatically visible to that org's admin via /activities listForViewer.
+function logActivity(req, payload) {
+  ActivityService.logFromRequest(req, payload).catch(() => {});
+}
 
 async function getBookOr404(req, res, bookId) {
   const book = await InteractiveBookModel.findById(bookId);
@@ -92,9 +107,9 @@ router.get('/books', async (req, res) => {
 
 router.post('/books', async (req, res) => {
   try {
-    if (req.user?.role === ROLES.MEMBER) {
-      return forbiddenResponse(res, 'Only organization admins can create interactive books');
-    }
+    // Any authenticated user with the `interactive.content` feature may create
+    // a book. Members are scoped to their own rows by `canAccessInteractiveBook`
+    // for all subsequent reads/writes (see tenantScope.js).
     const { title, description = null, metadataJson = null, organizationId } = req.body || {};
     if (!title || !String(title).trim()) return badRequestResponse(res, 'title is required');
 
@@ -112,6 +127,13 @@ router.post('/books', async (req, res) => {
       title: String(title).trim(),
       description: description == null ? null : String(description),
       metadataJson: metadataJson ?? null
+    });
+    logActivity(req, {
+      action: 'interactive.book.create',
+      entityType: 'interactive_book',
+      entityId: book?.id ?? null,
+      summary: `Created interactive book "${trunc(book?.title || title)}"`,
+      metadata: { bookId: book?.id ?? null }
     });
     return successResponse(res, book, 201);
   } catch (e) {
@@ -147,6 +169,17 @@ router.put('/books/:bookId', async (req, res) => {
       description: description !== undefined ? (description == null ? null : String(description)) : undefined,
       metadataJson: metadataJson !== undefined ? (metadataJson ?? null) : undefined
     });
+    const changed = [];
+    if (title !== undefined) changed.push('title');
+    if (description !== undefined) changed.push('description');
+    if (metadataJson !== undefined) changed.push('metadata');
+    logActivity(req, {
+      action: 'interactive.book.update',
+      entityType: 'interactive_book',
+      entityId: bookId,
+      summary: `Updated interactive book "${trunc(updated?.title || book.title)}"`,
+      metadata: { bookId, changed }
+    });
     return successResponse(res, updated);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -160,6 +193,13 @@ router.delete('/books/:bookId', async (req, res) => {
     const book = await getBookOr404(req, res, bookId);
     if (!book) return;
     await InteractiveBookModel.delete(bookId);
+    logActivity(req, {
+      action: 'interactive.book.delete',
+      entityType: 'interactive_book',
+      entityId: bookId,
+      summary: `Deleted interactive book "${trunc(book.title)}"`,
+      metadata: { bookId }
+    });
     return res.status(204).send();
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -198,6 +238,13 @@ router.post('/books/:bookId/chapters', async (req, res) => {
       position: Number(position) || 0,
       metadataJson: metadataJson ?? null
     });
+    logActivity(req, {
+      action: 'interactive.chapter.create',
+      entityType: 'interactive_chapter',
+      entityId: chapter?.id ?? null,
+      summary: `Added chapter "${trunc(chapter?.title || title)}" to "${trunc(book.title)}"`,
+      metadata: { bookId, chapterId: chapter?.id ?? null }
+    });
     return successResponse(res, chapter, 201);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -233,6 +280,17 @@ router.put('/chapters/:chapterId', async (req, res) => {
       position: position !== undefined ? (Number(position) || 0) : undefined,
       metadataJson: metadataJson !== undefined ? (metadataJson ?? null) : undefined
     });
+    const changed = [];
+    if (title !== undefined) changed.push('title');
+    if (position !== undefined) changed.push('position');
+    if (metadataJson !== undefined) changed.push('metadata');
+    logActivity(req, {
+      action: 'interactive.chapter.update',
+      entityType: 'interactive_chapter',
+      entityId: chapterId,
+      summary: `Updated chapter "${trunc(updated?.title || row.chapter_title)}" in "${trunc(row.book_title)}"`,
+      metadata: { bookId: row.book_id, chapterId, changed }
+    });
     return successResponse(res, updated);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -246,6 +304,13 @@ router.delete('/chapters/:chapterId', async (req, res) => {
     const row = await getChapterWithBookOr404(req, res, chapterId);
     if (!row) return;
     await InteractiveChapterModel.delete(chapterId);
+    logActivity(req, {
+      action: 'interactive.chapter.delete',
+      entityType: 'interactive_chapter',
+      entityId: chapterId,
+      summary: `Deleted chapter "${trunc(row.chapter_title)}" from "${trunc(row.book_title)}"`,
+      metadata: { bookId: row.book_id, chapterId }
+    });
     return res.status(204).send();
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -282,6 +347,13 @@ router.post('/books/:bookId/chapters/reorder', async (req, res) => {
       await InteractiveChapterModel.update(normalized[i], { position: i });
     }
     const updated = await InteractiveChapterModel.findByBookId(bookId);
+    logActivity(req, {
+      action: 'interactive.chapter.reorder',
+      entityType: 'interactive_book',
+      entityId: bookId,
+      summary: `Reordered ${normalized.length} chapter${normalized.length === 1 ? '' : 's'} in "${trunc(book.title)}"`,
+      metadata: { bookId, chapterIds: normalized }
+    });
     return successResponse(res, updated);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -323,6 +395,18 @@ router.post('/chapters/:chapterId/blocks', async (req, res) => {
       contentJson: contentJson,
       position: Number(position) || 0
     });
+    logActivity(req, {
+      action: 'interactive.block.create',
+      entityType: 'interactive_block',
+      entityId: block?.id ?? null,
+      summary: `Added ${trunc(String(type), 30)} block to chapter "${trunc(row.chapter_title)}"`,
+      metadata: {
+        bookId: row.book_id,
+        chapterId,
+        blockId: block?.id ?? null,
+        blockType: String(type)
+      }
+    });
     return successResponse(res, block, 201);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -360,6 +444,23 @@ router.put('/blocks/:blockId', async (req, res) => {
       contentJson: contentJson !== undefined ? contentJson : undefined,
       position: position !== undefined ? (Number(position) || 0) : undefined
     });
+    const changed = [];
+    if (type !== undefined) changed.push('type');
+    if (contentJson !== undefined) changed.push('content');
+    if (position !== undefined) changed.push('position');
+    logActivity(req, {
+      action: 'interactive.block.update',
+      entityType: 'interactive_block',
+      entityId: blockId,
+      summary: `Updated ${trunc(updated?.type || row.type, 30)} block in chapter ${row.chapter_id}`,
+      metadata: {
+        bookId: row.book_id,
+        chapterId: row.chapter_id,
+        blockId,
+        blockType: updated?.type || row.type,
+        changed
+      }
+    });
     return successResponse(res, updated);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -373,6 +474,18 @@ router.delete('/blocks/:blockId', async (req, res) => {
     const row = await getBlockWithChapterBookOr404(req, res, blockId);
     if (!row) return;
     await InteractiveBlockModel.delete(blockId);
+    logActivity(req, {
+      action: 'interactive.block.delete',
+      entityType: 'interactive_block',
+      entityId: blockId,
+      summary: `Deleted ${trunc(row.type, 30)} block from chapter ${row.chapter_id}`,
+      metadata: {
+        bookId: row.book_id,
+        chapterId: row.chapter_id,
+        blockId,
+        blockType: row.type
+      }
+    });
     return res.status(204).send();
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -409,6 +522,13 @@ router.post('/chapters/:chapterId/blocks/reorder', async (req, res) => {
       await InteractiveBlockModel.update(normalized[i], { position: i });
     }
     const updated = await InteractiveBlockModel.findByChapterId(chapterId);
+    logActivity(req, {
+      action: 'interactive.block.reorder',
+      entityType: 'interactive_chapter',
+      entityId: chapterId,
+      summary: `Reordered ${normalized.length} block${normalized.length === 1 ? '' : 's'} in chapter "${trunc(chapter.chapter_title)}"`,
+      metadata: { bookId: chapter.book_id, chapterId, blockIds: normalized }
+    });
     return successResponse(res, updated);
   } catch (e) {
     return errorResponse(res, e.message, 500);
@@ -451,6 +571,18 @@ router.post('/books/:bookId/export/epub', async (req, res) => {
     res.setHeader('Content-Type', 'application/epub+zip');
     res.setHeader('Content-Length', String(buf.length));
     res.setHeader('Cache-Control', 'no-cache');
+    logActivity(req, {
+      action: 'interactive.book.export_epub',
+      entityType: 'interactive_book',
+      entityId: bookId,
+      summary: `Exported EPUB (${includeInteractiveJs ? 'JS interactive' : 'strict fallback'}) for "${trunc(book.title)}"`,
+      metadata: {
+        bookId,
+        chapters: chapters.length,
+        includeInteractiveJs,
+        fileName
+      }
+    });
     return res.end(buf, 'binary');
   } catch (e) {
     return errorResponse(res, e.message, 500);

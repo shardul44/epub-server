@@ -265,24 +265,29 @@ export default function AppRouter() {
               </RequirePlanFeature>
             }
           />
+          {/*
+            Editor routes are NOT role-gated on the client.
+            The backend enforces per-book access via canAccessInteractiveBook:
+              - member   → can edit only books they created
+              - org_admin → can edit every book in their organization
+                            (this includes books created by members)
+            If a user opens a book they don't own, the API returns 403 and
+            the editor renders its "Book not found" fallback.
+          */}
           <Route
             path="interactive/editor/:bookId"
             element={
-              <RequireOrgAdmin>
-                <RequirePlanFeature featureKey="interactive.content">
-                  {lazyEl(InteractiveEditorEnhanced)}
-                </RequirePlanFeature>
-              </RequireOrgAdmin>
+              <RequirePlanFeature featureKey="interactive.content">
+                {lazyEl(InteractiveEditorEnhanced)}
+              </RequirePlanFeature>
             }
           />
           <Route
             path="interactive/editor-classic/:bookId"
             element={
-              <RequireOrgAdmin>
-                <RequirePlanFeature featureKey="interactive.content">
-                  {lazyEl(InteractiveEditor)}
-                </RequirePlanFeature>
-              </RequireOrgAdmin>
+              <RequirePlanFeature featureKey="interactive.content">
+                {lazyEl(InteractiveEditor)}
+              </RequirePlanFeature>
             }
           />
 

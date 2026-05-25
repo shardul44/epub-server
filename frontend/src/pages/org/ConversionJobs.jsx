@@ -242,7 +242,10 @@ const ConversionJobs = () => {
   const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
 
   // ── React Query (server state) ────────────────────────────────
-  const { jobs, isPending, isLoading: loading, error: pollError, refresh } = useConversionsQuery({ statusFilter });
+  const { jobs, isPending, isLoading: loading, error: pollError, refresh } = useConversionsQuery({
+    statusFilter,
+    excludeEpubImports: true,
+  });
 
   // If another page redirects here (e.g. editor opened while job is still running),
   // focus that job and switch filter to show the converting job.

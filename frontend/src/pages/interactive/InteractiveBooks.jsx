@@ -53,18 +53,35 @@ const StatCard = ({ icon, label, value, accent }) => (
 /* ─── Row actions dropdown ────────────────────────────────── */
 const RowMenu = ({ book, canEdit, onExport, onDelete, busyId }) => {
   const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState('bottom');
   const ref = useRef(null);
+  const btnRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
+
+    // Auto-flip: if there's not enough room below the button, open upward.
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const estHeight = canEdit ? 180 : 110; // rough dropdown height
+      if (spaceBelow < estHeight && spaceAbove > spaceBelow) {
+        setPlacement('top');
+      } else {
+        setPlacement('bottom');
+      }
+    }
+
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [open, canEdit]);
 
   return (
     <div className="ib-row-menu" ref={ref}>
       <button
+        ref={btnRef}
         className="ib-icon-btn"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
         aria-haspopup="true"
@@ -74,7 +91,11 @@ const RowMenu = ({ book, canEdit, onExport, onDelete, busyId }) => {
         <MoreVertical size={16} />
       </button>
       {open && (
-        <div className="ib-dropdown" onClick={(e) => e.stopPropagation()}>
+        <div
+          className={`ib-dropdown ib-dropdown--${placement}`}
+          onClick={(e) => e.stopPropagation()}
+          role="menu"
+        >
           <button className="ib-dropdown-item" onClick={() => { setOpen(false); onExport(book, false); }}>
             <Download size={15} /> Export EPUB (Strict)
           </button>
@@ -112,7 +133,13 @@ export default function InteractiveBooks() {
   const [creating, setCreating] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, book: null, loading: false });
 
-  const canEdit = useMemo(() => user?.role === 'org_admin', [user?.role]);
+  // Org admins manage the org's library; members manage only their own books.
+  // Per-book tenant scoping is enforced server-side (canAccessInteractiveBook),
+  // so it's safe to expose create/edit/delete UI to members for rows they own.
+  const canEdit = useMemo(
+    () => user?.role === 'org_admin' || user?.role === 'member',
+    [user?.role]
+  );
 
   /* derived stats */
   const totalBooks = books.length;

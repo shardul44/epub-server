@@ -267,14 +267,6 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                 label="EPUB Sync"
                 isActive={active.epubSync}
               />
-              <NavRow
-                to="/pdfs"
-                icon={FileText}
-                label="My PDFs"
-                isActive={active.pdfs}
-                end={<CountBadge count={pdfCount} tone="blue" />}
-              />
-
               <ExpandableNav
                 icon={ArrowLeftRight}
                 label="Conversions"
