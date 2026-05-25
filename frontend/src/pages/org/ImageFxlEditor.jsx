@@ -344,6 +344,7 @@ const ImageFxlEditor = () => {
 
   const { jobs: allJobs, isLoading: jobsLoading } = useConversionsQuery({
     statusFilter: 'COMPLETED',
+    excludeEpubImports: true,
   });
 
   const handleSelect = (job) => {

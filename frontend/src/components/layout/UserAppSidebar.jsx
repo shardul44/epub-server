@@ -243,16 +243,6 @@ export default function UserAppSidebar({ onCollapse }) {
               isActive={active.epubSync}
             />
           )}
-          {showConversion && (
-            <NavRow
-              to="/pdfs"
-              icon={FileText}
-              label="My PDFs"
-              isActive={active.pdfs}
-              end={<CountBadge count={pdfCount} tone="blue" />}
-            />
-          )}
-
           {showWorkflowNav && (
             <ExpandableNav
               icon={ArrowLeftRight}

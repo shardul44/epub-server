@@ -5,11 +5,13 @@
  * Cache key: ['conversions', scope]
  */
 
+import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../lib/queryKeys';
 import api from '../../services/api';
 import { useListScope } from '../../context/ListScopeContext';
 import { listScopeQueryParams } from '../../utils/listScope';
+import { isEpubSourceJob } from '../../utils/conversionJobKey';
 
 const ACTIVE_STATUSES = new Set(['IN_PROGRESS', 'PENDING', 'PROCESSING']);
 
@@ -63,9 +65,26 @@ export async function fetchAllJobs(scope = 'org') {
 }
 
 /**
- * @param {{ statusFilter?: string, enabled?: boolean, scope?: 'own'|'org' }} [options]
+ * @param {{
+ *   statusFilter?: string,
+ *   enabled?: boolean,
+ *   scope?: 'own'|'org',
+ *   excludeEpubImports?: boolean,
+ * }} [options]
+ *
+ * `excludeEpubImports` filters out direct-EPUB-import jobs (where the source
+ * is a .epub upload, not a PDF). Pass true on PDF-only workflow pages
+ * (Conversion Jobs, FXL Editor, Audio Sync Studio, Download EPUB) so the
+ * lists, counts, and badges only reflect PDF→EPUB conversions. The raw cache
+ * is left intact so the EPUB Sync page can still resolve its uploaded EPUBs
+ * back to their conversion jobs.
  */
-export function useConversionsQuery({ statusFilter = 'all', enabled = true, scope: scopeOverride } = {}) {
+export function useConversionsQuery({
+  statusFilter = 'all',
+  enabled = true,
+  scope: scopeOverride,
+  excludeEpubImports = false,
+} = {}) {
   const queryClient = useQueryClient();
   const contextScope = useListScope();
   const scope = scopeOverride ?? contextScope;
@@ -88,10 +107,17 @@ export function useConversionsQuery({ statusFilter = 'all', enabled = true, scop
     refetchIntervalInBackground: true,
   });
 
-  const allJobs = query.data ?? [];
+  const rawJobs = query.data ?? [];
 
-  const jobs =
-    statusFilter === 'all' ? allJobs : allJobs.filter((j) => j.status === statusFilter);
+  const allJobs = useMemo(
+    () => (excludeEpubImports ? rawJobs.filter((j) => !isEpubSourceJob(j)) : rawJobs),
+    [rawJobs, excludeEpubImports],
+  );
+
+  const jobs = useMemo(
+    () => (statusFilter === 'all' ? allJobs : allJobs.filter((j) => j.status === statusFilter)),
+    [allJobs, statusFilter],
+  );
 
   const refresh = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.conversions.all() });

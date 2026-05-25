@@ -290,7 +290,9 @@ const AudioSyncStudio = () => {
   const listScope = useListScope();
   const [error, setError] = useState('');
 
-  const { jobs: allJobs, loading: jobsLoading, error: jobsError } = useConversions();
+  const { jobs: allJobs, loading: jobsLoading, error: jobsError } = useConversions({
+    excludeEpubImports: true,
+  });
   const { goToAudioSync, primeAudioSyncWorkflow } = useWorkflowNavigation();
 
   useEffect(() => {
