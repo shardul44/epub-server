@@ -16,13 +16,11 @@ import {
   Search,
   CloudUpload,
   BarChart2,
-  Smartphone,
   HardDrive,
   Cpu,
   Eye,
   ExternalLink,
   Settings,
-  Zap,
   ShieldCheck,
   Accessibility,
 } from 'lucide-react';
@@ -36,6 +34,7 @@ import { aiConfigService } from '../../services/aiConfigService';
 import DashboardHeader from '../../components/layout/Header';
 import MainContent from '../../components/layout/MainContent';
 import RecentActivityPanel from '../../components/dashboard/RecentActivityPanel';
+import QuickActionsFab from '../../components/dashboard/QuickActionsFab';
 import '../Dashboard.css';
 import './UserDashboard.css';
 
@@ -197,26 +196,9 @@ export default function UserDashboard() {
       .slice(0, 4);
   }, [allJobs]);
 
-  const epubTypeRows = useMemo(() => {
-    const done = allJobs.filter((j) => j.status === 'COMPLETED');
-    const reflow = done.filter((j) => (j.jobType ?? 'REFLOW') !== 'FXL').length;
-    const fxl = done.filter((j) => j.jobType === 'FXL').length;
-    const total = reflow + fxl;
-    if (total === 0) {
-      return [
-        { name: 'EPUB 3 Reflowable', count: 0, pct: 0, color: '#2563eb' },
-        { name: 'EPUB 3 Fixed Layout', count: 0, pct: 0, color: '#7c3aed' },
-      ];
-    }
-    return [
-      { name: 'EPUB 3 Reflowable', count: reflow, pct: Math.round((reflow / total) * 1000) / 10, color: '#2563eb' },
-      { name: 'EPUB 3 Fixed Layout', count: fxl, pct: Math.round((fxl / total) * 1000) / 10, color: '#7c3aed' },
-    ];
-  }, [allJobs]);
-
   const jobStatusRows = useMemo(
     () => [
-      { name: 'Completed', count: breakdown.completed, color: '#16a34a' },
+      { name: 'Completed', count: breakdown.completed, color: '#2563eb' },
       { name: 'In progress', count: breakdown.inProgress, color: '#d97706' },
       { name: 'Failed', count: breakdown.failed, color: '#ef4444' },
     ],
@@ -260,6 +242,18 @@ export default function UserDashboard() {
 
   const aiCfg = aiConfigQuery.data;
   const chartMax = Math.max(1, ...throughputData.map((d) => d.count));
+
+  const quickActions = useMemo(
+    () => [
+      { Icon: ShieldCheck, label: 'EPUB Checker', to: '/epub-checker', show: showEpubTools },
+      { Icon: Accessibility, label: 'Accessibility', to: '/accessibility', show: showAccessibility },
+      { Icon: Download, label: 'Download EPUB', to: '/conversions/download', show: showConversion },
+      { Icon: Music, label: 'Audio Sync', to: '/conversions/audio-sync', show: showSyncStudio },
+      { Icon: Image, label: 'FXL Editor', to: '/conversions/fxl-editor', show: showKitaboo },
+      { Icon: CloudUpload, label: 'Upload PDF', to: '/pdfs/upload', show: showConversion },
+    ],
+    [showConversion, showSyncStudio, showEpubTools, showAccessibility, showKitaboo],
+  );
 
   const headerActions = showConversion ? (
     <>
@@ -474,111 +468,218 @@ export default function UserDashboard() {
         )}
       </div>
 
-      <div className="ud-split">
-        <RecentActivityPanel
-          loading={loading}
-          refreshing={refreshing}
-          recentJobs={recentJobs}
-          onRefresh={loadData}
-        />
-
-        <aside className="ud-aside">
-          <div className="ud-card">
-            <h3 className="ud-card-title">Your job status</h3>
-            <p className="ud-card-sub">Breakdown of your conversion jobs</p>
-            {loading ? (
-              <div className="ds-skel ds-skel--md" style={{ height: 120, borderRadius: 8 }} />
-            ) : (
-              <>
-                {jobStatusRows.map((row) => (
-                  <div key={row.name} className="ud-credit-row">
-                    <div className="ud-credit-row-top">
-                      <span className="ud-credit-row-label">{row.name}</span>
-                      <span className="ud-credit-row-val">{row.count.toLocaleString()}</span>
-                    </div>
-                    <div className="ud-credit-bar-track">
-                      <div
-                        className="ud-credit-bar-fill ud-credit-bar--conv"
-                        style={{
-                          width: `${(row.count / breakdown.max) * 100}%`,
-                          background: row.color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-
-          <div className="ud-card ud-card--quick-actions">
-            <div className="ud-card-title-row">
-              <Zap className="ud-card-title-zap" size={18} strokeWidth={2.25} aria-hidden />
-              <h3 className="ud-card-title">Quick Actions</h3>
-            </div>
-            <p className="ud-card-sub">Jump into common workflows</p>
-            <div className="ud-qa-grid">
-              {showConversion && (
-              <Link to="/pdfs/upload" className="ud-qa-item">
-                <span className="ud-qa-icon" aria-hidden>
-                  <CloudUpload size={20} strokeWidth={2} />
-                </span>
-                Upload PDF
-              </Link>
-              )}
-              {showKitaboo && (
-              <Link to="/conversions/fxl-editor" className="ud-qa-item">
-                <span className="ud-qa-icon" aria-hidden>
-                  <Image size={20} strokeWidth={2} />
-                </span>
-                FXL Editor
-              </Link>
-              )}
-              {showSyncStudio && (
-              <Link to="/conversions/audio-sync" className="ud-qa-item">
-                <span className="ud-qa-icon" aria-hidden>
-                  <Music size={20} strokeWidth={2} />
-                </span>
-                Audio Sync
-              </Link>
-              )}
-              {showConversion && (
-              <Link to="/conversions/download" className="ud-qa-item">
-                <span className="ud-qa-icon" aria-hidden>
-                  <Download size={20} strokeWidth={2} />
-                </span>
-                Download EPUB
-              </Link>
-              )}
-              {showEpubTools && (
-              <Link to="/epub-checker" className="ud-qa-item">
-                <span className="ud-qa-icon" aria-hidden>
-                  <ShieldCheck size={20} strokeWidth={2} />
-                </span>
-                EPUB Checker
-              </Link>
-              )}
-              {showAccessibility && (
-              <Link to="/accessibility" className="ud-qa-item">
-                <span className="ud-qa-icon" aria-hidden>
-                  <Accessibility size={20} strokeWidth={2} />
-                </span>
-                Accessibility
-              </Link>
-              )}
-            </div>
-          </div>
-        </aside>
-      </div>
-      </>
-      )}
-
-      {/* Insights grid — dynamic from jobs, throughput, credits, PDFs, AI config */}
-      {showConversion && (
+      {/* Top row: throughput, storage, job status */}
       <section className="ud-insights" aria-label="Dashboard insights">
         <div className="ud-insights-grid">
-          {/* 1 — Needs attention */}
-          <article className="ud-insight-card">
+          {/* Weekly throughput */}
+          <div className="ud-insight-card ud-insight-card--throughput">
+            <div className="ud-insight-head">
+              <div className="ud-insight-head-left">
+                <span className="ud-insight-icon ud-insight-icon--blue">
+                  <BarChart2 size={18} aria-hidden />
+                </span>
+                <div>
+                  <h2 className="ud-insight-title">Weekly throughput</h2>
+                  <p className="ud-insight-sub">Jobs completed per day</p>
+                </div>
+              </div>
+              {loading ? (
+                <div className="ds-skel ds-skel--pill" style={{ width: 48 }} />
+              ) : (
+                <span className="ud-insight-badge ud-insight-badge--blue">{trendLabel}</span>
+              )}
+            </div>
+            <div className="ud-insight-body ud-insight-body--chart">
+              {loading ? (
+                <div className="ud-chart ud-chart--skel" />
+              ) : (
+                <div className="ud-chart" role="img" aria-label="Completed jobs per day this week">
+                  {throughputData.map((d, i) => {
+                    const h = chartMax > 0 ? Math.round((d.count / chartMax) * 100) : 0;
+                    const isPeak = i === throughputPeakIdx && d.count > 0;
+                    return (
+                      <div key={d.date} className="ud-chart-col">
+                        <div className="ud-chart-track">
+                          <div
+                            className={`ud-chart-fill${isPeak ? ' ud-chart-fill--peak' : ''}`}
+                            style={{ height: `${Math.max(h, 4)}%` }}
+                            title={`${d.fullDay}: ${d.count}`}
+                          />
+                        </div>
+                        <span className={`ud-chart-lbl${isPeak ? ' ud-chart-lbl--peak' : ''}`}>
+                          {CHART_DAY_SHORT[d.day] ?? d.day?.charAt(0) ?? '—'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="ud-insight-foot">
+                <span>Avg {avgJobDuration ?? '—'}</span>
+                <span>Peak {peakDayShort}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 — Storage */}
+          <div className="ud-insight-card ud-insight-card--storage">
+            <div className="ud-insight-head">
+              <div className="ud-insight-head-left">
+                <span className="ud-insight-icon ud-insight-icon--slate">
+                  <HardDrive size={18} aria-hidden />
+                </span>
+                <div>
+                  <h2 className="ud-insight-title">Storage</h2>
+                  <p className="ud-insight-sub">Your file storage usage</p>
+                </div>
+              </div>
+              {loading ? (
+                <div className="ds-skel ds-skel--pill" style={{ width: 64 }} />
+              ) : (
+                <span className="ud-insight-badge ud-insight-badge--blue">
+                  {storageCard.pct.toFixed(1)}% used
+                </span>
+              )}
+            </div>
+            <div className="ud-insight-body">
+              {loading ? (
+                <div className="ds-skel ds-skel--lg" style={{ height: 80 }} />
+              ) : (
+                <>
+                  <p className="ud-storage-summary">
+                    <strong>{storageCard.usedMb.toFixed(1)}</strong> MB of {storageCard.capLabel}
+                  </p>
+                  <div className="ud-storage-bar-track">
+                    <div className="ud-storage-bar-fill" style={{ width: `${storageCard.pct}%` }} />
+                  </div>
+                  <ul className="ud-storage-rows">
+                    <li>
+                      <span className="ud-storage-dot" style={{ background: '#2563eb' }} aria-hidden />
+                      <span>PDF files</span>
+                      <span>{storageCard.pdfMb.toFixed(1)} MB</span>
+                    </li>
+                    <li>
+                      <span className="ud-storage-dot" style={{ background: '#7c3aed' }} aria-hidden />
+                      <span>EPUB &amp; assets</span>
+                      <span>{storageCard.epubMb.toFixed(1)} MB</span>
+                    </li>
+                  </ul>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Job status */}
+          <div className="ud-insight-card ud-insight-card--job-status">
+            <div className="ud-insight-head">
+              <div className="ud-insight-head-left">
+                <span className="ud-insight-icon ud-insight-icon--purple">
+                  <BarChart2 size={18} aria-hidden />
+                </span>
+                <div>
+                  <h2 className="ud-insight-title">Job status</h2>
+                  <p className="ud-insight-sub">Your conversion jobs by outcome</p>
+                </div>
+              </div>
+              <Link to="/conversions" className="ud-insight-manage">
+                View all →
+              </Link>
+            </div>
+            <div className="ud-insight-body">
+              {loading ? (
+                <div className="ud-insight-skel-stack">
+                  {[1, 2, 3].map((k) => (
+                    <div key={k} className="ds-skel ds-skel--sm" style={{ height: 28 }} />
+                  ))}
+                </div>
+              ) : (
+                <ul className="ud-insight-tts-list">
+                  {jobStatusRows.map((row) => (
+                    <li key={row.name} className="ud-insight-tts-row">
+                      <div className="ud-insight-tts-info">
+                        <span className="ud-insight-tts-name">{row.name}</span>
+                        <span className="ud-insight-tts-meta">{row.count} jobs</span>
+                      </div>
+                      <div className="ud-insight-tts-bar-wrap">
+                        <div
+                          className="ud-insight-tts-bar"
+                          style={{ width: `${(row.count / breakdown.max) * 100}%`, background: row.color }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {showAi && (
+          <div className="ud-insight-card ud-insight-card--ai-config">
+            <div className="ud-insight-head">
+              <div className="ud-insight-head-left">
+                <span className="ud-insight-icon ud-insight-icon--indigo">
+                  <Cpu size={18} aria-hidden />
+                </span>
+                <div>
+                  <h2 className="ud-insight-title">AI config</h2>
+                  <p className="ud-insight-sub">Your active AI settings</p>
+                </div>
+              </div>
+              <Link to="/ai-config" className="ud-insight-manage">
+                Edit →
+              </Link>
+            </div>
+            <div className="ud-insight-body">
+              {aiConfigQuery.isLoading ? (
+                <div className="ud-insight-skel-stack">
+                  {[1, 2, 3].map((k) => (
+                    <div key={k} className="ds-skel ds-skel--sm" style={{ height: 28 }} />
+                  ))}
+                </div>
+              ) : (
+                <ul className="ud-insight-ai-list">
+                  <li className="ud-insight-ai-row">
+                    <Cpu size={16} className="ud-insight-ai-ic" aria-hidden />
+                    <span className="ud-insight-ai-k">AI model</span>
+                    <span className="ud-insight-ai-v">{aiCfg?.modelName ?? '—'}</span>
+                  </li>
+                  <li className="ud-insight-ai-row">
+                    <Eye size={16} className="ud-insight-ai-ic" aria-hidden />
+                    <span className="ud-insight-ai-k">Status</span>
+                    <span className="ud-insight-ai-v">{aiCfg?.isActive !== false ? 'Active' : 'Inactive'}</span>
+                  </li>
+                  <li className="ud-insight-ai-row">
+                    <Settings size={16} className="ud-insight-ai-ic" aria-hidden />
+                    <span className="ud-insight-ai-k">Description</span>
+                    <span className="ud-insight-ai-v ud-insight-ai-v--muted">
+                      {aiCfg?.description ? String(aiCfg.description).slice(0, 48) : 'Default workspace'}
+                    </span>
+                  </li>
+                </ul>
+              )}
+              <Link to="/ai-config" className="ud-insight-ai-cta">
+                <Settings size={16} aria-hidden />
+                Edit AI configuration
+              </Link>
+            </div>
+          </div>
+          )}
+        </div>
+      </section>
+
+      {/* Bottom row: recent activity + needs attention */}
+      <div className="ud-split">
+        <div className="ud-split-card ud-split-card--recent">
+          <RecentActivityPanel
+            loading={loading}
+            refreshing={refreshing}
+            recentJobs={recentJobs}
+            onRefresh={loadData}
+          />
+        </div>
+
+        <aside className="ud-aside ud-split-card ud-split-card--attention">
+          <div className="ud-insight-card ud-insight-card--attention">
             <div className="ud-insight-head">
               <div className="ud-insight-head-left">
                 <span className="ud-insight-icon ud-insight-icon--amber">
@@ -593,7 +694,7 @@ export default function UserDashboard() {
                 <div className="ds-skel ds-skel--pill" style={{ width: 72 }} />
               ) : (
                 <span className="ud-insight-badge ud-insight-badge--red">
-                  {attentionJobs.length} issue{attentionJobs.length !== 1 ? 's' : ''}
+                  {attentionJobs.length} {attentionJobs.length === 1 ? 'issue' : 'issues'}
                 </span>
               )}
             </div>
@@ -660,244 +761,16 @@ export default function UserDashboard() {
                 </ul>
               )}
             </div>
-          </article>
-
-          {/* 2 — Weekly throughput */}
-          <article className="ud-insight-card">
-            <div className="ud-insight-head">
-              <div className="ud-insight-head-left">
-                <span className="ud-insight-icon ud-insight-icon--blue">
-                  <BarChart2 size={18} aria-hidden />
-                </span>
-                <div>
-                  <h2 className="ud-insight-title">Weekly throughput</h2>
-                  <p className="ud-insight-sub">Jobs completed per day</p>
-                </div>
-              </div>
-              {loading ? (
-                <div className="ds-skel ds-skel--pill" style={{ width: 48 }} />
-              ) : (
-                <span className="ud-insight-badge ud-insight-badge--blue">{trendLabel}</span>
-              )}
-            </div>
-            <div className="ud-insight-body ud-insight-body--chart">
-              {loading ? (
-                <div className="ud-chart ud-chart--skel" />
-              ) : (
-                <div className="ud-chart" role="img" aria-label="Completed jobs per day this week">
-                  {throughputData.map((d, i) => {
-                    const h = chartMax > 0 ? Math.round((d.count / chartMax) * 100) : 0;
-                    const isPeak = i === throughputPeakIdx && d.count > 0;
-                    return (
-                      <div key={d.date} className="ud-chart-col">
-                        <div className="ud-chart-track">
-                          <div
-                            className={`ud-chart-fill${isPeak ? ' ud-chart-fill--peak' : ''}`}
-                            style={{ height: `${Math.max(h, 4)}%` }}
-                            title={`${d.fullDay}: ${d.count}`}
-                          />
-                        </div>
-                        <span className={`ud-chart-lbl${isPeak ? ' ud-chart-lbl--peak' : ''}`}>
-                          {CHART_DAY_SHORT[d.day] ?? d.day?.charAt(0) ?? '—'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              <div className="ud-insight-foot">
-                <span>Avg {avgJobDuration ?? '—'}</span>
-                <span>Peak {peakDayShort}</span>
-              </div>
-            </div>
-          </article>
-
-          {/* 3 — TTS usage */}
-          <article className="ud-insight-card">
-            <div className="ud-insight-head">
-              <div className="ud-insight-head-left">
-                <span className="ud-insight-icon ud-insight-icon--purple">
-                  <BarChart2 size={18} aria-hidden />
-                </span>
-                <div>
-                  <h2 className="ud-insight-title">Job status</h2>
-                  <p className="ud-insight-sub">Your conversion jobs by outcome</p>
-                </div>
-              </div>
-              <Link to="/conversions" className="ud-insight-manage">
-                View all →
-              </Link>
-            </div>
-            <div className="ud-insight-body">
-              {loading ? (
-                <div className="ud-insight-skel-stack">
-                  {[1, 2, 3].map((k) => (
-                    <div key={k} className="ds-skel ds-skel--sm" style={{ height: 28 }} />
-                  ))}
-                </div>
-              ) : (
-                <ul className="ud-insight-tts-list">
-                  {jobStatusRows.map((row) => (
-                    <li key={row.name} className="ud-insight-tts-row">
-                      <span className="ud-insight-tts-dot" style={{ background: row.color }} aria-hidden />
-                      <div className="ud-insight-tts-info">
-                        <span className="ud-insight-tts-name">{row.name}</span>
-                        <span className="ud-insight-tts-meta">{row.count} jobs</span>
-                      </div>
-                      <div className="ud-insight-tts-bar-wrap">
-                        <div
-                          className="ud-insight-tts-bar"
-                          style={{ width: `${(row.count / breakdown.max) * 100}%`, background: row.color }}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </article>
-
-          {/* 4 — EPUB output types */}
-          <article className="ud-insight-card">
-            <div className="ud-insight-head">
-              <div className="ud-insight-head-left">
-                <span className="ud-insight-icon ud-insight-icon--teal">
-                  <Smartphone size={18} aria-hidden />
-                </span>
-                <div>
-                  <h2 className="ud-insight-title">EPUB output types</h2>
-                  <p className="ud-insight-sub">Breakdown by format</p>
-                </div>
-              </div>
-            </div>
-            <div className="ud-insight-body">
-              {loading ? (
-                <div className="ud-insight-skel-stack">
-                  {[1, 2].map((k) => (
-                    <div key={k} className="ds-skel ds-skel--sm" style={{ height: 32 }} />
-                  ))}
-                </div>
-              ) : (
-                <ul className="ud-insight-epub-list">
-                  {epubTypeRows.map((row) => (
-                    <li key={row.name} className="ud-insight-epub-row">
-                      <span className="ud-insight-epub-dot" style={{ background: row.color }} aria-hidden />
-                      <span className="ud-insight-epub-name">{row.name}</span>
-                      <span className="ud-insight-epub-count">{row.count}</span>
-                      <span className="ud-insight-epub-pct">{row.pct}%</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </article>
-
-          {/* 5 — Storage */}
-          <article className="ud-insight-card">
-            <div className="ud-insight-head">
-              <div className="ud-insight-head-left">
-                <span className="ud-insight-icon ud-insight-icon--slate">
-                  <HardDrive size={18} aria-hidden />
-                </span>
-                <div>
-                  <h2 className="ud-insight-title">Storage</h2>
-                  <p className="ud-insight-sub">Your file storage usage</p>
-                </div>
-              </div>
-              {loading ? (
-                <div className="ds-skel ds-skel--pill" style={{ width: 64 }} />
-              ) : (
-                <span className="ud-insight-badge ud-insight-badge--blue">
-                  {storageCard.pct.toFixed(1)}% used
-                </span>
-              )}
-            </div>
-            <div className="ud-insight-body">
-              {loading ? (
-                <div className="ds-skel ds-skel--lg" style={{ height: 80 }} />
-              ) : (
-                <>
-                  <p className="ud-storage-summary">
-                    <strong>{storageCard.usedMb.toFixed(1)}</strong> MB of {storageCard.capLabel}
-                  </p>
-                  <div className="ud-storage-bar-track">
-                    <div className="ud-storage-bar-fill" style={{ width: `${storageCard.pct}%` }} />
-                  </div>
-                  <ul className="ud-storage-rows">
-                    <li>
-                      <span className="ud-storage-dot" style={{ background: '#2563eb' }} aria-hidden />
-                      <span>PDF files</span>
-                      <span>{storageCard.pdfMb.toFixed(1)} MB</span>
-                    </li>
-                    <li>
-                      <span className="ud-storage-dot" style={{ background: '#7c3aed' }} aria-hidden />
-                      <span>EPUB &amp; assets</span>
-                      <span>{storageCard.epubMb.toFixed(1)} MB</span>
-                    </li>
-                  </ul>
-                </>
-              )}
-            </div>
-          </article>
-
-          {/* 6 — AI config */}
-          {showAi && (
-          <article className="ud-insight-card">
-            <div className="ud-insight-head">
-              <div className="ud-insight-head-left">
-                <span className="ud-insight-icon ud-insight-icon--indigo">
-                  <Cpu size={18} aria-hidden />
-                </span>
-                <div>
-                  <h2 className="ud-insight-title">AI config</h2>
-                  <p className="ud-insight-sub">Your active AI settings</p>
-                </div>
-              </div>
-              <Link to="/ai-config" className="ud-insight-manage">
-                Edit →
-              </Link>
-            </div>
-            <div className="ud-insight-body">
-              {aiConfigQuery.isLoading ? (
-                <div className="ud-insight-skel-stack">
-                  {[1, 2, 3].map((k) => (
-                    <div key={k} className="ds-skel ds-skel--sm" style={{ height: 28 }} />
-                  ))}
-                </div>
-              ) : (
-                <ul className="ud-insight-ai-list">
-                  <li className="ud-insight-ai-row">
-                    <Cpu size={16} className="ud-insight-ai-ic" aria-hidden />
-                    <span className="ud-insight-ai-k">AI model</span>
-                    <span className="ud-insight-ai-v">{aiCfg?.modelName ?? '—'}</span>
-                  </li>
-                  <li className="ud-insight-ai-row">
-                    <Eye size={16} className="ud-insight-ai-ic" aria-hidden />
-                    <span className="ud-insight-ai-k">Status</span>
-                    <span className="ud-insight-ai-v">{aiCfg?.isActive !== false ? 'Active' : 'Inactive'}</span>
-                  </li>
-                  <li className="ud-insight-ai-row">
-                    <Settings size={16} className="ud-insight-ai-ic" aria-hidden />
-                    <span className="ud-insight-ai-k">Description</span>
-                    <span className="ud-insight-ai-v ud-insight-ai-v--muted">
-                      {aiCfg?.description ? String(aiCfg.description).slice(0, 48) : 'Default workspace'}
-                    </span>
-                  </li>
-                </ul>
-              )}
-              <Link to="/ai-config" className="ud-insight-ai-cta">
-                <Settings size={16} aria-hidden />
-                Edit AI configuration
-              </Link>
-            </div>
-          </article>
-          )}
-        </div>
-      </section>
+          </div>
+        </aside>
+      </div>
+      </>
       )}
 
       </div>
       </MainContent>
+
+      <QuickActionsFab actions={quickActions} />
     </div>
   );
 }

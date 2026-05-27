@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { conversionApi, kitabooApi } from '../../api';
+import { conversionApi, kitabooApi, apiClient } from '../../api';
 import { useListScope } from '../../context/ListScopeContext';
-import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
+import { useConversions } from '../../hooks/useConversions';
 import useAppDispatch from '../../hooks/useAppDispatch';
 import useAppSelector from '../../hooks/useAppSelector';
 import {
@@ -13,8 +13,11 @@ import {
   clearError,
 } from '../../features/downloadEpub/downloadEpubSlice';
 import { useWorkflowNavigation, isFixedLayout } from '../../hooks/useWorkflowNavigation';
+import { useConversionActions } from '../../hooks/useConversionActions';
+import { selectActionError, clearActionError } from '../../features/conversions/conversionsSlice';
 import { selectWorkflowConversionType } from '../../features/conversionWorkflow/conversionWorkflowSlice';
 import WorkflowStepper from '../../components/WorkflowStepper';
+import ConfirmModal from '../../components/Loadingmodal';
 import { buildEpubReaderPath } from '../../utils/epubReaderUrl';
 import {
   conversionJobListKey,
@@ -30,6 +33,7 @@ import {
   FileText,
   BookOpen,
   ChevronRight,
+  Trash2,
 } from 'lucide-react';
 import './DownloadEpub.css';
 
@@ -102,10 +106,20 @@ const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId, epubSource }) {
   const cacheKey =
     pdfId != null && pdfId !== '' ? `pdf-thumb-card-${String(pdfId)}` : null;
 
-  if (epubSource || !url) {
+  const epubFallback = (
+    <div className="de-ready-pdf-thumb-fallback de-ready-pdf-thumb-epub" aria-hidden>
+      <span className="de-ready-pdf-thumb-epub-label">EPUB</span>
+    </div>
+  );
+
+  if (epubSource && !url) {
+    return epubFallback;
+  }
+
+  if (!url) {
     return (
       <div className="de-ready-pdf-thumb-fallback" aria-hidden>
-        {epubSource ? <BookOpen size={28} /> : <FileText size={28} />}
+        <FileText size={28} />
       </div>
     );
   }
@@ -113,7 +127,7 @@ const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId, epubSource }) {
   return (
     <>
       <div className="de-ready-pdf-thumb-fallback de-ready-pdf-thumb-fallback--under" aria-hidden>
-        <FileText size={28} />
+        {epubSource ? <span className="de-ready-pdf-thumb-epub-label">EPUB</span> : <FileText size={28} />}
       </div>
       <div className="de-ready-pdf-thumb-preview">
         <PdfThumbnail
@@ -124,6 +138,7 @@ const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId, epubSource }) {
           cacheKey={cacheKey}
           className="de-ready-pdf-thumb-img"
           alt=""
+          fallback={epubSource ? epubFallback : undefined}
         />
       </div>
     </>
@@ -138,6 +153,8 @@ const DownloadEpub = () => {
   const dispatch = useAppDispatch();
   const listScope = useListScope();
   const { goToAudioSync } = useWorkflowNavigation();
+  const { prepareDelete, confirmDelete: runConfirmDelete } = useConversionActions();
+  const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
 
   // jobId priority: URL param → navigation state → Redux state
   const urlJobId = params?.jobId;
@@ -153,12 +170,15 @@ const DownloadEpub = () => {
   const [downloading, setDownloading] = useState(false);
   const [quickDownloadId, setQuickDownloadId] = useState(null);
   const [downloadStatus, setDownloadStatus] = useState('');
+  const [directImportMeta, setDirectImportMeta] = useState(null);
+  const [directImportError, setDirectImportError] = useState('');
 
-  // ── React Query (server state — COMPLETED jobs only) ──────────
-  const { jobs, isLoading: loading, error: fetchError } = useConversionsQuery({
-    statusFilter: 'COMPLETED',
+  // ── COMPLETED conversion jobs + direct EPUB → Audio Sync imports ──
+  const { jobs, loading, error: fetchError, refetch } = useConversions({
     excludeEpubImports: true,
+    includeEpubSyncSessions: true,
   });
+  const actionError = useAppSelector(selectActionError);
 
   // Propagate fetch error into Redux
   useEffect(() => {
@@ -183,19 +203,46 @@ const DownloadEpub = () => {
     ? findJobByListKey(jobs, selectedJobId, workflowConversionType)
     : null;
 
+  // For direct EPUB imports, `jobs` list (conversion_jobs) is intentionally empty.
+  // Fetch lightweight metadata so we can still show the Download EPUB UI.
+  useEffect(() => {
+    if (loading) return;
+    if (selectedJob) return;
+    if (!urlJobId) return;
+    if (directImportMeta) return;
+
+    const directId = parseInt(String(urlJobId), 10);
+    if (Number.isNaN(directId)) return;
+
+    setDirectImportError('');
+    apiClient
+      .get(`/conversions/epub-import-meta/${directId}`)
+      .then((res) => setDirectImportMeta(res.data?.data ?? res.data))
+      .catch((err) => setDirectImportError(err?.message || 'Failed to load import metadata'));
+  }, [loading, selectedJob, urlJobId, directImportMeta]);
+
   /* ── Download ── */
   const handleDownload = useCallback(async () => {
-    if (!selectedJob) return;
-    const jid = selectedJob.id ?? selectedJob.jobId;
+    const directJid = directImportMeta?.pdfDocumentId ?? null;
+    const jid = selectedJob ? (selectedJob.id ?? selectedJob.jobId) : directJid;
+    if (!jid) return;
     setDownloading(true);
     setDownloadStatus('Downloading…');
     try {
-      if (selectedJob.jobType === 'FXL') {
-        await kitabooApi.downloadFxlEpub(jid, null, (status) => setDownloadStatus(status), {
-          skipAutoPublish: isEpubSourceJob(selectedJob),
-        });
+      if (selectedJob) {
+        if (selectedJob.jobType === 'FXL' && !isEpubSourceJob(selectedJob)) {
+          await kitabooApi.downloadFxlEpub(jid, null, (status) => setDownloadStatus(status), {
+            skipAutoPublish: false,
+          });
+        } else {
+          await conversionApi.downloadEpub(jid, {
+            jobType: selectedJob.jobType === 'FXL' ? 'FXL' : 'REFLOW',
+          });
+        }
       } else {
-        await conversionApi.downloadEpub(jid);
+        // Direct EPUB import sessions don't have conversion_jobs / kitaboo export rows.
+        // We download the originally imported EPUB stub directly.
+        await conversionApi.downloadEpub(jid, { jobType: 'REFLOW' });
       }
     } catch (err) {
       dispatch(setError(err.message || 'Failed to download EPUB'));
@@ -203,7 +250,7 @@ const DownloadEpub = () => {
       setDownloading(false);
       setDownloadStatus('');
     }
-  }, [selectedJob, dispatch]);
+  }, [selectedJob, directImportMeta, dispatch]);
 
   const handleQuickDownload = useCallback(async (job) => {
     if (!job) return;
@@ -212,12 +259,12 @@ const DownloadEpub = () => {
     dispatch(clearError());
     setQuickDownloadId(listKey);
     try {
-      if (job.jobType === 'FXL') {
-        await kitabooApi.downloadFxlEpub(jid, null, null, {
-          skipAutoPublish: isEpubSourceJob(job),
-        });
+      if (job.jobType === 'FXL' && !isEpubSourceJob(job)) {
+        await kitabooApi.downloadFxlEpub(jid, null, null, { skipAutoPublish: false });
       } else {
-        await conversionApi.downloadEpub(jid);
+        await conversionApi.downloadEpub(jid, {
+          jobType: job.jobType === 'FXL' ? 'FXL' : 'REFLOW',
+        });
       }
     } catch (err) {
       dispatch(setError(err.message || 'Failed to download EPUB'));
@@ -227,6 +274,26 @@ const DownloadEpub = () => {
   }, [dispatch]);
 
   const handleStepClick = useCallback((step) => navigate(step.path), [navigate]);
+
+  const handleDelete = useCallback(
+    (job) => {
+      prepareDelete(job);
+      setDeleteModal({ open: true, job, loading: false });
+    },
+    [prepareDelete],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    setDeleteModal((prev) => ({ ...prev, loading: true }));
+    const ok = await runConfirmDelete();
+    if (ok) {
+      await refetch();
+      dispatch(setSelectedJobId(null));
+      setDeleteModal({ open: false, job: null, loading: false });
+    } else {
+      setDeleteModal((prev) => ({ ...prev, loading: false }));
+    }
+  }, [runConfirmDelete, refetch, dispatch]);
 
   // Memoize validation items — only recompute when job changes
   // Must be before any early returns to satisfy Rules of Hooks
@@ -245,12 +312,17 @@ const DownloadEpub = () => {
   }
 
   const job = selectedJob;
-  const jobId = job ? (job.id ?? job.jobId) : null;
-  const isFxl = job?.jobType === 'FXL';
-  const pages = job?.totalPages ?? job?.pageCount ?? null;
-  const size = fmtSize(job?.fileSizeBytes ?? job?.fileSize ?? null);
-  const filename = job ? `job-${jobId}.epub` : null;
-  const pdfName = job?.pdfFilename ?? null;
+  const epubDirectImport = job ? isEpubSourceJob(job) : Boolean(directImportMeta);
+  const epubImportId = directImportMeta?.pdfDocumentId ?? null;
+  const effectiveJobId = job ? (job.id ?? job.jobId) : epubImportId;
+  const isFxl =
+    job?.jobType === 'FXL' ||
+    directImportMeta?.layoutType === 'FIXED_LAYOUT';
+  const pages = job?.totalPages ?? job?.pageCount ?? directImportMeta?.pages ?? null;
+  const size = fmtSize(job?.fileSizeBytes ?? job?.fileSize ?? directImportMeta?.fileSizeBytes ?? null);
+  const filename = job ? `job-${effectiveJobId}.epub` : (directImportMeta?.pdfFilename ?? null);
+  const pdfName = job?.pdfFilename ?? directImportMeta?.pdfFilename ?? null;
+  const readerSource = isFxl ? 'kitaboo' : 'conversion';
 
   return (
     <div className="de-root">
@@ -259,7 +331,7 @@ const DownloadEpub = () => {
       <div className="de-topbar">
         <div className="de-topbar-left">
           <h1 className="de-topbar-title">Download EPUB</h1>
-          {jobId && <span className="de-job-chip-top">Job #{jobId}</span>}
+          {effectiveJobId && <span className="de-job-chip-top">Job #{effectiveJobId}</span>}
 
         </div>
         <button
@@ -267,9 +339,19 @@ const DownloadEpub = () => {
           onClick={() => {
             if (job) {
               goToAudioSync(job);
-            } else {
-              navigate('/conversions/audio-sync');
+              return;
             }
+            if (directImportMeta && epubImportId) {
+              goToAudioSync({
+                id: epubImportId,
+                jobId: epubImportId,
+                jobType: isFxl ? 'FXL' : 'REFLOW',
+                pdfDocumentId: epubImportId,
+                pdfId: epubImportId,
+              });
+              return;
+            }
+            navigate('/conversions/audio-sync');
           }}
         >
           <ArrowLeft size={15} /> Audio Sync
@@ -277,33 +359,125 @@ const DownloadEpub = () => {
       </div>
 
       {/* ── Stepper ── */}
-      <WorkflowStepper activeStep={3} jobId={jobId} job={job} onStepClick={handleStepClick} />
+      <WorkflowStepper
+        activeStep={3}
+        jobId={effectiveJobId}
+        job={job}
+        onStepClick={handleStepClick}
+        disabledStepKeys={epubDirectImport ? ['jobs', 'editor'] : []}
+      />
 
       {/* ── Error ── */}
-      {error && (
+      {(error || actionError) && (
         <div className="de-error-bar">
-          {error}
-          <button onClick={() => dispatch(clearError())} className="de-error-close">✕</button>
+          {error || actionError}
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(clearError());
+              dispatch(clearActionError());
+            }}
+            className="de-error-close"
+          >
+            ✕
+          </button>
         </div>
       )}
 
-      {/* ── No jobs ── */}
-      {!job ? (
+      {/* ── No jobs (or URL-only direct-import fallback) ── */}
+      {jobs.length === 0 && !job ? (
+        directImportMeta ? (
+          /* ── Main content (direct import) ── */
+          <div className="de-content">
+            <div className="de-main-row">
+              <div className="de-ready-card">
+                <div className="de-check-circle">
+                  <Check size={28} />
+                </div>
+
+                <h2 className="de-ready-title">Your EPUB is ready</h2>
+
+                {pdfName && (
+                  <p className="de-ready-sub">
+                    {pdfName} is ready to download.
+                  </p>
+                )}
+
+                <div className="de-file-row">
+                  <span className="de-file-icon">📘</span>
+                  <div className="de-file-info">
+                    <span className="de-file-name">{filename}</span>
+                    <span className="de-file-meta">
+                      {isFxl ? 'FXL' : 'Reflow'}
+                      {pages ? ` · ${pages} pages` : ''}
+                      {size ? ` · ${size}` : ''}
+                    </span>
+                  </div>
+                  <span className="de-ready-badge">READY</span>
+                </div>
+
+                <div className="de-actions">
+                  <button
+                    className="de-btn de-btn-primary"
+                    onClick={handleDownload}
+                    disabled={downloading || !!quickDownloadId}
+                  >
+                    <Download size={16} />
+                    {downloading ? (downloadStatus || 'Downloading…') : 'Download EPUB'}
+                  </button>
+                  <button
+                    className="de-btn de-btn-outline"
+                    onClick={() => navigate(buildEpubReaderPath(effectiveJobId, {
+                      source: readerSource,
+                      fixedLayout: isFxl,
+                    }))}
+                  >
+                    <BookOpen size={15} />
+                    Open in Reader
+                  </button>
+                </div>
+              </div>
+
+              <div className="de-validation-panel">
+                <div className="de-val-title">VALIDATION SUMMARY</div>
+                <ul className="de-val-list">
+                  {validationItems.map((item, i) => (
+                    <li key={i} className="de-val-item">
+                      <span className="de-val-icon">{item.icon}</span>
+                      <span className="de-val-label">{item.label}</span>
+                      {item.ok && <Check className="de-val-check" size={14} />}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="de-empty">
           <FileText size={40} />
           <p>
             {listScope === 'own'
-              ? 'You have no completed jobs ready for download yet.'
+              ? 'You have no completed jobs ready for download yet. Import an EPUB or finish a PDF conversion first.'
               : 'No completed jobs available for download.'}
           </p>
-          <button
-            className="de-btn de-btn-primary"
-            style={{ width: 'auto', marginTop: 8 }}
-            onClick={() => navigate('/conversions')}
-          >
-            Go to Conversion Jobs
-          </button>
+          <div className="de-empty-actions">
+            <button
+              type="button"
+              className="de-btn de-btn-primary"
+              onClick={() => navigate('/epub-sync-import')}
+            >
+              EPUB → Audio Sync
+            </button>
+            <button
+              type="button"
+              className="de-btn de-btn-outline"
+              onClick={() => navigate('/conversions')}
+            >
+              Conversion Jobs
+            </button>
+          </div>
         </div>
+        )
       ) : (
         /* ── Main content ── */
         <div className="de-content">
@@ -348,13 +522,13 @@ const DownloadEpub = () => {
                   <Download size={16} />
                   {downloading ? (downloadStatus || 'Downloading…') : 'Download EPUB'}
                 </button>
-                <button
-                  className="de-btn de-btn-outline"
-                  onClick={() => navigate(buildEpubReaderPath(jobId, {
-                    source: isFxl ? 'kitaboo' : 'conversion',
-                    fixedLayout: isFxl,
-                  }))}
-                >
+                  <button
+                    className="de-btn de-btn-outline"
+                    onClick={() => navigate(buildEpubReaderPath(effectiveJobId, {
+                      source: readerSource,
+                      fixedLayout: isFxl,
+                    }))}
+                  >
                   <BookOpen size={15} />
                   Open in Reader
                 </button>
@@ -395,7 +569,7 @@ const DownloadEpub = () => {
           {jobs.length > 0 && (
             <section className="de-ready-list-section" aria-labelledby="de-ready-list-heading">
               <h3 id="de-ready-list-heading" className="de-ready-list-title">
-                PDFs ready to download
+                Ready to download
               </h3>
               <p className="de-ready-list-sub">
                 Tap a card to show it in the summary above. Use Download on a card to save that EPUB immediately.
@@ -520,6 +694,18 @@ const DownloadEpub = () => {
                           {quickDownloadId === listKey ? 'Downloading…' : 'Download EPUB'}
                           <ChevronRight size={18} aria-hidden />
                         </button>
+                        <button
+                          type="button"
+                          className="de-ready-pdf-card-del-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(j);
+                          }}
+                          title="Delete job"
+                          aria-label={`Delete job #${jid}`}
+                        >
+                          <Trash2 size={16} aria-hidden />
+                        </button>
                       </div>
                     </article>
                   );
@@ -530,6 +716,23 @@ const DownloadEpub = () => {
 
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, job: null, loading: false })}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        subtitle="This action cannot be undone."
+        message={
+          deleteModal.job
+            ? `Delete Job #${deleteModal.job.id ?? deleteModal.job.jobId}? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleteModal.loading}
+      />
     </div>
   );
 };

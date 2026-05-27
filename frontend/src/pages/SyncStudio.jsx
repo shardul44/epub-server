@@ -2099,9 +2099,17 @@ const SyncStudio = () => {
         }
 
         // Load job info
-        const jobData = await conversionService.getConversionJob(parseInt(jobId));
-        if (jobData?.pdfDocumentId) {
-          setPdfId(jobData.pdfDocumentId);
+        // Direct EPUB import sessions don't have conversion_jobs rows.
+        // In that case, treat the URL `jobId` as the `pdfId`.
+        try {
+          const jobData = await conversionService.getConversionJob(parseInt(jobId));
+          if (jobData?.pdfDocumentId) {
+            setPdfId(jobData.pdfDocumentId);
+          } else {
+            setPdfId(parseInt(jobId, 10));
+          }
+        } catch (_) {
+          setPdfId(parseInt(jobId, 10));
         }
 
         // Try Reflowable Sync Studio API first (same shape as FXL Sync Studio)

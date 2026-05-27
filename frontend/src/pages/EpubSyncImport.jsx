@@ -17,7 +17,6 @@ import {
   RefreshCw,
   LayoutGrid,
 } from 'lucide-react';
-import UploadedPdfsList from '../components/UploadedPdfsList';
 import './EpubSyncImport.css';
 
 /* ─── Sidebar info panels ─────────────────────────────────────── */
@@ -88,7 +87,6 @@ const EpubSyncImport = () => {
   const [busy, setBusy]       = useState(false);
   const [error, setError]     = useState('');
   const [dragOver, setDragOver] = useState(false);
-  const [highlightEpub, setHighlightEpub] = useState({ id: null, name: '' });
   const fileInputRef          = useRef(null);
   const navigate              = useNavigate();
   const queryClient           = useQueryClient();
@@ -141,38 +139,8 @@ const EpubSyncImport = () => {
     setError('');
     try {
       const result = await conversionService.importEpubForSync(file, mode);
-      const jobId = result?.job?.id ?? result?.jobId;
-      const pdfId = result?.pdfId ?? result?.job?.pdfDocumentId;
       const kind = result?.kind;
-
-      queryClient.invalidateQueries({ queryKey: queryKeys.conversions.all() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.pdfs.all() });
-
-      if (jobId) {
-        const convType = kind === 'fxl' ? 'FXL' : 'REFLOW';
-        queryClient.setQueryData(queryKeys.conversions.list(listScope), (prev = []) => {
-          const optimistic = {
-            id: jobId,
-            jobId,
-            jobType: convType,
-            status: 'COMPLETED',
-            pdfDocumentId: pdfId,
-            pdfId,
-            pdfFilename: file.name,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            progressPercentage: 100,
-          };
-          const filtered = Array.isArray(prev)
-            ? prev.filter((j) => String(j.id ?? j.jobId) !== String(jobId))
-            : [];
-          return [optimistic, ...filtered];
-        });
-      }
-
-      if (pdfId) {
-        setHighlightEpub({ id: pdfId, name: file.name });
-      }
+      // The uploaded EPUB list/card is intentionally hidden on this page now.
 
       if (kind === 'fxl' && result.fxlSyncStudioPath) {
         navigate(result.fxlSyncStudioPath);
@@ -397,14 +365,6 @@ const EpubSyncImport = () => {
           </div>
 
         </aside>
-      </div>
-
-      <div className="esi-epubs-section">
-        <UploadedPdfsList
-          epubOnly
-          highlightId={highlightEpub.id}
-          highlightName={highlightEpub.name}
-        />
       </div>
     </div>
   );

@@ -12,7 +12,6 @@ import {
   BookOpen,
 } from 'lucide-react';
 import PdfThumbnail from './PdfThumbnail';
-import { pdfViewUrl } from '../services/api';
 import './PdfCard.css';
 
 /* ─────────────────────────────────────────────
@@ -44,33 +43,58 @@ export const getGradient = (id) => cardGradients[(id || 0) % cardGradients.lengt
    in the browser. Falls back to gradient background
    if the PDF URL is unavailable or rendering fails.
 ───────────────────────────────────────────── */
-const CardThumbnail = memo(({ pdfId, onFileNotFound }) => {
+const CardThumbnail = memo(({ pdfId, isEpub = false, onFileNotFound }) => {
   const absentHandledRef = useRef(false);
   const idKey = pdfId != null && pdfId !== '' ? String(pdfId) : '';
 
-  const cacheKey = idKey ? `pdf-thumb-card-${idKey}` : null;
+  if (isEpub) {
+    return (
+      <div
+        className="pdc-thumb-img pdc-thumb-epub"
+        aria-hidden="true"
+      >
+        <span className="pdc-thumb-epub-label">epub</span>
+      </div>
+    );
+  }
 
-  const pdfUrl = useMemo(() => (idKey ? pdfViewUrl(idKey) : null), [idKey]);
+  // Dedicated HD cache key for the big book-style card. Separate from the
+  // generic `pdf-thumb-card-*` key used by small list/row thumbnails so we
+  // don't bloat localStorage with HD data URLs for 44px previews.
+  const cacheKey = idKey ? `pdf-thumb-card-hd-${idKey}` : null;
+
+  const pdfUrl = useMemo(() => {
+    if (!idKey) return null;
+    const token = localStorage.getItem('token');
+    const base  = (import.meta.env.VITE_API_URL || 'http://localhost:8082').replace(/\/$/, '');
+    return `${base}/pdfs/${idKey}/view${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  }, [idKey]);
 
   const handleAbsent = useCallback(() => {
     if (absentHandledRef.current) return;
     absentHandledRef.current = true;
-    if (cacheKey) {
+    if (idKey) {
       try {
-        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(`pdf-thumb-card-hd-${idKey}`);
+        localStorage.removeItem(`pdf-thumb-card-${idKey}`);
       } catch (_) { /* ignore */ }
     }
     onFileNotFound?.();
-  }, [cacheKey, onFileNotFound]);
+  }, [idKey, onFileNotFound]);
 
   if (!pdfUrl) return null;
 
+  // Render at 3x to stay crisp on HiDPI displays (Retina, 4K, Windows 150–200%
+  // scaling). JPEG keeps the resulting data URL small enough for localStorage
+  // caching; the slight compression is invisible at card-sized display.
   return (
     <PdfThumbnail
       url={pdfUrl}
-      width={400}
-      height={560}
-      scale={1.5}
+      width={300}
+      height={400}
+      scale={2.5}
+      format="image/jpeg"
+      quality={0.92}
       cacheKey={cacheKey}
       className="pdc-thumb-img"
       alt=""
@@ -209,7 +233,7 @@ const PdfCard = memo(({ pdf, onConvert, onHifi, onOpenEpubImport, onDelete, onPr
         onKeyDown={(e) => e.key === 'Enter' && handlePrimaryAction()}
       >
         {/* First-page thumbnail — absolutely fills the card, fades in when loaded */}
-        <CardThumbnail pdfId={pdf.id} onFileNotFound={onFileNotFound} />
+        <CardThumbnail pdfId={pdf.id} isEpub={isEpubStub} onFileNotFound={onFileNotFound} />
 
         {/* Left spine shadow */}
         <div className="pdc-spine-left" aria-hidden="true" />

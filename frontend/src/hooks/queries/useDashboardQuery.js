@@ -122,7 +122,7 @@ export function useDashboardQuery({
 
   const recentJobs = [...allJobs]
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-    .slice(0, 3);
+    .slice(0, 4);
 
   const throughputData = buildThroughput(completedArr);
   const throughputMeta = buildThroughputMeta(throughputData);

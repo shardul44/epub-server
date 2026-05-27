@@ -1,54 +1,39 @@
-import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import {
-  MoreVertical,
   Download,
-  Trash2,
-  Eye,
-  AlertTriangle,
   Copy,
-  Share2,
-  Pencil,
-  ExternalLink,
+  Briefcase,
+  Calendar,
+  Clock,
+  Trash2,
 } from 'lucide-react';
 import ThumbnailImage from './ThumbnailImage';
-import { buildEpubReaderPath } from '../utils/epubReaderUrl';
-import styles from './ExportCard.module.css';
+import './ExportCard.css';
 
 /* ─── Status config ───────────────────────────────────────────── */
 const STATUS_CONFIG = {
-  Completed:   { cls: styles.badgeCompleted,  label: 'Completed'  },
-  Rendering:   { cls: styles.badgeRendering,  label: 'Rendering'  },
-  Queued:      { cls: styles.badgeQueued,     label: 'Queued'     },
-  Failed:      { cls: styles.badgeFailed,     label: 'Failed'     },
-  COMPLETED:   { cls: styles.badgeCompleted,  label: 'Completed'  },
-  IN_PROGRESS: { cls: styles.badgeRendering,  label: 'Rendering'  },
-  PENDING:     { cls: styles.badgeQueued,     label: 'Queued'     },
-  FAILED:      { cls: styles.badgeFailed,     label: 'Failed'     },
-  CANCELLED:   { cls: styles.badgeFailed,     label: 'Cancelled'  },
+  Completed:   { cls: 'exp-card-badge--completed',  label: 'Completed'  },
+  Rendering:   { cls: 'exp-card-badge--rendering',  label: 'Rendering'  },
+  Queued:      { cls: 'exp-card-badge--queued',     label: 'Queued'     },
+  Failed:      { cls: 'exp-card-badge--failed',     label: 'Failed'     },
+  COMPLETED:   { cls: 'exp-card-badge--completed',  label: 'Completed'  },
+  IN_PROGRESS: { cls: 'exp-card-badge--rendering',  label: 'Rendering'  },
+  PENDING:     { cls: 'exp-card-badge--queued',     label: 'Queued'     },
+  FAILED:      { cls: 'exp-card-badge--failed',     label: 'Failed'     },
+  CANCELLED:   { cls: 'exp-card-badge--failed',     label: 'Cancelled'  },
 };
 
-/* ─── Gradient palettes — soft pastel, matching screenshot ───── */
+/* ─── Gradient palettes ───────────────────────────────────────── */
 const GRADIENTS = [
-  // blue-teal (card 1)
   'linear-gradient(160deg, #c8e6f5 0%, #b2e0d8 50%, #c5dff0 100%)',
-  // teal-mint (card 2)
   'linear-gradient(160deg, #a8ddd4 0%, #b8e8d8 50%, #a0d8cc 100%)',
-  // blue-lavender (card 3)
   'linear-gradient(160deg, #b8d4f0 0%, #c8d8f8 50%, #b0cce8 100%)',
-  // peach-amber (card 4 — Rendering)
   'linear-gradient(160deg, #f8d8b0 0%, #f5c890 50%, #f8d0a0 100%)',
-  // lavender-purple (card 5)
   'linear-gradient(160deg, #d0c8f0 0%, #c8b8e8 50%, #d8c8f5 100%)',
-  // rose-pink (card 6 — Failed)
   'linear-gradient(160deg, #f5c0c0 0%, #f0b0b0 50%, #f8c8c8 100%)',
-  // pink-rose (card 7)
   'linear-gradient(160deg, #f8c8d0 0%, #f5b8c8 50%, #f8c0cc 100%)',
-  // green-mint (card 8 — Queued)
   'linear-gradient(160deg, #b8e8b8 0%, #a8dca8 50%, #c0ecc0 100%)',
-  // sky-blue
   'linear-gradient(160deg, #b0d8f8 0%, #a0c8f0 50%, #b8d8f8 100%)',
-  // warm-yellow
   'linear-gradient(160deg, #f8e8a0 0%, #f5d880 50%, #f8e8b0 100%)',
 ];
 
@@ -70,7 +55,6 @@ const fmtDateTime = (d) => {
   };
 };
 
-/** Short clock for thumb badge (e.g. 3:32) — uses completion/update time when no audio duration. */
 const fmtTimeShort = (d) => {
   if (!d) return null;
   const t = new Date(d);
@@ -80,206 +64,24 @@ const fmtTimeShort = (d) => {
   return `${h12}:${String(m).padStart(2, '0')}`;
 };
 
-/* ─── Spinner for active jobs ─────────────────────────────────── */
 const Spinner = () => (
-  <svg className={styles.spinner} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+  <svg className="exp-card-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
     <circle cx="12" cy="12" r="9" strokeOpacity="0.25" />
     <path d="M12 3a9 9 0 0 1 9 9" />
   </svg>
 );
-
-/* ─── Progress bar ────────────────────────────────────────────── */
-const ProgressBar = ({ pct, status }) => {
-  const color = status === 'FAILED' ? '#ef4444' : status === 'COMPLETED' ? '#22c55e' : '#3b82f6';
-  return (
-    <div className={styles.progressTrack} role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-      <div className={styles.progressFill} style={{ width: `${pct}%`, background: color }} />
-    </div>
-  );
-};
-
-/* ─── Dot menu ────────────────────────────────────────────────── */
-const MENU_WIDTH  = 188;
-const MENU_HEIGHT = 220;
-
-const DotMenu = ({
-  onDownload,
-  onPreview,
-  onViewDetails,
-  onShare,
-  onCopyJobId,
-  onDelete,
-  canDownload,
-}) => {
-  const [open,        setOpen]        = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [pos,         setPos]         = useState({ top: 0, left: 0 });
-  const btnRef  = useRef(null);
-  const menuRef = useRef(null);
-
-  // Close on outside click or scroll
-  useEffect(() => {
-    if (!open) return;
-    const close = (e) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target) &&
-        btnRef.current  && !btnRef.current.contains(e.target)
-      ) setOpen(false);
-    };
-    const closeScroll = () => setOpen(false);
-    document.addEventListener('mousedown', close);
-    window.addEventListener('scroll', closeScroll, true);
-    return () => {
-      document.removeEventListener('mousedown', close);
-      window.removeEventListener('scroll', closeScroll, true);
-    };
-  }, [open]);
-
-  const handleToggle = (e) => {
-    e.stopPropagation();
-    if (open) { setOpen(false); return; }
-    const rect       = btnRef.current.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const top        = spaceBelow < MENU_HEIGHT + 8
-      ? rect.top - MENU_HEIGHT - 4
-      : rect.bottom + 4;
-    const left = Math.min(
-      rect.right - MENU_WIDTH,
-      window.innerWidth - MENU_WIDTH - 8
-    );
-    setPos({ top, left });
-    setOpen(true);
-  };
-
-  return (
-    <div className={styles.dotMenuWrap} ref={btnRef}>
-      <button
-        className={styles.dotBtn}
-        onClick={handleToggle}
-        aria-label="More options"
-        aria-expanded={open}
-      >
-        <MoreVertical size={16} />
-      </button>
-
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          className={styles.dotMenu}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, width: MENU_WIDTH }}
-          role="menu"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {canDownload && (
-            <button
-              className={styles.dotMenuItem}
-              role="menuitem"
-              disabled={downloading}
-              onClick={async (e) => {
-                e.stopPropagation();
-                setOpen(false);
-                setDownloading(true);
-                try {
-                  await onDownload?.();
-                } finally {
-                  setDownloading(false);
-                }
-              }}
-            >
-              <Download size={14} /> {downloading ? 'Downloading…' : 'Download EPUB'}
-            </button>
-          )}
-          {onViewDetails && (
-            <button
-              className={styles.dotMenuItem}
-              role="menuitem"
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onViewDetails?.(); }}
-            >
-              <ExternalLink size={14} /> View Details
-            </button>
-          )}
-          {onPreview && (
-            <button
-              className={styles.dotMenuItem}
-              role="menuitem"
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onPreview?.(); }}
-            >
-              <Eye size={14} /> Preview EPUB
-            </button>
-          )}
-          {onShare && (
-            <button
-              className={styles.dotMenuItem}
-              role="menuitem"
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onShare?.(); }}
-            >
-              <Share2 size={14} /> Share
-            </button>
-          )}
-          {onCopyJobId && (
-            <button
-              className={styles.dotMenuItem}
-              role="menuitem"
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onCopyJobId?.(); }}
-            >
-              <Pencil size={14} /> Copy job ID
-            </button>
-          )}
-          <button
-            className={`${styles.dotMenuItem} ${styles.dotMenuItemDanger}`}
-            role="menuitem"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete?.(); }}
-          >
-            <Trash2 size={14} /> Delete
-          </button>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
-
-/* ─── Delete Confirm Modal ────────────────────────────────────── */
-const DeleteConfirmModal = ({ jobId, onConfirm, onCancel }) =>
-  createPortal(
-    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="del-modal-title">
-      <div className={styles.modalBox}>
-        <div className={styles.modalIcon}>
-          <AlertTriangle size={24} />
-        </div>
-        <h2 id="del-modal-title" className={styles.modalTitle}>Delete Export</h2>
-        <p className={styles.modalBody}>
-          Delete export for <strong>Job #{jobId}</strong>? This cannot be undone.
-        </p>
-        <div className={styles.modalActions}>
-          <button className={styles.modalBtnCancel} onClick={onCancel}>
-            Cancel
-          </button>
-          <button className={styles.modalBtnDelete} onClick={onConfirm} autoFocus>
-            <Trash2 size={14} /> Delete
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
 
 /* ─── ExportCard ──────────────────────────────────────────────── */
 const ExportCard = ({
   job,
   onClick,
   onDownload,
-  onPreview,
   onViewDetails,
   onCopyJobId,
   onDelete,
   duration,
 }) => {
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const handleDeleteClick = () => setShowDeleteModal(true);
-  const handleDeleteConfirm = () => { setShowDeleteModal(false); onDelete?.(); };
-  const handleDeleteCancel  = () => setShowDeleteModal(false);
+  const [downloading, setDownloading] = useState(false);
 
   const jobId       = job.id ?? job.jobId;
   const isFxl       = job.jobType === 'FXL';
@@ -298,7 +100,12 @@ const ExportCard = ({
 
   const rawName   = job.pdfFilename || job.originalFileName || '';
   const title     = rawName.replace(/\.(pdf|epub)$/i, '') || `Job #${jobId}`;
-  const subtitle  = job.bookSubtitle ?? job.subtitle ?? null;
+  const description =
+    job.bookDescription ??
+    job.description ??
+    job.bookSubtitle ??
+    job.subtitle ??
+    null;
   const typeLabel = isFxl ? 'FXL EPUB' : 'Reflow EPUB';
   const size      = fmtSize(job.fileSizeBytes ?? job.fileSize);
   const { date: dateLine, time: timeLine } = fmtDateTime(
@@ -308,21 +115,36 @@ const ExportCard = ({
     duration ??
     (canDownload ? fmtTimeShort(job.completedAt ?? job.updatedAt) : null);
 
-  const handleShare = () => {
-    const url = `${window.location.origin}${buildEpubReaderPath(jobId, {
-      source: isFxl ? 'kitaboo' : 'conversion',
-      fixedLayout: isFxl,
-    })}`;
-    navigator.clipboard?.writeText(url).catch(() => {});
-  };
   const lang      = job.language ?? 'English';
   const version   = job.version ?? 'v1';
   const userName  = job.createdByName ?? 'You';
   const avatarLetter = userName.trim().toLowerCase() === 'you' ? 'Y' : userName.charAt(0).toUpperCase();
 
+  const handleViewDetailsClick = (e) => {
+    e.stopPropagation();
+    if (onViewDetails) onViewDetails();
+    else onClick?.(job);
+  };
+
+  const handleDownloadClick = async (e) => {
+    e.stopPropagation();
+    if (!canDownload || downloading) return;
+    setDownloading(true);
+    try {
+      await onDownload?.();
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    onDelete?.(job);
+  };
+
   return (
     <div
-      className={`${styles.card}${isActive ? ` ${styles.cardActive}` : ''}${isFailed ? ` ${styles.cardFailed}` : ''}`}
+      className={`exp-card${isActive ? ' exp-card--active' : ''}${isFailed ? ' exp-card--failed' : ''}`}
       onClick={() => onClick?.(job)}
       role="button"
       tabIndex={0}
@@ -330,136 +152,153 @@ const ExportCard = ({
       aria-label={`Export: ${title}`}
       aria-busy={isActive}
     >
-      {/* ── Thumbnail ── */}
-      <div className={styles.thumb}>
+      <div className="exp-card-media" aria-hidden>
         {!pdfId && (
-          <div className={styles.thumbTint} style={{ background: gradient }} aria-hidden />
+          <div className="exp-card-cover-tint" style={{ background: gradient }} />
         )}
         <ThumbnailImage
           pdfId={pdfId}
-          className={styles.thumbImg}
+          className="exp-card-cover-img"
           fallback={
-            <div className={styles.thumbTint} style={{ background: gradient }} aria-hidden />
+            <div className="exp-card-cover-tint" style={{ background: gradient }} />
           }
         />
-        {/* Status badge — top left */}
-        <span className={`${styles.badge} ${statusCfg.cls}`}>
+      </div>
+      <div className="exp-card-overlay" aria-hidden />
+
+      <div className="exp-card-top-row">
+        <span className={`exp-card-badge ${statusCfg.cls}`}>
           {isActive && <Spinner />}
           {statusCfg.label}
         </span>
-        {/* Duration — bottom right */}
-        {timeThumb && <span className={styles.duration}>{timeThumb}</span>}
+        {timeThumb ? <span className="exp-card-duration">{timeThumb}</span> : null}
       </div>
 
-      {/* ── Progress bar (shown for active and failed jobs) ── */}
-      {(isActive || isFailed || progress > 0) && (
-        <ProgressBar pct={progress} status={statusKey} />
-      )}
+      <div className="exp-card-footer">
+        <h3 className="exp-card-title" title={title}>
+          {title}
+        </h3>
 
-      {/* ── Body ── */}
-      <div className={styles.body}>
-        {/* Title + dot menu on same row */}
-        <div className={styles.titleRow}>
-          <div className={styles.titleBlock}>
-            <span className={styles.title} title={title}>{title}</span>
-            {subtitle && <span className={styles.subtitle}>{subtitle}</span>}
-          </div>
-          <DotMenu
-            onDownload={canDownload ? onDownload : undefined}
-            onPreview={onPreview}
-            onViewDetails={onViewDetails}
-            onShare={handleShare}
-            onCopyJobId={onCopyJobId}
-            onDelete={handleDeleteClick}
-            canDownload={canDownload}
-          />
-        </div>
+        {description && (
+          <p className="exp-card-description" title={description}>
+            {description}
+          </p>
+        )}
 
-        <div className={styles.jobRow}>
-          <span className={styles.jobId}>Job #{jobId}</span>
+        <div className="exp-card-meta-line">
+          <Briefcase size={12} aria-hidden />
+          <span>Job #{jobId}</span>
           {onCopyJobId && (
             <button
               type="button"
-              className={styles.jobCopy}
+              className="exp-card-job-copy"
               onClick={(e) => { e.stopPropagation(); onCopyJobId(); }}
               aria-label={`Copy job ID ${jobId}`}
             >
-              <Copy size={13} />
+              <Copy size={12} />
             </button>
           )}
-        </div>
-
-        <div className={styles.metaRow}>
-          <span className={styles.metaType}>{typeLabel}</span>
-          {size && (
+          <span className="exp-card-meta-sep" aria-hidden>|</span>
+          <span className="exp-card-meta-type">{typeLabel}</span>
+          {size ? (
             <>
-              <span className={styles.metaDot}>·</span>
-              <span className={styles.metaText}>{size}</span>
+              <span className="exp-card-meta-sep" aria-hidden>·</span>
+              <span>{size}</span>
             </>
-          )}
+          ) : null}
         </div>
 
-        {/* Active: show current step */}
-        {isActive && currentStep && (
-          <div className={styles.stepLabel}>
-            {currentStep}… {progress > 0 ? `${progress}%` : ''}
+        {!isActive && (dateLine || timeLine) && (
+          <div className="exp-card-meta-line">
+            {dateLine ? (
+              <>
+                <Calendar size={12} aria-hidden />
+                <span>{dateLine}</span>
+              </>
+            ) : null}
+            {timeLine ? (
+              <>
+                <Clock size={12} aria-hidden />
+                <span>{timeLine}</span>
+              </>
+            ) : null}
           </div>
         )}
 
-        {/* Failed: show error message */}
+        {isActive && currentStep && (
+          <p className="exp-card-step-label">
+            {currentStep}… {progress > 0 ? `${progress}%` : ''}
+          </p>
+        )}
+
         {isFailed && job.errorMessage && (
-          <div className={styles.errorMsg} title={job.errorMessage}>
+          <p className="exp-card-error-msg" title={job.errorMessage}>
             {job.errorMessage.length > 80
               ? job.errorMessage.slice(0, 80) + '…'
               : job.errorMessage}
-          </div>
+          </p>
         )}
 
-        {!isActive && (dateLine || timeLine) && (
-          <div className={styles.dateRow}>
-            {dateLine && <span className={styles.metaText}>{dateLine}</span>}
-            {timeLine && <span className={styles.metaTime}>{timeLine}</span>}
-          </div>
-        )}
-
-        {/* Tags: language · version · You avatar */}
-        <div className={styles.tags}>
-          <span className={styles.tag}>{lang}</span>
-          <span className={styles.tag}>{version}</span>
-          <span className={styles.tagYou}>
-            <span className={styles.tagYouAvatar}>
-              {avatarLetter}
-            </span>
-            <span className={styles.tagYouLabel}>You</span>
+        <div className="exp-card-tags">
+          <span className="exp-card-tag">{lang}</span>
+          <span className="exp-card-tag">{version}</span>
+          <span className="exp-card-tag-you">
+            <span className="exp-card-tag-you-avatar">{avatarLetter}</span>
+            <span className="exp-card-tag-you-label">{userName}</span>
           </span>
         </div>
-      </div>
 
-      {showDeleteModal && (
-        <DeleteConfirmModal
-          jobId={jobId}
-          onConfirm={handleDeleteConfirm}
-          onCancel={handleDeleteCancel}
-        />
-      )}
+        <div className="exp-card-actions">
+          {canDownload ? (
+            <button
+              type="button"
+              className="exp-card-view-btn"
+              onClick={handleDownloadClick}
+              disabled={downloading}
+            >
+              <Download size={14} aria-hidden />
+              {downloading ? 'Downloading…' : 'Download EPUB'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="exp-card-view-btn exp-card-view-btn--secondary"
+              onClick={handleViewDetailsClick}
+            >
+              {isFailed ? 'View error' : 'View progress'}
+            </button>
+          )}
+          {onDelete ? (
+            <button
+              type="button"
+              className="exp-card-del-btn"
+              onClick={handleDeleteClick}
+              title="Delete job"
+              aria-label={`Delete job #${jobId}`}
+            >
+              <Trash2 size={16} aria-hidden />
+            </button>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 };
 
 /* ─── ExportGrid ──────────────────────────────────────────────── */
 export const ExportGrid = ({ children }) => (
-  <div className={styles.grid}>{children}</div>
+  <div className="exp-card-grid">{children}</div>
 );
 
 /* ─── ExportCardSkeleton ──────────────────────────────────────── */
 export const ExportCardSkeleton = () => (
-  <div className={styles.skeleton} aria-hidden="true">
-    <div className={styles.skeletonThumb} />
-    <div className={styles.skeletonBody}>
-      <div className={styles.skeletonLine} style={{ width: '75%' }} />
-      <div className={styles.skeletonLine} style={{ width: '55%' }} />
-      <div className={styles.skeletonLine} style={{ width: '40%' }} />
-      <div className={styles.skeletonLine} style={{ width: '60%' }} />
+  <div className="exp-card-skeleton" aria-hidden="true">
+    <div className="exp-card-skeleton-cover" />
+    <div className="exp-card-skeleton-footer">
+      <div className="exp-card-skeleton-line" style={{ width: '70%', height: 18 }} />
+      <div className="exp-card-skeleton-line" style={{ width: '90%' }} />
+      <div className="exp-card-skeleton-line" style={{ width: '55%' }} />
+      <div className="exp-card-skeleton-line" style={{ width: '100%', height: 32, borderRadius: 999 }} />
     </div>
   </div>
 );

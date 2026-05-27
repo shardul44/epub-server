@@ -291,9 +291,13 @@ const ConversionJobs = () => {
 
   const confirmDelete = useCallback(async () => {
     setDeleteModal(prev => ({ ...prev, loading: true }));
-    await runConfirmDelete();
-    dispatch(setFocusedJobId(null));
-    setDeleteModal({ open: false, job: null, loading: false });
+    const ok = await runConfirmDelete();
+    if (ok) {
+      dispatch(setFocusedJobId(null));
+      setDeleteModal({ open: false, job: null, loading: false });
+    } else {
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
   }, [runConfirmDelete, dispatch]);
 
   const handleStepClick = useCallback((step) => navigate(step.path), [navigate]);

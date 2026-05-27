@@ -141,7 +141,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #90caf9 0%, #64b5f6 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #ffffff;
   border: none;
   border-radius: 8px;
@@ -149,12 +149,12 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 .navbar-logout-btn:hover {
-  background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
   transform: translateY(-1px);
 }
 
@@ -175,7 +175,7 @@
 
 .navbar-brand-icon {
   font-size: 32px;
-  color: #1976d2;
+  color: #2563eb;
 }
 
 .navbar-brand-text {
@@ -187,7 +187,7 @@
 .navbar-brand-title {
   font-size: 20px;
   font-weight: 700;
-  color: #1976d2;
+  color: #2563eb;
   letter-spacing: -0.3px;
 }
 
@@ -237,22 +237,22 @@
 
 .sidebar-link:hover {
   background-color: #f5f5f5;
-  color: #1976d2;
+  color: #2563eb;
 }
 
 .sidebar-link:hover .sidebar-icon {
-  color: #1976d2;
+  color: #2563eb;
 }
 
 .sidebar-link.active {
   background-color: #e3f2fd;
-  color: #1976d2;
+  color: #2563eb;
   font-weight: 600;
-  border-left-color: #1976d2;
+  border-left-color: #2563eb;
 }
 
 .sidebar-link.active .sidebar-icon {
-  color: #1976d2;
+  color: #2563eb;
 }
 
 .sidebar-icon {
@@ -373,7 +373,7 @@
 
   .sidebar-link.active {
     border-left: none;
-    border-right-color: #1976d2;
+    border-right-color: #2563eb;
   }
 
   .main-content {

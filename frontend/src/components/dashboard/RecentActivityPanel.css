@@ -108,13 +108,14 @@
 
 .ds-activity-content {
   min-height: 0;
-  padding: 0px;
+  padding:0px;
 }
 
 .ds-activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  container-type: inline-size;
 }
 
 /* ── Job card ─────────────────────────────────────────────────── */
@@ -161,8 +162,8 @@
 .ds-activity-job-inner {
   display: flex;
   align-items: stretch;
-  gap: 16px;
-  padding: 16px 18px 14px 20px;
+  gap: 12px;
+  padding: 14px 14px 12px 18px;
 }
 
 /* Thumbnail */
@@ -233,7 +234,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 10px;
 }
 
 .ds-activity-job-info {
@@ -781,9 +782,91 @@
   color: #9ca3af;
 }
 
+/* Compact layout inside each grid cell */
+.ds-activity-list .ds-activity-job-thumb-wrap,
+.ds-activity-list .ds-activity-skel-thumb {
+  width: 72px;
+}
+
+.ds-activity-list .ds-activity-job-thumb {
+  width: 72px;
+  height: 94px;
+}
+
+.ds-activity-list .ds-activity-job-status-col,
+.ds-activity-list .ds-activity-skel-status {
+  width: 148px;
+  max-width: 44%;
+}
+
+.ds-activity-list .ds-activity-job-pct-lg {
+  font-size: 17px;
+}
+
+.ds-activity-list .ds-activity-job-name {
+  font-size: 13px;
+}
+
+.ds-activity-list .ds-activity-job-meta {
+  gap: 10px;
+}
+
+.ds-activity-list .ds-activity-btn {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+@container (max-width: 420px) {
+  .ds-activity-job-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ds-activity-job-status-col,
+  .ds-activity-skel-status {
+    width: 100%;
+    max-width: none;
+  }
+}
+
 /* ── Responsive ───────────────────────────────────────────────── */
 
 @media (max-width: 960px) {
+  .ds-activity-list {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-activity-list .ds-activity-job-thumb-wrap,
+  .ds-activity-list .ds-activity-skel-thumb {
+    width: 92px;
+  }
+
+  .ds-activity-list .ds-activity-job-thumb {
+    width: 92px;
+    height: 120px;
+  }
+
+  .ds-activity-list .ds-activity-job-status-col,
+  .ds-activity-list .ds-activity-skel-status {
+    width: 200px;
+    max-width: 36%;
+  }
+
+  .ds-activity-list .ds-activity-job-pct-lg {
+    font-size: 20px;
+  }
+
+  .ds-activity-list .ds-activity-job-name {
+    font-size: 14px;
+  }
+
+  .ds-activity-list .ds-activity-btn {
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
   .ds-activity-job-top {
     flex-direction: column;
     gap: 14px;
@@ -797,6 +880,10 @@
 }
 
 @media (max-width: 640px) {
+  .ds-activity-list {
+    grid-template-columns: 1fr;
+  }
+
   .ds-panel.ds-activity {
     padding: 18px 16px 20px;
   }

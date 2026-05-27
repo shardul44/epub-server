@@ -29,7 +29,7 @@ import useAppDispatch from '../../hooks/useAppDispatch';
 import { setFocusedJobId } from '../../features/conversions/conversionsSlice';
 import { pdfViewUrl } from '../../services/api';
 
-const RECENT_ACTIVITY_LIMIT = 3;
+const RECENT_ACTIVITY_LIMIT = 4;
 
 const timeAgo = (dateStr) => {
   if (!dateStr) return '';
@@ -81,9 +81,9 @@ function statusPillText(job, pct) {
 }
 
 function barColorForStatus(status) {
-  if (status === 'COMPLETED') return '#10b981';
-  if (status === 'FAILED' || status === 'CANCELLED') return '#ef4444';
-  if (status === 'IN_PROGRESS' || status === 'PROCESSING') return '#f59e0b';
+  if (status === 'COMPLETED') return '#2563eb';
+  if (status === 'FAILED' || status === 'CANCELLED') return '#dc2626';
+  if (status === 'IN_PROGRESS' || status === 'PROCESSING') return '#2563eb';
   return '#9ca3af';
 }
 
@@ -610,9 +610,14 @@ export default function RecentActivityPanel({
         <ActivityEmptyState uploadHref={uploadHref} />
       ) : (
         <div className="ds-activity-list">
-          {visibleJobs.map((job) => (
-            <ActivityJobCard key={job.id ?? job.jobId} job={job} onRefresh={onRefresh} />
-          ))}
+          {visibleJobs.map((job) => {
+            // REFLOW (/conversions) and FXL (/kitaboo/jobs) lists can share the
+            // same numeric id, so include jobType in the React key to keep
+            // siblings unique. Matches the dedup key in mergeJobs().
+            const jobId = job.id ?? job.jobId;
+            const jobKey = `${job.jobType ?? 'JOB'}-${jobId}`;
+            return <ActivityJobCard key={jobKey} job={job} onRefresh={onRefresh} />;
+          })}
         </div>
       )}
       </div>

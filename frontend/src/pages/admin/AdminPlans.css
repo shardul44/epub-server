@@ -275,42 +275,42 @@
 }
 
 .apl-tag--on {
-  background: #d1fae5;
-  color: #065f46;
-  border: 1px solid #6ee7b7;
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;  
 }
 
 .apl-tag--on:hover:not(:disabled) {
-  background: #a7f3d0;
-  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.2);
+  background: #2563eb;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
 }
 
 .apl-tag--off {
-  background: #fff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
 }
 
 .apl-tag--off:hover:not(:disabled) {
-  border-color: #9ca3af;
-  background: #f9fafb;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border-color: #2563eb;
+  background: #2563eb;
+  box-shadow: 0 1px 4px rgba(37, 99, 235, 0.06);
 }
 
 .apl-tag-icon {
   flex-shrink: 0;
-  opacity: 0.9;
+  color: #2563eb;
 }
 
 .apl-block + .apl-block {
   margin-top: 22px;
   padding-top: 22px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #2563eb;
 }
 
 .apl-empty {
   font-size: 0.9rem;
-  color: #9ca3af;
+  color: #2563eb;
   font-style: italic;
 }
 
@@ -320,14 +320,14 @@
   justify-content: center;
   gap: 10px;
   padding: 48px 24px;
-  color: #6b7280;
+  color: #2563eb;
 }
 
 .apl-spinner {
   width: 22px;
   height: 22px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #2563eb;
+  border: 2px solid #2563eb;
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: apl-spin 0.7s linear infinite;
 }
@@ -341,6 +341,6 @@
 .apl-placeholder {
   padding: 32px 16px;
   text-align: center;
-  color: #6b7280;
+  color: #ffffff;
   font-size: 0.95rem;
 }

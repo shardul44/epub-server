@@ -1,8 +1,22 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+/** Strip `.module.css` so dev classes read as `ExportCard__grid`, not `ExportCard-module__grid`. */
+function cssModuleScopedName(local, filename) {
+  const base = path.basename(filename).replace(/\.module\.(css|scss|sass|less|styl)$/i, '')
+  return `${base}__${local}`
+}
+
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  css: {
+    modules: {
+      // Dev: readable scoped names. Prod: short hash for cache/size.
+      generateScopedName:
+        mode === 'production' ? '[hash:base64:5]' : cssModuleScopedName,
+    },
+  },
   optimizeDeps: {
     include: [
       '@ckeditor/ckeditor5-build-classic',
@@ -20,5 +34,5 @@ export default defineConfig({
       }
     }
   }
-})
+}))
 

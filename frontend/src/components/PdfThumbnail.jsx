@@ -89,8 +89,46 @@ const PdfThumbnail = memo(({
             err.httpStatus = response.status;
             throw err;
           }
+
+          // Content-Type sniff — if the server returned HTML/JSON (login page,
+          // error envelope, redirect, etc.) treat it as "absent" rather than
+          // letting pdfjs throw the noisy "Invalid PDF structure" exception.
+          const ct = (response.headers.get('content-type') || '').toLowerCase();
+          const ctLooksWrong =
+            ct.includes('text/html') ||
+            ct.includes('application/json') ||
+            ct.includes('text/plain');
+
           pdfBlob = await response.blob();
           if (cancelled) return;
+
+          // Empty body is never a PDF.
+          if (!pdfBlob || pdfBlob.size === 0) {
+            if (!cancelled) {
+              setStatus('absent');
+              onAbsentRef.current?.();
+            }
+            return;
+          }
+
+          // Magic-byte check: every PDF starts with "%PDF-".
+          const head = await pdfBlob.slice(0, 5).arrayBuffer();
+          const bytes = new Uint8Array(head);
+          const isPdf =
+            bytes.length >= 5 &&
+            bytes[0] === 0x25 && // %
+            bytes[1] === 0x50 && // P
+            bytes[2] === 0x44 && // D
+            bytes[3] === 0x46 && // F
+            bytes[4] === 0x2d;   // -
+
+          if (!isPdf || ctLooksWrong) {
+            if (!cancelled) {
+              setStatus('absent');
+              onAbsentRef.current?.();
+            }
+            return;
+          }
         }
 
         const dataUrl = await generatePdfThumbnail(pdfBlob, {
@@ -118,6 +156,7 @@ const PdfThumbnail = memo(({
 
         const httpStatus = err?.response?.status ?? err?.httpStatus;
         const msg = String(err?.message || '');
+        const errName = String(err?.name || '');
         const is404 = httpStatus === 404 || msg.includes('404');
 
         if (is404) {
@@ -128,7 +167,18 @@ const PdfThumbnail = memo(({
           return;
         }
 
-        console.error('[PdfThumbnail] Error:', err);
+        // pdfjs-dist InvalidPDFException → not a real PDF on disk. Treat as
+        // absent silently so we don't spam the console for legitimately
+        // non-PDF assets (EPUB stubs, partial uploads, etc.).
+        if (errName === 'InvalidPDFException' || msg.toLowerCase().includes('invalid pdf')) {
+          if (!cancelled) {
+            setStatus('absent');
+            onAbsentRef.current?.();
+          }
+          return;
+        }
+
+        console.warn('[PdfThumbnail] thumbnail generation failed:', err);
         setErrorMsg(err.message || 'Failed to generate thumbnail');
         setStatus('error');
         onErrorRef.current?.(err);
@@ -148,7 +198,17 @@ const PdfThumbnail = memo(({
   }, [file, fetchUrl, width, height, scale, format, quality, cacheKey]);
 
   if (status === 'absent') {
-    return null;
+    if (fallback) return fallback;
+    return (
+      <div
+        className={`pdf-thumb pdf-thumb--absent ${className}`}
+        style={{ width, height }}
+        role="img"
+        aria-label={alt || 'Preview unavailable'}
+      >
+        <span className="pdf-thumb-absent-label">epub</span>
+      </div>
+    );
   }
 
   if (status === 'loading' || status === 'idle') {

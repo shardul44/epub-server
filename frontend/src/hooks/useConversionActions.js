@@ -12,8 +12,10 @@
 
 import { useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { conversionApi, apiClient } from '../api';
+import { useQueryClient } from '@tanstack/react-query';
+import { conversionApi, apiClient, pdfApi } from '../api';
 import { useConversionsQuery } from './queries/useConversionsQuery';
+import { queryKeys } from '../lib/queryKeys';
 import useAppDispatch from './useAppDispatch';
 import {
   setActionError,
@@ -26,6 +28,38 @@ import {
   resolveConversionType as _resolveConversionType,
 } from './useWorkflowNavigation';
 
+function mutationErrorMessage(err) {
+  return (
+    err?.response?.data?.error ||
+    err?.response?.data?.message ||
+    err?.message ||
+    'Failed to delete job'
+  );
+}
+
+/** @returns {Promise<void>} resolves on success; throws on failure */
+async function deleteKitabooJob(jobId) {
+  try {
+    await apiClient.delete(`/kitaboo/jobs/${jobId}`);
+  } catch (err) {
+    if (err.response?.status !== 404) throw err;
+  }
+}
+
+/** @returns {Promise<void>} resolves on success; throws on failure */
+async function deleteReflowJob(jobId) {
+  try {
+    await conversionApi.deleteConversionJob(jobId);
+  } catch (err) {
+    if (err.response?.status !== 404) throw err;
+  }
+}
+
+function isDirectEpubImportJob(job) {
+  if (!job) return false;
+  return job.source === 'epub_direct_import' || job.sourceType === 'epub';
+}
+
 /* ─── Re-export helpers so existing imports keep working ─────── */
 export const resolveJobType   = _resolveConversionType;
 export const isFixedLayout    = _isFixedLayout;
@@ -37,6 +71,7 @@ const MAX_RETRIES = 3;
 export function useConversionActions() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const { jobs, refresh } = useConversionsQuery();
   const { goToEditor, goToAudioSync, goToDownload } = useWorkflowNavigation();
 
@@ -51,27 +86,33 @@ export function useConversionActions() {
 
   const confirmDelete = useCallback(async () => {
     const job = deleteJobRef.current;
-    if (!job) return;
+    if (!job) return false;
     const jobId = job.id ?? job.jobId;
+    const pdfId = job.pdfDocumentId ?? job.pdfId;
     try {
       dispatch(clearActionError());
-      if (job.jobType === 'FXL') {
-        try {
-          await apiClient.delete(`/kitaboo/jobs/${jobId}`);
-        } catch (err) {
-          // 404 means already removed — treat as success
-          if (err.response?.status !== 404) throw err;
+
+      if (isDirectEpubImportJob(job)) {
+        await deleteKitabooJob(jobId);
+        if (pdfId != null) {
+          await pdfApi.deletePdf(pdfId);
         }
+      } else if (_isFixedLayout(job)) {
+        await deleteKitabooJob(jobId);
+        await deleteReflowJob(jobId);
       } else {
-        await conversionApi.deleteConversionJob(jobId);
+        await deleteReflowJob(jobId);
       }
-      // Clear focused job if it was the deleted one
+
       dispatch(setFocusedJobId(null));
-      refresh();
+      await refresh();
+      await queryClient.invalidateQueries({ queryKey: queryKeys.pdfs.all() });
+      return true;
     } catch (err) {
-      dispatch(setActionError(err.message || 'Failed to delete job'));
+      dispatch(setActionError(mutationErrorMessage(err)));
+      return false;
     }
-  }, [dispatch, refresh]);
+  }, [dispatch, refresh, queryClient]);
 
   /* ── Stop ── */
   const handleStop = useCallback(async (jobId) => {

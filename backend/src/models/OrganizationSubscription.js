@@ -1,12 +1,6 @@
 import pool from '../config/database.js';
 import { OrganizationModel } from './Organization.js';
-
-function normDate(v) {
-  if (v == null || v === '') return null;
-  if (typeof v === 'string') return v.slice(0, 10);
-  if (v instanceof Date) return v.toISOString().slice(0, 10);
-  return String(v).slice(0, 10);
-}
+import { normIsoDate } from '../utils/isoDate.js';
 
 export class OrganizationSubscriptionModel {
   static async findByOrganizationId(organizationId) {
@@ -22,8 +16,8 @@ export class OrganizationSubscriptionModel {
     const existing = await this.findByOrganizationId(organizationId);
     const newFrom = validFrom ? String(validFrom).slice(0, 10) : null;
     const newUntil = validUntil ? String(validUntil).slice(0, 10) : null;
-    const oldFrom = existing ? normDate(existing.valid_from) : null;
-    const oldUntil = existing ? normDate(existing.valid_until) : null;
+    const oldFrom = existing ? normIsoDate(existing.valid_from) : null;
+    const oldUntil = existing ? normIsoDate(existing.valid_until) : null;
     const datesChanged = oldFrom !== newFrom || oldUntil !== newUntil;
 
     if (existing) {

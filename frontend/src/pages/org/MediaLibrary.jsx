@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   List,
   RefreshCw,
+  Heart,
 } from 'lucide-react';
 import { useMediaAssetsQuery } from '../../hooks/queries/useMediaAssetsQuery';
 import { useMediaActions } from '../../hooks/useMediaActions';
@@ -76,6 +77,20 @@ const fmtDate = (d) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const fmtCardDate = (d) => {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const typeBadgeLabel = (type) => {
+  switch (type) {
+    case 'Images': return 'Image';
+    case 'Videos': return 'Video';
+    case 'GIFs':   return 'GIF';
+    default:       return type;
+  }
+};
+
 const getAssetType = (asset) => {
   const mime = (asset.mimeType || asset.type || '').toLowerCase();
   const name = (asset.filename || asset.name || '').toLowerCase();
@@ -95,17 +110,13 @@ const getTypeIcon = (type) => {
   }
 };
 
-const GRADIENTS = [
-  'linear-gradient(135deg, #c8e6f5 0%, #b2e0d8 100%)',
-  'linear-gradient(135deg, #d0c8f0 0%, #c8b8e8 100%)',
-  'linear-gradient(135deg, #f8d8b0 0%, #f5c890 100%)',
-  'linear-gradient(135deg, #b8e8b8 0%, #a8dca8 100%)',
-  'linear-gradient(135deg, #f8c8d0 0%, #f5b8c8 100%)',
-  'linear-gradient(135deg, #b0d8f8 0%, #a0c8f0 100%)',
-  'linear-gradient(135deg, #f8e8a0 0%, #f5d880 100%)',
-  'linear-gradient(135deg, #c0ecc0 0%, #b0e0b0 100%)',
+const THUMB_GRADIENTS = [
+  'linear-gradient(165deg, #dceefb 0%, #cce8f6 50%, #b8dff0 100%)',
+  'linear-gradient(165deg, #e0ecf8 0%, #d4e6f4 50%, #c5dff0 100%)',
+  'linear-gradient(165deg, #d8eaf6 0%, #cae4f2 50%, #b6ddf0 100%)',
+  'linear-gradient(165deg, #e4eef8 0%, #d6e8f4 50%, #c8e2f0 100%)',
 ];
-const pickGradient = (id) => GRADIENTS[(id ?? 0) % GRADIENTS.length];
+const pickGradient = (id) => THUMB_GRADIENTS[(id ?? 0) % THUMB_GRADIENTS.length];
 
 /* ─── Dot menu ────────────────────────────────────────────────── */
 const MENU_WIDTH  = 152;
@@ -186,28 +197,21 @@ const AssetMenu = ({ asset, onPreview, onDownload, onDelete }) => {
 
 /* ─── Asset Card (grid view) ──────────────────────────────────── */
 const AssetCard = ({ asset, index, onPreview, onDownload, onDelete }) => {
+  const [favorited, setFavorited] = useState(false);
   const type     = getAssetType(asset);
   const gradient = pickGradient(index);
   const name     = asset.filename || asset.name || `Asset #${asset.id}`;
   const size     = fmtSize(asset.fileSizeBytes ?? asset.fileSize ?? asset.size);
-  const date     = fmtDate(asset.createdAt ?? asset.uploadedAt);
+  const date     = fmtCardDate(asset.createdAt ?? asset.uploadedAt);
   const thumbUrl = asset.thumbnailUrl || asset.url;
 
   return (
-    <div
-      className="ml-card"
-      role="button"
-      tabIndex={0}
-      onClick={() => onPreview?.(asset)}
-      onKeyDown={(e) => e.key === 'Enter' && onPreview?.(asset)}
-      aria-label={`Asset: ${name}`}
-    >
-      {/* Thumbnail */}
+    <article className="ml-card" aria-label={`Asset: ${name}`}>
       <div className="ml-card-thumb" style={{ background: gradient }}>
         {thumbUrl && (type === 'Images' || type === 'GIFs') ? (
           <img
             src={thumbUrl}
-            alt={name}
+            alt=""
             className="ml-card-img"
             loading="lazy"
             onError={(e) => { e.target.style.display = 'none'; }}
@@ -215,22 +219,52 @@ const AssetCard = ({ asset, index, onPreview, onDownload, onDelete }) => {
         ) : (
           <div className="ml-card-type-icon">{getTypeIcon(type)}</div>
         )}
-        <span className="ml-card-type-badge">{type}</span>
+        <div className="ml-card-thumb-actions">
+          <button
+            type="button"
+            className="ml-card-del-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete?.(asset);
+            }}
+            title="Delete asset"
+            aria-label={`Delete ${name}`}
+          >
+            <Trash2 size={15} strokeWidth={2} aria-hidden />
+          </button>
+        </div>
       </div>
 
-      {/* Body */}
       <div className="ml-card-body">
-        <div className="ml-card-title-row">
-          <span className="ml-card-title" title={name}>{name}</span>
-          <AssetMenu asset={asset} onPreview={onPreview} onDownload={onDownload} onDelete={onDelete} />
-        </div>
-        <div className="ml-card-meta">
+        <h3 className="ml-card-title" title={name}>{name}</h3>
+        <p className="ml-card-meta">
           <span>{size}</span>
-          <span className="ml-card-dot">·</span>
+          <span className="ml-card-dot" aria-hidden>·</span>
           <span>{date}</span>
+        </p>
+        <div className="ml-card-actions">
+          <button
+            type="button"
+            className="ml-card-btn ml-card-btn--preview"
+            onClick={() => onPreview?.(asset)}
+          >
+            <Eye size={15} strokeWidth={2} aria-hidden />
+            Preview
+          </button>
+          <button
+            type="button"
+            className="ml-card-btn ml-card-btn--download"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload?.(asset);
+            }}
+          >
+            <Download size={15} strokeWidth={2} aria-hidden />
+            Download
+          </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -279,8 +313,12 @@ const CardSkeleton = () => (
   <div className="ml-skeleton" aria-hidden="true">
     <div className="ml-skeleton-thumb" />
     <div className="ml-skeleton-body">
-      <div className="ml-skeleton-line" style={{ width: '70%' }} />
-      <div className="ml-skeleton-line" style={{ width: '45%' }} />
+      <div className="ml-skeleton-line" style={{ width: '78%' }} />
+      <div className="ml-skeleton-line" style={{ width: '52%' }} />
+      <div className="ml-skeleton-actions">
+        <div className="ml-skeleton-btn" />
+        <div className="ml-skeleton-btn ml-skeleton-btn--wide" />
+      </div>
     </div>
   </div>
 );

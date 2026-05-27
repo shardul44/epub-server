@@ -5,16 +5,11 @@
 /* ── Dashboard root wrapper (matches .pld-page) ─────────────────── */
 .ds-root {
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
+ 
   box-sizing: border-box;
-  min-height: 100vh;
   background: #f7f7f2;
-  padding: 0 0 48px;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  overflow-x: clip;
 }
 
 /* ── Top Navbar (matches .pld-navbar) ────────────────────────────── */
@@ -297,12 +292,12 @@
 .wb-btn svg { font-size: 15px; flex-shrink: 0; }
 
 .wb-btn--primary {
-  background: #1a7a3c;
+  background: #2563eb;
   color: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.18);
 }
 .wb-btn--primary:hover {
-  background: #1f2937;
+  background: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.22);
   color: #fff;
@@ -766,9 +761,9 @@
 
 /* keep old activity styles for compat */
 .ds-activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .ds-activity-row {

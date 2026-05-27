@@ -17,9 +17,9 @@
   animation: toaster-in 180ms ease-out;
 }
 
-.toaster--info    { background: #2563eb; }
-.toaster--success { background: #16a34a; }
-.toaster--warning { background: #d97706; }
+.toaster--info    { background: #7f9cf5; }
+.toaster--success { background: #2563eb; }
+.toaster--warning { background: #ffa500; }
 .toaster--error   { background: #dc2626; }
 
 .toaster__msg {

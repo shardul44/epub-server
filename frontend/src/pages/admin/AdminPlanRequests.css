@@ -528,7 +528,7 @@
 }
 
 .apr-info-icon {
-  color: #6b7280;
+  color: #2563eb;
   flex-shrink: 0;
 }
 
@@ -536,7 +536,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+  background: #2563eb;
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -580,7 +580,7 @@
 .apr-member-note,
 .apr-admin-note {
   font-size: 13px;
-  color: #4b5563;
+  color: #2563eb;
   margin: 0 0 14px;
   line-height: 1.5;
   padding: 10px 12px;

@@ -50,9 +50,26 @@ export async function generatePdfThumbnail(pdfFile, options = {}) {
 
   // Convert File/Blob → ArrayBuffer
   const arrayBuffer = await pdfFile.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+
+  // Magic-byte guard — every PDF starts with "%PDF-" (0x25 0x50 0x44 0x46 0x2D).
+  // Bail out early with a typed error so callers can treat non-PDF inputs as
+  // "absent" instead of letting pdfjs throw the noisy InvalidPDFException.
+  if (
+    bytes.length < 5 ||
+    bytes[0] !== 0x25 ||
+    bytes[1] !== 0x50 ||
+    bytes[2] !== 0x44 ||
+    bytes[3] !== 0x46 ||
+    bytes[4] !== 0x2d
+  ) {
+    const err = new Error('Not a PDF file (missing %PDF- header)');
+    err.name = 'InvalidPDFException';
+    throw err;
+  }
 
   // Load the PDF document
-  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+  const loadingTask = pdfjsLib.getDocument({ data: bytes });
   const pdf = await loadingTask.promise;
 
   // Clamp page number to valid range

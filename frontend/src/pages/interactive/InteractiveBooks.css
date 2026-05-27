@@ -72,7 +72,7 @@
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
-  background: #4f46e5;
+  background: #2563eb; 
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -80,14 +80,14 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
   white-space: nowrap;
   text-decoration: none;
 }
 .ib-btn-primary:hover:not(:disabled) {
-  background: #4338ca;
+  background: #1d4ed8;  
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
 }
 .ib-btn-primary:disabled {
   opacity: 0.55;
@@ -234,9 +234,9 @@
 .ib-card {
   background: #fff;
   border-radius: 16px;
-  border: 1px solid #ebebе6;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
-  padding: 22px 24px;
+  border: 1px solid #e9ecf3;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06), 0 10px 40px -12px rgba(15, 23, 42, 0.12);
+  padding: 22px 24px; 
 }
 
 .ib-card--table {
@@ -306,7 +306,7 @@
   box-sizing: border-box;
 }
 .ib-input:focus {
-  border-color: #6366f1;
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
   background: #fff;
 }
@@ -328,8 +328,8 @@
   line-height: 1.5;
 }
 .ib-textarea:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);   
   background: #fff;
 }
 .ib-textarea::placeholder { color: #9ca3af; }
@@ -399,8 +399,8 @@
   transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
 }
 .ib-search:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   background: #fff;
 }
 .ib-search::placeholder { color: #b0b7c3; }
@@ -503,7 +503,7 @@
 
 .ib-status-published {
   background: #f0fdf4;
-  color: #16a34a;
+  color: #2563eb;
   border: 1.5px solid #bbf7d0;
 }
 
@@ -718,7 +718,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #2563eb;
   flex-shrink: 0;
 }
 

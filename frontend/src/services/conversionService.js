@@ -13,6 +13,10 @@ export const conversionService = {
     return api.post('/conversions/import-epub-for-sync', formData).then((res) => res.data.data);
   },
 
+  /** Direct EPUB → Audio Sync sessions (no conversion_jobs row). */
+  getEpubSyncSessions: (params = {}) =>
+    api.get('/conversions/epub-sync-sessions', { params }).then((res) => res.data?.data ?? res.data ?? []),
+
   startConversion: (pdfDocumentId, options = {}) =>
     api.post(`/conversions/start/${pdfDocumentId}`, options).then(res => res.data.data),
   
@@ -33,6 +37,24 @@ export const conversionService = {
   
   getConversionsByPdf: (pdfDocumentId) => 
     api.get(`/conversions/pdf/${pdfDocumentId}`).then(res => res.data.data),
+
+  /**
+   * Ensure a conversion job exists for a direct EPUB import row (used by Sync Studio).
+   * Backend route: POST /conversions/ensure-epub-sync-job/:pdfDocumentId
+   */
+  ensureEpubSyncJob: async (pdfDocumentId, options = {}) => {
+    const mode =
+      options.mode === 'fxl' || options.mode === 'reflowable' || options.mode === 'auto'
+        ? options.mode
+        : 'auto';
+
+    // Backend log uses `requestedMode`, but we send both for compatibility.
+    const res = await api.post(`/conversions/ensure-epub-sync-job/${pdfDocumentId}`, {
+      requestedMode: mode,
+      mode,
+    });
+    return res.data?.data ?? res.data;
+  },
   
   /** @param {{ scope?: 'own' }} [params] - scope=own: only conversions for PDFs this user created (dashboard) */
   getConversionsByStatus: (status, params = {}) =>

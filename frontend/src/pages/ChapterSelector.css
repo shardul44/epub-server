@@ -468,7 +468,7 @@
   justify-content: center;
   gap: 7px;
   padding: 10px 20px;
-  background: #4f46e5;
+  background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -476,14 +476,14 @@
   font-weight: 700;
   cursor: pointer;
   transition: background 0.16s, transform 0.13s, box-shadow 0.16s;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
   white-space: nowrap;
   flex-shrink: 0;
 }
 .cs-convert-btn:hover:not(:disabled) {
-  background: #4338ca;
+  background: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
 }
 .cs-convert-btn:active { transform: translateY(0); }
 .cs-convert-btn:disabled {
