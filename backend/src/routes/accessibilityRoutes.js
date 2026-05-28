@@ -652,8 +652,15 @@ router.post('/:jobId/remediate', async (req, res) => {
     await engine.applyHeadingOrderFixes(epubPath, headingLevelUpdates);
     await engine.applyApprovedCodeRepairs(epubPath, approvedCodeRepairs);
 
-    // Clear report dir (keep epubPath.json).
-    const epubPathData = { epubPath };
+    // Clear report dir, then re-persist epubPath.json so later
+    // remediation/re-validation requests can still resolve the job.
+    const epubPathFile = path.join(reportDir, 'epubPath.json');
+    const epubPathData = {
+      epubPath,
+      userId: jobCtx.meta?.userId ?? req.user?.id ?? null,
+      organizationId:
+        jobCtx.meta?.organizationId ?? req.user?.organizationId ?? null,
+    };
     await fs.emptyDir(reportDir);
     await fs.writeJson(epubPathFile, epubPathData);
 

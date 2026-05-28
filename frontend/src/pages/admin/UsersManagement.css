@@ -147,7 +147,7 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: #2563eb;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.22);
 }
@@ -166,11 +166,11 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #2563eb;  
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #374151;
+  color: #2563eb;
   background: #fff;
   cursor: pointer;
 }
@@ -206,7 +206,7 @@
   padding: 14px 16px;
   border-bottom: 1px solid #f3f4f6;
   vertical-align: middle;
-  color: #374151;
+  color: #2563eb;
 }
 
 .umgmt-table tr:last-child td {
@@ -224,7 +224,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: #2563eb;
   color: #fff;
   font-size: 0.8rem;
   font-weight: 700;
@@ -313,17 +313,17 @@
   background: #fff;
   font-size: 0.8rem;
   font-weight: 600;
-  color: #374151;
+  color: #2563eb;
   cursor: pointer;
 }
 
 .umgmt-icon-btn:hover:not(:disabled) {
   background: #f9fafb;
-  border-color: #d1d5db;
+  border-color: #2563eb;
 }
 
 .umgmt-icon-btn--danger {
-  color: #dc2626;
+  color: #2563eb;
   border-color: #fecaca;
 }
 
@@ -338,13 +338,13 @@
   justify-content: center;
   gap: 10px;
   padding: 48px;
-  color: #6b7280;
+  color: #2563eb;
 }
 
 .umgmt-spinner {
   width: 22px;
   height: 22px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #2563eb;
   border-top-color: #2563eb;
   border-radius: 50%;
   animation: umgmt-spin 0.7s linear infinite;
@@ -401,7 +401,7 @@
   display: block;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #374151;
+  color: #2563eb;
   margin-bottom: 6px;
 }
 
@@ -410,7 +410,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 9px 11px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #2563eb;
   border-radius: 8px;
   font-size: 0.9rem;
 }
@@ -424,7 +424,7 @@
 
 .umgmt-hint {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: #2563eb;
   margin-top: 4px;
 }
 
@@ -444,7 +444,7 @@
   background: #fff;
   font-weight: 600;
   font-size: 0.9rem;
-  color: #4b5563;
+  color: #2563eb;
   cursor: pointer;
 }
 
@@ -464,7 +464,7 @@
 }
 
 .umgmt-btn-submit:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #2563eb;
 }
 
 .umgmt-btn-submit:disabled {
@@ -478,6 +478,6 @@
   border-radius: 8px;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  color: #991b1b;
+  color: #2563eb;
   font-size: 0.85rem;
 }

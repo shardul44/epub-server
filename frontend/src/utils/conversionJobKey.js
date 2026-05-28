@@ -47,10 +47,21 @@ export function findJobByListKey(jobs, listKeyOrId, preferredType = null) {
 
 /** Job row represents an EPUB direct import (not a renderable PDF). */
 export function isEpubSourceJob(job) {
-  if (!job) return false;
-  const name = (job.pdfFilename || job.pdfName || job.originalFileName || '').toLowerCase();
+  if (!job) return true;
+  const name = (
+    job.pdfFilename ||
+    job.pdfName ||
+    job.originalFileName ||
+    job.fileName ||
+    job.filename ||
+    job.epubFilename ||
+    ''
+  ).toLowerCase();
   if (name.endsWith('.epub')) return true;
+  if (name.includes('.epub')) return true; // catches `book.epub.something` edge cases
   if (/fxl_stub_\d+\.epub$/i.test(name)) return true;
   if (job.source === 'epub_direct_import') return true;
+  if (job.sourceType === 'epub' || job.sourceType === 'EPUB') return true;
+  if (job.fileType === 'epub' || job.fileType === 'EPUB') return true;
   return false;
 }

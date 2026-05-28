@@ -181,9 +181,9 @@
 }
 
 .upl-view-btn--active {
-  border-color: #7c3aed;
+  border-color: #2563eb;
   background: #f5f3ff;
-  color: #7c3aed;
+  color: #2563eb;
 }
 
 .upl-view-btn:hover:not(.upl-view-btn--active) {
@@ -293,6 +293,19 @@
   color: #9ca3af;
 }
 
+.upl-thumb-epub {
+  background: linear-gradient(145deg, #eef2ff 0%, #e0e7ff 100%);
+  border-color: #c7d2fe;
+}
+
+.upl-thumb-epub-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #4f46e5;
+}
+
 .upl-name-text {
   min-width: 0;
 }
@@ -366,13 +379,15 @@
 }
 
 .upl-layout-badge--reflow {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #f5f5f5;
+  color: #2563eb;
+
 }
 
 .upl-layout-badge--fixed {
-  background: #d1fae5;
-  color: #047857;
+  background: #dadada;
+  color: #2563eb;
+
 }
 
 .upl-actions {
@@ -455,9 +470,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 14px 22px;
+  padding: 10px 18px;
   border-top: 1px solid #f1f5f9;
   background: #fafafa;
 }
@@ -501,9 +516,9 @@
   min-width: 32px;
   height: 32px;
   padding: 0 8px;
-  border: 1px solid #7c3aed;
+  border: 1px solid #2563eb;
   border-radius: 8px;
-  background: #7c3aed;
+  background: #2563eb;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -567,11 +582,12 @@
 }
 
 .upl-grid-wrap {
-  padding: 20px 22px 8px;
+  padding: 14px 18px 6px;
 }
 
 .upl-grid-wrap .pld-grid {
   margin: 0;
+  width: 100%;
 }
 
 @media (max-width: 900px) {

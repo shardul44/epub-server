@@ -20,6 +20,7 @@ import {
   notFoundResponse,
   forbiddenResponse
 } from '../utils/responseHandler.js';
+import { normIsoDate } from '../utils/isoDate.js';
 
 const router = express.Router();
 
@@ -36,8 +37,8 @@ function toOrgDto(row) {
     memberSeatLimit: row.member_seat_limit != null ? row.member_seat_limit : null,
     pdfPageQuota: row.pdf_page_quota != null ? Number(row.pdf_page_quota) : null,
     pdfPagesUsed: row.pdf_pages_used != null ? Number(row.pdf_pages_used) : 0,
-    validFrom: row.sub_valid_from ?? null,
-    validUntil: row.sub_valid_until ?? null,
+    validFrom: normIsoDate(row.sub_valid_from),
+    validUntil: normIsoDate(row.sub_valid_until),
     planId: row.plan_id ?? null,
     planName: row.plan_name ?? null,
     createdAt: row.created_at,
@@ -104,8 +105,8 @@ function toSubDto(row) {
     organizationId: row.organization_id,
     planId: row.plan_id,
     status: row.status,
-    validFrom: row.valid_from,
-    validUntil: row.valid_until,
+    validFrom: normIsoDate(row.valid_from),
+    validUntil: normIsoDate(row.valid_until),
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

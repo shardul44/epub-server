@@ -291,7 +291,7 @@
   gap: 6px;
   margin-top: 10px;
   padding: 10px 20px;
-  background: #1a7a3c;
+  background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -301,7 +301,7 @@
   transition: all 0.15s ease;
 }
 .esi-choose-btn:hover {
-  background: #1f2937;
+  background: #1d4ed8;
   transform: translateY(-1px);
 }
 .esi-choose-btn svg { font-size: 14px; }
@@ -523,7 +523,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 22px;
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -535,7 +535,7 @@
   white-space: nowrap;
 }
 .esi-submit-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: #1d4ed8;
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(37,99,235,0.35);
 }

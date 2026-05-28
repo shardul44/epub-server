@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api, { API_BASE_URL } from '../services/api';
+import { mediaUrl } from '../utils/mediaUrl';
 import { useSearchParams } from 'react-router-dom';
 import {
   X,
@@ -18,6 +19,10 @@ import {
   ArrowRight,
   RefreshCw,
   Save,
+  Search,
+  ChevronDown,
+  Plus,
+  Eye,
 } from 'lucide-react';
 import './AccessibilityWizard.css';
 
@@ -197,6 +202,33 @@ const AccessibilityWizard = ({ onStateChange }) => {
   const [headingDrafts, setHeadingDrafts] = useState([]);
   const [codeRepairDrafts, setCodeRepairDrafts] = useState([]);
 
+  // Results UI state — tabs, search, filters, sort, expansion
+  const [activeTab, setActiveTab] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSeverityFilters, setActiveSeverityFilters] = useState([]);
+  const [sortMode, setSortMode] = useState('severity');
+  const [expandedViolations, setExpandedViolations] = useState(() => new Set());
+
+  const toggleViolationExpanded = (id) => {
+    setExpandedViolations((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const isAutoFixable = (v) => !!AUTO_FIXED_RULES[v?.title];
+
+  const parsePatchDiff = (patch) => {
+    if (!patch || typeof patch !== 'string') return { before: '', after: '' };
+    const dual = patch.match(/<!--\s*Before\s*-->([\s\S]*?)<!--\s*After\s*-->([\s\S]*)/i);
+    if (dual) return { before: dual[1].trim(), after: dual[2].trim() };
+    const afterOnly = patch.match(/<!--\s*After\s*-->([\s\S]*)/i);
+    if (afterOnly) return { before: '', after: afterOnly[1].trim() };
+    return { before: '', after: patch.trim() };
+  };
+
   // --- Computed ---
   // Show only images that are currently part of Ace "image-alt" violations.
   // `report.data.images` is an image inventory and may include non-violations.
@@ -341,13 +373,96 @@ const AccessibilityWizard = ({ onStateChange }) => {
   const hasViolations = summary.totalViolations > 0 || revalidateFailed || summary.totalViolations < 0;
   const anyCodeViolations = SEVERITIES.some((s) => (codeViolationsBySeverity[s] || []).length > 0);
 
+  // Flat list of all code violations (across severities) used by the redesigned tabbed/filterable section
+  const allCodeViolations = useMemo(() => {
+    const out = [];
+    for (const sev of SEVERITIES) out.push(...(codeViolationsBySeverity[sev] || []));
+    return out;
+  }, [codeViolationsBySeverity]);
+
+  const codeTabCounts = useMemo(() => ({
+    all: allCodeViolations.length,
+    auto: allCodeViolations.filter(isAutoFixable).length,
+    manual: allCodeViolations.filter((v) => !isAutoFixable(v)).length,
+    passed: Array.isArray(report?.allPasses)
+      ? report.allPasses.length
+      : Array.isArray(report?.passes)
+        ? report.passes.length
+        : 0,
+  }), [allCodeViolations, report]);
+
+  const filteredCodeViolations = useMemo(() => {
+    let list = allCodeViolations;
+    if (activeTab === 'auto') list = list.filter(isAutoFixable);
+    else if (activeTab === 'manual') list = list.filter((v) => !isAutoFixable(v));
+    else if (activeTab === 'passed') list = [];
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter((v) =>
+        String(v.title || '').toLowerCase().includes(q) ||
+        String(v.description || '').toLowerCase().includes(q) ||
+        String(v.helpDescription || '').toLowerCase().includes(q) ||
+        String(v.filePath || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (activeSeverityFilters.length > 0) {
+      list = list.filter((v) => activeSeverityFilters.includes(v.severity));
+    }
+
+    const order = { critical: 0, serious: 1, moderate: 2, minor: 3 };
+    if (sortMode === 'severity') {
+      list = [...list].sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
+    } else if (sortMode === 'rule') {
+      list = [...list].sort((a, b) => String(a.title || '').localeCompare(String(b.title || '')));
+    } else if (sortMode === 'file') {
+      list = [...list].sort((a, b) => String(a.filePath || '').localeCompare(String(b.filePath || '')));
+    }
+    return list;
+  }, [allCodeViolations, activeTab, searchQuery, activeSeverityFilters, sortMode]);
+
+  // Highest severity present in the filtered list, used for the section badge
+  const codeSectionTopSeverity = useMemo(() => {
+    for (const sev of SEVERITIES) {
+      if (filteredCodeViolations.some((v) => v.severity === sev)) return sev;
+    }
+    return 'minor';
+  }, [filteredCodeViolations]);
+
+  const allListedAreAutoFixable = useMemo(
+    () => filteredCodeViolations.length > 0 && filteredCodeViolations.every(isAutoFixable),
+    [filteredCodeViolations]
+  );
+
+  // Count of approved/applied fixes for the sticky status bar
+  const approvedCount = useMemo(() => {
+    let n = 0;
+    n += Object.entries(imageAltDrafts).filter(([, v]) => typeof v === 'string' && v.trim().length > 0).length;
+    n += showHeadingSection
+      ? headingLevelDraftsReady.filter((h) => Number(h.nextLevel) !== Number(h.currentLevel)).length
+      : 0;
+    n += allCodeViolations.filter(isAutoFixable).length;
+    n += codeRepairDrafts.filter((c) => c.approved).length;
+    return n;
+  }, [imageAltDrafts, showHeadingSection, headingLevelDraftsReady, allCodeViolations, codeRepairDrafts]);
+
+  const totalFixesPossible = summary.totalViolations || 0;
+
   const imageUrl = (imgSrc) =>
     `${API_BASE_URL}/accessibility/${jobId}/image?src=${encodeURIComponent(imgSrc)}`;
 
   const backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
   const absoluteReportUrl = reportUrl ? `${backendBase}${reportUrl}` : '';
-  const downloadEpubUrl = jobId ? `${backendBase}/api/accessibility/${jobId}/download-epub` : '';
-  const downloadReportPdfUrl = jobId ? `${backendBase}/api/accessibility/report/${jobId}/pdf` : '';
+  // The backend /api/accessibility/* routes require auth. Native <a> links can't
+  // send an Authorization header, so we append ?token=<jwt> (supported by the
+  // authenticate middleware for GET/HEAD requests) via mediaUrl().
+  const downloadEpubUrl = jobId
+    ? mediaUrl(`${backendBase}/api/accessibility/${jobId}/download-epub`)
+    : '';
+  const downloadReportPdfUrl = jobId
+    ? mediaUrl(`${backendBase}/api/accessibility/report/${jobId}/pdf`)
+    : '';
 
   const onResetDraftsFromReport = (nextReport) => {
     const headings = parseHeadingsFromAceHtml(nextReport?.outlines?.headings);
@@ -675,80 +790,126 @@ const AccessibilityWizard = ({ onStateChange }) => {
   // ---- Render ----
   return (
     <div className="aw-card">
-      <div className="aw-header">
-        <h2 className="aw-title">Accessibility Wizard</h2>
-        <p className="aw-subtitle">
-          Upload an EPUB → review all violations → apply AI-assisted fixes → re-validate → download a WCAG&nbsp;AA&#8209;compliant EPUB.
-        </p>
-      </div>
-
       {/* ── Step 1: Upload ── */}
       <div className="aw-upload-section">
-        {/* Label above row */}
-        <span className="aw-file-label-inline">Select EPUB file</span>
+        <div className="aw-upload-header">
+          <h2 className="aw-upload-title">EPUB Accessibility Checker</h2>
+          <p className="aw-upload-subtitle">
+            Upload your EPUB, review violations, apply AI-assisted fixes, and download a WCAG&nbsp;AA&#8209;compliant file.
+          </p>
+        </div>
 
-        {/* Row 1: file controls + centre hint + run button */}
-        <div className="aw-upload-row">
-          {/* Left: choose + filename */}
-          <label className="aw-file-btn" htmlFor="epub-file-input">
-            Choose File
-          </label>
-          <input
-            id="epub-file-input"
-            type="file"
-            accept=".epub,application/epub+zip"
-            onChange={handleFileChange}
-            disabled={busy}
-            className="aw-file-input-hidden"
-          />
-          {file
-            ? (
-              <span className="aw-file-chosen">
-                <FileText size={14} strokeWidth={2} className="aw-file-chosen-doc" aria-hidden />
-                <span className="aw-file-chosen-name" title={file.name}>{file.name}</span>
+        <input
+          id="epub-file-input"
+          type="file"
+          accept=".epub,application/epub+zip"
+          onChange={handleFileChange}
+          disabled={busy}
+          className="aw-file-input-hidden"
+        />
+
+        <div className="aw-upload-grid">
+          {/* Left column: file chip + validation standards */}
+          <div className="aw-upload-col aw-upload-col--main">
+            {!file ? (
+              <label className="aw-file-chip aw-file-chip--empty" htmlFor="epub-file-input">
+                <span className="aw-file-chip-icon" aria-hidden>
+                  <FileText size={18} strokeWidth={2} />
+                </span>
+                <span className="aw-file-chip-name">Click to choose an EPUB file…</span>
+                <span className="aw-file-chip-action">Browse</span>
+              </label>
+            ) : (
+              <div className="aw-file-chip aw-file-chip--filled">
+                <span className="aw-file-chip-icon" aria-hidden>
+                  <FileText size={18} strokeWidth={2} />
+                </span>
+                <span className="aw-file-chip-name" title={file.name}>{file.name}</span>
+                <span className="aw-file-chip-status">
+                  {loadingCheck ? (
+                    <>
+                      <Loader2 size={11} strokeWidth={2.75} className="aw-icon-spin" aria-hidden />
+                      Pre-scanning…
+                    </>
+                  ) : (
+                    <>
+                      <Check size={11} strokeWidth={2.75} aria-hidden />
+                      Pre-scan complete
+                    </>
+                  )}
+                </span>
                 <button
                   type="button"
-                  className="aw-file-remove-btn"
+                  className="aw-file-chip-close"
                   onClick={handleRemoveFile}
                   disabled={busy}
                   aria-label="Remove selected file"
                   title="Remove file"
                 >
-                  <X size={11} strokeWidth={2.75} aria-hidden />
+                  <X size={12} strokeWidth={2.75} aria-hidden />
                 </button>
-              </span>
-            )
-            : <span className="aw-file-placeholder">No file chosen</span>
-          }
-
-          {/* Centre: mini bar chart + pre-scan hint */}
-          <div className="aw-upload-center">
-            <div className="aw-prescan-bars">
-              <div className="aw-prescan-bar" style={{ height: 14, background: '#6366f1' }} />
-              <div className="aw-prescan-bar" style={{ height: 22, background: '#6366f1' }} />
-              <div className="aw-prescan-bar" style={{ height: 18, background: '#6366f1' }} />
-              <div className="aw-prescan-bar" style={{ height: 26, background: '#6366f1' }} />
-              <div className="aw-prescan-bar" style={{ height: 10, background: '#f59e0b' }} />
-              <div className="aw-prescan-bar" style={{ height: 16, background: '#f59e0b' }} />
-              <div className="aw-prescan-bar" style={{ height: 20, background: '#10b981' }} />
-              <div className="aw-prescan-bar" style={{ height: 8,  background: '#10b981' }} />
-              <div className="aw-prescan-bar" style={{ height: 12, background: '#94a3b8' }} />
-            </div>
-            <div className="aw-prescan-labels">
-              <span>Text</span>
-              <span>Structure</span>
-              <span>Media</span>
-              <span>Prints</span>
-            </div>
-            {file && (
-              <p className="aw-prescan-hint">
-                File pre-scan completed: structure identified. Press to run detailed standard checks.
-              </p>
+              </div>
             )}
+
+            <div className="aw-standards-block">
+              <div className="aw-standards-label">Validation Standards</div>
+              <div className="aw-standards-pills">
+                {[
+                  { key: 'wcag21aa',      label: 'WCAG 2.1 AA' },
+                  { key: 'epubA11y',      label: 'EPUB Accessibility 1.1' },
+                  { key: 'wcag22aa',      label: 'Section 508' },
+                  { key: 'section508',    label: 'WCAG 2.2 AA' },
+                  { key: 'ariaLandmarks', label: 'ARIA Landmarks' },
+                ].map(({ key, label }) => {
+                  const checked = !!standards[key];
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`aw-std-pill${checked ? ' aw-std-pill--active' : ''}`}
+                      onClick={() => setStandards(prev => ({ ...prev, [key]: !prev[key] }))}
+                      aria-pressed={checked}
+                      title={`Toggle ${label}`}
+                    >
+                      <span className="aw-std-pill-dot" aria-hidden />
+                      <span className="aw-std-pill-text">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          {/* Right: run button + status */}
-          <div className="aw-upload-right">
+          {/* Right column: pre-scan analysis + run button */}
+          <div className="aw-upload-col aw-upload-col--side">
+            <div className="aw-prescan-card">
+              <div className="aw-prescan-card-title">Pre-scan Analysis</div>
+              <div className="aw-prescan-bars">
+                <div className="aw-prescan-bar aw-prescan-bar--text"   style={{ height: 32 }} />
+                <div className="aw-prescan-bar aw-prescan-bar--struct" style={{ height: 44 }} />
+                <div className="aw-prescan-bar aw-prescan-bar--media"  style={{ height: 36 }} />
+                <div className="aw-prescan-bar aw-prescan-bar--prints" style={{ height: 28 }} />
+              </div>
+              <div className="aw-prescan-legend">
+                <span className="aw-prescan-legend-item">
+                  <span className="aw-prescan-legend-dot aw-prescan-dot--text" />Text
+                </span>
+                <span className="aw-prescan-legend-item">
+                  <span className="aw-prescan-legend-dot aw-prescan-dot--struct" />Structure
+                </span>
+                <span className="aw-prescan-legend-item">
+                  <span className="aw-prescan-legend-dot aw-prescan-dot--media" />Media
+                </span>
+                <span className="aw-prescan-legend-item">
+                  <span className="aw-prescan-legend-dot aw-prescan-dot--prints" />Prints
+                </span>
+              </div>
+              <div className={`aw-prescan-status${file ? ' aw-prescan-status--ready' : ''}`}>
+                <span className="aw-prescan-status-dot" aria-hidden />
+                {file ? 'Structure identified · Ready' : 'Waiting for upload'}
+              </div>
+            </div>
+
             <button
               type="button"
               className="aw-run-btn"
@@ -762,49 +923,13 @@ const AccessibilityWizard = ({ onStateChange }) => {
                 </>
               ) : (
                 <>
-                  <Play size={16} strokeWidth={2} className="aw-run-play" aria-hidden />
+                  <Play size={14} strokeWidth={2.5} className="aw-run-play" aria-hidden />
                   Run Accessibility Check
+                  <ArrowRight size={15} strokeWidth={2.25} aria-hidden />
                 </>
               )}
             </button>
-            {file && !loadingCheck && (
-              <span className="aw-analysis-status">
-                <span className="aw-analysis-status-dot" />
-                Analysis ready
-              </span>
-            )}
-            {loadingCheck && (
-              <span className="aw-analysis-status">
-                <Loader2 size={12} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
-                Running checks…
-              </span>
-            )}
           </div>
-        </div>
-
-        {/* Row 2: standards checkboxes */}
-        <div className="aw-upload-divider" />
-        <div className="aw-standards-row">
-          {[
-            { key: 'wcag21aa',      label: 'WCAG 2.1 AA' },
-            { key: 'epubA11y',      label: 'EPUB Accessibility 1.1' },
-            { key: 'wcag22aa',      label: 'Section 508' },
-            { key: 'section508',    label: 'WCAG 2.2 AA' },
-            { key: 'ariaLandmarks', label: 'ARIA landmarks' },
-          ].map(({ key, label }) => (
-            <label key={key} className="aw-std-label">
-              <input
-                type="checkbox"
-                className="aw-std-checkbox"
-                checked={standards[key]}
-                onChange={() => setStandards(prev => ({ ...prev, [key]: !prev[key] }))}
-              />
-              <span className="aw-std-text">{label}</span>
-              <span className="aw-std-info" title={`Learn more about ${label}`} aria-hidden>
-                <Info size={9} strokeWidth={2.75} />
-              </span>
-            </label>
-          ))}
         </div>
 
         {error && <div className="aw-error-bar">{error}</div>}
@@ -814,21 +939,39 @@ const AccessibilityWizard = ({ onStateChange }) => {
       {jobId && (
         <div className="aw-results">
 
-          {/* ── Step 2: Stats ── */}
+          {/* ── Stats cards ── */}
           <div className="aw-stats-row">
-            {SEVERITIES.map((sev) => (
-              <div key={sev} className={`aw-stat-card aw-stat-${sev}`}>
-                <span className="aw-stat-label">{SEVERITY_LABELS[sev]}</span>
-                <span className="aw-stat-count">{summary.bySeverity?.[sev] ?? 0}</span>
-              </div>
-            ))}
+            {SEVERITIES.map((sev) => {
+              const count = summary.bySeverity?.[sev] ?? 0;
+              let subtitle;
+              if (sev === 'critical') subtitle = count === 0 ? 'No critical issues' : `${count} need immediate attention`;
+              else if (sev === 'serious') subtitle = count === 0 ? 'No serious issues' : `${count} flagged`;
+              else if (sev === 'moderate') subtitle = count === 0 ? 'No moderate issues' : 'Needs attention';
+              else subtitle = count === 0 ? 'All clear' : 'Review when possible';
+              return (
+                <div key={sev} className={`aw-stat-card aw-stat-${sev}`}>
+                  <div className="aw-stat-top">
+                    <span className={`aw-stat-dot aw-stat-dot--${sev}`} aria-hidden />
+                    <span className="aw-stat-label">{SEVERITY_LABELS[sev]}</span>
+                  </div>
+                  <span className="aw-stat-count">{count}</span>
+                  <span className="aw-stat-sub">{subtitle}</span>
+                  <span className={`aw-stat-stripe aw-stat-stripe--${sev}`} aria-hidden />
+                </div>
+              );
+            })}
             <div className="aw-stat-card aw-stat-total">
-              <span className="aw-stat-label">Total</span>
+              <div className="aw-stat-top">
+                <span className="aw-stat-dot aw-stat-dot--total" aria-hidden />
+                <span className="aw-stat-label">Total</span>
+              </div>
               <span className="aw-stat-count">{summary.totalViolations}</span>
+              <span className="aw-stat-sub">{summary.totalViolations === 0 ? 'All clear' : 'Violations found'}</span>
+              <span className="aw-stat-stripe aw-stat-stripe--total" aria-hidden />
             </div>
           </div>
 
-          {/* ── Step 3 (success): 0 violations ── */}
+          {/* ── 0 violations — success banner ── */}
           {!hasViolations && !revalidateFailed && summary.totalViolations === 0 && (
             <div className="aw-success-banner">
               <div className="aw-success-icon" aria-hidden>
@@ -859,20 +1002,19 @@ const AccessibilityWizard = ({ onStateChange }) => {
             </div>
           )}
 
-          {/* ── Step 3 (violations): Fix panel ── */}
+          {/* ── Violations exist ── */}
           {hasViolations && (
-            <div className="aw-fix-panel">
-
-              {/* Toolbar */}
-              <div className="aw-fix-toolbar">
-                <div className="aw-fix-toolbar-left">
+            <>
+              {/* Fix Mode toolbar card */}
+              <div className="aw-toolbar-card">
+                <div className="aw-toolbar-left">
                   <span className="aw-fix-badge">
-                    <Wrench size={13} strokeWidth={2.25} aria-hidden />
+                    <span className="aw-fix-badge-dot" aria-hidden />
                     Fix Mode ON
                   </span>
                   <span className="aw-fix-hint">AI suggestions are drafts — review, edit, approve, then save.</span>
                 </div>
-                <div className="aw-fix-toolbar-right">
+                <div className="aw-toolbar-right">
                   <button
                     type="button"
                     className="aw-ai-btn"
@@ -881,12 +1023,12 @@ const AccessibilityWizard = ({ onStateChange }) => {
                   >
                     {loadingAi ? (
                       <>
-                        <Loader2 size={15} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
-                        Running AI in parallel… (may take ~30s)
+                        <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                        Running AI in parallel…
                       </>
                     ) : (
                       <>
-                        <Sparkles size={15} strokeWidth={2} aria-hidden />
+                        <Plus size={14} strokeWidth={2.5} aria-hidden />
                         Generate AI Suggestions
                       </>
                     )}
@@ -898,7 +1040,7 @@ const AccessibilityWizard = ({ onStateChange }) => {
                       onClick={handleApproveAllAiFixes}
                       disabled={busy}
                     >
-                      <Check size={15} strokeWidth={2.75} aria-hidden />
+                      <Check size={14} strokeWidth={2.75} aria-hidden />
                       Approve All AI Fixes
                     </button>
                   )}
@@ -929,11 +1071,16 @@ const AccessibilityWizard = ({ onStateChange }) => {
 
               {/* ─── Section: Image Alt Text ─── */}
               {altViolations.length > 0 && (
-                <div className="aw-section">
-                  <div className="aw-section-header">
-                    <span className="aw-badge aw-badge-serious">Serious</span>
-                    <span className="aw-section-title-text">Missing Image Alt Text</span>
-                    <span className="aw-issue-count">{altViolations.length} image{altViolations.length !== 1 ? 's' : ''}</span>
+                <div className="aw-section-card">
+                  <div className="aw-section-card-header">
+                    <div className="aw-cs-title-row">
+                      <span className="aw-cs-badge aw-cs-badge--serious">
+                        <AlertTriangle size={13} strokeWidth={2.25} aria-hidden />
+                        SERIOUS
+                      </span>
+                      <span className="aw-cs-title-text">Missing Image Alt Text</span>
+                      <span className="aw-cs-issue-pill">{altViolations.length} image{altViolations.length !== 1 ? 's' : ''}</span>
+                    </div>
                   </div>
                   <p className="aw-section-desc">
                     Content images need descriptive alt text. FXL page images (SVG) and decorative images will be
@@ -1010,10 +1157,15 @@ const AccessibilityWizard = ({ onStateChange }) => {
 
               {/* ─── Section: Heading Order ─── */}
               {showHeadingSection && (
-                <div className="aw-section">
-                  <div className="aw-section-header">
-                    <span className="aw-badge aw-badge-moderate">Moderate</span>
-                    <span className="aw-section-title-text">Heading Order</span>
+                <div className="aw-section-card">
+                  <div className="aw-section-card-header">
+                    <div className="aw-cs-title-row">
+                      <span className="aw-cs-badge aw-cs-badge--moderate">
+                        <AlertTriangle size={13} strokeWidth={2.25} aria-hidden />
+                        MODERATE
+                      </span>
+                      <span className="aw-cs-title-text">Heading Order</span>
+                    </div>
                   </div>
                   <p className="aw-section-desc">
                     Heading levels must increase by one (e.g. H1→H2, not H1→H3). Set the correct level for each heading.
@@ -1050,154 +1202,343 @@ const AccessibilityWizard = ({ onStateChange }) => {
                 </div>
               )}
 
-              {/* ─── Sections: Code violations by severity ─── */}
-              {anyCodeViolations && SEVERITIES.map((sev) => {
-                const group = codeViolationsBySeverity[sev] || [];
-                if (group.length === 0) return null;
-                return (
-                  <div key={sev} className="aw-section">
-                    <div className="aw-section-header">
-                      <span className={`aw-badge aw-badge-${sev}`}>{SEVERITY_LABELS[sev]}</span>
-                      <span className="aw-section-title-text">Code Violations</span>
-                      <span className="aw-issue-count">{group.length} issue{group.length !== 1 ? 's' : ''}</span>
+              {/* ─── Section: Code Violations (tabbed + filterable) ─── */}
+              {anyCodeViolations && (
+                <div className="aw-section-card aw-code-section">
+                  <div className="aw-section-card-header">
+                    <div className="aw-cs-title-row">
+                      <span className={`aw-cs-badge aw-cs-badge--${codeSectionTopSeverity}`}>
+                        <AlertTriangle size={13} strokeWidth={2.25} aria-hidden />
+                        {SEVERITY_LABELS[codeSectionTopSeverity]?.toUpperCase()}
+                      </span>
+                      <span className="aw-cs-title-text">Code Violations</span>
+                      <span className="aw-cs-issue-pill">{filteredCodeViolations.length} issue{filteredCodeViolations.length !== 1 ? 's' : ''}</span>
                     </div>
-                    <div className="aw-violation-list">
-                      {group.map((violation) => {
+                    {allListedAreAutoFixable && (
+                      <span className="aw-cs-status-text">All auto-fixable</span>
+                    )}
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="aw-tab-row">
+                    {[
+                      { key: 'all', label: 'All Issues', count: codeTabCounts.all },
+                      { key: 'auto', label: 'Auto Fixes', count: codeTabCounts.auto },
+                      { key: 'manual', label: 'Manual Fixes', count: codeTabCounts.manual },
+                      { key: 'passed', label: 'Passed Checks', count: codeTabCounts.passed },
+                    ].map((t) => (
+                      <button
+                        key={t.key}
+                        type="button"
+                        className={`aw-tab${activeTab === t.key ? ' aw-tab--active' : ''}`}
+                        onClick={() => setActiveTab(t.key)}
+                      >
+                        {t.label}
+                        <span className={`aw-tab-count${activeTab === t.key ? ' aw-tab-count--active' : ''}`}>{t.count}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Filter / search / sort row */}
+                  <div className="aw-filter-row">
+                    <div className="aw-search">
+                      <Search size={14} strokeWidth={2.25} className="aw-search-icon" aria-hidden />
+                      <input
+                        type="text"
+                        className="aw-search-input"
+                        placeholder="Search violations, rules, files…"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <div className="aw-sort">
+                      <select
+                        className="aw-sort-select"
+                        value={sortMode}
+                        onChange={(e) => setSortMode(e.target.value)}
+                      >
+                        <option value="severity">Sort by Severity</option>
+                        <option value="rule">Sort by Rule</option>
+                        <option value="file">Sort by File</option>
+                      </select>
+                      <ChevronDown size={14} strokeWidth={2.25} className="aw-sort-chev" aria-hidden />
+                    </div>
+                    {SEVERITIES.filter((sev) => allCodeViolations.some((v) => v.severity === sev)).map((sev) => {
+                      const active = activeSeverityFilters.includes(sev);
+                      return (
+                        <button
+                          key={sev}
+                          type="button"
+                          className={`aw-sev-pill aw-sev-pill--${sev}${active ? ' aw-sev-pill--active' : ''}`}
+                          onClick={() => setActiveSeverityFilters((prev) =>
+                            prev.includes(sev) ? prev.filter((s) => s !== sev) : [...prev, sev]
+                          )}
+                          aria-pressed={active}
+                        >
+                          {SEVERITY_LABELS[sev]}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Violation list */}
+                  <div className="aw-vcard-list">
+                    {activeTab === 'passed' ? (
+                      <div className="aw-empty-state">
+                        <Check size={20} strokeWidth={2} aria-hidden />
+                        <span>{codeTabCounts.passed} accessibility checks passed for this EPUB.</span>
+                      </div>
+                    ) : filteredCodeViolations.length === 0 ? (
+                      <div className="aw-empty-state">
+                        <Info size={18} strokeWidth={2} aria-hidden />
+                        <span>No violations match the current filter.</span>
+                      </div>
+                    ) : (
+                      filteredCodeViolations.map((violation) => {
                         const draftIdx = codeRepairDrafts.findIndex((d) => d.violationId === violation.id);
                         const draft = draftIdx >= 0 ? codeRepairDrafts[draftIdx] : null;
+                        const isExpanded = expandedViolations.has(violation.id);
+                        const autoFixed = AUTO_FIXED_RULES[violation.title];
+                        const diff = autoFixed ? parsePatchDiff(autoFixed.patch) : null;
+                        const sev = violation.severity || 'minor';
                         return (
-                          <div key={violation.id} className="aw-violation-card">
-                            <div className="aw-violation-meta">
-                              <span className="aw-violation-rule">{violation.title}</span>
-                              {violation.filePath && (
-                                <span className="aw-violation-file">{violation.filePath.split('/').pop()}</span>
-                              )}
-                            </div>
-                            {violation.description && (
-                              <p className="aw-violation-desc">{violation.description}</p>
-                            )}
-                            {violation.helpDescription && !violation.description && (
-                              <p className="aw-violation-desc">{violation.helpDescription}</p>
-                            )}
-                            {violation.offendingSnippet && (
-                              <details className="aw-snippet-details">
-                                <summary className="aw-snippet-summary">View offending HTML</summary>
-                                <pre className="aw-snippet-pre">{violation.offendingSnippet.slice(0, 500)}</pre>
-                              </details>
-                            )}
-                            {AUTO_FIXED_RULES[violation.title] ? (
-                              <div className="aw-auto-fix-card">
-                                <div className="aw-auto-fix-header">
-                                  <span className="aw-auto-fix-icon" aria-hidden>
-                                    <Settings size={15} strokeWidth={2.25} />
-                                  </span>
-                                  <strong>Auto-fixed on Save</strong>
-                                  <span className="aw-auto-fix-file">{AUTO_FIXED_RULES[violation.title].file}</span>
-                                </div>
-                                <p className="aw-auto-fix-summary">{AUTO_FIXED_RULES[violation.title].summary}</p>
-                                <div className="aw-auto-fix-patch-label">Change that will be applied:</div>
-                                <pre className="aw-auto-fix-patch">{AUTO_FIXED_RULES[violation.title].patch}</pre>
-                              </div>
-                            ) : draft ? (
-                              <div className="aw-fix-area">
-                                {draft.reason && (
-                                  <p className="aw-fix-reason">
-                                    <Lightbulb size={14} strokeWidth={2.25} className="aw-fix-reason-icon" aria-hidden />
-                                    <span>{draft.reason}</span>
-                                  </p>
-                                )}
-                                {draft.error && (
-                                  <p className="aw-fix-error">
-                                    <AlertTriangle size={14} strokeWidth={2.25} className="aw-fix-error-icon" aria-hidden />
-                                    <span>{draft.error}</span>
-                                  </p>
-                                )}
-                                <div className="aw-fix-label">AI Suggested Fix (editable)</div>
-                                <textarea
-                                  className="aw-fix-textarea"
-                                  rows={5}
-                                  value={draft.fixedSnippet}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setCodeRepairDrafts((prev) => {
-                                      const next = [...prev];
-                                      next[draftIdx] = { ...next[draftIdx], fixedSnippet: val };
-                                      return next;
-                                    });
-                                  }}
-                                />
-                                <label className="aw-approve-label">
-                                  <input
-                                    type="checkbox"
-                                    checked={!!draft.approved}
-                                    onChange={(e) => {
-                                      const checked = e.target.checked;
-                                      setCodeRepairDrafts((prev) => {
-                                        const next = [...prev];
-                                        next[draftIdx] = { ...next[draftIdx], approved: checked };
-                                        return next;
-                                      });
-                                    }}
-                                  />
-                                  Approve this fix
-                                </label>
-                              </div>
-                            ) : violation.offendingSnippet ? (
-                              <div className="aw-no-fix-hint">
-                                Click <strong>Generate AI Suggestions</strong> to get an automated fix for this issue.
-                              </div>
-                            ) : (
-                              <div className="aw-no-snippet-hint">
-                                <Info size={15} strokeWidth={2.25} className="aw-no-snippet-icon" aria-hidden />
-                                <span>
-                                  No HTML snippet available — this is a structural/metadata issue.
-                                  Click <strong>Save Changes &amp; Re-validate</strong> to apply all global fixes.
+                          <div
+                            key={violation.id}
+                            className={`aw-vcard aw-vcard--${sev}${isExpanded ? ' aw-vcard--open' : ''}`}
+                          >
+                            <button
+                              type="button"
+                              className="aw-vcard-summary"
+                              onClick={() => toggleViolationExpanded(violation.id)}
+                              aria-expanded={isExpanded}
+                            >
+                              <div className="aw-vcard-header">
+                                <span className={`aw-vcard-badge aw-vcard-badge--${sev}`}>
+                                  {SEVERITY_LABELS[sev]?.toUpperCase()}
                                 </span>
+                                <span className="aw-vcard-rule">{violation.title}</span>
+                                {violation.filePath && (
+                                  <span className="aw-vcard-file">{violation.filePath.split('/').pop()}</span>
+                                )}
+                                <ChevronDown
+                                  size={16}
+                                  strokeWidth={2.25}
+                                  className={`aw-vcard-chev${isExpanded ? ' aw-vcard-chev--open' : ''}`}
+                                  aria-hidden
+                                />
+                              </div>
+                              {(violation.description || violation.helpDescription) && (
+                                <p className="aw-vcard-desc">
+                                  {violation.description || violation.helpDescription}
+                                </p>
+                              )}
+                            </button>
+
+                            {isExpanded && (
+                              <div className="aw-vcard-body">
+                                {violation.offendingSnippet && (
+                                  <details className="aw-snippet-details">
+                                    <summary className="aw-snippet-summary">View offending HTML</summary>
+                                    <pre className="aw-snippet-pre">{violation.offendingSnippet.slice(0, 500)}</pre>
+                                  </details>
+                                )}
+
+                                {autoFixed ? (
+                                  <div className="aw-autofix">
+                                    <div className="aw-autofix-header">
+                                      <div className="aw-autofix-title">
+                                        <Sparkles size={14} strokeWidth={2.25} aria-hidden />
+                                        <strong>Auto-fixed on Save</strong>
+                                      </div>
+                                      {autoFixed.file && (
+                                        <span className="aw-autofix-file-chip">{autoFixed.file}</span>
+                                      )}
+                                    </div>
+                                    <p className="aw-autofix-desc">{autoFixed.summary}</p>
+
+                                    <div className="aw-confidence">
+                                      <div className="aw-confidence-head">
+                                        <span className="aw-confidence-label">Confidence</span>
+                                        <span className="aw-confidence-pct">98%</span>
+                                      </div>
+                                      <div className="aw-confidence-bar">
+                                        <div className="aw-confidence-fill" style={{ width: '98%' }} />
+                                      </div>
+                                    </div>
+
+                                    <div className="aw-changepreview-label">
+                                      <FileText size={11} strokeWidth={2.5} aria-hidden />
+                                      CHANGE PREVIEW
+                                    </div>
+                                    <div className="aw-diff">
+                                      <div className="aw-diff-col aw-diff-col--before">
+                                        <div className="aw-diff-head">- Before</div>
+                                        <pre className="aw-diff-pre">{diff?.before || '(no prior content)'}</pre>
+                                      </div>
+                                      <div className="aw-diff-col aw-diff-col--after">
+                                        <div className="aw-diff-head">+ After</div>
+                                        <pre className="aw-diff-pre">{diff?.after || ''}</pre>
+                                      </div>
+                                    </div>
+
+                                    <div className="aw-autofix-approved">
+                                      <Check size={13} strokeWidth={2.75} aria-hidden />
+                                      Fix approved
+                                    </div>
+                                  </div>
+                                ) : draft ? (
+                                  <div className="aw-autofix aw-autofix--ai">
+                                    <div className="aw-autofix-header">
+                                      <div className="aw-autofix-title">
+                                        <Sparkles size={14} strokeWidth={2.25} aria-hidden />
+                                        <strong>AI Suggested Fix</strong>
+                                      </div>
+                                      {violation.filePath && (
+                                        <span className="aw-autofix-file-chip">{violation.filePath.split('/').pop()}</span>
+                                      )}
+                                    </div>
+
+                                    {draft.reason && (
+                                      <p className="aw-fix-reason">
+                                        <Lightbulb size={13} strokeWidth={2.25} className="aw-fix-reason-icon" aria-hidden />
+                                        <span>{draft.reason}</span>
+                                      </p>
+                                    )}
+                                    {draft.error && (
+                                      <p className="aw-fix-error">
+                                        <AlertTriangle size={13} strokeWidth={2.25} className="aw-fix-error-icon" aria-hidden />
+                                        <span>{draft.error}</span>
+                                      </p>
+                                    )}
+
+                                    <div className="aw-confidence">
+                                      <div className="aw-confidence-head">
+                                        <span className="aw-confidence-label">Confidence</span>
+                                        <span className="aw-confidence-pct">85%</span>
+                                      </div>
+                                      <div className="aw-confidence-bar">
+                                        <div className="aw-confidence-fill" style={{ width: '85%' }} />
+                                      </div>
+                                    </div>
+
+                                    <div className="aw-changepreview-label">
+                                      <FileText size={11} strokeWidth={2.5} aria-hidden />
+                                      CHANGE PREVIEW
+                                    </div>
+                                    <div className="aw-diff">
+                                      <div className="aw-diff-col aw-diff-col--before">
+                                        <div className="aw-diff-head">- Before</div>
+                                        <pre className="aw-diff-pre">{draft.offendingSnippet || '(no prior content)'}</pre>
+                                      </div>
+                                      <div className="aw-diff-col aw-diff-col--after">
+                                        <div className="aw-diff-head">+ After (editable)</div>
+                                        <textarea
+                                          className="aw-diff-textarea"
+                                          rows={6}
+                                          value={draft.fixedSnippet}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setCodeRepairDrafts((prev) => {
+                                              const next = [...prev];
+                                              next[draftIdx] = { ...next[draftIdx], fixedSnippet: val };
+                                              return next;
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <label className="aw-approve-label">
+                                      <input
+                                        type="checkbox"
+                                        checked={!!draft.approved}
+                                        onChange={(e) => {
+                                          const checked = e.target.checked;
+                                          setCodeRepairDrafts((prev) => {
+                                            const next = [...prev];
+                                            next[draftIdx] = { ...next[draftIdx], approved: checked };
+                                            return next;
+                                          });
+                                        }}
+                                      />
+                                      Approve this fix
+                                    </label>
+                                  </div>
+                                ) : violation.offendingSnippet ? (
+                                  <div className="aw-no-fix-hint">
+                                    Click <strong>Generate AI Suggestions</strong> to get an automated fix for this issue.
+                                  </div>
+                                ) : (
+                                  <div className="aw-no-snippet-hint">
+                                    <Info size={15} strokeWidth={2.25} className="aw-no-snippet-icon" aria-hidden />
+                                    <span>
+                                      No HTML snippet available — this is a structural/metadata issue.
+                                      Click <strong>Save Changes &amp; Re-validate</strong> to apply all global fixes.
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
                         );
-                      })}
-                    </div>
+                      })
+                    )}
                   </div>
-                );
-              })}
+                </div>
+              )}
 
-              {/* ─── Step 4: Save & Re-validate ─── */}
-              <div className="aw-save-bar">
-                {absoluteReportUrl && (
-                  <a className="aw-view-report-link" href={absoluteReportUrl} target="_blank" rel="noreferrer">
-                    <FileText size={15} strokeWidth={2} aria-hidden />
-                    View Ace Report
-                  </a>
-                )}
-                {downloadReportPdfUrl && (
-                  <a className="aw-download-report-link" href={downloadReportPdfUrl} target="_blank" rel="noreferrer">
-                    <Download size={15} strokeWidth={2.25} aria-hidden />
-                    Download Report (PDF)
-                  </a>
-                )}
-                <button
-                  type="button"
-                  className="aw-save-btn"
-                  onClick={handleSaveAndRevalidate}
-                  disabled={loadingFix || loadingRecheck}
-                >
-                  {loadingFix ? (
-                    <>
-                      <Loader2 size={16} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
-                      Applying &amp; Re-validating…
-                    </>
-                  ) : (
-                    <>
-                      <Save size={16} strokeWidth={2.25} aria-hidden />
-                      Save Changes &amp; Re-validate
-                    </>
+              {/* Bottom save bar */}
+              <div className="aw-sticky-save">
+                <div className="aw-sticky-status">
+                  <span className="aw-sticky-dot" aria-hidden />
+                  {approvedCount} of {totalFixesPossible} fixes approved
+                  <span className="aw-sticky-sep">·</span>
+                  <span className="aw-sticky-unsaved">Changes unsaved</span>
+                </div>
+                <div className="aw-sticky-actions">
+                  {absoluteReportUrl && (
+                    <a
+                      className="aw-view-report-link"
+                      href={absoluteReportUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Eye size={14} strokeWidth={2.25} aria-hidden />
+                      <span>View ACE Report</span>
+                    </a>
                   )}
-                </button>
+                  {downloadReportPdfUrl && (
+                    <a
+                      className="aw-download-report-link"
+                      href={downloadReportPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Download size={14} strokeWidth={2.25} aria-hidden />
+                      <span>Download PDF</span>
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    className="aw-save-btn"
+                    onClick={handleSaveAndRevalidate}
+                    disabled={loadingFix || loadingRecheck}
+                  >
+                    {loadingFix ? (
+                      <>
+                        <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                        Applying &amp; Re-validating…
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} strokeWidth={2.25} aria-hidden />
+                        Save Changes &amp; Revalidate
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-
-            </div>
+            </>
           )}
         </div>
       )}

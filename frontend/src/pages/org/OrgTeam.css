@@ -81,7 +81,7 @@
   align-items: center;
   gap: 7px;
   padding: 9px 18px;
-  background: #4f46e5;
+  background: #2563eb;  
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -89,13 +89,13 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
   white-space: nowrap;
 }
 .ot-btn-primary:hover:not(:disabled) {
-  background: #4338ca;
+  background: #2563eb;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4);
 }
 .ot-btn-primary:disabled {
   opacity: 0.55;

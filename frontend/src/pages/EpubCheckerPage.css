@@ -560,7 +560,7 @@
   align-items: center;
   gap: 7px;
   padding: 11px 32px;
-  background: #16a34a;
+  background: #2563eb; 
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -571,7 +571,7 @@
   margin-top: 4px;
 }
 .ecc-success-btn:hover {
-  background: #15803d;
+  background: #2563eb;
   transform: translateY(-1px);
 }
 .ecc-success-btn:active { transform: scale(0.97); }

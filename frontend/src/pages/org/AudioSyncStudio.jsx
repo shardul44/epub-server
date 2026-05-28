@@ -1,12 +1,18 @@
 import { useEffect, useState, useCallback, useMemo, memo } from 'react';
-import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams, Link } from 'react-router-dom';
 import { useListScope } from '../../context/ListScopeContext';
 import { useConversions } from '../../hooks/useConversions';
 import { useWorkflowNavigation, isFixedLayout, audioSyncPath } from '../../hooks/useWorkflowNavigation';
+import { isEpubSourceJob } from '../../utils/conversionJobKey';
+import { useConversionActions } from '../../hooks/useConversionActions';
+import useAppSelector from '../../hooks/useAppSelector';
+import { selectActionError, clearActionError } from '../../features/conversions/conversionsSlice';
+import useAppDispatch from '../../hooks/useAppDispatch';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import PdfThumbnail from '../../components/PdfThumbnail';
+import ConfirmModal from '../../components/Loadingmodal';
 import { pdfViewUrl } from '../../services/api';
-import { ArrowLeft, FileText, X, Mic2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, FileText, X, Mic2, ChevronRight, Trash2 } from 'lucide-react';
 import './AudioSyncStudio.css';
 
 const fmtStep = (s) =>
@@ -89,12 +95,23 @@ const statusLabel = (status) => {
   return String(status || '').replace(/_/g, ' ');
 };
 
-const AssPdfThumb = memo(function AssPdfThumb({ pdfId }) {
+const AssEpubThumbLabel = () => (
+  <span className="ass-job-card-thumb-epub-label">EPUB</span>
+);
+
+const AssPdfThumb = memo(function AssPdfThumb({ pdfId, epubSource = false }) {
   const url = useMemo(() => buildPdfViewUrl(pdfId), [pdfId]);
   const cacheKey =
     pdfId != null && pdfId !== '' ? `pdf-thumb-card-${String(pdfId)}` : null;
 
+  const epubFallback = (
+    <div className="ass-job-card-thumb-fallback ass-job-card-thumb-epub" aria-hidden>
+      <AssEpubThumbLabel />
+    </div>
+  );
+
   if (!url) {
+    if (epubSource) return epubFallback;
     return (
       <div className="ass-job-card-thumb-fallback" aria-hidden>
         <FileText size={28} />
@@ -105,7 +122,7 @@ const AssPdfThumb = memo(function AssPdfThumb({ pdfId }) {
   return (
     <>
       <div className="ass-job-card-thumb-fallback ass-job-card-thumb-fallback--under" aria-hidden>
-        <FileText size={28} />
+        {epubSource ? <AssEpubThumbLabel /> : <FileText size={28} />}
       </div>
       <div className="ass-job-card-thumb-preview">
         <PdfThumbnail
@@ -116,6 +133,7 @@ const AssPdfThumb = memo(function AssPdfThumb({ pdfId }) {
           cacheKey={cacheKey}
           className="ass-job-card-pdf-thumb"
           alt=""
+          fallback={epubSource ? epubFallback : undefined}
         />
       </div>
     </>
@@ -123,7 +141,7 @@ const AssPdfThumb = memo(function AssPdfThumb({ pdfId }) {
 });
 
 /* ─── Job selector ────────────────────────────────────────────── */
-const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
+const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope, onSelect, onDelete }) => (
   <div className="ass-selector-root">
     <div className="ass-selector-header">
       <h2 className="ass-selector-title">Audio Sync Studio</h2>
@@ -140,7 +158,10 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
     ) : jobs.length === 0 ? (
       <div className="ass-selector-empty">
         <FileText size={40} />
-        <p>No completed jobs available. Complete a conversion first.</p>
+        <p>
+          No completed jobs available. Import an EPUB from{' '}
+          <Link to="/epub-sync-import">EPUB → Audio Sync</Link> or complete a PDF conversion first.
+        </p>
       </div>
     ) : (
       <div className="ass-selector-grid">
@@ -148,6 +169,7 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
           const jobId = job.id ?? job.jobId;
           const pdfId = job.pdfDocumentId ?? job.pdfId;
           const fxl = isFixedLayout(job);
+          const epubImport = isEpubSourceJob(job);
           const to = audioSyncPath(job);
           const status = job.status ?? 'COMPLETED';
           const pct = job.progressPercentage ?? (status === 'COMPLETED' ? 100 : 0);
@@ -194,10 +216,14 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
                   ? 'ass-progress-fill--fxl'
                   : 'ass-progress-fill--reflow';
 
+          const handleCardActivate = () => {
+            primeAudioSyncWorkflow(job);
+            onSelect(to);
+          };
+
           return (
-            <Link
+            <div
               key={`${fxl ? 'FXL' : 'REFLOW'}-${jobId}`}
-              to={to}
               className={[
                 'ass-job-card',
                 fxl ? 'ass-job-card--fxl' : 'ass-job-card--reflow',
@@ -206,7 +232,15 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
               ]
                 .filter(Boolean)
                 .join(' ')}
-              onClick={() => primeAudioSyncWorkflow(job)}
+              role="button"
+              tabIndex={0}
+              onClick={handleCardActivate}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCardActivate();
+                }
+              }}
             >
               <div className="ass-job-card-header">
                 <span className={`ass-type-pill${fxl ? ' ass-type-pill--fxl' : ' ass-type-pill--reflow'}`}>
@@ -220,10 +254,10 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
               <div className="ass-job-card-pdf-panel">
                 <div className="ass-job-card-pdf-thumb-col">
                   <span className="ass-job-card-pdf-badge" aria-hidden>
-                    PDF
+                    {epubImport ? 'EPUB' : 'PDF'}
                   </span>
                   <div className="ass-job-card-thumb">
-                    <AssPdfThumb pdfId={pdfId} />
+                    <AssPdfThumb pdfId={pdfId} epubSource={epubImport} />
                   </div>
                 </div>
                 <div className="ass-job-card-pdf-meta">
@@ -271,8 +305,20 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope }) => (
                   Open Audio Sync
                   <ChevronRight size={18} aria-hidden />
                 </span>
+                <button
+                  type="button"
+                  className="ass-job-card-del-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(job);
+                  }}
+                  title="Delete job"
+                  aria-label={`Delete job #${jobId}`}
+                >
+                  <Trash2 size={16} aria-hidden />
+                </button>
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
@@ -285,13 +331,18 @@ const AudioSyncStudio = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
+  const dispatch = useAppDispatch();
   const listScope = useListScope();
   const [error, setError] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
 
-  const { jobs: allJobs, loading: jobsLoading, error: jobsError } = useConversions({
+  const { jobs: allJobs, loading: jobsLoading, error: jobsError, refetch } = useConversions({
     excludeEpubImports: true,
+    includeEpubSyncSessions: true,
   });
+  const actionError = useAppSelector(selectActionError);
   const { goToAudioSync, primeAudioSyncWorkflow } = useWorkflowNavigation();
+  const { prepareDelete, confirmDelete: runConfirmDelete } = useConversionActions();
 
   useEffect(() => {
     if (jobsError) setError(jobsError);
@@ -310,6 +361,32 @@ const AudioSyncStudio = () => {
     },
     [navigate],
   );
+
+  const handleCardSelect = useCallback(
+    (to) => {
+      navigate(to);
+    },
+    [navigate],
+  );
+
+  const handleDelete = useCallback(
+    (job) => {
+      prepareDelete(job);
+      setDeleteModal({ open: true, job, loading: false });
+    },
+    [prepareDelete],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    setDeleteModal((prev) => ({ ...prev, loading: true }));
+    const ok = await runConfirmDelete();
+    if (ok) {
+      await refetch();
+      setDeleteModal({ open: false, job: null, loading: false });
+    } else {
+      setDeleteModal((prev) => ({ ...prev, loading: false }));
+    }
+  }, [runConfirmDelete, refetch]);
 
   useEffect(() => {
     if (jobsLoading) return;
@@ -335,10 +412,16 @@ const AudioSyncStudio = () => {
 
       <WorkflowStepper activeStep={2} jobId={null} onStepClick={handleStepClick} />
 
-      {error && (
+      {(error || actionError) && (
         <div className="ass-error-bar">
-          {error}
-          <button type="button" onClick={() => setError('')}>
+          {error || actionError}
+          <button
+            type="button"
+            onClick={() => {
+              setError('');
+              dispatch(clearActionError());
+            }}
+          >
             <X size={13} />
           </button>
         </div>
@@ -349,6 +432,25 @@ const AudioSyncStudio = () => {
         loading={jobsLoading}
         primeAudioSyncWorkflow={primeAudioSyncWorkflow}
         listScope={listScope}
+        onSelect={handleCardSelect}
+        onDelete={handleDelete}
+      />
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, job: null, loading: false })}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        subtitle="This action cannot be undone."
+        message={
+          deleteModal.job
+            ? `Delete Job #${deleteModal.job.id ?? deleteModal.job.jobId}? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleteModal.loading}
       />
     </div>
   );

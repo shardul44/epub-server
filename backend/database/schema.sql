@@ -211,7 +211,7 @@ CREATE TABLE IF NOT EXISTS tts_configurations (
 CREATE TABLE IF NOT EXISTS audio_syncs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     pdf_document_id BIGINT NOT NULL,
-    conversion_job_id BIGINT NOT NULL,
+    conversion_job_id BIGINT NULL,
     page_number INT NOT NULL,
     block_id VARCHAR(255),
     start_time DOUBLE NOT NULL,
@@ -223,7 +223,6 @@ CREATE TABLE IF NOT EXISTS audio_syncs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (pdf_document_id) REFERENCES pdf_documents(id) ON DELETE CASCADE,
-    FOREIGN KEY (conversion_job_id) REFERENCES conversion_jobs(id) ON DELETE CASCADE,
     INDEX idx_pdf_document_id (pdf_document_id),
     INDEX idx_conversion_job_id (conversion_job_id),
     INDEX idx_page_number (page_number)

@@ -22,6 +22,7 @@ import {
   isEpubImportStubDocument,
   epubImportStubMessage
 } from '../utils/pdfDocumentSource.js';
+import { EpubDirectImportService } from '../services/epubDirectImportService.js';
 import { resolveKitabooEpubDownload } from '../utils/kitabooEpubDownload.js';
 
 const router = express.Router();
@@ -241,12 +242,30 @@ async function buildKitabooJobsList(user, scope) {
   });
 
   const allowedPdfs = await PdfService.getAllPdfs(user, scope);
-  const allowedIds = new Set(allowedPdfs.map((p) => String(p.id)));
-  return merged.filter((j) => {
-    const pid = j.pdfDocumentId ?? j.pdfId;
-    if (pid == null || pid === '') return false;
-    return allowedIds.has(String(pid));
-  });
+  const allowedById = new Map(allowedPdfs.map((p) => [String(p.id), p]));
+
+  return merged
+    .filter((j) => {
+      const pid = j.pdfDocumentId ?? j.pdfId;
+      if (pid == null || pid === '') return false;
+      return allowedById.has(String(pid));
+    })
+    .map((j) => {
+      const pid = j.pdfDocumentId ?? j.pdfId;
+      const pdf = pid != null ? allowedById.get(String(pid)) : null;
+      const fileName = pdf?.fileName ?? null;
+      const originalFileName = pdf?.originalFileName ?? null;
+
+      const isEpub = typeof fileName === 'string' && fileName.toLowerCase().endsWith('.epub');
+
+      return {
+        ...j,
+        pdfFilename: fileName,
+        originalFileName,
+        // Helps the frontend excludeEpubImports filter (isEpubSourceJob) reliably.
+        ...(isEpub ? { source: 'epub_direct_import', sourceType: 'epub' } : {}),
+      };
+    });
 }
 
 router.get('/jobs', noCache, async (req, res) => {
@@ -308,7 +327,21 @@ router.delete('/jobs/:jobId', async (req, res) => {
       if (e.code !== 'ENOENT') console.warn(`[KitabooRoute] Could not delete output dir: ${e.message}`);
     }
 
+    // Drop matching reflow conversion_jobs row when FXL shares the same numeric id.
+    const numericJobId = parseInt(jobId, 10);
+    if (!Number.isNaN(numericJobId)) {
+      try {
+        const { ConversionJobModel } = await import('../models/ConversionJob.js');
+        await ConversionJobModel.delete(numericJobId);
+      } catch (e) {
+        if (!e.message?.includes('not found')) {
+          console.warn(`[KitabooRoute] Could not delete conversion_jobs row for ${jobId}:`, e.message);
+        }
+      }
+    }
+
     cacheDelByPrefix('kitaboo:jobs:');
+    cacheDelByPrefix('conversions:');
     return res.status(204).send();
   } catch (error) {
     console.error('[KitabooRoute] Delete job error:', error);
@@ -1131,18 +1164,43 @@ router.get('/epub/:jobId/check', async (req, res) => {
 // ---------------------------------------------------------------------------
 
 /**
+ * Resolve in-memory Kitaboo job; restore from DB or rehydrate FXL EPUB import stubs when missing.
+ */
+async function ensureKitabooJobForSyncStudio(jobId) {
+  let job = kitabooFxlJobStore.get(jobId);
+  if (!job) {
+    const fromDb = await KitabooZoneModel.getJobByJobId(jobId);
+    if (fromDb) {
+      kitabooFxlJobStore.restore(jobId, fromDb.pdfId);
+      job = kitabooFxlJobStore.get(jobId);
+    }
+  }
+  if (job) return job;
+
+  const pdfId = parseInt(jobId, 10);
+  if (Number.isNaN(pdfId)) return null;
+  const pdf = await PdfDocumentModel.findById(pdfId);
+  if (!pdf) return null;
+  const layout = String(pdf.layout_type || pdf.layoutType || '').toUpperCase();
+  if (layout !== 'FIXED_LAYOUT' || !isEpubImportStubDocument(pdf)) return null;
+
+  try {
+    await EpubDirectImportService.rehydrateFxlImport(pdf);
+    return kitabooFxlJobStore.get(jobId);
+  } catch (err) {
+    console.error(`[KitabooRoute] FXL EPUB rehydrate failed for job ${jobId}:`, err.message);
+    return null;
+  }
+}
+
+/**
  * GET /api/kitaboo/sync-studio/:jobId
  * Load FXL Sync Studio data: pages with zones, audio URL, and alignment (if any).
  */
 router.get('/sync-studio/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
-    let job = kitabooFxlJobStore.get(jobId);
-    if (!job) {
-      const fromDb = await KitabooZoneModel.getJobByJobId(jobId);
-      if (fromDb) kitabooFxlJobStore.restore(jobId, fromDb.pdfId);
-      job = kitabooFxlJobStore.get(jobId);
-    }
+    const job = await ensureKitabooJobForSyncStudio(jobId);
     if (!job) return errorResponse(res, 'Job not found', 404);
 
     const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
@@ -1307,12 +1365,7 @@ router.put('/sync-studio/:jobId', async (req, res) => {
     const { segments } = req.body || {};
     if (!Array.isArray(segments)) return errorResponse(res, 'Body must include segments array', 400);
 
-    let job = kitabooFxlJobStore.get(jobId);
-    if (!job) {
-      const fromDb = await KitabooZoneModel.getJobByJobId(jobId);
-      if (fromDb) kitabooFxlJobStore.restore(jobId, fromDb.pdfId);
-      job = kitabooFxlJobStore.get(jobId);
-    }
+    const job = await ensureKitabooJobForSyncStudio(jobId);
     if (!job) return errorResponse(res, 'Job not found', 404);
 
     const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);

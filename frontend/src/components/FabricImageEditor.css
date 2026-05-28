@@ -129,39 +129,39 @@
 }
 
 .btn-primary {
-  background: #2196F3;
+  background: #2563eb;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #1976D2;
+  background: #2563eb;
 }
 
 .btn-secondary {
-  background: #4CAF50;
+  background: #2563eb;
   color: white;
 }
 
 .btn-secondary:hover {
-  background: #388E3C;
+  background: #2563eb;
 }
 
 .btn-danger {
-  background: #f44336;
+  background: #2563eb;
   color: white;
 }
 
 .btn-danger:hover {
-  background: #d32f2f;
+  background: #2563eb;
 }
 
 .btn-save {
-  background: #4CAF50;
+  background: #2563eb;
   color: white;
 }
 
 .btn-save:hover {
-  background: #388E3C;
+  background: #2563eb;
 }
 
 .btn-save:disabled {
@@ -170,12 +170,12 @@
 }
 
 .btn-cancel {
-  background: #757575;
+  background: #2563eb;
   color: white;
 }
 
 .btn-cancel:hover {
-  background: #616161;
+  background: #2563eb;
 }
 
 .object-info {
@@ -207,7 +207,7 @@
 
 .zoom-controls button:hover {
   background: #f0f0f0;
-  border-color: #2196F3;
+  border-color: #2563eb;
 }
 
 .toolbar-section.actions {
@@ -266,7 +266,7 @@
 
 .loading-spinner {
   padding: 1rem 2rem;
-  background: #2196F3;
+  background: #2563eb;
   color: white;
   border-radius: 4px;
   font-weight: 500;

@@ -123,7 +123,7 @@
   gap: 5px;
   font-size: 12px;
   font-weight: 600;
-  color: #16a34a;
+  color: #2563eb;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-radius: 20px;
@@ -169,20 +169,20 @@
 
 .pu-dropzone:hover,
 .pu-dropzone:focus-visible {
-  border-color: #6366f1;
+  border-color: #2563eb;
   background: #f5f3ff;
 }
 
 .pu-dropzone--over {
-  border-color: #6366f1;
+  border-color: #2563eb;
   background: #eef2ff;
   transform: scale(1.005);
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 .pu-dropzone-icon {
   font-size: 40px;
-  color: #6366f1;
+  color: #2563eb;
   margin-bottom: 4px;
   transition: transform 0.18s ease;
 }
@@ -205,7 +205,7 @@
 }
 
 .pu-dropzone-link {
-  color: #6366f1;
+  color: #2563eb;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -292,7 +292,7 @@
 .pu-file-remove:hover {
   background: #fef2f2;
   border-color: #fca5a5;
-  color: #dc2626;
+  color: #ef4444;
 }
 
 /* ── Upload progress bar ───────────────────────────────────────── */
@@ -306,7 +306,7 @@
 .pu-upload-progress-bar {
   flex: 1;
   height: 4px;
-  background: #6366f1;
+  background: #2563eb;
   border-radius: 99px;
   transition: width 0.3s ease;
   position: relative;
@@ -329,7 +329,7 @@
 .pu-upload-progress-pct {
   font-size: 11px;
   font-weight: 700;
-  color: #6366f1;
+  color: #2563eb;
   white-space: nowrap;
 }
 
@@ -361,12 +361,12 @@
 }
 
 .pu-layout-card:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
 .pu-layout-card--active {
-  border-color: #6366f1;
+  border-color: #2563eb;
   background: #eef2ff;
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
@@ -378,7 +378,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.3px;
-  color: #6366f1;
+  color: #2563eb;
   background: #e0e7ff;
   border: 1px solid #c7d2fe;
   border-top: none;
@@ -397,7 +397,7 @@
   height: 32px;
   border-radius: 8px;
   background: #e0e7ff;
-  color: #6366f1;
+  color: #2563eb;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -425,7 +425,7 @@
   letter-spacing: 0.3px;
 }
 .pu-layout-tag--blue   { background: #dbeafe; color: #1d4ed8; }
-.pu-layout-tag--purple { background: #ede9fe; color: #7c3aed; }
+.pu-layout-tag--purple { background: #ede9fe; color: #2563eb; }
 
 .pu-layout-desc {
   font-size: 12.5px;
@@ -443,7 +443,7 @@
   border-radius: 8px;
   background: #fef2f2;
   border: 1px solid #fecaca;
-  color: #dc2626;
+  color: #ef4444;
   font-size: 13.5px;
   font-weight: 500;
   margin-bottom: 16px;
@@ -505,14 +505,14 @@
 }
 
 .pu-btn--primary {
-  background: #6366f1;
+  background: #2563eb;
   color: #fff;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 .pu-btn--primary:hover:not(:disabled) {
-  background: #4f46e5;
+  background: #1d4ed8;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 }
 .pu-btn--primary:active:not(:disabled) {
   transform: translateY(0);
@@ -563,12 +563,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #92400e;
+  color: #ef4444;
 }
 
 .pu-tips-icon {
   font-size: 16px;
-  color: #d97706;
+  color: #ef4444;
   flex-shrink: 0;
 }
 
@@ -639,13 +639,13 @@
   align-items: flex-start;
   gap: 7px;
   font-size: 12.5px;
-  color: #78350f;
+  color: #ef4444;
   line-height: 1.5;
 }
 
 .pu-tips-check {
   font-size: 14px;
-  color: #d97706;
+  color: #ef4444;
   flex-shrink: 0;
   margin-top: 1px;
 }

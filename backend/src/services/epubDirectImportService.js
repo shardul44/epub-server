@@ -4,11 +4,9 @@ import JSZip from 'jszip';
 import { JSDOM } from 'jsdom';
 import sharp from 'sharp';
 import { getEpubOutputDir, getHtmlIntermediateDir, getUploadDir } from '../config/fileStorage.js';
-import { ConversionJobModel } from '../models/ConversionJob.js';
 import { PdfDocumentModel } from '../models/PdfDocument.js';
 import { KitabooZoneModel } from '../models/KitabooZone.js';
 import { kitabooFxlJobStore } from './kitabooFxlJobStore.js';
-import { ConversionService } from './conversionService.js';
 import { zonesFromHeuristicWildHtml } from '../utils/wildFxlHtmlHeuristic.js';
 
 /** @param {import('jszip')} zip */
@@ -254,7 +252,69 @@ export function detectEpubLayoutMode(opfXml) {
   return 'reflowable';
 }
 
+/** Parse OPF spine into ordered HTML manifest items (shared by import + rehydrate). */
+function parseFxlSpineHtmlItems(opfXml) {
+  const opfDom = new JSDOM(opfXml, { contentType: 'application/xml' });
+  const opfDoc = opfDom.window.document;
+  const manifest = opfDoc.querySelector('manifest');
+  const spine = opfDoc.querySelector('spine');
+  if (!manifest || !spine) throw new Error('Invalid OPF: missing manifest or spine');
+
+  const itemsById = {};
+  manifest.querySelectorAll('item').forEach((item) => {
+    const id = item.getAttribute('id');
+    const href = item.getAttribute('href');
+    const props = (item.getAttribute('properties') || '').toLowerCase();
+    const mt = (item.getAttribute('media-type') || '').toLowerCase();
+    if (id && href) itemsById[id] = { href, props, mediaType: mt };
+  });
+
+  const spineHtmlItems = [];
+  spine.querySelectorAll('itemref').forEach((ref) => {
+    const idref = ref.getAttribute('idref');
+    const it = itemsById[idref];
+    if (!it) return;
+    if (it.props.includes('nav')) return;
+    const isHtml =
+      it.mediaType.includes('html') ||
+      it.href.toLowerCase().endsWith('.xhtml') ||
+      it.href.toLowerCase().endsWith('.html');
+    if (!isHtml) return;
+    const base = path.basename(it.href).toLowerCase();
+    if (base === 'nav.xhtml' || base === 'toc.xhtml') return;
+    spineHtmlItems.push({ manifestId: idref, href: it.href });
+  });
+
+  const spineHrefs = spineHtmlItems.map((s) => s.href);
+  if (spineHrefs.length === 0) {
+    throw new Error('No fixed-layout pages found in spine (or only nav documents).');
+  }
+  return { spineHtmlItems, spineHrefs };
+}
+
 export class EpubDirectImportService {
+  /**
+   * Rebuild kitaboo intermediate + zones for an existing FXL EPUB import stub
+   * (e.g. after DELETE /kitaboo/jobs/:id or a partial import).
+   */
+  static async rehydrateFxlImport(pdfRecord) {
+    const fp = pdfRecord?.file_path || pdfRecord?.filePath;
+    if (!fp) throw new Error('Imported EPUB file path is missing');
+    await fs.access(fp);
+    const epubBuffer = await fs.readFile(fp);
+    const zip = await JSZip.loadAsync(epubBuffer);
+    const opfPaths = listOpfPaths(zip);
+    if (opfPaths.length === 0) throw new Error('No OPF package document found in EPUB');
+    const opfPath = opfPaths.includes('OEBPS/content.opf') ? 'OEBPS/content.opf' : opfPaths[0];
+    const opfXml = await zip.file(opfPath).async('string');
+    const jobId = String(pdfRecord.id);
+    const result = await this._buildFxlKitabooAssets(zip, opfPath, opfXml, jobId, pdfRecord.id);
+    kitabooFxlJobStore.start(pdfRecord.id, jobId);
+    kitabooFxlJobStore.complete(jobId, result.pages, [], 'sentence');
+    console.log(`[EpubImport FXL] Rehydrated kitaboo job ${jobId} from ${path.basename(fp)} (${result.pageCount} pages)`);
+    return result;
+  }
+
   /**
    * @param {Buffer} epubBuffer
    * @param {string} originalName
@@ -303,78 +363,24 @@ export class EpubDirectImportService {
     });
 
     await fs.writeFile(pdfRecord.file_path, epubBuffer);
-
-    let job = await ConversionJobModel.create({
-      pdfDocumentId: pdfRecord.id,
-      status: 'PENDING',
-      currentStep: null,
-      progressPercentage: 0,
-      intermediateData: JSON.stringify({
-        source: 'epub_direct_import',
-        originalFileName: originalName,
-        layout: 'reflowable'
-      })
-    });
-
     const epubDir = getEpubOutputDir();
     await fs.mkdir(epubDir, { recursive: true });
-    const destEpub = path.join(epubDir, `epub_${job.id}.epub`);
+    // Store the EPUB in the standard location used by EpubService:
+    //   epub_<jobId>.epub / converted_<jobId>.epub / job_<jobId>.epub
+    // For direct import we use the PdfDocument stub id as the "jobId".
+    const destEpub = path.join(epubDir, `epub_${pdfRecord.id}.epub`);
     await fs.writeFile(destEpub, epubBuffer);
 
-    job = await ConversionJobModel.update(job.id, {
-      status: 'COMPLETED',
-      progressPercentage: 100,
-      epubFilePath: destEpub,
-      completedAt: new Date(),
-      intermediateData: JSON.stringify({
-        source: 'epub_direct_import',
-        originalFileName: originalName,
-        layout: 'reflowable'
-      })
-    });
-
     return {
-      job: ConversionService.convertToDTO(job),
-      syncStudioPath: `/sync-studio/${job.id}`
+      kind: 'reflowable',
+      jobId: pdfRecord.id,
+      pdfId: pdfRecord.id,
+      syncStudioPath: `/sync-studio/${pdfRecord.id}`
     };
   }
 
   static async _importFxl(zip, opfPath, opfXml, originalName, epubBuffer, owner = null) {
-    const opfDom = new JSDOM(opfXml, { contentType: 'application/xml' });
-    const opfDoc = opfDom.window.document;
-    const manifest = opfDoc.querySelector('manifest');
-    const spine = opfDoc.querySelector('spine');
-    if (!manifest || !spine) throw new Error('Invalid OPF: missing manifest or spine');
-
-    const itemsById = {};
-    manifest.querySelectorAll('item').forEach((item) => {
-      const id = item.getAttribute('id');
-      const href = item.getAttribute('href');
-      const props = (item.getAttribute('properties') || '').toLowerCase();
-      const mt = (item.getAttribute('media-type') || '').toLowerCase();
-      if (id && href) itemsById[id] = { href, props, mediaType: mt };
-    });
-
-    /** Ordered spine HTML items with manifest id (for preserve-import publish: SMIL → original XHTML hrefs). */
-    const spineHtmlItems = [];
-    spine.querySelectorAll('itemref').forEach((ref) => {
-      const idref = ref.getAttribute('idref');
-      const it = itemsById[idref];
-      if (!it) return;
-      if (it.props.includes('nav')) return;
-      const isHtml =
-        it.mediaType.includes('html') ||
-        it.href.toLowerCase().endsWith('.xhtml') ||
-        it.href.toLowerCase().endsWith('.html');
-      if (!isHtml) return;
-      const base = path.basename(it.href).toLowerCase();
-      if (base === 'nav.xhtml' || base === 'toc.xhtml') return;
-      spineHtmlItems.push({ manifestId: idref, href: it.href });
-    });
-
-    const spineHrefs = spineHtmlItems.map((s) => s.href);
-
-    if (spineHrefs.length === 0) throw new Error('No fixed-layout pages found in spine (or only nav documents).');
+    const { spineHrefs } = parseFxlSpineHtmlItems(opfXml);
 
     const uploadsDir = path.join(getUploadDir(), 'epub_imports');
     await fs.mkdir(uploadsDir, { recursive: true });
@@ -399,20 +405,7 @@ export class EpubDirectImportService {
 
     await fs.writeFile(pendingEpubPath, epubBuffer);
 
-    let job = await ConversionJobModel.create({
-      pdfDocumentId: pdfRecord.id,
-      status: 'COMPLETED',
-      currentStep: null,
-      progressPercentage: 100,
-      intermediateData: JSON.stringify({
-        source: 'epub_direct_import',
-        originalFileName: originalName,
-        layout: 'fxl'
-      }),
-      completedAt: new Date()
-    });
-
-    const jobId = String(job.id);
+    const jobId = String(pdfRecord.id);
     const finalEpubPath = path.join(uploadsDir, `fxl_stub_${jobId}.epub`);
     try {
       await fs.rename(pendingEpubPath, finalEpubPath);
@@ -421,7 +414,21 @@ export class EpubDirectImportService {
       await fs.unlink(pendingEpubPath).catch(() => {});
     }
     await PdfDocumentModel.update(pdfRecord.id, { filePath: finalEpubPath });
-    job = await ConversionJobModel.update(job.id, { epubFilePath: finalEpubPath });
+
+    const built = await this._buildFxlKitabooAssets(zip, opfPath, opfXml, jobId, pdfRecord.id);
+    kitabooFxlJobStore.start(pdfRecord.id, jobId);
+    kitabooFxlJobStore.complete(jobId, built.pages, [], 'sentence');
+
+    return {
+      jobId,
+      pdfId: pdfRecord.id,
+      pageCount: built.pageCount,
+      fxlSyncStudioPath: `/fxl-sync-studio/${jobId}`
+    };
+  }
+
+  static async _buildFxlKitabooAssets(zip, opfPath, opfXml, jobId, pdfId) {
+    const { spineHtmlItems, spineHrefs } = parseFxlSpineHtmlItems(opfXml);
 
     const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
     const webpDir = path.join(intermediateDir, 'webp');
@@ -578,7 +585,7 @@ export class EpubDirectImportService {
         }
       }
 
-      await KitabooZoneModel.saveZonesForJob(jobId, pdfRecord.id, pageNum, zones);
+      await KitabooZoneModel.saveZonesForJob(jobId, pdfId, pageNum, zones);
 
       pages.push({
         pageNumber: pageNum,
@@ -604,15 +611,6 @@ export class EpubDirectImportService {
       'utf8'
     );
 
-    kitabooFxlJobStore.start(pdfRecord.id, jobId);
-    kitabooFxlJobStore.complete(jobId, pages, [], 'sentence');
-
-    return {
-      job: ConversionService.convertToDTO(job),
-      jobId,
-      pdfId: pdfRecord.id,
-      pageCount: pages.length,
-      fxlSyncStudioPath: `/fxl-sync-studio/${jobId}`
-    };
+    return { pages, pageCount: pages.length };
   }
 }

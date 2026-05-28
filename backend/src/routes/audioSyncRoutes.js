@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
 import { AudioSyncService } from '../services/audioSyncService.js';
 import { AudioSyncModel } from '../models/AudioSync.js';
 import { ConversionJobModel } from '../models/ConversionJob.js';
+import { PdfDocumentModel } from '../models/PdfDocument.js';
 import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from '../utils/responseHandler.js';
 import { getUploadDir, getTtsOutputDir } from '../config/fileStorage.js';
 import { aeneasService } from '../services/aeneasService.js';
@@ -58,20 +59,21 @@ const audioUpload = multer({
 async function resolveJobAudioPath(jobId) {
   const id = jobId != null ? String(jobId).trim() : '';
   if (!id) return null;
-  const job = await ConversionJobModel.findById(parseInt(id, 10));
-  if (!job) return null;
+  const job = await ConversionJobModel.findById(parseInt(id, 10)).catch(() => null);
   const audioDir = path.join(getUploadDir(), 'audio');
   const ttsDir = getTtsOutputDir();
 
   // Check activeAudioSource preference stored in intermediate_data
   // When TTS is generated we set this to 'tts' so uploaded file is bypassed even if it still exists on disk
   let activeAudioSource = null;
-  try {
-    const intermediate = typeof job.intermediate_data === 'string'
-      ? JSON.parse(job.intermediate_data)
-      : (job.intermediate_data || {});
-    activeAudioSource = intermediate?.activeAudioSource ?? null; // 'tts' | 'uploaded' | null
-  } catch (_) { }
+  if (job) {
+    try {
+      const intermediate = typeof job.intermediate_data === 'string'
+        ? JSON.parse(job.intermediate_data)
+        : (job.intermediate_data || {});
+      activeAudioSource = intermediate?.activeAudioSource ?? null; // 'tts' | 'uploaded' | null
+    } catch (_) { }
+  }
 
   const uploadedPath = path.join(audioDir, `uploaded_audio_${id}.mp3`);
   const ttsCandidates = [
@@ -163,8 +165,12 @@ router.get('/sync-studio/:jobId', async (req, res) => {
   try {
     const jobId = parseInt(req.params.jobId, 10);
     if (isNaN(jobId)) return badRequestResponse(res, 'Invalid job ID');
-    const job = await ConversionJobModel.findById(jobId);
-    if (!job) return notFoundResponse(res, 'Conversion job not found');
+    let job = await ConversionJobModel.findById(jobId);
+    if (!job) {
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'Conversion job not found');
+      job = { pdf_document_id: pdf.id, intermediate_data: null };
+    }
     let sections;
     try {
       sections = await EpubService.getEpubSections(jobId);
@@ -531,8 +537,12 @@ router.post('/sync-studio/:jobId/align', async (req, res) => {
     const usePerSectionAudio = Boolean(perSectionAudio || inferredPerSectionAudio);
     // Optional: manual section boundaries (start/end per section) for per-section Aeneas = FXL-style accuracy
     // perSectionAudio: when true, each section uses its own uploaded/TTS audio file instead of a global slice
-    const job = await ConversionJobModel.findById(jobId);
-    if (!job) return notFoundResponse(res, 'Conversion job not found');
+    let job = await ConversionJobModel.findById(jobId);
+    if (!job) {
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'Conversion job not found');
+      job = { pdf_document_id: pdf.id };
+    }
     let sections;
     try {
       sections = await EpubService.getEpubSections(jobId);
@@ -1133,8 +1143,12 @@ router.put('/sync-studio/:jobId', async (req, res) => {
     if (isNaN(jobId)) return badRequestResponse(res, 'Invalid job ID');
     const { segments, readingOrder, pageNumber, orderKey } = req.body || {};
     if (!Array.isArray(segments)) return badRequestResponse(res, 'Body must include segments array');
-    const job = await ConversionJobModel.findById(jobId);
-    if (!job) return notFoundResponse(res, 'Conversion job not found');
+    let job = await ConversionJobModel.findById(jobId);
+    if (!job) {
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'Conversion job not found');
+      job = { pdf_document_id: pdf.id };
+    }
     const existingSyncs = await AudioSyncModel.findByJobId(jobId);
     let firstAudioPath = existingSyncs[0]?.audio_file_path || null;
 
@@ -1663,9 +1677,11 @@ router.post('/save-sync-blocks', async (req, res) => {
     }
 
     // Get job to get PDF ID
-    const job = await ConversionJobModel.findById(jobId);
+    let job = await ConversionJobModel.findById(jobId);
     if (!job) {
-      return notFoundResponse(res, 'Conversion job not found');
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'Conversion job not found');
+      job = { pdf_document_id: pdf.id };
     }
 
     // CRITICAL FIX: Also save excluded blocks with shouldRead: false marker
@@ -1834,12 +1850,16 @@ router.post('/auto-sync', async (req, res) => {
     console.log(`[AutoSync] Language: ${language}, Granularity: ${granularity}`);
 
     // Get job info
-    const job = await ConversionJobModel.findById(jobId);
+    let job = await ConversionJobModel.findById(jobId);
     if (!job) {
-      console.log(`[AutoSync] Error: Job ${jobId} not found`);
-      return notFoundResponse(res, 'Conversion job not found');
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) {
+        console.log(`[AutoSync] Error: Job ${jobId} not found`);
+        return notFoundResponse(res, 'Conversion job not found');
+      }
+      job = { id: jobId, pdf_document_id: pdf.id };
     }
-    console.log(`[AutoSync] Found job:`, job.id);
+    console.log(`[AutoSync] Found job:`, job.id ?? jobId);
 
     // Get XHTML content from EPUB
     let sections;
@@ -2187,10 +2207,12 @@ router.post('/magic-align', async (req, res) => {
     console.log(`[MagicAlign] Starting Magic Sync (Gemini-only timestamps) for job ${jobId}`);
     console.log(`[MagicAlign] Language: ${language}, Granularity: ${granularity}`);
 
-    // Get job info
-    const job = await ConversionJobModel.findById(jobId);
+    // Get job info (optional for direct EPUB imports)
+    let job = await ConversionJobModel.findById(jobId);
     if (!job) {
-      return notFoundResponse(res, 'Conversion job not found');
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'Conversion job not found');
+      job = { id: jobId, pdf_document_id: pdf.id };
     }
 
     // Get XHTML content from EPUB
@@ -2544,10 +2566,12 @@ router.post('/batch-auto-sync', async (req, res) => {
 
     console.log(`[BatchAutoSync] Starting batch alignment for job ${jobId}`);
 
-    // Get job info
-    const job = await ConversionJobModel.findById(jobId);
+    // Get job info (optional for direct EPUB imports)
+    let job = await ConversionJobModel.findById(jobId);
     if (!job) {
-      return notFoundResponse(res, 'Conversion job not found');
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'Conversion job not found');
+      job = { id: jobId, pdf_document_id: pdf.id };
     }
 
     // Get all EPUB sections

@@ -13,10 +13,10 @@
   cursor: default;
 }
 
-/* ── Book card (gradient area) ──────────────────────────────── */
+/* ── Book card (gradient area) — compact ~230×307 (3:4) ─────── */
 .pdc-book {
   position: relative;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
   aspect-ratio: 3 / 4;
   width: 100%;
@@ -24,9 +24,9 @@
   flex-direction: column;
   cursor: pointer;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-              box-shadow 0.25s ease;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.22s ease;
   outline: none;
   background-size: cover;
   background-position: center top;
@@ -82,6 +82,28 @@
   pointer-events: none;
 }
 
+/* EPUB import stub — no PDF on disk for thumbnail */
+.pdc-thumb-epub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.pdc-thumb-epub-label {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+}
+
+.pdc-book:has(.pdc-thumb-epub) .pdc-body {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* PdfThumbnail loading/error states inside the card */
 .pdc-thumb-img.pdf-thumb--loading,
 .pdc-thumb-img.pdf-thumb--error {
@@ -117,8 +139,8 @@
 }
 
 .pdc-card:hover .pdc-book {
-  transform: translateY(-5px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
 }
 
 .pdc-book:focus-visible {
@@ -131,7 +153,7 @@
   position: absolute;
   inset-block: 0;
   left: 0;
-  width: 8px;
+  width: 6px;
   background: linear-gradient(to bottom, rgba(0,0,0,0.28), rgba(0,0,0,0.08), rgba(0,0,0,0.28));
   z-index: 3;
   pointer-events: none;
@@ -140,9 +162,9 @@
 /* Right page-edge highlight */
 .pdc-spine-right {
   position: absolute;
-  inset-block: 4px;
+  inset-block: 3px;
   right: 0;
-  width: 4px;
+  width: 3px;
   background: rgba(255, 255, 255, 0.65);
   z-index: 3;
   pointer-events: none;
@@ -151,9 +173,9 @@
 /* ── Top badges ─────────────────────────────────────────────── */
 .pdc-badges {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
+  top: 8px;
+  left: 8px;
+  right: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -164,13 +186,18 @@
 .pdc-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 10px;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
+}
+
+.pdc-badge svg {
+  width: 10px;
+  height: 10px;
 }
 
 .pdc-badge-pdf {
@@ -199,7 +226,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px 16px;
+  padding: 36px 12px 12px;
   text-align: center;
   z-index: 3;
   transition: opacity 0.2s ease;
@@ -207,23 +234,28 @@
 
 /* Book icon box */
 .pdc-center-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
   color: rgba(0, 0, 0, 0.65);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 8px;
   flex-shrink: 0;
+}
+
+.pdc-center-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* File name */
 .pdc-name {
-  margin: 0 0 4px;
-  font-size: 13px;
+  margin: 0 0 3px;
+  font-size: 12px;
   font-weight: 700;
   color: rgba(0, 0, 0, 0.88);
   display: -webkit-box;
@@ -231,14 +263,14 @@
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.35;
+  line-height: 1.3;
   max-width: 100%;
 }
 
 /* Pages · layout type */
 .pdc-sub {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   color: rgba(0, 0, 0, 0.55);
 }
@@ -248,7 +280,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 15px;
+  padding: 8px 10px;
   background: rgba(207, 218, 241, 0.72);
   backdrop-filter: blur(6px);
   z-index: 3;
@@ -256,10 +288,10 @@
 }
 
 .pdc-bottom-text {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: rgba(0, 0, 0, 0.6);
-  letter-spacing: 0.2px;
+  letter-spacing: 0.15px;
 }
 
 /* ── Hover overlay ──────────────────────────────────────────── */
@@ -270,11 +302,11 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 12px;
+  padding: 8px;
   z-index: 10;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.22s ease;
 }
 
 .pdc-card:hover .pdc-hover-overlay {
@@ -286,7 +318,7 @@
 .pdc-overlay-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   width: 100%;
 }
 
@@ -296,18 +328,24 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 7px 10px;
+  gap: 4px;
+  padding: 6px 8px;
   background: #2563eb;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 7px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, transform 0.13s;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}
+
+.pdc-overlay-primary svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
 }
 .pdc-overlay-primary:hover {
   background: #1d4ed8;
@@ -322,10 +360,10 @@
 
 /* Icon-only buttons (eye, three-dot) */
 .pdc-overlay-icon-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: 7px;
   background: rgba(255, 255, 255, 0.9);
   color: #374151;
   display: flex;
@@ -335,6 +373,11 @@
   flex-shrink: 0;
   transition: background 0.14s, transform 0.12s;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.pdc-overlay-icon-btn svg {
+  width: 14px;
+  height: 14px;
 }
 .pdc-overlay-icon-btn:hover {
   background: #fff;
@@ -409,28 +452,34 @@
 
 /* ── Below-card info ────────────────────────────────────────── */
 .pdc-info {
-  padding: 8px 2px 2px;
+  padding: 6px 2px 0;
 }
 
 .pdc-info-name {
-  margin: 0 0 3px;
-  font-size: 14px;
+  margin: 0 0 2px;
+  font-size: 13px;
   font-weight: 700;
   color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .pdc-info-meta {
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 8px;
-  font-weight: 700;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
   color: #6b7280;
+}
+
+.pdc-info-meta svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
 }
 
 .pdc-info-sep {

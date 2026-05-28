@@ -56,7 +56,7 @@ function buildStepPaths(jobId, job) {
   });
 }
 
-const WorkflowStepper = memo(({ activeStep, jobId, job, onStepClick }) => {
+const WorkflowStepper = memo(({ activeStep, jobId, job, onStepClick, disabledStepKeys = [] }) => {
   const steps = buildStepPaths(jobId, job);
 
   return (
@@ -64,7 +64,7 @@ const WorkflowStepper = memo(({ activeStep, jobId, job, onStepClick }) => {
       {steps.map((step, idx) => {
         const done   = idx < activeStep;
         const active = idx === activeStep;
-        const locked = idx > activeStep;
+        const locked = idx > activeStep || disabledStepKeys.includes(step.key);
         return (
           <button
             key={step.key}

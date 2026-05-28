@@ -423,7 +423,7 @@ const OrgDashboard = () => {
                       : `Conversion failed at step ${job.failedStep ?? 1}`;
 
                   return (
-                    <div key={job.id} className="ds-attn-item">
+                    <div key={`${job.jobType || 'JOB'}-${job.id}`} className="ds-attn-item">
                       {/* left: name + sub + action */}
                       <div className="ds-attn-body">
                         <span className="ds-attn-name">{name}</span>

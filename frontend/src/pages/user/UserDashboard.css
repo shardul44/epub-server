@@ -97,15 +97,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
+  gap: 20px;
   flex-wrap: wrap;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 24px 28px;
+  border-radius: 12px;
+  padding: 18px 22px;
   color: #111827;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.15s ease;
@@ -120,14 +120,14 @@
   min-width: min(100%, 280px);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .ud-hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 10px;
+  gap: 6px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -135,7 +135,7 @@
   background: #dcfce7;
   border: 1px solid #bbf7d0;
   border-radius: 20px;
-  padding: 5px 12px 5px 10px;
+  padding: 3px 10px 3px 8px;
   width: fit-content;
 }
 
@@ -149,19 +149,19 @@
 
 .ud-hero-title {
   margin: 0;
-  font-size: 1.65rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   color: #111827;
 }
 
 .ud-hero-desc {
   margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.55;
+  font-size: 0.8125rem;
+  line-height: 1.5;
   color: #6b7280;
-  max-width: 52ch;
+  max-width: 100ch;
 }
 
 .ud-hero-desc strong {
@@ -172,8 +172,14 @@
 .ud-hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 6px;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ud-hero .ud-btn {
+  padding: 7px 14px;
+  font-size: 0.8125rem;
+  border-radius: 8px;
 }
 
 .ud-btn {
@@ -216,13 +222,13 @@
 
 /* Hero-only button styles (green primary, outlined secondary) */
 .ud-hero .ud-btn--solid {
-  background: #16a34a;
+  background: #2563eb;
   color: #fff;
   box-shadow: 0 1px 2px rgba(21, 128, 61, 0.2);
 }
 
 .ud-hero .ud-btn--solid:hover {
-  background: #15803d;
+  background: #2563eb;
   color: #fff;
   transform: translateY(-1px);
 }
@@ -241,31 +247,31 @@
 .ud-hero-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
   align-items: stretch;
 }
 
 .ud-hero-stat {
-  flex: 1 1 88px;
-  min-width: 88px;
-  max-width: 120px;
+  flex: 1 1 76px;
+  min-width: 76px;
+  max-width: 108px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 14px 12px;
+  gap: 6px;
+  padding: 10px 10px;
   text-align: center;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 10px;
   box-sizing: border-box;
 }
 
 .ud-hero-stat-lbl {
   margin: 0;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -276,7 +282,7 @@
 .ud-hero-stat-val {
   display: block;
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.15;
   color: #111827;
@@ -291,7 +297,7 @@
 }
 
 .ud-hero-stat-val--dash {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -309,7 +315,7 @@
 }
 
 .ud-hero-stat--loading {
-  min-height: 92px;
+  min-height: 72px;
 }
 
 .ud-hero-stat-skel {
@@ -340,12 +346,26 @@
   }
 }
 
-/* ── Main / aside split ── */
+/* ── Bottom row: recent activity (wide) + needs attention (narrow) ── */
 .ud-split {
   display: grid;
-  grid-template-columns: 1fr min(320px, 34vw);
-  gap: 18px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.ud-split-card {
+  min-width: 0;
+}
+
+.ud-split-card--attention {
+  display: flex;
+  flex-direction: column;
+}
+
+.ud-split-card--attention .ud-insight-card {
+  flex: 1;
+  min-height: 100%;
 }
 
 @media (max-width: 960px) {
@@ -515,15 +535,16 @@
   margin-top: 0;
 }
 
-/* ── Insights grid (6 cards) ─────────────────────────────────── */
+/* ── Top row: throughput, storage, job status ── */
 .ud-insights {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 .ud-insights-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+  align-items: stretch;
 }
 
 @media (max-width: 1100px) {
@@ -836,12 +857,12 @@
   width: 100%;
   border-radius: 0 0 8px 8px;
   min-height: 4px;
-  background: #93c5fd;
+  background: #e5e7eb;
   transition: height 0.25s ease;
 }
 
 .ud-chart-fill--peak {
-  background: #1d4ed8;
+  background: #2563eb;
 }
 
 .ud-chart-lbl {
@@ -851,7 +872,8 @@
 }
 
 .ud-chart-lbl--peak {
-  color: #1d4ed8;
+  color: #2563eb;
+  font-weight: 700;
 }
 
 /* TTS rows */
@@ -865,19 +887,13 @@
 }
 
 .ud-insight-tts-row {
-  display: grid;
-  grid-template-columns: 10px 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 10px;
-  row-gap: 4px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .ud-insight-tts-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  grid-row: 1 / span 2;
+  display: none;
 }
 
 .ud-insight-tts-info {
@@ -885,7 +901,6 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
-  grid-column: 2;
 }
 
 .ud-insight-tts-name {
@@ -901,7 +916,6 @@
 }
 
 .ud-insight-tts-bar-wrap {
-  grid-column: 2;
   height: 6px;
   border-radius: 999px;
   background: #f3f4f6;

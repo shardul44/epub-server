@@ -19,10 +19,23 @@ function fmtNum(n) {
   return Number.isFinite(x) ? x.toLocaleString() : '—';
 }
 
+function toIsoDateOnly(d) {
+  if (d == null || d === '') return '';
+  if (d instanceof Date) {
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toISOString().slice(0, 10);
+  }
+  const s = String(d).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  const parsed = new Date(s);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+  return '';
+}
+
+/** YYYY-MM-DD for table display. */
 function fmtDateShort(d) {
-  if (d == null || d === '') return '—';
-  const s = typeof d === 'string' ? d : String(d);
-  return s.slice(0, 10);
+  const iso = toIsoDateOnly(d);
+  return iso || '—';
 }
 
 function fmtRenewal(validUntil) {
@@ -139,8 +152,8 @@ export default function PlatformBilling() {
     setPlanOrg(org);
     const today = new Date().toISOString().slice(0, 10);
     setPlanId(org.planId != null ? String(org.planId) : plans[0]?.id != null ? String(plans[0].id) : '');
-    setSubValidFrom(org.validFrom ? fmtDateShort(org.validFrom) : today);
-    setSubValidUntil(org.validUntil ? fmtDateShort(org.validUntil) : defaultUntilDate());
+    setSubValidFrom(toIsoDateOnly(org.validFrom) || today);
+    setSubValidUntil(toIsoDateOnly(org.validUntil) || defaultUntilDate());
   };
 
   const closeQuotaModal = () => {

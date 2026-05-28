@@ -15,6 +15,9 @@ import { pdfService } from '../services/pdfService';
 import { mediaUrl } from '../utils/mediaUrl';
 import { pdfViewUrl } from '../services/api';
 import { isEpubImportStub } from '../utils/pdfDocumentSource';
+import { resolveSyncStudioJobForPdf } from '../utils/resolveSyncStudioJob';
+import { useConversionsQuery } from '../hooks/queries/useConversionsQuery';
+import { audioSyncPath } from '../hooks/useWorkflowNavigation';
 import {
   Search,
   SlidersHorizontal,
@@ -83,10 +86,23 @@ function formatUploaded(createdAt) {
   };
 }
 
-const RowThumbnail = memo(({ pdfId }) => {
+const EpubThumbPlaceholder = () => (
+  <div className="upl-thumb upl-thumb-epub" aria-hidden="true">
+    <span className="upl-thumb-epub-label">EPUB</span>
+  </div>
+);
+
+const RowThumbnail = memo(({ pdfId, epubOnly = false }) => {
   const idKey = pdfId != null ? String(pdfId) : '';
   const cacheKey = idKey ? `pdf-thumb-card-${idKey}` : null;
-  const pdfUrl = useMemo(() => (idKey ? pdfViewUrl(idKey) : null), [idKey]);
+  const pdfUrl = useMemo(
+    () => (!epubOnly && idKey ? pdfViewUrl(idKey) : null),
+    [idKey, epubOnly],
+  );
+
+  if (epubOnly) {
+    return <EpubThumbPlaceholder />;
+  }
 
   if (!pdfUrl) {
     return (
@@ -233,7 +249,7 @@ const PdfTableRow = memo(({
       </td>
       <td>
         <div className="upl-name-cell">
-          <RowThumbnail pdfId={pdf.id} />
+          <RowThumbnail pdfId={pdf.id} epubOnly={epubOnly} />
           <div className="upl-name-text">
             <p className="upl-name" title={pdf.originalFileName}>{pdf.originalFileName || 'Unnamed PDF'}</p>
             <p className="upl-id">ID #{pdf.id}</p>
@@ -300,8 +316,11 @@ export default function UploadedPdfsList({
   const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf, deleteMutation } = usePdfs();
   const copy = COPY[epubOnly ? 'epub' : 'pdf'];
 
+  // Warm conversion job cache so Sync Studio can resolve EPUB import rows.
+  useConversionsQuery({ enabled: epubOnly, excludeEpubImports: false });
+
   const libraryPdfs = useMemo(
-    () => (epubOnly ? pdfs.filter(isEpubImportStub) : pdfs),
+    () => (epubOnly ? pdfs.filter(isEpubImportStub) : pdfs.filter((p) => !isEpubImportStub(p))),
     [pdfs, epubOnly],
   );
 
@@ -319,6 +338,7 @@ export default function UploadedPdfsList({
   const [hifiSubmitting, setHifiSubmitting] = useState(false);
   const [deleteModal, setDeleteModal] = useState({ open: false, pdfId: null });
   const [previewPdf, setPreviewPdf] = useState(null);
+  const [syncOpeningId, setSyncOpeningId] = useState(null);
   const filterRef = useRef(null);
   const rowRefs = useRef({});
   const deleteModalRef = useRef(null);
@@ -421,6 +441,7 @@ export default function UploadedPdfsList({
         });
         try {
           localStorage.removeItem(`pdf-thumb-card-${pdfId}`);
+          localStorage.removeItem(`pdf-thumb-card-hd-${pdfId}`);
         } catch (_) { /* ignore */ }
       },
       onError: (err) => {
@@ -444,25 +465,36 @@ export default function UploadedPdfsList({
     setHifiTocEndPage('');
   };
 
-  const handleOpenEpubImport = useCallback((pdf) => {
+  const handleOpenEpubImport = useCallback(async (pdf) => {
     if (!pdf?.id) return;
-    const jobs = queryClient.getQueryData(queryKeys.conversions.list(listScope)) || [];
-    const match = Array.isArray(jobs)
-      ? jobs.find((j) => String(j.pdfDocumentId ?? j.pdfId) === String(pdf.id))
-      : null;
-    if (match) {
-      const jobId = match.id ?? match.jobId;
-      const isFxl =
-        match.jobType === 'FXL' ||
-        pdf.layoutType === 'FIXED_LAYOUT' ||
-        (typeof match.intermediateData === 'string' &&
-          match.intermediateData.includes('"layout":"fxl"'));
-      navigate(isFxl ? `/fxl-sync-studio/${jobId}` : `/sync-studio/${jobId}`);
-      return;
+    setSyncOpeningId(pdf.id);
+    setError('');
+    try {
+      const resolved = await resolveSyncStudioJobForPdf(pdf, { queryClient, listScope });
+      if (resolved?.job) {
+        const jobForNav = {
+          ...resolved.job,
+          jobType: resolved.isFxl ? 'FXL' : 'REFLOW',
+          layoutType: pdf.layoutType,
+        };
+        navigate(audioSyncPath(jobForNav));
+        return;
+      }
+      setError(
+        'No sync job found for this EPUB. Upload it again with the form above, or check Conversion Jobs.',
+      );
+      setTimeout(() => setError(''), 8000);
+    } catch (err) {
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Could not open Sync Studio.';
+      setError(msg);
+      setTimeout(() => setError(''), 8000);
+    } finally {
+      setSyncOpeningId(null);
     }
-    setError('No sync job found for this EPUB. Re-import via EPUB Sync or check Conversions.');
-    setTimeout(() => setError(''), 8000);
-    navigate('/conversions');
   }, [queryClient, listScope, navigate]);
 
   const handlePreview = useCallback((pdf) => {
@@ -605,7 +637,10 @@ export default function UploadedPdfsList({
                   onDownload={handleDownload}
                   onOpenEpubImport={handleOpenEpubImport}
                   onFileNotFound={() => {
-                    try { localStorage.removeItem(`pdf-thumb-card-${pdf.id}`); } catch (_) { /* ignore */ }
+                    try {
+                      localStorage.removeItem(`pdf-thumb-card-${pdf.id}`);
+                      localStorage.removeItem(`pdf-thumb-card-hd-${pdf.id}`);
+                    } catch (_) { /* ignore */ }
                     removePdf(pdf.id);
                   }}
                 />

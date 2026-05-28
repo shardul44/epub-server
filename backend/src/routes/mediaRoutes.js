@@ -1,6 +1,7 @@
 /**
  * Media Library routes
  * GET    /media          — list assets (member: own uploads; org_admin: org library)
+ * GET    /media/:id/download — download an asset (attachment)
  * POST   /media/upload   — upload a new asset
  * DELETE /media/:id      — delete an asset
  */
@@ -195,6 +196,46 @@ router.post('/upload', async (req, res) => {
     try { await fs.unlink(path.join(MEDIA_DIR, filename)); } catch (_) { /* ignore */ }
     console.error('[media] POST /media/upload DB error:', err.stack || err);
     return errorResponse(res, `Upload failed: ${err.message}`, 500);
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────── */
+/* GET /media/:id/download                                          */
+/* ─────────────────────────────────────────────────────────────── */
+router.get('/:id/download', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
+
+  try {
+    const [rows] = await pool.execute(
+      'SELECT * FROM media_assets WHERE id = ? LIMIT 1',
+      [id]
+    );
+    if (!rows.length) return notFoundResponse(res, 'Asset not found');
+
+    const asset = rows[0];
+
+    if (!canAccessMediaAsset(req.user, asset)) {
+      return forbiddenResponse(res, 'You do not have permission to download this asset');
+    }
+
+    const filePath = asset.storage_path;
+    try {
+      await fs.access(filePath);
+    } catch {
+      return notFoundResponse(res, 'File not found on disk');
+    }
+
+    const downloadName = (asset.original_name || asset.filename || 'asset').replace(/"/g, '\\"');
+    res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+    res.setHeader('Content-Type', asset.mime_type || 'application/octet-stream');
+
+    const fileBuffer = await fs.readFile(filePath);
+    return res.send(fileBuffer);
+  } catch (err) {
+    console.error('[media] GET /media/:id/download error:', err);
+    return errorResponse(res, err.message, 500);
   }
 });
 

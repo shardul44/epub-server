@@ -76,6 +76,23 @@
   }
 }
 
+/* ── Absent state (e.g. EPUB stub, missing PDF on disk) ── */
+.pdf-thumb--absent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+}
+
+.pdf-thumb-absent-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #6b7280;
+}
+
 /* ── Error state ── */
 .pdf-thumb--error {
   display: flex;

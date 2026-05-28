@@ -4,6 +4,7 @@ import { KitabooZoneModel } from '../models/KitabooZone.js';
 import { kitabooFxlJobStore } from '../services/kitabooFxlJobStore.js';
 import { forbiddenResponse, notFoundResponse, badRequestResponse } from '../utils/responseHandler.js';
 import { canAccessPdfRow } from '../utils/tenantScope.js';
+import { isEpubImportStubDocument } from '../utils/pdfDocumentSource.js';
 
 export async function loadPdfIfAccessible(user, pdfId) {
   if (pdfId == null || pdfId === '') return null;
@@ -56,6 +57,15 @@ export async function paramJobTenantAccess(req, res, next, jobId) {
       if (resolved) {
         req.tenantPdf = resolved.pdf;
         req.tenantJob = resolved.job;
+        return next();
+      }
+
+      // Reflowable EPUB direct-import uses the PdfDocument stub id as `jobId`.
+      // In that case there is intentionally no conversion_jobs row.
+      const pdf = await PdfDocumentModel.findById(id);
+      if (pdf && isEpubImportStubDocument(pdf) && canAccessPdfRow(req.user, pdf)) {
+        req.tenantPdf = pdf;
+        req.tenantJob = { id, pdf_document_id: pdf.id };
         return next();
       }
 

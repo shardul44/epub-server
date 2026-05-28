@@ -350,24 +350,24 @@
   background: #dcfce7;
 }
 
-/* ── PDF Grid — 5 columns, equal cell widths, cards fill cells ─ */
-/* width: auto avoids horizontal overflow when margin-left/right is set on this block */
+/* ── PDF Grid — compact auto-fill (~220–240px cards) ───────── */
 .pld-grid {
   display: grid;
   width: auto;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 240px));
+  gap: 14px;
   align-content: start;
+  justify-content: start;
   justify-items: stretch;
 }
 
 .pld-grid .pdc-card {
   width: 100%;
   min-width: 0;
-  max-width: 100%;
+  max-width: 240px;
   box-sizing: border-box;
 }
 
@@ -508,27 +508,29 @@
 
 /* ── Skeleton loader ────────────────────────────────────────── */
 .pld-skeleton-card {
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
   background: #fff;
   border: 1px solid #e9ecf3;
+  max-width: 240px;
 }
 
 .pld-skeleton-visual {
-  height: 180px;
+  aspect-ratio: 3 / 4;
+  width: 100%;
   background: #e5e7eb;
 }
 
 .pld-skeleton-body {
-  padding: 12px;
+  padding: 8px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .pld-skeleton-line {
-  height: 12px;
-  border-radius: 6px;
+  height: 10px;
+  border-radius: 5px;
   background: #e5e7eb;
 }
 
@@ -636,7 +638,7 @@
   text-decoration: none;
 }
 .pld-detail-back:hover {
-  color: #2563eb;
+  color: #2563eb; 
 }
 
 .pld-detail-header {
@@ -795,7 +797,7 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7, #6366f1);
+  background: #2563eb;
   background-size: 200% 100%;
   animation: hifi-shimmer-bar 4s linear infinite;
 }
@@ -826,7 +828,7 @@
   align-items: center;
   justify-content: center;
   color: #eef2ff;
-  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 55%, #5b21b6 100%);
+  background: #2563eb;
   box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
 }
 
@@ -1004,7 +1006,7 @@
 }
 
 .hifi-zone-option--active {
-  border-color: #6366f1;
+  border-color: #2563eb;
   background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
   box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 24px rgba(99, 102, 241, 0.12);
 }
@@ -1023,7 +1025,7 @@
 }
 
 .hifi-zone-option--active .hifi-zone-option-icon {
-  background: #6366f1;
+  background: #2563eb;
   color: #fff;
 }
 
@@ -1081,7 +1083,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #334155;
+  color: #111827;
   margin-bottom: 8px;
 }
 
@@ -1169,12 +1171,12 @@
   padding-left: 20px;
   padding-right: 22px;
   color: #fff;
-  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #6d28d9 100%);
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+  background: #2563eb;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
 }
 
 .hifi-btn--primary:hover:not(:disabled) {
-  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.45);
   transform: translateY(-1px);
 }
 
@@ -1187,19 +1189,7 @@
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
-@media (max-width: 1400px) {
-  .pld-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
-  }
-}
-
 @media (max-width: 1100px) {
-  .pld-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-  }
-
   .pld-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1223,8 +1213,14 @@
   }
 
   .pld-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    justify-content: stretch;
+  }
+
+  .pld-grid .pdc-card,
+  .pld-skeleton-card {
+    max-width: none;
   }
 
   .pld-stats {
@@ -1245,8 +1241,8 @@
 
 @media (max-width: 480px) {
   .pld-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .pld-stats {

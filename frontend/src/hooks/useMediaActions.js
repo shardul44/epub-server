@@ -55,16 +55,34 @@ export function useMediaActions() {
     }
   }, [dispatch, queryClient, listScope]);
 
-  const handleDownload = useCallback((asset) => {
-    const url = asset.url || asset.thumbnailUrl;
-    if (!url) return;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = asset.filename || asset.name || 'asset';
-    a.target = '_blank';
-    a.rel = 'noreferrer';
-    a.click();
-  }, []);
+  const handleDownload = useCallback(async (asset) => {
+    if (!asset?.id) return;
+    dispatch(clearUploadError());
+    try {
+      const res = await api.get(`/media/${asset.id}/download`, { responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      const name =
+        asset.originalName ||
+        asset.original_name ||
+        asset.filename ||
+        asset.name ||
+        'asset';
+      link.setAttribute('download', name);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to download asset';
+      dispatch(setUploadError(msg));
+    }
+  }, [dispatch]);
 
   return { handleUpload, handleDelete, handleDownload };
 }

@@ -40,4 +40,7 @@ backend/epub_output/
 backend/html_intermediate/
 backend/temp/
 backend/uploads/
+backend/reports/
+backend/brain/
+
 

@@ -7,6 +7,9 @@ import { ConversionService } from '../services/conversionService.js';
 import { ActivityService } from '../services/activityService.js';
 import { EpubService } from '../services/epubService.js';
 import { EpubDirectImportService } from '../services/epubDirectImportService.js';
+import { PdfService } from '../services/pdfService.js';
+import { PdfDocumentModel } from '../models/PdfDocument.js';
+import { isEpubImportStubDocument } from '../utils/pdfDocumentSource.js';
 import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from '../utils/responseHandler.js';
 import { getHtmlIntermediateDir } from '../config/fileStorage.js';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
@@ -194,6 +197,86 @@ router.get('/review-required', async (req, res) => {
   }
 });
 
+/**
+ * GET /conversions/epub-sync-sessions
+ * List direct EPUB → Audio Sync imports (pdf_documents stubs, no conversion_jobs row).
+ */
+router.get('/epub-sync-sessions', noCache, async (req, res) => {
+  try {
+    const scope = resolveListScope(req.user, req.query.scope);
+    const scopeOpts = scope.onlyOwn ? { onlyOwn: true } : {};
+    const pdfs = await PdfService.getAllPdfs(req.user, scopeOpts);
+    const sessions = pdfs
+      .filter((p) =>
+        isEpubImportStubDocument({
+          file_path: p.filePath,
+          filePath: p.filePath,
+          file_name: p.fileName,
+          fileName: p.fileName,
+          original_file_name: p.originalFileName,
+          originalFileName: p.originalFileName,
+        }) ||
+        String(p.fileName || p.originalFileName || '')
+          .toLowerCase()
+          .endsWith('.epub')
+      )
+      .map((p) => {
+        const isFxl = String(p.layoutType || '').toUpperCase() === 'FIXED_LAYOUT';
+        const createdAt = p.createdAt || null;
+        return {
+          id: p.id,
+          jobId: p.id,
+          pdfDocumentId: p.id,
+          pdfId: p.id,
+          jobType: isFxl ? 'FXL' : 'REFLOW',
+          status: 'COMPLETED',
+          progressPercentage: 100,
+          currentStep: 'COMPLETE',
+          pdfFilename: p.originalFileName || p.fileName,
+          originalFileName: p.originalFileName,
+          fileName: p.fileName,
+          totalPages: p.totalPages ?? null,
+          fileSizeBytes: p.fileSize ?? null,
+          fileSize: p.fileSize ?? null,
+          layoutType: p.layoutType,
+          source: 'epub_direct_import',
+          sourceType: 'epub',
+          createdAt,
+          updatedAt: createdAt,
+          completedAt: createdAt,
+        };
+      });
+    return successResponse(res, sessions);
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+});
+
+/**
+ * GET /conversions/epub-import-meta/:pdfDocumentId
+ * Metadata for a direct EPUB import (no conversion_jobs row).
+ */
+router.get('/epub-import-meta/:pdfDocumentId', async (req, res) => {
+  try {
+    const pdfId = parseInt(req.params.pdfDocumentId, 10);
+    if (Number.isNaN(pdfId)) return badRequestResponse(res, 'Invalid EPUB import id');
+
+    const pdf = await PdfDocumentModel.findById(pdfId);
+    if (!pdf) return notFoundResponse(res, 'EPUB import not found');
+
+    return successResponse(res, {
+      epubImportId: pdf.id,
+      pdfDocumentId: pdf.id,
+      pdfFilename: pdf.original_file_name || pdf.originalFileName || pdf.file_name || pdf.fileName,
+      fileSizeBytes: pdf.file_size ?? pdf.fileSize ?? null,
+      pages: pdf.total_pages ?? pdf.totalPages ?? null,
+      layoutType: pdf.layout_type ?? pdf.layoutType ?? null,
+    });
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+});
+
 // PUT /api/conversions/:jobId/review - Mark as reviewed
 router.put('/:jobId/review', async (req, res) => {
   try {
@@ -291,16 +374,17 @@ router.post('/:jobId/retry', async (req, res) => {
 router.get('/:jobId/download', async (req, res) => {
   try {
     console.log('Download request for jobId:', req.params.jobId);
-    const job = await ConversionService.getConversionJob(parseInt(req.params.jobId));
-    
-    if (!job.epubFilePath) {
-      console.warn('EPUB file path not available for job:', req.params.jobId);
-      return notFoundResponse(res, 'EPUB file not available. Conversion may not be completed yet.');
-    }
+    const jobId = parseInt(req.params.jobId, 10);
+    if (Number.isNaN(jobId)) return badRequestResponse(res, 'Invalid job ID');
 
-    console.log('EPUB file path:', job.epubFilePath);
-    
+    // 1) Normal conversion jobs (conversion_jobs table)
     try {
+      const job = await ConversionService.getConversionJob(jobId);
+      if (!job?.epubFilePath) {
+        console.warn('EPUB file path not available for conversion job:', jobId);
+        return notFoundResponse(res, 'EPUB file not available. Conversion may not be completed yet.');
+      }
+
       const exists = await fs.access(job.epubFilePath).then(() => true).catch(() => false);
       if (!exists) {
         console.error('EPUB file does not exist on server:', job.epubFilePath);
@@ -310,19 +394,32 @@ router.get('/:jobId/download', async (req, res) => {
       const fileName = path.basename(job.epubFilePath);
       const fileBuffer = await fs.readFile(job.epubFilePath);
 
-      console.log('Sending EPUB file:', fileName, 'Size:', fileBuffer.length);
-      
-      // Set headers for binary file download
       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
       res.setHeader('Content-Type', 'application/epub+zip');
       res.setHeader('Content-Length', fileBuffer.length.toString());
       res.setHeader('Cache-Control', 'no-cache');
-      
-      // Use end() instead of send() for binary data to avoid any JSON wrapping
+
       return res.end(fileBuffer, 'binary');
-    } catch (error) {
-      console.error('Error reading EPUB file:', error);
-      return errorResponse(res, 'Error downloading EPUB: ' + error.message, 500);
+    } catch (_) {
+      // 2) EPUB direct-import stubs (no conversion_job row)
+      const pdf = await PdfDocumentModel.findById(jobId);
+      if (!pdf) return notFoundResponse(res, 'EPUB import not found');
+
+      const filePath = pdf.file_path || pdf.filePath;
+      if (!filePath) return notFoundResponse(res, 'EPUB file path not available');
+
+      const exists = await fs.access(filePath).then(() => true).catch(() => false);
+      if (!exists) return notFoundResponse(res, 'EPUB file not found on server');
+
+      const fileName = path.basename(filePath);
+      const fileBuffer = await fs.readFile(filePath);
+
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+      res.setHeader('Content-Type', 'application/epub+zip');
+      res.setHeader('Content-Length', fileBuffer.length.toString());
+      res.setHeader('Cache-Control', 'no-cache');
+
+      return res.end(fileBuffer, 'binary');
     }
   } catch (error) {
     console.error('Error in download route:', error);
@@ -1054,7 +1151,7 @@ router.post('/import-epub-for-sync', epubImportUpload.single('epub'), async (req
       organizationId: req.user?.organizationId ?? null
     };
     const result = await EpubDirectImportService.importForAudioSync(buf, req.file.originalname, mode, owner);
-    const jid = result?.job?.id;
+    const jid = result?.jobId ?? result?.job?.id ?? result?.pdfId ?? null;
     await ActivityService.logFromRequest(req, {
       action: 'epub.import_sync',
       entityType: 'conversion_job',

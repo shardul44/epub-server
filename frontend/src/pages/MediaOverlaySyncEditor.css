@@ -121,7 +121,7 @@
   height: 56px;
   border-radius: 50%;
   border: none;
-  background-color: #1976d2;
+  background-color: #2563eb;
   color: white;
   display: flex;
   align-items: center;
@@ -132,7 +132,7 @@
 }
 
 .play-pause-btn:hover {
-  background-color: #1565c0;
+  background-color: #2563eb;
 }
 
 .audio-progress-container {
@@ -152,7 +152,7 @@
 
 .audio-progress-fill {
   height: 100%;
-  background-color: #1976d2;
+    background-color: #2563eb;
   border-radius: 4px;
   transition: width 0.1s linear;
 }
@@ -185,21 +185,21 @@
 }
 
 .btn-primary {
-  background-color: #1976d2;
+  background-color: #2563eb;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #1565c0;
+  background-color: #2563eb;
 }
 
 .btn-secondary {
-  background-color: #757575;
+  background-color: #2563eb;
   color: white;
 }
 
 .btn-secondary:hover {
-  background-color: #616161;
+  background-color: #2563eb;
 }
 
 .btn-small {
@@ -238,9 +238,9 @@
 }
 
 .text-block-item.selected {
-  border-color: #1976d2;
+  border-color: #2563eb;
   background-color: #e3f2fd;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .block-header {
@@ -260,7 +260,7 @@
 
 .selected-indicator {
   font-size: 12px;
-  color: #1976d2;
+  color: #2563eb;
   font-weight: 600;
 }
 
@@ -307,18 +307,18 @@
 
 .timing-input:focus {
   outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .timing-input.input-error {
-  border-color: #d32f2f;
+  border-color: #2563eb;
   background-color: #ffebee;
 }
 
 .timing-input.input-error:focus {
-  border-color: #d32f2f;
-  box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .block-info {

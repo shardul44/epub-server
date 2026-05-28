@@ -5,14 +5,16 @@
  *   FXL   → /conversions/fxl-editor/:jobId  → KitabooZoningStudio
  *   Reflow → /conversions/image-editor/:jobId → EpubImageEditorPage
  */
-import { useMemo, memo, useState } from 'react';
+import { useMemo, memo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, FileText, Layers, Image, ChevronRight } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileText, Layers, Image, ChevronRight, Trash2 } from 'lucide-react';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import { useListScope } from '../../context/ListScopeContext';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import { isFixedLayout, useWorkflowNavigation } from '../../hooks/useWorkflowNavigation';
+import { useConversionActions } from '../../hooks/useConversionActions';
 import PdfThumbnail from '../../components/PdfThumbnail';
+import ConfirmModal from '../../components/Loadingmodal';
 import { pdfViewUrl } from '../../services/api';
 import './ImageFxlEditor.css';
 
@@ -122,7 +124,7 @@ const IfePdfThumb = memo(function IfePdfThumb({ pdfId }) {
 });
 
 /* ─── Job selector grid ───────────────────────────────────────── */
-const JobSelector = ({ jobs, onSelect, loading, listScope }) => {
+const JobSelector = ({ jobs, onSelect, onDelete, loading, listScope }) => {
   const [tab, setTab] = useState('FXL');
 
   const fxlJobs    = jobs.filter(j => isFixedLayout(j));
@@ -243,9 +245,8 @@ const JobSelector = ({ jobs, onSelect, loading, listScope }) => {
                     : 'ife-progress-fill--reflow';
 
             return (
-              <button
+              <div
                 key={jobId}
-                type="button"
                 className={[
                   'ife-job-card',
                   fxl ? 'ife-job-card--fxl' : 'ife-job-card--reflow',
@@ -254,7 +255,15 @@ const JobSelector = ({ jobs, onSelect, loading, listScope }) => {
                 ]
                   .filter(Boolean)
                   .join(' ')}
+                role="button"
+                tabIndex={0}
                 onClick={() => onSelect(job)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelect(job);
+                  }
+                }}
               >
                 <div className="ife-job-card-header">
                   <span className={`ife-type-pill${fxl ? ' ife-type-fxl' : ' ife-type-reflow'}`}>
@@ -324,8 +333,20 @@ const JobSelector = ({ jobs, onSelect, loading, listScope }) => {
                     {fxl ? 'Open in Zoning Studio' : 'Open in Editor'}
                     <ChevronRight size={18} aria-hidden />
                   </span>
+                  <button
+                    type="button"
+                    className="ife-job-card-del-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete?.(job);
+                    }}
+                    title="Delete job"
+                    aria-label={`Delete job #${jobId}`}
+                  >
+                    <Trash2 size={16} aria-hidden />
+                  </button>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -339,6 +360,8 @@ const ImageFxlEditor = () => {
   const navigate = useNavigate();
   const { goToEditor } = useWorkflowNavigation();
   const listScope = useListScope();
+  const { prepareDelete, confirmDelete: runConfirmDelete } = useConversionActions();
+  const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
 
   const { jobs: allJobs, isLoading: jobsLoading } = useConversionsQuery({
     statusFilter: 'COMPLETED',
@@ -348,6 +371,23 @@ const ImageFxlEditor = () => {
   const handleSelect = (job) => {
     goToEditor(job);
   };
+
+  const handleDelete = useCallback(
+    (job) => {
+      prepareDelete(job);
+      setDeleteModal({ open: true, job, loading: false });
+    },
+    [prepareDelete],
+  );
+
+  const confirmDelete = useCallback(async () => {
+    setDeleteModal((prev) => ({ ...prev, loading: true }));
+    try {
+      await runConfirmDelete();
+    } finally {
+      setDeleteModal({ open: false, job: null, loading: false });
+    }
+  }, [runConfirmDelete]);
 
   return (
     <div className="ife-root">
@@ -364,7 +404,30 @@ const ImageFxlEditor = () => {
 
       <WorkflowStepper activeStep={1} jobId={null} onStepClick={(s) => navigate(s.path)} />
 
-      <JobSelector jobs={allJobs} onSelect={handleSelect} loading={jobsLoading} listScope={listScope} />
+      <JobSelector
+        jobs={allJobs}
+        onSelect={handleSelect}
+        onDelete={handleDelete}
+        loading={jobsLoading}
+        listScope={listScope}
+      />
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, job: null, loading: false })}
+        onConfirm={confirmDelete}
+        title="Confirm Deletion"
+        subtitle="This action cannot be undone."
+        message={
+          deleteModal.job
+            ? `Delete Job #${deleteModal.job.id ?? deleteModal.job.jobId}? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        loading={deleteModal.loading}
+      />
     </div>
   );
 };

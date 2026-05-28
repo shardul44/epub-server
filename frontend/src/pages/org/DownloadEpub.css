@@ -6,7 +6,7 @@
   --de-blue: #2563eb;
   --de-blue-lt: #eff6ff;
   --de-purple: #7c3aed;
-  --de-green: #22c55e;
+  --de-green: #2563eb;
   --de-green-lt: #f0fdf4;
   --de-green-mid: #bbf7d0;
   --de-border: #e5e7eb;
@@ -23,6 +23,9 @@
   display: flex;
   flex-direction: column;
   background: var(--de-bg);
+  height: 100%;
+  min-height: 0;
+
 }
 
 /* ── Loading ───────────────────────────────────────────────────── */
@@ -152,6 +155,14 @@
 
 .de-empty p {
   margin: 0;
+}
+
+.de-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 8px;
 }
 
 /* ── Job selector ──────────────────────────────────────────────── */
@@ -486,8 +497,8 @@
 /* ── PDF-style cards (ready to download) ─────────────────────── */
 .de-ready-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 12px;
 }
 
 .de-ready-pdf-card {
@@ -496,20 +507,15 @@
   flex-direction: column;
   background: var(--de-white);
   border: 1px solid #e8e8e3;
-  border-left: 4px solid var(--de-card-accent);
   border-radius: var(--de-radius);
   overflow: hidden;
   transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
   min-width: 0;
 }
 
 .de-ready-pdf-card--reflow {
-  --de-card-accent: #22c55e;
-}
-
-.de-ready-pdf-card--fxl {
-  --de-card-accent: var(--de-purple);
+  --de-card-accent: #2563eb;
 }
 
 .de-ready-pdf-card:hover {
@@ -546,7 +552,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 0;
+  padding: 10px 12px 0;
   gap: 10px;
 }
 
@@ -561,7 +567,7 @@
 
 .de-ready-pdf-type--reflow {
   background: var(--de-green-lt);
-  color: #15803d;
+  color: #2563eb;
 }
 
 .de-ready-pdf-type--fxl {
@@ -582,23 +588,23 @@
 }
 
 .de-ready-pdf-status--done {
-  background: #dcfce7;
-  color: #15803d;
+  background: #eeeeee;
+  color: #1c5be4;
 }
 
 .de-ready-pdf-status--done::before {
   content: '✓';
   font-size: 11px;
   font-weight: 900;
-  color: #15803d;
+  color: #2563eb;
 }
 
 .de-ready-pdf-card-pdf-panel {
   display: flex;
   align-items: stretch;
-  gap: 12px;
-  margin: 10px 12px 0;
-  padding: 10px 12px;
+  gap: 10px;
+  margin: 8px 10px 0;
+  padding: 8px 10px;
   background: #f3f4f6;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
@@ -607,7 +613,7 @@
 .de-ready-pdf-card-pdf-thumb-col {
   position: relative;
   flex-shrink: 0;
-  width: 76px;
+  width: 64px;
 }
 
 .de-ready-pdf-card-pdf-badge {
@@ -629,9 +635,9 @@
 
 .de-ready-pdf-thumb {
   position: relative;
-  width: 76px;
+  width: 64px;
   aspect-ratio: 3 / 4;
-  min-height: 96px;
+  min-height: 82px;
   border-radius: 8px;
   overflow: hidden;
   background-color: #e5e7eb;
@@ -648,6 +654,13 @@
   justify-content: center;
   color: #94a3b8;
   pointer-events: none;
+}
+
+.de-ready-pdf-thumb-epub-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #64748b;
 }
 
 .de-ready-pdf-thumb-fallback--under {
@@ -687,7 +700,7 @@
 }
 
 .de-ready-pdf-card-pdf-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--de-text);
   line-height: 1.25;
@@ -698,21 +711,21 @@
 }
 
 .de-ready-pdf-card-pdf-sub {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--de-muted);
 }
 
 .de-ready-pdf-card-body {
-  padding: 12px 14px 0;
+  padding: 10px 12px 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   flex: 1;
   min-width: 0;
 }
 
 .de-ready-pdf-card-job-id {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--de-text);
   letter-spacing: -0.02em;
@@ -723,7 +736,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.35px;
@@ -740,12 +753,12 @@
 .de-ready-pdf-card-pct {
   font-weight: 800;
   color: var(--de-text);
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
 .de-ready-pdf-card-progress-track {
-  height: 8px;
+  height: 7px;
   border-radius: 999px;
   background: #e8ecf1;
   overflow: hidden;
@@ -764,7 +777,7 @@
 .de-ready-pdf-card-metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px 10px;
+  gap: 7px 8px;
   padding: 4px 0 2px;
   border-top: 1px solid #f1f5f9;
   margin-top: 2px;
@@ -778,7 +791,7 @@
 }
 
 .de-ready-pdf-card-metric-label {
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -786,7 +799,7 @@
 }
 
 .de-ready-pdf-card-metric-value {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #374151;
   line-height: 1.25;
@@ -801,7 +814,10 @@
 }
 
 .de-ready-pdf-card-actions {
-  padding: 12px 14px 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px 12px;
   margin-top: 6px;
   border-top: 1px solid #f1f5f9;
 }
@@ -811,29 +827,55 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 16px;
+  flex: 1;
+  min-height: 40px;
+  padding: 0 14px;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 9px;
+  font-size: 13px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   color: #fff;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 55%, #15803d 100%);
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
   transition: filter 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
 }
 
 .de-ready-pdf-card-dl:hover:not(:disabled) {
   filter: brightness(1.04);
-  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.45);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
 }
 
 .de-ready-pdf-card-dl:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.de-ready-pdf-card-del-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.de-ready-pdf-card-del-btn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+.de-ready-pdf-card-del-btn:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
