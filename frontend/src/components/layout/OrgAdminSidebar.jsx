@@ -31,8 +31,6 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useLogout from '../../hooks/useLogout';
@@ -177,7 +175,6 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
       home:           path === '/' || path === '',
       pdfsUpload:     path.startsWith('/pdfs/upload'),
       epubSync:       path.startsWith('/epub-sync-import'),
-      pdfs:           path.startsWith('/pdfs') && !path.startsWith('/pdfs/upload'),
       conversions:
         path.startsWith('/conversions') ||
         path.startsWith('/audio-sync/') ||

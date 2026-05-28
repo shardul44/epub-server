@@ -267,7 +267,7 @@ export default function UserDashboard() {
         <Bell size={18} strokeWidth={2} aria-hidden />
         {notifyAttention ? <span className="ud-icon-btn-dot" aria-hidden /> : null}
       </Link>
-      <Link to="/pdfs" title="Search library" aria-label="Search library" className="ui-icon-btn ud-icon-btn">
+      <Link to="/pdfs/upload" title="Upload PDF" aria-label="Upload PDF" className="ui-icon-btn ud-icon-btn">
         <Search size={18} strokeWidth={2} aria-hidden />
       </Link>
       <Link to="/pdfs/upload" className="ds-navbar-btn ds-navbar-btn--ghost">
@@ -321,9 +321,9 @@ export default function UserDashboard() {
                   Resume work
                   <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
                 </Link>
-                <Link to="/pdfs" className="ud-btn ud-btn--ghost">
+                <Link to="/pdfs/upload" className="ud-btn ud-btn--ghost">
                   <FileText size={16} strokeWidth={2} aria-hidden />
-                  Browse PDFs
+                  Upload PDF
                 </Link>
               </>
             )}

@@ -1,16 +1,20 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Trash2,
   Image,
   RefreshCw,
   FileText,
   ChevronRight,
+  Bookmark,
+  CalendarDays,
+  Clock3,
+  Activity,
+  Sparkles,
 } from 'lucide-react';
 import styles from './JobCard.module.css';
+import '../pages/org/ConversionJobs.css';
 import { isFixedLayout } from '../hooks/useConversionActions';
 import PdfThumbnail from './PdfThumbnail';
-import { aiConfigService } from '../services/aiConfigService';
 import { pdfViewUrl } from '../services/api';
 
 const MAX_RETRIES = 3;
@@ -46,11 +50,6 @@ const fmtDurationMs = (ms) => {
   return '—';
 };
 
-const fmtTimeShort = (d) =>
-  d
-    ? new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : '—';
-
 const fmtCompletedNice = (d) =>
   d
     ? new Date(d).toLocaleString('en-US', {
@@ -59,6 +58,15 @@ const fmtCompletedNice = (d) =>
         day: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
+      })
+    : '—';
+
+const fmtDateOnly = (d) =>
+  d
+    ? new Date(d).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
       })
     : '—';
 
@@ -78,29 +86,6 @@ const jobDurationMs = (job) => {
   const start = job.createdAt;
   if (!start || !end) return null;
   return new Date(end).getTime() - new Date(start).getTime();
-};
-
-const resolveAiModel = (job) => {
-  if (!job) return null;
-  const direct =
-    job.aiModel ||
-    job.ai_model ||
-    job.modelName ||
-    job.model ||
-    job.llmModel ||
-    null;
-  if (direct) return direct;
-  try {
-    const raw = job.intermediateData ?? job.intermediate_data;
-    if (raw) {
-      const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      if (data?.modelName) return data.modelName;
-      if (data?.aiModel) return data.aiModel;
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
 };
 
 function buildPdfViewUrl(pdfDocumentId) {
@@ -134,6 +119,8 @@ const JobCard = ({
   onRetry,
   onOpenEditor,
   isSelected,
+  primaryActionLabel,
+  primaryActionIcon: PrimaryActionIcon = Image,
 }) => {
   const jobId      = job.id ?? job.jobId;
   const pct        = job.progressPercentage ?? 0;
@@ -144,15 +131,8 @@ const JobCard = ({
   const pdfDocumentId = job.pdfDocumentId ?? job.pdfId;
   const pdfViewUrl = useMemo(() => buildPdfViewUrl(pdfDocumentId), [pdfDocumentId]);
 
-  const { data: activeAi } = useQuery({
-    queryKey: ['ai-config', 'active-model'],
-    queryFn: () => aiConfigService.getActiveModel(),
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
-  const configuredAiModel = activeAi?.modelName ?? null;
-
   const displayName =
+    job.originalFileName ||
     job.pdfFilename ||
     job.filename ||
     (pdfDocumentId != null && pdfDocumentId !== ''
@@ -162,39 +142,50 @@ const JobCard = ({
   const sizeStr = formatFileSize(job.fileSize ?? job.pdfFileSize ?? job.bytes ?? job.size);
   const pagesPart = job.totalPages != null ? `${job.totalPages} pages` : null;
   const subMeta = [pagesPart, sizeStr].filter(Boolean).join(' · ') || (pagesPart || '—');
+  const authorLabel =
+    job.authorName ||
+    job.author ||
+    job.createdByName ||
+    job.createdBy ||
+    null;
 
   const metrics = useMemo(() => {
-    const ai = resolveAiModel(job) || configuredAiModel;
     const durMs = jobDurationMs(job);
     if (job.status === 'COMPLETED') {
       return {
-        c1Label: 'Completed',
-        c1Val: fmtCompletedNice(job.completedAt || job.updatedAt),
-        c2Label: 'Duration',
+        c1Label: 'Joined',
+        c1Val: fmtDateOnly(job.createdAt || job.updatedAt),
+        c2Label: 'Completed in',
         c2Val: durMs != null ? fmtDurationMs(durMs) : '—',
-        c3Label: 'AI model',
-        c3Val: ai || '—',
+        c3Label: 'Step',
+        c3Val: fmtStep(job.currentStep) || 'Complete',
       };
     }
     if (job.status === 'IN_PROGRESS') {
       return {
-        c1Label: 'ETA',
-        c1Val: estimateEta(job),
-        c2Label: 'Started',
-        c2Val: fmtTimeShort(job.createdAt),
-        c3Label: 'AI model',
-        c3Val: ai || '—',
+        c1Label: 'Joined',
+        c1Val: fmtDateOnly(job.createdAt || job.updatedAt),
+        c2Label: 'ETA',
+        c2Val: estimateEta(job),
+        c3Label: 'Step',
+        c3Val: fmtStep(job.currentStep) || 'Running',
       };
     }
     return {
-      c1Label: 'Status',
-      c1Val: job.status.replace(/_/g, ' '),
-      c2Label: 'Started',
-      c2Val: fmtTimeShort(job.createdAt),
-      c3Label: 'AI model',
-      c3Val: ai || '—',
+      c1Label: 'Joined',
+      c1Val: fmtDateOnly(job.createdAt || job.updatedAt),
+      c2Label: 'Duration',
+      c2Val: durMs != null ? fmtDurationMs(durMs) : '—',
+      c3Label: 'Step',
+      c3Val: fmtStep(job.currentStep) || '—',
     };
-  }, [job, configuredAiModel]);
+  }, [job]);
+
+  const quickStatLabel = job.status === 'COMPLETED' ? 'Completed in' : job.status === 'IN_PROGRESS' ? 'ETA' : 'Duration';
+  const quickStatValue =
+    job.status === 'IN_PROGRESS'
+      ? estimateEta(job)
+      : metrics.c2Val;
 
   const progressFillClass =
     job.status === 'COMPLETED'
@@ -226,189 +217,197 @@ const JobCard = ({
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onSelect?.(job)}
     >
-      <div className="cj-card-header">
-        <span className={`cj-type-pill ${isFxl ? 'cj-type-fxl' : 'cj-type-reflow'}`}>
-          {isFxl ? 'FXL' : 'REFLOW'}
+      <div className="cj-card-pdf-thumb-col">
+        <span className="cj-card-pdf-badge" aria-hidden>
+          PDF
         </span>
-        <span className={`cj-status-pill ${STATUS_CLASS[job.status] ?? 'cj-badge--info'}`}>
-          {job.status === 'COMPLETED'
-            ? 'COMPLETED'
-            : job.status === 'IN_PROGRESS'
-              ? 'RUNNING'
-              : job.status.replace(/_/g, ' ')}
-        </span>
+       
+        <div className="cj-card-thumb" onClick={(e) => e.stopPropagation()}>
+          <div className="cj-card-thumb-fallback" aria-hidden={!!pdfViewUrl}>
+            <FileText size={28} />
+          </div>
+          {pdfViewUrl ? (
+            <div className="cj-card-thumb-preview-layer">
+              <PdfThumbnail
+                url={pdfViewUrl}
+                width={200}
+                height={280}
+                scale={1.25}
+                cacheKey={thumbCacheKey}
+                className="cj-job-pdf-thumb"
+                alt=""
+              />
+            </div>
+          ) : null}
+         
+        </div>
       </div>
 
-      <div className="cj-card-pdf-panel">
-        <div className="cj-card-pdf-thumb-col">
-          <span className="cj-card-pdf-badge" aria-hidden>
-            PDF
+      <div className="cj-card-main">
+        <div className="cj-card-header">
+          <span className={`cj-type-pill ${isFxl ? 'cj-type-fxl' : 'cj-type-reflow'}`}>
+            {isFxl ? 'FXL' : 'REFLOW'}
           </span>
-          <div className="cj-card-thumb" onClick={(e) => e.stopPropagation()}>
-            <div className="cj-card-thumb-fallback" aria-hidden={!!pdfViewUrl}>
-              <FileText size={28} />
-            </div>
-            {pdfViewUrl ? (
-              <div className="cj-card-thumb-preview-layer">
-                <PdfThumbnail
-                  url={pdfViewUrl}
-                  width={200}
-                  height={280}
-                  scale={1.25}
-                  cacheKey={thumbCacheKey}
-                  className="cj-job-pdf-thumb"
-                  alt=""
-                />
-              </div>
-            ) : null}
+          <div className="cj-card-header-right">
+            <span className={`cj-status-pill ${STATUS_CLASS[job.status] ?? 'cj-badge--info'}`}>
+              {job.status === 'COMPLETED'
+                ? 'Completed'
+                : job.status === 'IN_PROGRESS'
+                  ? 'Running'
+                  : job.status.replace(/_/g, ' ')}
+            </span>
           </div>
         </div>
-        <div className="cj-card-pdf-meta">
+
+        <div className="cj-card-body">
           <div className="cj-card-pdf-name" title={displayName}>
             {displayName}
           </div>
-          <div className="cj-card-pdf-sub">{subMeta}</div>
-        </div>
-      </div>
-
-      <div className="cj-card-body">
-        <div className="cj-card-job-id">Job #{jobId}</div>
-
-        <div className="cj-card-step-row">
-          <span className="cj-card-step-text">
-            Step: {fmtStep(job.currentStep) || '—'}
-          </span>
-          <span className="cj-card-pct">{pct}%</span>
-        </div>
-
-        <div className="cj-progress-track cj-progress-track--card">
-          <div
-            className={['cj-progress-fill', progressFillClass].filter(Boolean).join(' ')}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-
-        <div className="cj-card-metrics">
-          <div className="cj-card-metric">
-            <span className="cj-card-metric-label">{metrics.c1Label}</span>
-            <span className="cj-card-metric-value">{metrics.c1Val}</span>
+          <div className="cj-card-metrics">
+            <div className="cj-card-metric">
+              <span className="cj-card-metric-label">
+                <CalendarDays size={12} aria-hidden /> {metrics.c1Label}
+              </span>
+              <span className="cj-card-metric-value">{metrics.c1Val}</span>
+            </div>
+            <div className="cj-card-metric">
+              <span className="cj-card-metric-label">
+                <Clock3 size={12} aria-hidden /> Duration
+              </span>
+              <span className="cj-card-metric-value">{metrics.c2Val}</span>
+            </div>
+            <div className="cj-card-metric">
+              <span className="cj-card-metric-label">
+                <Activity size={12} aria-hidden /> {metrics.c3Label}
+              </span>
+              <span className="cj-card-metric-value">{metrics.c3Val}</span>
+            </div>
           </div>
-          <div className="cj-card-metric">
-            <span className="cj-card-metric-label">{metrics.c2Label}</span>
-            <span className="cj-card-metric-value">{metrics.c2Val}</span>
+
+          <div className="cj-card-bottom">
+            <div className="cj-card-progress-stack">
+              <div className="cj-card-step-row">
+                <span className="cj-card-step-text">
+                  Progress - {fmtStep(job.currentStep) || '—'}
+                </span>
+                <span className="cj-card-pct">{pct}%</span>
+              </div>
+              <div className="cj-progress-track cj-progress-track--card">
+                <div
+                  className={['cj-progress-fill', progressFillClass].filter(Boolean).join(' ')}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+
+            <div
+              className={[
+                'cj-card-actions',
+                job.status === 'IN_PROGRESS' ? 'cj-card-actions--running' : '',
+                job.status === 'COMPLETED' ? 'cj-card-actions--completed' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              {job.status === 'COMPLETED' && (
+                <button
+                  type="button"
+                  className="cj-btn cj-btn-open-editor"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenEditor?.(job);
+                  }}
+                >
+                  <PrimaryActionIcon size={16} aria-hidden />
+                  {primaryActionLabel || (isFxl ? 'Open' : 'Open')}
+                  <ChevronRight size={18} aria-hidden />
+                </button>
+              )}
+
+              {job.status === 'IN_PROGRESS' && !isFxl && (
+                <button
+                  type="button"
+                  className="cj-btn cj-btn-stop"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStop?.(jobId);
+                  }}
+                >
+                  <span className="cj-btn-stop-icon" aria-hidden />
+                  Stop
+                </button>
+              )}
+
+              {job.status === 'IN_PROGRESS' && (
+                <button
+                  type="button"
+                  className="cj-btn cj-btn-del cj-btn-del--inline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(job);
+                  }}
+                  title="Delete job"
+                  aria-label="Delete job"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+
+              {job.status === 'IN_PROGRESS' && <span className="cj-card-actions-spacer" aria-hidden />}
+
+              {(job.status === 'FAILED' || job.status === 'CANCELLED') && (
+                <button
+                  type="button"
+                  className="cj-btn cj-btn-retry"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRetry?.(jobId);
+                  }}
+                  disabled={!canRetry}
+                  title={
+                    !canRetry
+                      ? `Max retries (${MAX_RETRIES}) reached`
+                      : `Retry (attempt ${retryCount + 1}/${MAX_RETRIES})`
+                  }
+                >
+                  <RefreshCw size={14} aria-hidden />
+                  Retry{retryCount > 0 ? ` (${retryCount}/${MAX_RETRIES})` : ''}
+                </button>
+              )}
+
+              {job.status === 'PENDING' && (
+                <span className="cj-card-waiting">Waiting to start...</span>
+              )}
+
+              {job.status !== 'IN_PROGRESS' && (
+                <button
+                  type="button"
+                  className="cj-btn cj-btn-del"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(job);
+                  }}
+                  title="Delete job"
+                  aria-label="Delete job"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
           </div>
-          <div className="cj-card-metric">
-            <span className="cj-card-metric-label">{metrics.c3Label}</span>
-            <span className="cj-card-metric-value">{metrics.c3Val}</span>
-          </div>
+
+          {job.status === 'FAILED' && (job.error || job.errorMessage) && (
+            <div className="cj-card-error" title={job.error || job.errorMessage}>
+              ⚠ {job.error || job.errorMessage}
+            </div>
+          )}
+
+          {job.status === 'FAILED' && !canRetry && (
+            <div className="cj-card-retry-limit">Max retries ({MAX_RETRIES}) reached</div>
+          )}
         </div>
-
-        {job.status === 'FAILED' && (job.error || job.errorMessage) && (
-          <div className="cj-card-error" title={job.error || job.errorMessage}>
-            ⚠ {job.error || job.errorMessage}
-          </div>
-        )}
-
-        {job.status === 'FAILED' && !canRetry && (
-          <div className="cj-card-retry-limit">Max retries ({MAX_RETRIES}) reached</div>
-        )}
-      </div>
-
-      <div
-        className={[
-          'cj-card-actions',
-          job.status === 'IN_PROGRESS' ? 'cj-card-actions--running' : '',
-          job.status === 'COMPLETED' ? 'cj-card-actions--completed' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        {job.status === 'COMPLETED' && (
-          <button
-            type="button"
-            className="cj-btn cj-btn-open-editor"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenEditor?.(job);
-            }}
-          >
-            <Image size={16} aria-hidden />
-            {isFxl ? 'Open in Zoning Studio' : 'Open in Editor'}
-            <ChevronRight size={18} aria-hidden />
-          </button>
-        )}
-
-        {job.status === 'IN_PROGRESS' && !isFxl && (
-          <button
-            type="button"
-            className="cj-btn cj-btn-stop"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStop?.(jobId);
-            }}
-          >
-            <span className="cj-btn-stop-icon" aria-hidden />
-            Stop
-          </button>
-        )}
-
-        {job.status === 'IN_PROGRESS' && (
-          <button
-            type="button"
-            className="cj-btn cj-btn-del cj-btn-del--inline"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(job);
-            }}
-            title="Delete job"
-            aria-label="Delete job"
-          >
-            <Trash2 size={16} />
-          </button>
-        )}
-
-        {job.status === 'IN_PROGRESS' && <span className="cj-card-actions-spacer" aria-hidden />}
-
-        {(job.status === 'FAILED' || job.status === 'CANCELLED') && (
-          <button
-            type="button"
-            className="cj-btn cj-btn-retry"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRetry?.(jobId);
-            }}
-            disabled={!canRetry}
-            title={
-              !canRetry
-                ? `Max retries (${MAX_RETRIES}) reached`
-                : `Retry (attempt ${retryCount + 1}/${MAX_RETRIES})`
-            }
-          >
-            <RefreshCw size={14} aria-hidden />
-            Retry{retryCount > 0 ? ` (${retryCount}/${MAX_RETRIES})` : ''}
-          </button>
-        )}
-
-        {job.status === 'PENDING' && (
-          <span className="cj-card-waiting">Waiting to start…</span>
-        )}
-
-        {job.status !== 'IN_PROGRESS' && (
-          <button
-            type="button"
-            className="cj-btn cj-btn-del"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete?.(job);
-            }}
-            title="Delete job"
-            aria-label="Delete job"
-          >
-            <Trash2 size={16} />
-          </button>
-        )}
       </div>
     </div>
   );

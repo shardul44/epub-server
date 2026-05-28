@@ -18,6 +18,7 @@ import { selectActionError, clearActionError } from '../../features/conversions/
 import { selectWorkflowConversionType } from '../../features/conversionWorkflow/conversionWorkflowSlice';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import ConfirmModal from '../../components/Loadingmodal';
+import JobCard, { JobGrid } from '../../components/JobCard';
 import { buildEpubReaderPath } from '../../utils/epubReaderUrl';
 import {
   conversionJobListKey,
@@ -33,7 +34,6 @@ import {
   FileText,
   BookOpen,
   ChevronRight,
-  Trash2,
 } from 'lucide-react';
 import './DownloadEpub.css';
 
@@ -147,6 +147,7 @@ const DeReadyPdfThumb = memo(function DeReadyPdfThumb({ pdfId, epubSource }) {
 
 /* ─── Main component ──────────────────────────────────────────── */
 const DownloadEpub = () => {
+  const ITEMS_PER_PAGE = 9;
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
@@ -172,6 +173,7 @@ const DownloadEpub = () => {
   const [downloadStatus, setDownloadStatus] = useState('');
   const [directImportMeta, setDirectImportMeta] = useState(null);
   const [directImportError, setDirectImportError] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ── COMPLETED conversion jobs + direct EPUB → Audio Sync imports ──
   const { jobs, loading, error: fetchError, refetch } = useConversions({
@@ -179,6 +181,24 @@ const DownloadEpub = () => {
     includeEpubSyncSessions: true,
   });
   const actionError = useAppSelector(selectActionError);
+  const totalPages = Math.max(1, Math.ceil(jobs.length / ITEMS_PER_PAGE));
+  const paginatedJobs = jobs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const windowStart = Math.max(2, currentPage - 1);
+    const windowEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < totalPages - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+
+    return pages;
+  }, [currentPage, totalPages]);
 
   // Propagate fetch error into Redux
   useEffect(() => {
@@ -198,6 +218,12 @@ const DownloadEpub = () => {
       if (first) dispatch(setSelectedJobId(conversionJobListKey(first)));
     }
   }, [loading, jobs, preselectedJobId, selectedJobId, workflowConversionType, dispatch]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const selectedJob = selectedJobId
     ? findJobByListKey(jobs, selectedJobId, workflowConversionType)
@@ -481,9 +507,11 @@ const DownloadEpub = () => {
       ) : (
         /* ── Main content ── */
         <div className="de-content">
-
+          <div className="de-ready-list-header">
+            <h2 className="de-ready-list-heading">Ready to download</h2>
+            <p className="de-ready-list-sub">Tap a card to show it in the summary above. Use Download on a card to save that EPUB immediately.</p>
+          </div>
           <div className="de-main-row">
-
             {/* ── Ready card ── */}
             <div className="de-ready-card">
               <div className="de-check-circle">
@@ -567,151 +595,72 @@ const DownloadEpub = () => {
 
           {/* All completed jobs — PDF-style cards ready for EPUB download */}
           {jobs.length > 0 && (
-            <section className="de-ready-list-section" aria-labelledby="de-ready-list-heading">
-              <h3 id="de-ready-list-heading" className="de-ready-list-title">
-                Ready to download
-              </h3>
-              <p className="de-ready-list-sub">
-                Tap a card to show it in the summary above. Use Download on a card to save that EPUB immediately.
-              </p>
-              <div className="de-ready-card-grid">
-                {jobs.map((j) => {
-                  const jid = j.id ?? j.jobId;
+
+            <div className="de-ready-list-section">
+              <section aria-labelledby="de-ready-list-heading">
+              <JobGrid>
+                {paginatedJobs.map((j) => {
                   const listKey = conversionJobListKey(j);
                   const isSel = selectedJobId === listKey;
-                  const isFxlJ = isFixedLayout(j);
-                  const pid = j.pdfDocumentId ?? j.pdfId;
-                  const epubSource = isEpubSourceJob(j);
-                  const pdfLabel = j.pdfFilename || (pid != null ? `PDF #${pid}` : 'Document');
-                  const pagesJ = j.totalPages ?? j.pageCount ?? null;
-                  const sizeJ = fmtSize(j.fileSizeBytes ?? j.fileSize ?? null);
-                  const subMeta = [pagesJ != null ? `${pagesJ} pages` : null, sizeJ].filter(Boolean).join(' · ') || '—';
-                  const durMs = jobDurationMs(j);
-                  const pct = j.progressPercentage ?? 100;
 
                   return (
-                    <article
-                      key={listKey}
-                      className={[
-                        'de-ready-pdf-card',
-                        isFxlJ ? 'de-ready-pdf-card--fxl' : 'de-ready-pdf-card--reflow',
-                        isSel ? 'de-ready-pdf-card--selected' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      <div
-                        className="de-ready-pdf-card-hit"
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => dispatch(setSelectedJobId(listKey))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            dispatch(setSelectedJobId(listKey));
-                          }
-                        }}
-                      >
-                        <div className="de-ready-pdf-card-header">
-                          <span
-                            className={`de-ready-pdf-type ${isFxlJ ? 'de-ready-pdf-type--fxl' : 'de-ready-pdf-type--reflow'}`}
-                          >
-                            {isFxlJ ? 'FXL' : 'REFLOW'}
-                          </span>
-                          <span className="de-ready-pdf-status de-ready-pdf-status--done">COMPLETED</span>
-                        </div>
-
-                        <div className="de-ready-pdf-card-pdf-panel">
-                          <div className="de-ready-pdf-card-pdf-thumb-col">
-                            <span className="de-ready-pdf-card-pdf-badge" aria-hidden>
-                              {epubSource ? 'EPUB' : 'PDF'}
-                            </span>
-                            <div className="de-ready-pdf-thumb">
-                              <DeReadyPdfThumb pdfId={pid} epubSource={epubSource} />
-                            </div>
-                          </div>
-                          <div className="de-ready-pdf-card-pdf-meta">
-                            <div className="de-ready-pdf-card-pdf-name" title={pdfLabel}>
-                              {pdfLabel}
-                            </div>
-                            <div className="de-ready-pdf-card-pdf-sub">{subMeta}</div>
-                          </div>
-                        </div>
-
-                        <div className="de-ready-pdf-card-body">
-                          <div className="de-ready-pdf-card-job-id">Job #{jid}</div>
-                          <div className="de-ready-pdf-card-step-row">
-                            <span className="de-ready-pdf-card-step-text">
-                              Step: {fmtStep(j.currentStep) || 'COMPLETE'}
-                            </span>
-                            <span className="de-ready-pdf-card-pct">{pct}%</span>
-                          </div>
-                          <div className="de-ready-pdf-card-progress-track">
-                            <div
-                              className="de-ready-pdf-card-progress-fill de-ready-pdf-progress-fill--done"
-                              style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-                            />
-                          </div>
-
-                          <div className="de-ready-pdf-card-metrics">
-                            <div className="de-ready-pdf-card-metric">
-                              <span className="de-ready-pdf-card-metric-label">Completed</span>
-                              <span className="de-ready-pdf-card-metric-value">
-                                {fmtCompletedNice(j.completedAt || j.updatedAt)}
-                              </span>
-                            </div>
-                            <div className="de-ready-pdf-card-metric">
-                              <span className="de-ready-pdf-card-metric-label">Duration</span>
-                              <span className="de-ready-pdf-card-metric-value">
-                                {durMs != null ? fmtDurationMs(durMs) : '—'}
-                              </span>
-                            </div>
-                            <div className="de-ready-pdf-card-metric">
-                              <span className="de-ready-pdf-card-metric-label">AI model</span>
-                              <span className="de-ready-pdf-card-metric-value">
-                                {j.aiModel || j.modelName || j.model || '—'}
-                              </span>
-                            </div>
-                          </div>
-
-                          {isSel ? (
-                            <span className="de-ready-pdf-card-selected">Selected for preview</span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <div className="de-ready-pdf-card-actions">
-                        <button
-                          type="button"
-                          className="de-ready-pdf-card-dl"
-                          disabled={!!quickDownloadId || downloading}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleQuickDownload(j);
-                          }}
-                          title={`Download job-${jid}.epub`}
-                        >
-                          <Download size={16} aria-hidden />
-                          {quickDownloadId === listKey ? 'Downloading…' : 'Download EPUB'}
-                          <ChevronRight size={18} aria-hidden />
-                        </button>
-                        <button
-                          type="button"
-                          className="de-ready-pdf-card-del-btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(j);
-                          }}
-                          title="Delete job"
-                          aria-label={`Delete job #${jid}`}
-                        >
-                          <Trash2 size={16} aria-hidden />
-                        </button>
-                      </div>
-                    </article>
+                    <div key={listKey} className="de-ready-card-wrap">
+                      <JobCard
+                        job={j}
+                        isSelected={isSel}
+                        onSelect={() => dispatch(setSelectedJobId(listKey))}
+                        onDelete={handleDelete}
+                        onOpenEditor={handleQuickDownload}
+                        primaryActionLabel={quickDownloadId === listKey ? 'Downloading...' : 'Download EPUB'}
+                        primaryActionIcon={Download}
+                      />
+                    </div>
                   );
                 })}
-              </div>
+              </JobGrid>
+              {jobs.length > ITEMS_PER_PAGE && (
+                <div className="de-pagination" role="navigation" aria-label="Jobs pagination">
+                  <div className="de-pagination-shell">
+                    <button
+                      type="button"
+                      className="de-pagination-nav"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <span aria-hidden>←</span> Previous
+                    </button>
+                    <div className="de-pagination-pages">
+                      {pageNumbers.map((page, idx) =>
+                        typeof page === 'string' ? (
+                          <span key={`${page}-${idx}`} className="de-pagination-ellipsis" aria-hidden>
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={page}
+                            type="button"
+                            className={`de-pagination-page ${currentPage === page ? 'is-active' : ''}`}
+                            onClick={() => setCurrentPage(page)}
+                            aria-current={currentPage === page ? 'page' : undefined}
+                          >
+                            {page}
+                          </button>
+                        ),
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="de-pagination-nav"
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next <span aria-hidden>→</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
+            </div>
           )}
 
         </div>

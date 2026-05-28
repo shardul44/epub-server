@@ -47,8 +47,6 @@ import Register from '../pages/Register';
 import NotFound from '../pages/NotFound';
 
 /* ─── Lazy-loaded pages (one chunk per page) ──────────────────── */
-const PdfList                 = lazy(() => import('../pages/PdfList'));
-const PdfDetail               = lazy(() => import('../pages/PdfDetail'));
 const PdfUpload               = lazy(() => import('../pages/PdfUpload'));
 const ChapterSelector         = lazy(() => import('../pages/ChapterSelector'));
 const ConversionJobs          = lazy(() => import('../pages/org/ConversionJobs'));
@@ -132,9 +130,8 @@ export default function AppRouter() {
 
           {/* PDF conversion workflow */}
           <Route element={<RequireFeature featureKey="conversion.basic" />}>
-            <Route path="pdfs"                element={lazyEl(PdfList)} />
+            <Route path="pdfs"                element={<Navigate to="/" replace />} />
             <Route path="pdfs/upload"         element={lazyEl(PdfUpload)} />
-            <Route path="pdfs/:pdfId"         element={lazyEl(PdfDetail)} />
             <Route path="chapter-plan/:pdfId" element={lazyEl(ChapterSelector)} />
             <Route path="conversions"                          element={lazyEl(ConversionJobs)} />
             <Route path="conversions/download"                 element={lazyEl(DownloadEpub)} />

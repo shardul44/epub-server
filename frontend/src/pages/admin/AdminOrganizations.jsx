@@ -394,8 +394,15 @@ export default function AdminOrganizations() {
                       </td>
                       <td>
                         <div className="aorg-actions">
-                          <button type="button" className="aorg-btn-ghost" onClick={() => toggleActive(o)}>
-                            Toggle
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={o.active}
+                            aria-label={o.active ? 'Deactivate organization' : 'Activate organization'}
+                            className={`aorg-switch ${o.active ? 'aorg-switch--on' : ''}`}
+                            onClick={() => toggleActive(o)}
+                          >
+                            <span className="aorg-switch-thumb" aria-hidden />
                           </button>
                           <button type="button" className="aorg-btn-ghost" onClick={() => openManageUsers(o.id)}>
                             <Users size={16} aria-hidden />

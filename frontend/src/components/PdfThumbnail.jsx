@@ -258,6 +258,8 @@ const PdfThumbnail = memo(({
       alt={alt}
       width={width}
       height={height}
+      loading="lazy"
+      decoding="async"
       className={`pdf-thumb pdf-thumb--ready ${className}`}
       draggable={false}
     />

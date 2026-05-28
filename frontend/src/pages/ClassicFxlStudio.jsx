@@ -114,7 +114,7 @@ export default function ClassicFxlStudio() {
   return (
     <div className="classic-fxl-studio">
       <header className="classic-fxl-header">
-        <button type="button" className="classic-fxl-back" onClick={() => navigate('/pdfs')}>
+        <button type="button" className="classic-fxl-back" onClick={() => navigate('/pdfs/upload')}>
           <ArrowLeft size={20} /> Back
         </button>
         <h1 className="classic-fxl-title">Classic FXL</h1>
@@ -131,8 +131,8 @@ export default function ClassicFxlStudio() {
         {error && !job?.status && (
           <div className="classic-fxl-card classic-fxl-card-error">
             <p className="classic-fxl-message error">{error}</p>
-            <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs')}>
-              Back to PDFs
+            <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs/upload')}>
+              Back to Upload
             </button>
           </div>
         )}
@@ -157,8 +157,8 @@ export default function ClassicFxlStudio() {
           <div className="classic-fxl-card classic-fxl-card-error">
             <h2>Conversion failed</h2>
             <p className="classic-fxl-message error">{job.error || error}</p>
-            <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs')}>
-              Back to PDFs
+            <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs/upload')}>
+              Back to Upload
             </button>
           </div>
         )}
@@ -216,8 +216,8 @@ export default function ClassicFxlStudio() {
               >
                 Open Kitaboo Studio
               </button>
-              <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs')}>
-                Back to PDFs
+              <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs/upload')}>
+                Back to Upload
               </button>
             </div>
           </div>
@@ -229,8 +229,8 @@ export default function ClassicFxlStudio() {
             <p className="classic-fxl-message">
               This job has no layout fragments. Start a <strong>Classic FXL</strong> conversion from the PDF list to use the layout-only pipeline.
             </p>
-            <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs')}>
-              Back to PDFs
+            <button type="button" className="classic-fxl-btn secondary" onClick={() => navigate('/pdfs/upload')}>
+              Back to Upload
             </button>
           </div>
         )}

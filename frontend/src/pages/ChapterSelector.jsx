@@ -293,8 +293,8 @@ const ChapterSelector = () => {
     return (
       <div className="cs-page">
         <div className="cs-navbar">
-          <button className="cs-back-btn" onClick={() => navigate('/pdfs')}>
-            <ArrowLeft size={16} /> PDF Library
+          <button className="cs-back-btn" onClick={() => navigate('/pdfs/upload')}>
+            <ArrowLeft size={16} /> Upload PDF
           </button>
         </div>
         <div className="cs-loading">
@@ -310,8 +310,8 @@ const ChapterSelector = () => {
     return (
       <div className="cs-page">
         <div className="cs-navbar">
-          <button className="cs-back-btn" onClick={() => navigate('/pdfs')}>
-            <ArrowLeft size={16} /> PDF Library
+          <button className="cs-back-btn" onClick={() => navigate('/pdfs/upload')}>
+            <ArrowLeft size={16} /> Upload PDF
           </button>
         </div>
         <div className="cs-empty">
@@ -329,9 +329,9 @@ const ChapterSelector = () => {
       {/* ── Navbar ── */}
       <div className="cs-navbar">
          <span className="cs-navbar-title">Chapter Plan</span>
-        <button className="cs-back-btn" onClick={() => navigate('/pdfs')}>
+        <button className="cs-back-btn" onClick={() => navigate('/pdfs/upload')}>
           <ArrowLeft size={15} />
-          <span>PDF Library</span>
+          <span>Upload PDF</span>
         </button>
       </div>
 
@@ -453,7 +453,7 @@ const ChapterSelector = () => {
             <button
               className="cs-cancel-btn"
               type="button"
-              onClick={() => navigate('/pdfs')}
+              onClick={() => navigate('/pdfs/upload')}
             >
               Cancel
             </button>

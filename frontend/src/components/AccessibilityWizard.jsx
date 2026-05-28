@@ -453,15 +453,18 @@ const AccessibilityWizard = ({ onStateChange }) => {
     `${API_BASE_URL}/accessibility/${jobId}/image?src=${encodeURIComponent(imgSrc)}`;
 
   const backendBase = API_BASE_URL.replace(/\/api\/?$/, '');
+  const apiBaseEndsWithApi = /\/api\/?$/.test(API_BASE_URL);
+  const resolveAccessibilityApiUrl = (path) =>
+    `${backendBase}${apiBaseEndsWithApi ? `/api${path}` : path}`;
   const absoluteReportUrl = reportUrl ? `${backendBase}${reportUrl}` : '';
-  // The backend /api/accessibility/* routes require auth. Native <a> links can't
-  // send an Authorization header, so we append ?token=<jwt> (supported by the
-  // authenticate middleware for GET/HEAD requests) via mediaUrl().
+  // Accessibility download routes require auth. Native <a> links can't send an
+  // Authorization header, so we append ?token=<jwt> (supported by authenticate
+  // for GET/HEAD requests) via mediaUrl().
   const downloadEpubUrl = jobId
-    ? mediaUrl(`${backendBase}/api/accessibility/${jobId}/download-epub`)
+    ? mediaUrl(resolveAccessibilityApiUrl(`/accessibility/${jobId}/download-epub`))
     : '';
   const downloadReportPdfUrl = jobId
-    ? mediaUrl(`${backendBase}/api/accessibility/report/${jobId}/pdf`)
+    ? mediaUrl(resolveAccessibilityApiUrl(`/accessibility/report/${jobId}/pdf`))
     : '';
 
   const onResetDraftsFromReport = (nextReport) => {

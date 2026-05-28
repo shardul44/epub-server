@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, memo, useRef } from 'react';
+import { useEffect, useState, useCallback, memo, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { conversionApi, apiClient } from '../../api';
 import WorkflowStepper from '../../components/WorkflowStepper';
@@ -33,6 +33,7 @@ import './ConversionJobs.css';
 
 /* ─── Constants ───────────────────────────────────────────────── */
 const MAX_RETRIES = 3;
+const ITEMS_PER_PAGE = 9;
 
 /* ─── Helpers ─────────────────────────────────────────────────── */
 const STATUS_CLASS = {
@@ -240,6 +241,7 @@ const ConversionJobs = () => {
 
   // ── Local UI state (ephemeral — not worth persisting) ─────────
   const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ── React Query (server state) ────────────────────────────────
   const { jobs, isPending, isLoading: loading, error: pollError, refresh } = useConversionsQuery({
@@ -306,6 +308,34 @@ const ConversionJobs = () => {
   const completedCount = jobs.filter(j => j.status === 'COMPLETED').length;
   const runningCount   = jobs.filter(j => j.status === 'IN_PROGRESS').length;
   const displayError   = actionError || pollError;
+  const totalPages = Math.max(1, Math.ceil(jobs.length / ITEMS_PER_PAGE));
+  const paginatedJobs = jobs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const windowStart = Math.max(2, currentPage - 1);
+    const windowEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < totalPages - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+
+    return pages;
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, viewMode]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   /* ── render ── */
   if (isPending && jobs.length === 0) {
@@ -416,7 +446,7 @@ const ConversionJobs = () => {
           </div>
         ) : viewMode === 'card' ? (
           <JobGrid>
-            {jobs.map(job => (
+            {paginatedJobs.map(job => (
               <JobCard
                 key={`${job.jobType ?? 'REFLOW'}-${job.id ?? job.jobId}`}
                 job={job}
@@ -445,7 +475,7 @@ const ConversionJobs = () => {
                 </tr>
               </thead>
               <tbody>
-                {jobs.map(job => (
+                {paginatedJobs.map(job => (
                   <JobRow
                     key={`${job.jobType ?? 'REFLOW'}-${job.id ?? job.jobId}`}
                     job={job}
@@ -457,6 +487,47 @@ const ConversionJobs = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {jobs.length > ITEMS_PER_PAGE && (
+          <div className="cj-pagination" role="navigation" aria-label="Jobs pagination">
+            <div className="cj-pagination-shell">
+              <button
+                type="button"
+                className="cj-pagination-nav"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                <span aria-hidden>←</span> Previous
+              </button>
+              <div className="cj-pagination-pages">
+                {pageNumbers.map((page, idx) =>
+                  typeof page === 'string' ? (
+                    <span key={`${page}-${idx}`} className="cj-pagination-ellipsis" aria-hidden>
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`cj-pagination-page ${currentPage === page ? 'is-active' : ''}`}
+                      onClick={() => setCurrentPage(page)}
+                      aria-current={currentPage === page ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+              </div>
+              <button
+                type="button"
+                className="cj-pagination-nav"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next <span aria-hidden>→</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

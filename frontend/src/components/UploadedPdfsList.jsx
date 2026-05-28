@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
@@ -25,10 +24,8 @@ import {
   List,
   Eye,
   Download,
-  MoreVertical,
   FileText,
   Trash2,
-  Play,
   Sparkles,
   ChevronLeft,
   ChevronRight,
@@ -39,7 +36,6 @@ import {
   Loader2,
   Info,
 } from 'lucide-react';
-import '../pages/PdfList.css';
 import './UploadedPdfsList.css';
 
 const FILTER_OPTIONS = [
@@ -132,121 +128,23 @@ const RowThumbnail = memo(({ pdfId, epubOnly = false }) => {
 });
 RowThumbnail.displayName = 'RowThumbnail';
 
-const RowMoreMenu = memo(({ pdf, onPreview, onDownload, onConvert, onHifi, onOpenEpubImport, onDelete, epubOnly = false }) => {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const btnRef = useRef(null);
-  const menuRef = useRef(null);
-  const isFixed = pdf.layoutType === 'FIXED_LAYOUT';
-  const isEpubStub = isEpubImportStub(pdf);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const close = (e) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target) &&
-        btnRef.current && !btnRef.current.contains(e.target)
-      ) {
-        setOpen(false);
-      }
-    };
-    const closeOnScroll = () => setOpen(false);
-    document.addEventListener('mousedown', close);
-    window.addEventListener('scroll', closeOnScroll, true);
-    return () => {
-      document.removeEventListener('mousedown', close);
-      window.removeEventListener('scroll', closeOnScroll, true);
-    };
-  }, [open]);
-
-  const toggle = (e) => {
-    e.stopPropagation();
-    if (open) {
-      setOpen(false);
-      return;
-    }
-    const rect = btnRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom + 6, left: rect.right - 168 });
-    setOpen(true);
-  };
-
-  const menu = open && createPortal(
-    <div
-      ref={menuRef}
-      className="upl-dropdown"
-      style={{ top: pos.top, left: pos.left }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {(epubOnly || isEpubStub) && (
-        <button type="button" className="upl-dropdown-item" onClick={() => { setOpen(false); onOpenEpubImport?.(pdf); }}>
-          <Sparkles size={15} /> {isFixed ? 'FXL Sync Studio' : 'Sync Studio'}
-        </button>
-      )}
-      {!epubOnly && !isFixed && !isEpubStub && (
-        <button type="button" className="upl-dropdown-item" onClick={() => { setOpen(false); onConvert?.(pdf); }}>
-          <Play size={15} /> Convert
-        </button>
-      )}
-      {!epubOnly && isFixed && !isEpubStub && (
-        <button type="button" className="upl-dropdown-item" onClick={() => { setOpen(false); onHifi?.(pdf); }}>
-          <Sparkles size={15} /> Hi-Fi FXL
-        </button>
-      )}
-      <div className="upl-dropdown-divider" />
-      <button type="button" className="upl-dropdown-item upl-dropdown-item--danger" onClick={() => { setOpen(false); onDelete?.(pdf.id); }}>
-        <Trash2 size={15} /> Delete
-      </button>
-    </div>,
-    document.body,
-  );
-
-  return (
-    <div className="upl-more-wrap">
-      <button
-        ref={btnRef}
-        type="button"
-        className="upl-action-btn"
-        title="More options"
-        onClick={toggle}
-        aria-haspopup="true"
-        aria-expanded={open}
-      >
-        <MoreVertical size={16} />
-      </button>
-      {menu}
-    </div>
-  );
-});
-RowMoreMenu.displayName = 'RowMoreMenu';
-
 const PdfTableRow = memo(({
   pdf,
-  selected,
-  onToggleSelect,
   isHighlight,
   rowRef,
   onPreview,
   onDownload,
-  onConvert,
   onHifi,
   onOpenEpubImport,
   onDelete,
   epubOnly = false,
 }) => {
   const isFixed = pdf.layoutType === 'FIXED_LAYOUT';
+  const isEpubStub = isEpubImportStub(pdf);
   const { date, time } = formatUploaded(pdf.createdAt);
 
   return (
     <tr ref={rowRef} className={isHighlight ? 'upl-row--highlight' : ''}>
-      <td className="upl-td-check">
-        <input
-          type="checkbox"
-          className="upl-check"
-          checked={selected}
-          onChange={() => onToggleSelect(pdf.id)}
-          aria-label={`Select ${pdf.originalFileName || 'PDF'}`}
-        />
-      </td>
       <td>
         <div className="upl-name-cell">
           <RowThumbnail pdfId={pdf.id} epubOnly={epubOnly} />
@@ -288,17 +186,30 @@ const PdfTableRow = memo(({
           >
             <Download size={16} />
           </button>
-          <RowMoreMenu
-            pdf={pdf}
-            onPreview={onPreview}
-            onDownload={onDownload}
-            onConvert={onConvert}
-            onHifi={onHifi}
-            onOpenEpubImport={onOpenEpubImport}
-            onDelete={onDelete}
-            epubOnly={epubOnly}
-          />
+          <button
+            type="button"
+            className="upl-action-btn upl-action-btn--delete"
+            title={epubOnly ? 'Delete EPUB' : 'Delete PDF'}
+            onClick={() => onDelete?.(pdf.id)}
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
+      </td>
+      <td>
+        {!epubOnly && isFixed && !isEpubStub ? (
+          <button
+            type="button"
+            className="upl-convert-btn"
+            onClick={() => onHifi?.(pdf)}
+            title="Start Hi-Fi FXL conversion"
+          >
+            <Sparkles size={15} />
+            Hi-Fi FXL
+          </button>
+        ) : (
+          <span className="upl-convert-empty">—</span>
+        )}
       </td>
     </tr>
   );
@@ -331,7 +242,6 @@ export default function UploadedPdfsList({
   const [viewMode, setViewMode] = useState('list');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [hifiModalPdf, setHifiModalPdf] = useState(null);
   const [hifiZoneLevel, setHifiZoneLevel] = useState('word');
   const [hifiTocEndPage, setHifiTocEndPage] = useState('');
@@ -402,29 +312,6 @@ export default function UploadedPdfsList({
     if (page > totalPages) setPage(totalPages);
   }, [totalPages, page]);
 
-  const allPageSelected = pageItems.length > 0 && pageItems.every((p) => selectedIds.has(p.id));
-
-  const toggleSelect = useCallback((id) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  const toggleSelectAllPage = useCallback(() => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allPageSelected) {
-        pageItems.forEach((p) => next.delete(p.id));
-      } else {
-        pageItems.forEach((p) => next.add(p.id));
-      }
-      return next;
-    });
-  }, [allPageSelected, pageItems]);
-
   const handleDelete = (id) => setDeleteModal({ open: true, pdfId: id });
 
   const confirmDelete = () => {
@@ -434,11 +321,6 @@ export default function UploadedPdfsList({
     deleteMutation.mutate(pdfId, {
       onSuccess: () => {
         setDeleteModal({ open: false, pdfId: null });
-        setSelectedIds((prev) => {
-          const next = new Set(prev);
-          next.delete(pdfId);
-          return next;
-        });
         try {
           localStorage.removeItem(`pdf-thumb-card-${pdfId}`);
           localStorage.removeItem(`pdf-thumb-card-hd-${pdfId}`);
@@ -652,21 +534,13 @@ export default function UploadedPdfsList({
             <table className="upl-table">
               <thead>
                 <tr>
-                  <th className="upl-th-check">
-                    <input
-                      type="checkbox"
-                      className="upl-check"
-                      checked={allPageSelected}
-                      onChange={toggleSelectAllPage}
-                      aria-label="Select all on this page"
-                    />
-                  </th>
                   <th>Name</th>
-                  <th style={{ textAlign: 'center' }}>Pages</th>
+                  <th >Pages</th>
                   <th>Size</th>
                   <th>Uploaded on</th>
                   <th>Layout</th>
                   <th>Actions</th>
+                  <th>Conversion</th>
                 </tr>
               </thead>
               <tbody>
@@ -674,13 +548,10 @@ export default function UploadedPdfsList({
                   <PdfTableRow
                     key={pdf.id}
                     pdf={pdf}
-                    selected={selectedIds.has(pdf.id)}
-                    onToggleSelect={toggleSelect}
                     isHighlight={highlightId != null && pdf.id === highlightId}
                     rowRef={(el) => { if (el) rowRefs.current[pdf.id] = el; }}
                     onPreview={handlePreview}
                     onDownload={handleDownload}
-                    onConvert={handleConvert}
                     onHifi={handleHifi}
                     onOpenEpubImport={handleOpenEpubImport}
                     onDelete={handleDelete}

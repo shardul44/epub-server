@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import useAppDispatch from '../hooks/useAppDispatch';
 import useAppSelector from '../hooks/useAppSelector';
 import { useQueryClient } from '@tanstack/react-query';
@@ -81,7 +80,6 @@ const PdfUpload = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [highlightPdf, setHighlightPdf] = useState({ id: null, name: '' });
   const fileInputRef                = useRef(null);
-  const navigate                    = useNavigate();
   const dispatch                    = useAppDispatch();
   const queryClient                 = useQueryClient();
   const listScope                   = useListScope();
@@ -103,7 +101,7 @@ const PdfUpload = () => {
     uploadStatus === 'failed'    ? 'error'   :
     'uploading';
 
-  // After successful upload: add to My PDFs only — conversion starts from PdfList "Convert" / Hi-Fi.
+  // After successful upload: keep list cache hot for upload-page library actions.
   useEffect(() => {
     if (uploadStatus !== 'succeeded' || !lastDoc) return undefined;
     upsertPdfInListCache(queryClient, listScope, lastDoc);
@@ -121,10 +119,14 @@ const PdfUpload = () => {
     clearFile();
   };
 
-  const goToMyPdfsFromUpload = () => {
-    dismissUploadModal();
-    navigate('/pdfs');
-  };
+  // Auto-close success modal after 1 seconds and return to upload view.
+  useEffect(() => {
+    if (!uploadModalOpen || uploadModalStatus !== 'success') return undefined;
+    const closeTimer = setTimeout(() => {
+      dismissUploadModal();
+    }, 1000);
+    return () => clearTimeout(closeTimer);
+  }, [uploadModalOpen, uploadModalStatus]);
 
   /* ── file helpers ── */
   const validateAndSet = (f) => {
@@ -430,8 +432,6 @@ const PdfUpload = () => {
         error={uploadError || ''}
         onClose={dismissUploadModal}
         onDismiss={dismissUploadModal}
-        onSuccessAction={goToMyPdfsFromUpload}
-        successActionLabel="Go to My PDFs"
       />
 
     </div>

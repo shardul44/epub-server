@@ -5,131 +5,55 @@
  *   FXL   → /conversions/fxl-editor/:jobId  → KitabooZoningStudio
  *   Reflow → /conversions/image-editor/:jobId → EpubImageEditorPage
  */
-import { useMemo, memo, useState, useCallback } from 'react';
+import { useMemo, memo, useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, FileText, Layers, Image, ChevronRight, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileText, Layers } from 'lucide-react';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import { useListScope } from '../../context/ListScopeContext';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
 import { isFixedLayout, useWorkflowNavigation } from '../../hooks/useWorkflowNavigation';
 import { useConversionActions } from '../../hooks/useConversionActions';
-import PdfThumbnail from '../../components/PdfThumbnail';
+import JobCard, { JobGrid } from '../../components/JobCard';
 import ConfirmModal from '../../components/Loadingmodal';
-import { pdfViewUrl } from '../../services/api';
 import './ImageFxlEditor.css';
-
-const fmtStep = (s) =>
-  s ? String(s).replace(/STEP_\d+_/, '').replace(/_/g, ' ') : '';
-
-const fmtDurationMs = (ms) => {
-  if (ms == null || !Number.isFinite(ms) || ms < 0) return '—';
-  const sec = Math.floor(ms / 1000);
-  const m = Math.floor(sec / 60);
-  const h = Math.floor(m / 60);
-  if (h > 0) return `${h}h ${m % 60}m`;
-  if (m > 0) return `${m}m ${sec % 60}s`;
-  if (sec > 0) return `${sec}s`;
-  return '—';
-};
-
-const fmtTimeShort = (d) =>
-  d
-    ? new Date(d).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    : '—';
-
-const fmtCompletedNice = (d) =>
-  d
-    ? new Date(d).toLocaleString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      })
-    : '—';
-
-const estimateEta = (job) => {
-  const pct = job.progressPercentage ?? 0;
-  if (pct <= 0 || pct >= 100) return '—';
-  const start = new Date(job.createdAt || job.updatedAt).getTime();
-  if (!Number.isFinite(start)) return '—';
-  const elapsed = Date.now() - start;
-  if (elapsed < 4000) return '—';
-  const remaining = (elapsed / pct) * (100 - pct);
-  return fmtDurationMs(remaining);
-};
-
-const jobDurationMs = (job) => {
-  const end = job.completedAt || job.updatedAt;
-  const start = job.createdAt;
-  if (!start || !end) return null;
-  return new Date(end).getTime() - new Date(start).getTime();
-};
-
-function buildPdfViewUrl(pdfDocumentId) {
-  if (pdfDocumentId == null || pdfDocumentId === '') return null;
-  try {
-    return pdfViewUrl(pdfDocumentId);
-  } catch {
-    return null;
-  }
-}
-
-const STATUS_BADGE = {
-  PENDING:     'ife-status-pill--info',
-  IN_PROGRESS: 'ife-status-pill--running',
-  COMPLETED:   'ife-status-pill--done',
-  FAILED:      'ife-status-pill--fail',
-  CANCELLED:   'ife-status-pill--fail',
-};
-
-const statusLabel = (status) => {
-  if (status === 'COMPLETED') return 'COMPLETED';
-  if (status === 'IN_PROGRESS') return 'RUNNING';
-  return String(status || '').replace(/_/g, ' ');
-};
-
-/* ─── PDF thumb (first page) ─────────────────────────────────── */
-const IfePdfThumb = memo(function IfePdfThumb({ pdfId }) {
-  const url = useMemo(() => buildPdfViewUrl(pdfId), [pdfId]);
-  const cacheKey =
-    pdfId != null && pdfId !== '' ? `pdf-thumb-card-${String(pdfId)}` : null;
-
-  if (!url) {
-    return (
-      <div className="ife-job-card-thumb-fallback" aria-hidden>
-        <FileText size={28} />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="ife-job-card-thumb-fallback ife-job-card-thumb-fallback--under" aria-hidden>
-        <FileText size={28} />
-      </div>
-      <div className="ife-job-card-thumb-preview">
-        <PdfThumbnail
-          url={url}
-          width={200}
-          height={280}
-          scale={1.25}
-          cacheKey={cacheKey}
-          className="ife-job-card-pdf-thumb"
-          alt=""
-        />
-      </div>
-    </>
-  );
-});
 
 /* ─── Job selector grid ───────────────────────────────────────── */
 const JobSelector = ({ jobs, onSelect, onDelete, loading, listScope }) => {
+  const ITEMS_PER_PAGE = 9;
   const [tab, setTab] = useState('FXL');
 
   const fxlJobs    = jobs.filter(j => isFixedLayout(j));
   const reflowJobs = jobs.filter(j => !isFixedLayout(j));
   const visible    = tab === 'FXL' ? fxlJobs : reflowJobs;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
+  const paginatedVisible = visible.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const windowStart = Math.max(2, currentPage - 1);
+    const windowEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < totalPages - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+
+    return pages;
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [tab]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="ife-selector-root">
@@ -191,164 +115,66 @@ const JobSelector = ({ jobs, onSelect, onDelete, loading, listScope }) => {
           </p>
         </div>
       ) : (
-        <div className="ife-selector-grid">
-          {visible.map((job) => {
+        <JobGrid>
+          {paginatedVisible.map((job) => {
             const jobId = job.id ?? job.jobId;
-            const pdfId = job.pdfDocumentId ?? job.pdfId;
-            const fxl   = isFixedLayout(job);
-            const status = job.status ?? 'COMPLETED';
-            const pct = job.progressPercentage ?? (status === 'COMPLETED' ? 100 : 0);
-            const displayName = job.pdfFilename || (pdfId != null ? `PDF #${pdfId}` : 'Untitled PDF');
-            const pagesPart = job.totalPages != null ? `${job.totalPages} pages` : null;
-            const subMeta = pagesPart || '—';
-
-            const durMs = jobDurationMs(job);
-            const metrics =
-              status === 'COMPLETED'
-                ? {
-                    c1Label: 'Completed',
-                    c1Val: fmtCompletedNice(job.completedAt || job.updatedAt),
-                    c2Label: 'Duration',
-                    c2Val: durMs != null ? fmtDurationMs(durMs) : '—',
-                    c3Label: 'AI model',
-                    c3Val:
-                      job.aiModel ||
-                      job.modelName ||
-                      job.model ||
-                      '—',
-                  }
-                : status === 'IN_PROGRESS'
-                  ? {
-                      c1Label: 'ETA',
-                      c1Val: estimateEta(job),
-                      c2Label: 'Started',
-                      c2Val: fmtTimeShort(job.createdAt),
-                      c3Label: 'AI model',
-                      c3Val: job.aiModel || job.modelName || '—',
-                    }
-                  : {
-                      c1Label: 'Status',
-                      c1Val: status.replace(/_/g, ' '),
-                      c2Label: 'Started',
-                      c2Val: fmtTimeShort(job.createdAt),
-                      c3Label: 'AI model',
-                      c3Val: job.aiModel || job.modelName || '—',
-                    };
-
-            const progressClass =
-              status === 'COMPLETED'
-                ? 'ife-progress-fill--done'
-                : status === 'FAILED' || status === 'CANCELLED'
-                  ? 'ife-progress-fill--fail'
-                  : fxl
-                    ? 'ife-progress-fill--fxl'
-                    : 'ife-progress-fill--reflow';
-
             return (
               <div
                 key={jobId}
-                className={[
-                  'ife-job-card',
-                  fxl ? 'ife-job-card--fxl' : 'ife-job-card--reflow',
-                  status === 'IN_PROGRESS' ? 'ife-job-card--running' : '',
-                  status === 'COMPLETED' ? 'ife-job-card--done' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                role="button"
-                tabIndex={0}
-                onClick={() => onSelect(job)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelect(job);
-                  }
-                }}
+                className="ife-selector-card-wrap"
               >
-                <div className="ife-job-card-header">
-                  <span className={`ife-type-pill${fxl ? ' ife-type-fxl' : ' ife-type-reflow'}`}>
-                    {fxl ? 'FXL' : 'REFLOW'}
-                  </span>
-                  <span className={`ife-status-pill ${STATUS_BADGE[status] ?? 'ife-status-pill--info'}`}>
-                    {statusLabel(status)}
-                  </span>
-                </div>
-
-                <div className="ife-job-card-pdf-panel">
-                  <div className="ife-job-card-pdf-thumb-col">
-                    <span className="ife-job-card-pdf-badge" aria-hidden>
-                      PDF
-                    </span>
-                    {fxl && (
-                      <span className="ife-job-card-zones-badge">
-                        <Layers size={10} /> Zones
-                      </span>
-                    )}
-                    <div className="ife-job-card-thumb">
-                      <IfePdfThumb pdfId={pdfId} />
-                    </div>
-                  </div>
-                  <div className="ife-job-card-pdf-meta">
-                    <div className="ife-job-card-pdf-name" title={displayName}>
-                      {displayName}
-                    </div>
-                    <div className="ife-job-card-pdf-sub">{subMeta}</div>
-                  </div>
-                </div>
-
-                <div className="ife-job-card-body">
-                  <div className="ife-job-card-job-id">Job #{jobId}</div>
-                  <div className="ife-job-card-step-row">
-                    <span className="ife-job-card-step-text">
-                      Step: {fmtStep(job.currentStep) || '—'}
-                    </span>
-                    <span className="ife-job-card-pct">{pct}%</span>
-                  </div>
-                  <div className="ife-job-card-progress-track">
-                    <div
-                      className={['ife-job-card-progress-fill', progressClass].filter(Boolean).join(' ')}
-                      style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-                    />
-                  </div>
-
-                  <div className="ife-job-card-metrics">
-                    <div className="ife-job-card-metric">
-                      <span className="ife-job-card-metric-label">{metrics.c1Label}</span>
-                      <span className="ife-job-card-metric-value">{metrics.c1Val}</span>
-                    </div>
-                    <div className="ife-job-card-metric">
-                      <span className="ife-job-card-metric-label">{metrics.c2Label}</span>
-                      <span className="ife-job-card-metric-value">{metrics.c2Val}</span>
-                    </div>
-                    <div className="ife-job-card-metric">
-                      <span className="ife-job-card-metric-label">{metrics.c3Label}</span>
-                      <span className="ife-job-card-metric-value">{metrics.c3Val}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="ife-job-card-footer">
-                  <span className="ife-job-card-cta">
-                    <Image size={16} aria-hidden />
-                    {fxl ? 'Open in Zoning Studio' : 'Open in Editor'}
-                    <ChevronRight size={18} aria-hidden />
-                  </span>
-                  <button
-                    type="button"
-                    className="ife-job-card-del-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete?.(job);
-                    }}
-                    title="Delete job"
-                    aria-label={`Delete job #${jobId}`}
-                  >
-                    <Trash2 size={16} aria-hidden />
-                  </button>
-                </div>
+                <JobCard
+                  job={job}
+                  isSelected={false}
+                  onSelect={onSelect}
+                  onDelete={onDelete}
+                  onOpenEditor={onSelect}
+                />
               </div>
             );
           })}
+        </JobGrid>
+      )}
+      {visible.length > ITEMS_PER_PAGE && !loading && (
+        <div className="ife-pagination" role="navigation" aria-label="Jobs pagination">
+          <div className="ife-pagination-shell">
+            <button
+              type="button"
+              className="ife-pagination-nav"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <span aria-hidden>←</span> Previous
+            </button>
+            <div className="ife-pagination-pages">
+              {pageNumbers.map((page, idx) =>
+                typeof page === 'string' ? (
+                  <span key={`${page}-${idx}`} className="ife-pagination-ellipsis" aria-hidden>
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    type="button"
+                    className={`ife-pagination-page ${currentPage === page ? 'is-active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                    aria-current={currentPage === page ? 'page' : undefined}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+            </div>
+            <button
+              type="button"
+              className="ife-pagination-nav"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next <span aria-hidden>→</span>
+            </button>
+          </div>
+         
         </div>
       )}
     </div>

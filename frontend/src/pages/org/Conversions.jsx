@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { conversionService } from '../../services/conversionService';
 import api from '../../services/api';
@@ -23,6 +23,7 @@ import './Conversions.css';
 
 /* ─── Constants ───────────────────────────────────────────────── */
 const MAX_RETRIES = 3;
+const ITEMS_PER_PAGE = 9;
 
 /* ─── Stepper config ──────────────────────────────────────────── */
 const STEPS = [
@@ -258,6 +259,7 @@ const Conversions = () => {
   const [focusedJob, setFocusedJob]     = useState(null);
   const [activeStep, setActiveStep]     = useState(0);
   const [actionError, setActionError]   = useState('');
+  const [currentPage, setCurrentPage]   = useState(1);
 
   // ── Centralised polling (single hook, no scattered intervals) ──
   const { jobs: conversions, loading, error: pollError, refresh } = useJobPolling(statusFilter);
@@ -326,6 +328,34 @@ const Conversions = () => {
   const completedCount = conversions.filter(j => j.status === 'COMPLETED').length;
   const runningCount   = conversions.filter(j => j.status === 'IN_PROGRESS').length;
   const displayError   = actionError || pollError;
+  const totalPages = Math.max(1, Math.ceil(conversions.length / ITEMS_PER_PAGE));
+  const paginatedConversions = conversions.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const windowStart = Math.max(2, currentPage - 1);
+    const windowEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < totalPages - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+
+    return pages;
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, viewMode]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   if (loading && conversions.length === 0) {
     return <div className="cv-loading">Loading conversions…</div>;
@@ -400,7 +430,7 @@ const Conversions = () => {
         <div className="cv-empty">No conversions found</div>
       ) : viewMode === 'card' ? (
         <div className="cv-grid">
-          {conversions.map(job => (
+          {paginatedConversions.map(job => (
             <JobCard
               key={`${job.jobType ?? 'REFLOW'}-${job.id ?? job.jobId}`}
               job={job}
@@ -429,7 +459,7 @@ const Conversions = () => {
               </tr>
             </thead>
             <tbody>
-              {conversions.map(job => {
+              {paginatedConversions.map(job => {
                 const jobId      = job.id ?? job.jobId;
                 const retryCount = job.retryCount ?? 0;
                 const canRetry   = retryCount < MAX_RETRIES;
@@ -497,6 +527,48 @@ const Conversions = () => {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {conversions.length > ITEMS_PER_PAGE && (
+        <div className="cv-pagination" role="navigation" aria-label="Jobs pagination">
+          <div className="cv-pagination-shell">
+            <button
+              type="button"
+              className="cv-pagination-nav"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              <span aria-hidden>←</span> Previous
+            </button>
+            <div className="cv-pagination-pages">
+              {pageNumbers.map((page, idx) =>
+                typeof page === 'string' ? (
+                  <span key={`${page}-${idx}`} className="cv-pagination-ellipsis" aria-hidden>
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    type="button"
+                    className={`cv-pagination-page ${currentPage === page ? 'is-active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                    aria-current={currentPage === page ? 'page' : undefined}
+                  >
+                    {page}
+                  </button>
+                ),
+              )}
+            </div>
+            <button
+              type="button"
+              className="cv-pagination-nav"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next <span aria-hidden>→</span>
+            </button>
+          </div>
+          <span className="cv-pagination-info">Showing page {currentPage} of {totalPages}</span>
         </div>
       )}
     </div>
