@@ -133,25 +133,66 @@ export default function AppRouter() {
           {/* PDF conversion workflow */}
           <Route element={<RequireFeature featureKey="conversion.basic" />}>
             <Route path="pdfs"                element={lazyEl(PdfList)} />
-            <Route path="pdfs/upload"         element={lazyEl(PdfUpload)} />
             <Route path="pdfs/:pdfId"         element={lazyEl(PdfDetail)} />
             <Route path="chapter-plan/:pdfId" element={lazyEl(ChapterSelector)} />
             <Route path="conversions"                          element={lazyEl(ConversionJobs)} />
-            <Route path="conversions/download"                 element={lazyEl(DownloadEpub)} />
-            <Route path="conversions/download/:jobId"          element={lazyEl(DownloadEpub)} />
             <Route path="conversions/image-editor/:jobId" element={lazyEl(EpubImageEditorPage)} />
             <Route path="image-editor/:jobId"             element={lazyEl(EpubImageEditorPage)} />
             <Route path="reader/epub/:jobId" element={lazyEl(EpubReaderPage)} />
-            <Route path="exports"          element={lazyEl(Exports)} />
+          </Route>
+
+          <Route
+            element={
+              <RequireAnyFeature
+                featureKeys={[
+                  'conversion.basic',
+                  'kitaboo.import',
+                ]}
+              />
+            }
+          >
+            <Route path="pdfs/upload" element={lazyEl(PdfUpload)} />
+          </Route>
+
+          <Route
+            element={
+              <RequireAnyFeature
+                featureKeys={[
+                  'conversion.basic',
+                  'kitaboo.import',
+                  'sync_studio',
+                  'reflowable_epub.audio_sync',
+                  'hifi_fxl_epub.audio_sync',
+                ]}
+              />
+            }
+          >
+            <Route path="conversions/download"                 element={lazyEl(DownloadEpub)} />
+            <Route path="conversions/download/:jobId"          element={lazyEl(DownloadEpub)} />
+            <Route path="exports"                              element={lazyEl(Exports)} />
           </Route>
 
           {/* Kitaboo / FXL import & studios */}
           <Route element={<RequireFeature featureKey="kitaboo.import" />}>
-            <Route path="epub-sync-import" element={lazyEl(EpubSyncImport)} />
             <Route path="conversions/fxl-editor"               element={lazyEl(ImageFxlEditor)} />
             <Route path="conversions/fxl-editor/:jobId"   element={lazyEl(KitabooZoningStudio)} />
             <Route path="fxl-studio/:jobId"               element={lazyEl(KitabooZoningStudio)} />
             <Route path="kitaboo-studio/:jobId"           element={lazyEl(KitabooZoningStudio)} />
+          </Route>
+
+          {/* EPUB import -> audio sync (reflowable/fxl) */}
+          <Route
+            element={
+              <RequireAnyFeature
+                featureKeys={[
+                  'reflowable_epub.audio_sync',
+                  'hifi_fxl_epub.audio_sync',
+                  'sync_studio',
+                ]}
+              />
+            }
+          >
+            <Route path="epub-sync-import" element={lazyEl(EpubSyncImport)} />
           </Route>
 
           {/* Sync studio & audio overlay */}

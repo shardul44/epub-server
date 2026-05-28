@@ -76,6 +76,60 @@ import mfaService from './mfaService.js';
 export class KitabooFxlService {
   static _fontMappingCache = {};
 
+  static _fontLooksBold(fontName) {
+    const f = String(fontName || '');
+    return /(?:^|[\s_-])(bold|black|heavy|semibold|demi|extrabold|ultrabold|bd|blk)(?:$|[\s_-])/i.test(f)
+      || /(?:-)(bold|black|heavy|semibold|demi|extrabold|ultrabold|bd|blk)$/i.test(f);
+  }
+
+  static _fontLooksItalic(fontName) {
+    const f = String(fontName || '');
+    return /(?:^|[\s_-])(italic|oblique)(?:$|[\s_-])/i.test(f)
+      || /(?:-)(it|italic|oblique)$/i.test(f);
+  }
+
+  static _isBoldStyle(item) {
+    const flags = Number(item?.flags || 0);
+    return ((flags & 2) !== 0) || KitabooFxlService._fontLooksBold(item?.font);
+  }
+
+  static _isItalicStyle(item) {
+    const flags = Number(item?.flags || 0);
+    return ((flags & 1) !== 0) || KitabooFxlService._fontLooksItalic(item?.font);
+  }
+
+  static _sliceStyleRunsForWord(sourceRuns, wordStart, wordEnd, fallback = {}) {
+    if (!Array.isArray(sourceRuns) || sourceRuns.length === 0) {
+      return [{
+        start: 0,
+        end: Math.max(0, wordEnd - wordStart),
+        bold: !!fallback.bold,
+        italic: !!fallback.italic,
+        color: fallback.color || '#000000',
+      }];
+    }
+
+    const mapped = sourceRuns
+      .filter((r) => Number(r.end) > wordStart && Number(r.start) < wordEnd)
+      .map((r) => ({
+        start: Math.max(0, Number(r.start) - wordStart),
+        end: Math.min(wordEnd, Number(r.end)) - wordStart,
+        bold: !!r.bold,
+        italic: !!r.italic,
+        color: r.color || fallback.color || '#000000',
+      }))
+      .filter((r) => r.end > r.start);
+
+    if (mapped.length > 0) return mapped;
+    return [{
+      start: 0,
+      end: Math.max(0, wordEnd - wordStart),
+      bold: !!fallback.bold,
+      italic: !!fallback.italic,
+      color: fallback.color || '#000000',
+    }];
+  }
+
   /**
    * SMIL/audio highlight granularity for publish. Hi-Fi jobs store the user's choice as zoneLevel
    * (glyph extraction is always extractionLevel 'glyph'). Prefer explicit request, then zoneLevel, then extractionLevel.
@@ -785,8 +839,8 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
                 return {
                   start,
                   end,
-                  bold: !!((gf.flags || 0) & 2) || /bold/i.test(String(gf.font || '')),
-                  italic: !!((gf.flags || 0) & 1) || /italic/i.test(String(gf.font || '')),
+                  bold: KitabooFxlService._isBoldStyle(gf),
+                  italic: KitabooFxlService._isItalicStyle(gf),
                   color: gf.color || '#000000'
                 };
               });
@@ -827,8 +881,8 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
             parseFloat((item.origin[1] * scaleY).toFixed(3)),
             item.rotation || 0
           ] : null,
-          bold: !!((item.flags || 0) & 2) || /bold/i.test(String(item.font || '')),
-          italic: !!((item.flags || 0) & 1) || /italic/i.test(String(item.font || '')),
+          bold: KitabooFxlService._isBoldStyle(item),
+          italic: KitabooFxlService._isItalicStyle(item),
           ascender: item.ascender || 0.8,
           descender: item.descender || -0.2,
           textAlign: (item.align === 'right' || item.align === 'center') ? item.align : 'left'
@@ -841,8 +895,8 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
           if (Array.isArray(item.styleRuns) && item.styleRuns.length > 0) {
             zone.styleRuns = item.styleRuns;
           } else {
-            const bold = !!((item.flags || 0) & 2) || /bold/i.test(String(item.font || ''));
-            const italic = !!((item.flags || 0) & 1) || /italic/i.test(String(item.font || ''));
+            const bold = KitabooFxlService._isBoldStyle(item);
+            const italic = KitabooFxlService._isItalicStyle(item);
             zone.styleRuns = [{ start: 0, end: contentLen, bold, italic, color: item.color || '#000000' }];
           }
         }
@@ -2145,8 +2199,11 @@ Only return JSON.`;
     const out = [];
     for (const zone of allTextZonesOrdered) {
       const isAlreadyWord = /_w\d+$/.test(String(zone.id || ''));
+      const zoneStyleRef = { flags: 0, font: zone.fontFamily || zone.font };
+      const zoneBold = !!zone.bold || KitabooFxlService._isBoldStyle(zoneStyleRef);
+      const zoneItalic = !!zone.italic || KitabooFxlService._isItalicStyle(zoneStyleRef);
       if (isAlreadyWord) {
-        out.push({ ...zone, readingOrder: nextRO++ });
+        out.push({ ...zone, bold: zoneBold, italic: zoneItalic, readingOrder: nextRO++ });
         continue;
       }
       const content = (zone.content || '').trim();
@@ -2165,11 +2222,16 @@ Only return JSON.`;
       // Multi-line zone: expand per line so each word keeps its line's y (preserves vertical spacing at word level)
       if (Array.isArray(zone.lines) && zone.lines.length > 1) {
         let globalWordIdx = 0;
+        let contentCursor = 0;
         for (let lineIdx = 0; lineIdx < zone.lines.length; lineIdx++) {
           const line = zone.lines[lineIdx];
           const lineText = (line.text || '').trim();
           const lineWords = lineText.split(/\s+/).filter(w => w.length > 0);
           if (lineWords.length === 0) continue;
+          const lineWordMatches = [...lineText.matchAll(/\S+/g)];
+          const lineStartInZone = content.indexOf(lineText, contentCursor);
+          const absLineStart = lineStartInZone >= 0 ? lineStartInZone : contentCursor;
+          contentCursor = absLineStart + lineText.length;
           const lx0 = (line.origin && line.origin[0] != null) ? Number(line.origin[0]) : (Number(zone.x) ?? 0);
           const ly = (line.origin && line.origin[1] != null) ? Number(line.origin[1]) : (Number(zone.y) ?? 0);
           const lineBbox = line.bbox && line.bbox.length >= 4 ? line.bbox : null;
@@ -2188,6 +2250,12 @@ Only return JSON.`;
               y: Math.round(ly),
               w,
               h: zh,
+              styleRuns: KitabooFxlService._sliceStyleRunsForWord(
+                zone.styleRuns,
+                absLineStart + (lineWordMatches[wi]?.index ?? 0),
+                absLineStart + ((lineWordMatches[wi]?.index ?? 0) + word.length),
+                { bold: zoneBold, italic: zoneItalic, color: zone.color }
+              ),
               readingOrder: nextRO++
             });
             x += w;
@@ -2202,6 +2270,7 @@ Only return JSON.`;
       const zy = Number(zone.y) ?? 0;
       const zw = Number(zone.w) ?? 100;
       const totalChars = words.reduce((s, w) => s + w.length, 0);
+      const wordMatches = [...content.matchAll(/\S+/g)];
       const estimatedCharWidth = fSize * 0.55;
       const textWidthEst = totalChars * estimatedCharWidth;
       const scalingWidth = (textWidthEst < zw * 0.8) ? textWidthEst : zw;
@@ -2218,6 +2287,12 @@ Only return JSON.`;
           y: Math.round(zy),
           w,
           h: zh,
+          styleRuns: KitabooFxlService._sliceStyleRunsForWord(
+            zone.styleRuns,
+            wordMatches[i]?.index ?? 0,
+            (wordMatches[i]?.index ?? 0) + word.length,
+            { bold: zoneBold, italic: zoneItalic, color: zone.color }
+          ),
           readingOrder: nextRO++
         });
         x += w;
@@ -5099,6 +5174,9 @@ Return ONLY the JSON array.
       const useGlyphLayout = options.renderMode === 'absolute-html' && extractionLevelFromJob === 'glyph' && zoneLevelFromJob === 'word' && pageCoords && Array.isArray(pageCoords.items) && pageCoords.items.length > 0;
       const zonesForXhtml = KitabooFxlService.expandZonesToSyncLevelInMemory(pageZones, syncLevel, useGlyphLayout ? { extractionLevel: 'glyph' } : {});
       const scaledZones = zonesForXhtml.map(z => {
+        const zoneStyleRef = { flags: 0, font: z.fontFamily || z.font };
+        const inferredBold = !!z.bold || KitabooFxlService._isBoldStyle(zoneStyleRef);
+        const inferredItalic = !!z.italic || KitabooFxlService._isItalicStyle(zoneStyleRef);
         const scaled = {
           ...z,
           x: z.x * scaleX,
@@ -5106,6 +5184,8 @@ Return ONLY the JSON array.
           w: z.w * scaleX,
           h: z.h * scaleY,
           fontSize: z.fontSize * scaleY,
+          bold: inferredBold,
+          italic: inferredItalic,
           origin: z.origin ? [z.origin[0] * scaleX, z.origin[1] * scaleY] : null,
         };
         if (Array.isArray(z.styleRuns) && z.styleRuns.length > 0) scaled.styleRuns = z.styleRuns;
@@ -5135,6 +5215,7 @@ Return ONLY the JSON array.
         ? pageCoords.items.map(it => {
           const ox = (it.origin && it.origin[0] != null) ? it.origin[0] : (it.bbox && it.bbox[0] != null ? it.bbox[0] : 0);
           const oy = (it.origin && it.origin[1] != null) ? it.origin[1] : (it.bbox && it.bbox[1] != null ? it.bbox[1] : 0);
+          const glyphStyleRef = { flags: it.flags, font: it.font };
           return {
             text: it.text,
             origin: [ox * coordScaleX, oy * coordScaleY],
@@ -5145,7 +5226,10 @@ Return ONLY the JSON array.
             sentence_id: it.sentence_id ?? it.sentenceId,
             size: (it.size || 12) * coordScaleY,
             font: it.font,
-            color: it.color
+            color: it.color,
+            // Keep per-glyph style fallback independent of zone ordering/styleRuns alignment.
+            bold: KitabooFxlService._isBoldStyle(glyphStyleRef),
+            italic: KitabooFxlService._isItalicStyle(glyphStyleRef),
           };
         })
         : scaledZones;
