@@ -29,6 +29,7 @@ import {
   FileText,
   Trash2,
   Sparkles,
+  Play,
   ChevronLeft,
   ChevronRight,
   X,
@@ -136,6 +137,7 @@ const PdfTableRow = memo(({
   rowRef,
   onPreview,
   onDownload,
+  onConvert,
   onHifi,
   onOpenEpubImport,
   onDelete,
@@ -199,6 +201,17 @@ const PdfTableRow = memo(({
         </div>
       </td>
       <td>
+        {!epubOnly && !isFixed && !isEpubStub ? (
+          <button
+            type="button"
+            className="upl-convert-btn"
+            onClick={() => onConvert?.(pdf)}
+            title="Start Reflowable conversion"
+          >
+            <Play size={15} />
+            Convert
+          </button>
+        ) : null}
         {!epubOnly && isFixed && !isEpubStub ? (
           <button
             type="button"
@@ -209,7 +222,8 @@ const PdfTableRow = memo(({
             <Sparkles size={15} />
             Hi-Fi FXL
           </button>
-        ) : (
+        ) : null}
+        {(epubOnly || isEpubStub) && (
           <span className="upl-convert-empty">—</span>
         )}
       </td>
@@ -569,6 +583,7 @@ export default function UploadedPdfsList({
                     rowRef={(el) => { if (el) rowRefs.current[pdf.id] = el; }}
                     onPreview={handlePreview}
                     onDownload={handleDownload}
+                    onConvert={handleConvert}
                     onHifi={handleHifi}
                     onOpenEpubImport={handleOpenEpubImport}
                     onDelete={handleDelete}
