@@ -5,6 +5,34 @@ import { forbiddenResponse } from '../utils/responseHandler.js';
 
 const jwtSecret = () => process.env.JWT_SECRET || 'your-secret-key';
 
+const FEATURE_ALIASES = {
+  'conversion.basic': ['reflowable.pdf_to_epub'],
+  'kitaboo.import': ['hifi_fxl.pdf_to_epub'],
+  'sync_studio': [
+    'reflowable.audio_sync',
+    'hifi_fxl.audio_sync',
+    'reflowable_epub.audio_sync',
+    'hifi_fxl_epub.audio_sync'
+  ],
+  accessibility_tools: ['accessibility'],
+  epub_tools: ['epub_checker'],
+  'interactive.content': ['interactive_books'],
+  'reflowable.pdf_to_epub': ['conversion.basic'],
+  'hifi_fxl.pdf_to_epub': ['kitaboo.import'],
+  'reflowable.audio_sync': ['sync_studio'],
+  'hifi_fxl.audio_sync': ['sync_studio'],
+  'reflowable_epub.audio_sync': ['sync_studio'],
+  'hifi_fxl_epub.audio_sync': ['sync_studio'],
+  accessibility: ['accessibility_tools'],
+  epub_checker: ['epub_tools'],
+  interactive_books: ['interactive.content']
+};
+
+function expandFeatureCandidates(featureKey) {
+  const aliases = FEATURE_ALIASES[featureKey] || [];
+  return [featureKey, ...aliases];
+}
+
 async function hydrateUserFromDb(decoded) {
   const row = await UserModel.findById(decoded.id);
   if (!row) return null;
@@ -93,7 +121,8 @@ export const requireFeature = (featureKey) => (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   const f = req.user.features || [];
-  if (f.includes('*') || f.includes(featureKey)) {
+  const candidates = expandFeatureCandidates(featureKey);
+  if (f.includes('*') || candidates.some((k) => f.includes(k))) {
     return next();
   }
   return forbiddenResponse(res, 'This feature is not enabled for your plan');

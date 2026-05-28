@@ -5,6 +5,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/queryKeys';
 import { jobFromKitabooStart, upsertConversionJobInCache } from '../lib/syncConversionCaches';
 import { useListScope } from '../context/ListScopeContext';
+import { useAuth } from '../context/AuthContext';
+import { hasFeature } from '../utils/features';
 import usePdfs from '../hooks/usePdfs';
 import ConfirmModal from './Loadingmodal';
 import PdfCard from './PdfCard';
@@ -311,9 +313,12 @@ export default function UploadedPdfsList({
   epubOnly = false,
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const listScope = useListScope();
   const { pdfs, loading, error: fetchError, refetch: loadPdfs, removePdf, deleteMutation } = usePdfs();
+  const canReflowConvert = hasFeature(user, 'conversion.basic');
+  const canFxlConvert = hasFeature(user, 'kitaboo.import');
   const copy = COPY[epubOnly ? 'epub' : 'pdf'];
 
   // Warm conversion job cache so Sync Studio can resolve EPUB import rows.
@@ -453,9 +458,21 @@ export default function UploadedPdfsList({
     });
   };
 
-  const handleConvert = (pdf) => navigate(`/chapter-plan/${pdf.id}`);
+  const handleConvert = (pdf) => {
+    if (!canReflowConvert) {
+      setError('Current plan does not include Reflowable PDF to EPUB conversion.');
+      setTimeout(() => setError(''), 6000);
+      return;
+    }
+    navigate(`/chapter-plan/${pdf.id}`);
+  };
 
   const handleHifi = (pdf) => {
+    if (!canFxlConvert) {
+      setError('Current plan does not include Hi-fi FXL PDF to EPUB conversion.');
+      setTimeout(() => setError(''), 6000);
+      return;
+    }
     if (isEpubImportStub(pdf)) {
       handleOpenEpubImport(pdf);
       return;

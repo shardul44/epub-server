@@ -1191,18 +1191,48 @@ const KitabooZoningStudio = () => {
       const content = getZoneTextContent(data);
       if (!content.length || end > content.length) return;
 
-      let runs =
-        Array.isArray(data.styleRuns) && data.styleRuns.length > 0
-          ? data.styleRuns.map((r) => ({ ...r }))
-          : [
-              {
-                start: 0,
-                end: content.length,
-                bold: !!data.bold,
-                italic: !!data.italic,
-                color: data.color || '#000000',
-              },
-            ];
+      const baseStyle = {
+        bold: !!data.bold,
+        italic: !!data.italic,
+        color: data.color || '#000000',
+      };
+      const normalizeRuns = () => {
+        const source = Array.isArray(data.styleRuns) ? data.styleRuns : [];
+        const cleaned = source
+          .map((r) => {
+            const s = Math.max(0, Math.min(content.length, Number(r.start ?? 0)));
+            const e = Math.max(0, Math.min(content.length, Number(r.end ?? 0)));
+            if (e <= s) return null;
+            return {
+              start: s,
+              end: e,
+              bold: runIsBold(r, baseStyle),
+              italic: runIsItalic(r, baseStyle),
+              color: r.color || baseStyle.color,
+            };
+          })
+          .filter(Boolean)
+          .sort((a, b) => a.start - b.start || a.end - b.end);
+        if (cleaned.length === 0) return [{ start: 0, end: content.length, ...baseStyle }];
+
+        const filled = [];
+        let cursor = 0;
+        for (const r of cleaned) {
+          if (r.start > cursor) {
+            filled.push({ start: cursor, end: r.start, ...baseStyle });
+          }
+          const startPos = Math.max(cursor, r.start);
+          if (r.end > startPos) {
+            filled.push({ ...r, start: startPos });
+            cursor = r.end;
+          }
+        }
+        if (cursor < content.length) {
+          filled.push({ start: cursor, end: content.length, ...baseStyle });
+        }
+        return filled;
+      };
+      const runs = normalizeRuns();
 
       const newRuns = [];
       for (const r of runs) {
@@ -1242,7 +1272,6 @@ const KitabooZoningStudio = () => {
       }
 
       const nextData = { ...data, content, styleRuns: coalesced };
-      delete nextData.lines;
       setZoneData(zone, nextData);
       fabricCanvas?.requestRenderAll?.() || fabricCanvas?.renderAll?.();
       setZonePropsVersion((v) => v + 1);

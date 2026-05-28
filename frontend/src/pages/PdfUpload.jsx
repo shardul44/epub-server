@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { hasFeature } from '../utils/features';
 import useAppDispatch from '../hooks/useAppDispatch';
 import useAppSelector from '../hooks/useAppSelector';
 import { useQueryClient } from '@tanstack/react-query';
@@ -54,12 +55,13 @@ const TIPS = [
 ];
 
 /* ─── Layout option card ──────────────────────────────────────── */
-const LayoutCard = ({ value, selected, onSelect, title, tag, tagColor, icon, desc, recommended }) => (
+const LayoutCard = ({ value, selected, onSelect, title, tag, tagColor, icon, desc, recommended, disabled }) => (
   <button
     type="button"
-    className={`pu-layout-card${selected ? ' pu-layout-card--active' : ''}`}
-    onClick={() => onSelect(value)}
+    className={`pu-layout-card${selected ? ' pu-layout-card--active' : ''}${disabled ? ' pu-layout-card--disabled' : ''}`}
+    onClick={() => !disabled && onSelect(value)}
     aria-pressed={selected}
+    disabled={disabled}
   >
     {recommended && <span className="pu-recommended">Recommended</span>}
     <div className="pu-layout-card-top">
@@ -74,6 +76,7 @@ const LayoutCard = ({ value, selected, onSelect, title, tag, tagColor, icon, des
 
 /* ─── Main component ──────────────────────────────────────────── */
 const PdfUpload = () => {
+  const { user }                    = useAuth();
   const [file, setFile]             = useState(null);
   const [layoutType, setLayoutType] = useState('REFLOWABLE');
   const [localError, setLocalError] = useState('');
@@ -81,7 +84,6 @@ const PdfUpload = () => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [highlightPdf, setHighlightPdf] = useState({ id: null, name: '' });
   const fileInputRef                = useRef(null);
-  const navigate                    = useNavigate();
   const dispatch                    = useAppDispatch();
   const queryClient                 = useQueryClient();
   const listScope                   = useListScope();
@@ -96,6 +98,17 @@ const PdfUpload = () => {
   const uploading = uploadStatus === 'loading';
   const progress  = uploadProgress;
   const error     = localError || uploadError || '';
+  const canReflowableUpload = hasFeature(user, 'conversion.basic');
+  const canFxlUpload = hasFeature(user, 'kitaboo.import');
+
+  useEffect(() => {
+    if (!canReflowableUpload && canFxlUpload && layoutType !== 'FIXED_LAYOUT') {
+      setLayoutType('FIXED_LAYOUT');
+    }
+    if (!canFxlUpload && canReflowableUpload && layoutType !== 'REFLOWABLE') {
+      setLayoutType('REFLOWABLE');
+    }
+  }, [canReflowableUpload, canFxlUpload, layoutType]);
 
   // Derive modal status from Redux upload state
   const uploadModalStatus =
@@ -119,11 +132,6 @@ const PdfUpload = () => {
     setUploadModalOpen(false);
     dispatch(resetUpload());
     clearFile();
-  };
-
-  const goToMyPdfsFromUpload = () => {
-    dismissUploadModal();
-    navigate('/pdfs');
   };
 
   /* ── file helpers ── */
@@ -308,6 +316,7 @@ const PdfUpload = () => {
                   value="REFLOWABLE"
                   selected={layoutType === 'REFLOWABLE'}
                   onSelect={setLayoutType}
+                  disabled={!canReflowableUpload}
                   title="Reflowable"
                   tag="EPUB 3"
                   tagColor="blue"
@@ -319,6 +328,7 @@ const PdfUpload = () => {
                   value="FIXED_LAYOUT"
                   selected={layoutType === 'FIXED_LAYOUT'}
                   onSelect={setLayoutType}
+                  disabled={!canFxlUpload}
                   title="Fixed Layout"
                   tag="FXL"
                   tagColor="purple"
@@ -326,6 +336,12 @@ const PdfUpload = () => {
                   desc="Preserves exact page design. Best for cookbooks, atlases, and visual books."
                 />
               </div>
+              {!canReflowableUpload && canFxlUpload && (
+                <p className="pu-layout-lock-note">Your plan allows only Fixed Layout (FXL) upload.</p>
+              )}
+              {!canFxlUpload && canReflowableUpload && (
+                <p className="pu-layout-lock-note">Your plan allows only Reflowable upload.</p>
+              )}
             </div>
 
             {/* ── Error ── */}
@@ -430,8 +446,8 @@ const PdfUpload = () => {
         error={uploadError || ''}
         onClose={dismissUploadModal}
         onDismiss={dismissUploadModal}
-        onSuccessAction={goToMyPdfsFromUpload}
-        successActionLabel="Go to My PDFs"
+        onSuccessAction={dismissUploadModal}
+        successActionLabel="Close"
       />
 
     </div>

@@ -49,8 +49,14 @@ export const kitabooService = {
         validateStatus: (s) => s === 200 || s === 404,
       });
 
-    let downloadRes = await getBlob();
     const skipAutoPublish = options.skipAutoPublish === true;
+    const forcePublish = options.forcePublish === true;
+    if (forcePublish && !skipAutoPublish) {
+      if (onStatus) onStatus('Publishing EPUB…');
+      await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });
+      if (onStatus) onStatus('Loading EPUB…');
+    }
+    let downloadRes = await getBlob();
     if (downloadRes.status === 404 && !skipAutoPublish) {
       if (onStatus) onStatus('Publishing EPUB…');
       await api.post(`/kitaboo/publish/${jobId}`, {}, { timeout: 300000 });

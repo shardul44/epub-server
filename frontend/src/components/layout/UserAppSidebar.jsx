@@ -176,14 +176,19 @@ export default function UserAppSidebar({ onCollapse }) {
 
   const showConversion = hasFeature(user, 'conversion.basic');
   const showKitaboo = hasFeature(user, 'kitaboo.import');
+  const planFeatures = user?.features || [];
+  const showEpubSyncImport =
+    planFeatures.includes('reflowable_epub.audio_sync') ||
+    planFeatures.includes('hifi_fxl_epub.audio_sync');
   const showSyncStudio = hasFeature(user, 'sync_studio');
+  const showDownload = showConversion || showKitaboo || showEpubSyncImport || showSyncStudio;
   const showLibrary = hasAnyFeature(user, WORKFLOW_LIBRARY_FEATURES);
-  const showExports = showConversion;
+  const showExports = showConversion || showEpubSyncImport;
   const showAccessibility = hasFeature(user, 'accessibility_tools');
   const showEpubTools = hasFeature(user, 'epub_tools');
   const showInteractive = hasFeature(user, 'interactive.content');
 
-  const showWorkflowNav = showConversion || showKitaboo || showSyncStudio;
+  const showWorkflowNav = showConversion || showKitaboo || showSyncStudio || showEpubSyncImport;
 
   const showToolsSection =
     showAccessibility || showEpubTools || showInteractive;
@@ -227,7 +232,7 @@ export default function UserAppSidebar({ onCollapse }) {
 
           <NavRow to="/" icon={LayoutGrid} label="Dashboard" isActive={active.home} />
 
-          {showConversion && (
+          {(showConversion || showKitaboo) && (
             <NavRow
               to="/pdfs/upload"
               icon={Upload}
@@ -235,7 +240,7 @@ export default function UserAppSidebar({ onCollapse }) {
               isActive={active.pdfsUpload}
             />
           )}
-          {showKitaboo && (
+          {showEpubSyncImport && (
             <NavRow
               to="/epub-sync-import"
               icon={RefreshCw}
@@ -270,7 +275,7 @@ export default function UserAppSidebar({ onCollapse }) {
                   isActive={active.convAudio}
                 />
               )}
-              {showConversion && (
+              {showDownload && (
                 <SubNav
                   to="/conversions/download"
                   label="Download EPUB"

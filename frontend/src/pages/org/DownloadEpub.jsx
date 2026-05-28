@@ -14,6 +14,8 @@ import {
 } from '../../features/downloadEpub/downloadEpubSlice';
 import { useWorkflowNavigation, isFixedLayout } from '../../hooks/useWorkflowNavigation';
 import { useConversionActions } from '../../hooks/useConversionActions';
+import { useAuth } from '../../context/AuthContext';
+import { hasFeature } from '../../utils/features';
 import { selectActionError, clearActionError } from '../../features/conversions/conversionsSlice';
 import { selectWorkflowConversionType } from '../../features/conversionWorkflow/conversionWorkflowSlice';
 import WorkflowStepper from '../../components/WorkflowStepper';
@@ -153,6 +155,7 @@ const DownloadEpub = () => {
   const dispatch = useAppDispatch();
   const listScope = useListScope();
   const { goToAudioSync } = useWorkflowNavigation();
+  const { user } = useAuth();
   const { prepareDelete, confirmDelete: runConfirmDelete } = useConversionActions();
   const [deleteModal, setDeleteModal] = useState({ open: false, job: null, loading: false });
 
@@ -174,9 +177,10 @@ const DownloadEpub = () => {
   const [directImportError, setDirectImportError] = useState('');
 
   // ── COMPLETED conversion jobs + direct EPUB → Audio Sync imports ──
+  const canUseSyncStudio = hasFeature(user, 'sync_studio');
   const { jobs, loading, error: fetchError, refetch } = useConversions({
     excludeEpubImports: true,
-    includeEpubSyncSessions: true,
+    includeEpubSyncSessions: canUseSyncStudio,
   });
   const actionError = useAppSelector(selectActionError);
 
@@ -233,6 +237,7 @@ const DownloadEpub = () => {
         if (selectedJob.jobType === 'FXL' && !isEpubSourceJob(selectedJob)) {
           await kitabooApi.downloadFxlEpub(jid, null, (status) => setDownloadStatus(status), {
             skipAutoPublish: false,
+            forcePublish: true,
           });
         } else {
           await conversionApi.downloadEpub(jid, {
@@ -260,7 +265,10 @@ const DownloadEpub = () => {
     setQuickDownloadId(listKey);
     try {
       if (job.jobType === 'FXL' && !isEpubSourceJob(job)) {
-        await kitabooApi.downloadFxlEpub(jid, null, null, { skipAutoPublish: false });
+        await kitabooApi.downloadFxlEpub(jid, null, null, {
+          skipAutoPublish: false,
+          forcePublish: true,
+        });
       } else {
         await conversionApi.downloadEpub(jid, {
           jobType: job.jobType === 'FXL' ? 'FXL' : 'REFLOW',

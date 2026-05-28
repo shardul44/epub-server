@@ -5,27 +5,21 @@
       "title": "Chapter 1",
       "startPage": 1,
       "endPage": 3,
-      "pageType": "cover"
+      "pageType": "regular"
     },
     {
       "title": "Chapter 2",
       "startPage": 4,
-      "endPage": 5,
-      "pageType": "toc"
-    },
-    {
-      "title": "Chapter 3",
-      "startPage": 6,
-      "endPage": 9,
+      "endPage": 6,
       "pageType": "regular"
     },
     {
-      "title": "Chapter 4",
-      "startPage": 10,
+      "title": "Chapter 3",
+      "startPage": 7,
       "endPage": 11,
       "pageType": "regular"
     }
   ],
-  "createdAt": "2026-04-09T10:56:06.403Z",
-  "updatedAt": "2026-04-09T10:56:06.403Z"
+  "createdAt": "2026-05-28T11:28:00.168Z",
+  "updatedAt": "2026-05-28T11:28:00.168Z"
 }

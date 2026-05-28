@@ -26,7 +26,13 @@ import { EpubDirectImportService } from '../services/epubDirectImportService.js'
 import { resolveKitabooEpubDownload } from '../utils/kitabooEpubDownload.js';
 
 const router = express.Router();
-router.use(authenticate, requireFeature('kitaboo.import'));
+router.use(authenticate);
+router.use((req, res, next) => {
+  if (req.path.startsWith('/sync-studio/')) {
+    return requireFeature('sync_studio')(req, res, next);
+  }
+  return requireFeature('kitaboo.import')(req, res, next);
+});
 
 router.param('jobId', paramJobTenantAccess);
 

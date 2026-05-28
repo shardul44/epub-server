@@ -1708,6 +1708,21 @@ ${xhtmlPages.map((p, i) => `    <li><a href="${p.xhtmlFileName}">Page ${p.pageNu
     if (user && !canAccessPdfRow(user, pdf)) {
       throw new Error('PDF document not found with id: ' + pdfDocumentId);
     }
+    if (user) {
+      const features = user.features || [];
+      const hasAny = (...keys) => features.includes('*') || keys.some((k) => features.includes(k));
+      const isFixedLayout = String(pdf.layout_type || pdf.layoutType || '').toUpperCase() === 'FIXED_LAYOUT';
+      if (isFixedLayout && !hasAny('kitaboo.import', 'hifi_fxl.pdf_to_epub')) {
+        const err = new Error('Current plan does not include Hi-fi FXL PDF to EPUB conversion');
+        err.code = 'PLAN_FEATURE_REQUIRED';
+        throw err;
+      }
+      if (!isFixedLayout && !hasAny('conversion.basic', 'reflowable.pdf_to_epub')) {
+        const err = new Error('Current plan does not include Reflowable PDF to EPUB conversion');
+        err.code = 'PLAN_FEATURE_REQUIRED';
+        throw err;
+      }
+    }
 
     const intermediateData = options.chapterPlan
       ? JSON.stringify({ chapterPlan: options.chapterPlan })

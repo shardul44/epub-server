@@ -3,7 +3,32 @@ import { Check, Plus } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import './AdminPlans.css';
 
+const FEATURE_TAXONOMY = [
+  { id: 'reflowable_pdf_to_epub', label: 'Reflowable Pdf to EPub', keys: ['reflowable.pdf_to_epub', 'conversion.basic'] },
+  { id: 'reflowable_audio_sync', label: 'Reflowable Audio Sync', keys: ['reflowable.audio_sync', 'sync_studio'] },
+  { id: 'hifi_fxl_pdf_to_epub', label: 'Hi-fi FXL Pdf to EPub', keys: ['hifi_fxl.pdf_to_epub', 'kitaboo.import'] },
+  { id: 'hifi_fxl_audio_sync', label: 'Hi-fi FXL Audio Sync', keys: ['hifi_fxl.audio_sync'] },
+  { id: 'reflowable_epub_audio_sync', label: 'Reflowable EPUB to Audio Sync', keys: ['reflowable_epub.audio_sync'] },
+  { id: 'hifi_fxl_epub_audio_sync', label: 'Hi-fi FXL EPUB to Audio Sync', keys: ['hifi_fxl_epub.audio_sync'] },
+  { id: 'accessibility', label: 'Accessibility', keys: ['accessibility', 'accessibility_tools'] },
+  { id: 'epub_checker', label: 'Epub Checker', keys: ['epub_checker', 'epub_tools'] },
+  { id: 'interactive_books', label: 'Interactive Books', keys: ['interactive_books', 'interactive.content'] },
+];
+
+const FEATURE_BY_KEY = FEATURE_TAXONOMY.reduce((acc, item) => {
+  item.keys.forEach((k) => {
+    acc.set(k, item);
+  });
+  return acc;
+}, new Map());
+
+function toFeatureBucket(featureKey) {
+  return FEATURE_BY_KEY.get(featureKey) || null;
+}
+
 function featureLabel(featureKey, descriptionByKey) {
+  const bucket = toFeatureBucket(featureKey);
+  if (bucket) return bucket.label;
   const desc = descriptionByKey.get(featureKey);
   if (desc != null && String(desc).trim() !== '') return String(desc).trim();
   return featureKey;
@@ -180,18 +205,33 @@ export default function AdminPlans() {
     return map;
   }, [catalog]);
 
-  const keysOnPlan = new Set((detail?.features || []).map((f) => f.featureKey));
-  const onPlanSorted = [...(detail?.features || [])].sort((a, b) =>
+  const onPlanByBucket = new Map();
+  (detail?.features || []).forEach((f) => {
+    const bucket = toFeatureBucket(f.featureKey);
+    if (!bucket) return;
+    if (!onPlanByBucket.has(bucket.id)) onPlanByBucket.set(bucket.id, f);
+  });
+  const onPlanSorted = [...onPlanByBucket.values()].sort((a, b) =>
     featureLabel(a.featureKey, descriptionByKey).localeCompare(
       featureLabel(b.featureKey, descriptionByKey),
     ),
   );
-  const catalogSorted = [...catalog].sort((a, b) =>
+  const catalogByBucket = new Map();
+  catalog.forEach((c) => {
+    const bucket = toFeatureBucket(c.featureKey);
+    if (!bucket) return;
+    if (!catalogByBucket.has(bucket.id)) catalogByBucket.set(bucket.id, c);
+  });
+  const catalogSorted = [...catalogByBucket.values()].sort((a, b) =>
     featureLabel(a.featureKey, descriptionByKey).localeCompare(
       featureLabel(b.featureKey, descriptionByKey),
     ),
   );
-  const availableFromCatalog = catalogSorted.filter((c) => !keysOnPlan.has(c.featureKey));
+  const keysOnPlan = new Set(onPlanSorted.map((f) => toFeatureBucket(f.featureKey)?.id).filter(Boolean));
+  const availableFromCatalog = catalogSorted.filter((c) => {
+    const bucketId = toFeatureBucket(c.featureKey)?.id;
+    return !bucketId || !keysOnPlan.has(bucketId);
+  });
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const catalogLen = catalog.length;

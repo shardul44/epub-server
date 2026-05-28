@@ -10,7 +10,7 @@ import { EpubDirectImportService } from '../services/epubDirectImportService.js'
 import { PdfService } from '../services/pdfService.js';
 import { PdfDocumentModel } from '../models/PdfDocument.js';
 import { isEpubImportStubDocument } from '../utils/pdfDocumentSource.js';
-import { successResponse, errorResponse, notFoundResponse, badRequestResponse } from '../utils/responseHandler.js';
+import { successResponse, errorResponse, notFoundResponse, badRequestResponse, forbiddenResponse } from '../utils/responseHandler.js';
 import { getHtmlIntermediateDir } from '../config/fileStorage.js';
 import { authenticate, requireFeature } from '../middlewares/auth.js';
 import { paramJobTenantAccess, paramPdfTenantAccess } from '../middlewares/tenantAccess.js';
@@ -47,7 +47,40 @@ async function resolveDocumentPageCount(jobId) {
 }
 
 const router = express.Router();
-router.use(authenticate, requireFeature('conversion.basic'));
+
+function userHasAnyFeature(user, keys = []) {
+  const f = user?.features || [];
+  return f.includes('*') || keys.some((k) => f.includes(k));
+}
+
+function canAccessLayoutForCurrentPlan(user, layoutOrJobType) {
+  const value = String(layoutOrJobType || '').toUpperCase();
+  const isFixed = value === 'FIXED_LAYOUT' || value === 'FXL';
+  if (isFixed) {
+    return userHasAnyFeature(user, ['kitaboo.import', 'hifi_fxl.pdf_to_epub', 'hifi_fxl.audio_sync']);
+  }
+  return userHasAnyFeature(user, ['conversion.basic', 'reflowable.pdf_to_epub', 'reflowable.audio_sync']);
+}
+
+router.use(authenticate);
+router.use((req, res, next) => {
+  const isEpubSyncPath =
+    req.path === '/import-epub-for-sync' ||
+    req.path === '/epub-sync-sessions' ||
+    req.path.startsWith('/epub-import-meta/') ||
+    /^\/\d+\/epub-(sections|text|section\/[^/]+\/xhtml|css|image\/[^/]+)$/i.test(req.path);
+  if (isEpubSyncPath) return requireFeature('sync_studio')(req, res, next);
+  const isReadOnlyListPath = req.method === 'GET' && req.path === '/';
+  if (isReadOnlyListPath) {
+    const features = req.user?.features || [];
+    const canReadForFxlPlan =
+      features.includes('*') ||
+      features.includes('kitaboo.import') ||
+      features.includes('hifi_fxl.pdf_to_epub');
+    if (canReadForFxlPlan) return next();
+  }
+  return requireFeature('conversion.basic')(req, res, next);
+});
 
 router.param('jobId', paramJobTenantAccess);
 router.param('pdfDocumentId', paramPdfTenantAccess);
@@ -76,7 +109,10 @@ router.get('/', noCache, async (req, res) => {
   try {
     const scope = resolveListScope(req.user, req.query.scope);
     const jobs = await ConversionService.getAllConversions(req.user, scope);
-    return successResponse(res, jobs);
+    const filtered = jobs.filter((job) =>
+      canAccessLayoutForCurrentPlan(req.user, job.layoutType || job.jobType)
+    );
+    return successResponse(res, filtered);
   } catch (error) {
     return errorResponse(res, error.message, 500);
   }
@@ -96,6 +132,9 @@ router.post('/start/:pdfDocumentId', async (req, res) => {
   } catch (error) {
     if (error.message.includes('not found')) {
       return notFoundResponse(res, error.message);
+    }
+    if (error.code === 'PLAN_FEATURE_REQUIRED') {
+      return forbiddenResponse(res, error.message);
     }
     return errorResponse(res, error.message, 500);
   }
@@ -220,6 +259,7 @@ router.get('/epub-sync-sessions', noCache, async (req, res) => {
           .toLowerCase()
           .endsWith('.epub')
       )
+      .filter((p) => canAccessLayoutForCurrentPlan(req.user, p.layoutType))
       .map((p) => {
         const isFxl = String(p.layoutType || '').toUpperCase() === 'FIXED_LAYOUT';
         const createdAt = p.createdAt || null;
@@ -380,6 +420,9 @@ router.get('/:jobId/download', async (req, res) => {
     // 1) Normal conversion jobs (conversion_jobs table)
     try {
       const job = await ConversionService.getConversionJob(jobId);
+      if (!canAccessLayoutForCurrentPlan(req.user, job.layoutType || job.jobType)) {
+        return forbiddenResponse(res, 'This job layout is not enabled in your current plan');
+      }
       if (!job?.epubFilePath) {
         console.warn('EPUB file path not available for conversion job:', jobId);
         return notFoundResponse(res, 'EPUB file not available. Conversion may not be completed yet.');
@@ -404,6 +447,9 @@ router.get('/:jobId/download', async (req, res) => {
       // 2) EPUB direct-import stubs (no conversion_job row)
       const pdf = await PdfDocumentModel.findById(jobId);
       if (!pdf) return notFoundResponse(res, 'EPUB import not found');
+      if (!canAccessLayoutForCurrentPlan(req.user, pdf.layout_type || pdf.layoutType)) {
+        return forbiddenResponse(res, 'This EPUB layout is not enabled in your current plan');
+      }
 
       const filePath = pdf.file_path || pdf.filePath;
       if (!filePath) return notFoundResponse(res, 'EPUB file path not available');
