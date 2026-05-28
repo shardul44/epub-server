@@ -1,9 +1,11 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { conversionService } from '../services/conversionService';
 import { queryKeys } from '../lib/queryKeys';
 import { useListScope } from '../context/ListScopeContext';
+import { useAuth } from '../context/AuthContext';
+import { hasFeature } from '../utils/features';
 import {
   Upload,
   FileText,
@@ -39,12 +41,17 @@ const LAYOUT_INFO = [
 ];
 
 /* ─── Layout option card ──────────────────────────────────────── */
-const LayoutCard = ({ value, selected, onSelect, title, tag, tagColor, icon, desc }) => (
+const LayoutCard = ({ value, selected, onSelect, title, tag, tagColor, icon, desc, disabled = false }) => (
   <button
     type="button"
-    className={`esi-layout-card${selected ? ' esi-layout-card--active' : ''}`}
-    onClick={() => onSelect(value)}
+    className={`esi-layout-card${selected ? ' esi-layout-card--active' : ''}${disabled ? ' esi-layout-card--disabled' : ''}`}
+    onClick={() => {
+      if (disabled) return;
+      onSelect(value);
+    }}
     aria-pressed={selected}
+    disabled={disabled}
+    title={disabled ? 'Not enabled in your current plan' : undefined}
   >
     <div className="esi-layout-card-top">
       <div className="esi-layout-card-icon">{icon}</div>
@@ -89,8 +96,20 @@ const EpubSyncImport = () => {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef          = useRef(null);
   const navigate              = useNavigate();
+  const { user }              = useAuth();
   const queryClient           = useQueryClient();
   const listScope             = useListScope();
+  const canReflowableSync = hasFeature(user, 'reflowable_epub.audio_sync');
+  const canFxlSync = hasFeature(user, 'hifi_fxl_epub.audio_sync');
+
+  useEffect(() => {
+    if (mode === 'reflowable' && !canReflowableSync && canFxlSync) {
+      setMode('fxl');
+    }
+    if (mode === 'fxl' && !canFxlSync && canReflowableSync) {
+      setMode('reflowable');
+    }
+  }, [mode, canReflowableSync, canFxlSync]);
 
   /* ── file helpers ── */
   const validateAndSet = (f) => {
@@ -134,6 +153,14 @@ const EpubSyncImport = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) { setError('Please choose an EPUB file.'); return; }
+    if (mode === 'reflowable' && !canReflowableSync) {
+      setError('Reflowable EPUB to Audio Sync is not enabled in your plan.');
+      return;
+    }
+    if (mode === 'fxl' && !canFxlSync) {
+      setError('Hi-fi FXL EPUB to Audio Sync is not enabled in your plan.');
+      return;
+    }
 
     setBusy(true);
     setError('');
@@ -278,6 +305,7 @@ const EpubSyncImport = () => {
                   value="reflowable"
                   selected={mode === 'reflowable'}
                   onSelect={setMode}
+                  disabled={!canReflowableSync}
                   title="Reflowable"
                   tag="SYNC STUDIO"
                   tagColor="blue"
@@ -288,6 +316,7 @@ const EpubSyncImport = () => {
                   value="fxl"
                   selected={mode === 'fxl'}
                   onSelect={setMode}
+                  disabled={!canFxlSync}
                   title="Fixed layout (FXL)"
                   tag="FXL SYNC STUDIO"
                   tagColor="purple"
@@ -300,6 +329,11 @@ const EpubSyncImport = () => {
                 Choose <strong>Reflowable</strong> for standard reflowable EPUBs, or{' '}
                 <strong>Fixed layout</strong> for FXL page-based books.
               </p>
+              {!canReflowableSync && (
+                <p className="esi-layout-lock-hint">
+                  Reflowable EPUB to Audio Sync is not available in your current plan.
+                </p>
+              )}
 
               {/* ── Footer ── */}
               <div className="esi-section-divider" />

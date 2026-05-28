@@ -202,7 +202,23 @@ thumbRouter.get('/:id/thumbnail', authenticate, async (req, res) => {
 router.use('/', thumbRouter);
 
 /* ── All other PDF routes require conversion.basic feature ─── */
-router.use(authenticate, requireFeature('conversion.basic'));
+router.use(authenticate);
+router.use((req, res, next) => {
+  const features = req.user?.features || [];
+  const hasReflowablePdfAccess =
+    features.includes('*') ||
+    features.includes('conversion.basic') ||
+    features.includes('reflowable.pdf_to_epub');
+  const hasFxlPdfAccess =
+    features.includes('*') ||
+    features.includes('kitaboo.import') ||
+    features.includes('hifi_fxl.pdf_to_epub');
+
+  if (hasReflowablePdfAccess || hasFxlPdfAccess) {
+    return next();
+  }
+  return forbiddenResponse(res, 'This feature is not enabled for your plan');
+});
 
 router.param('id', paramPdfTenantAccess);
 

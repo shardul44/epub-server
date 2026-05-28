@@ -55,22 +55,18 @@ export class EntitlementService {
 
   /**
    * @param {object} userRow - row from users with role, organization_id
-   * @returns {Promise<string[]>} ['*'] for platform / org admins; otherwise plan features from DB
+   * @returns {Promise<string[]>} ['*'] for platform admins; org members/admins inherit org plan features
    */
   static async getFeatureKeysForUser(userRow) {
     if (!userRow) return [];
     if (userRow.role === ROLES.PLATFORM_ADMIN) {
       return ['*'];
     }
-    // Org admins manage the tenant; plan rows are often incomplete in dev / legacy DBs.
-    if (userRow.role === ROLES.ORG_ADMIN) {
-      return ['*'];
-    }
 
     const orgId = userRow.organization_id;
     if (!orgId) return [];
 
-    if (userRow.role === ROLES.MEMBER) {
+    if (userRow.role === ROLES.MEMBER || userRow.role === ROLES.ORG_ADMIN) {
       return EntitlementService.resolveTenantFeatureKeys(orgId);
     }
 

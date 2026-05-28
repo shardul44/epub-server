@@ -409,6 +409,18 @@
   box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
 }
 
+.esi-layout-card--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.esi-layout-card--disabled:hover {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+}
+
 .esi-layout-card-top {
   display: flex;
   align-items: center;
@@ -490,6 +502,12 @@
   line-height: 1.5;
 }
 .esi-layout-hint strong { color: #6b7280; }
+
+.esi-layout-lock-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #b45309;
+}
 
 /* ── Section divider ───────────────────────────────────────────── */
 .esi-section-divider {

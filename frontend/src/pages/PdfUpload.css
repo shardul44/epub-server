@@ -371,6 +371,16 @@
   box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
 }
 
+.pu-layout-card--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pu-layout-card--disabled:hover {
+  border-color: #e5e7eb;
+  background: #fafafa;
+}
+
 .pu-recommended {
   position: absolute;
   top: -1px;
@@ -432,6 +442,12 @@
   color: #6b7280;
   margin: 0;
   line-height: 1.5;
+}
+
+.pu-layout-lock-note {
+  margin: 10px 2px 0;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 /* ── Error ─────────────────────────────────────────────────────── */

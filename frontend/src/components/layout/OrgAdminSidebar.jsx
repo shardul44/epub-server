@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import useLogout from '../../hooks/useLogout';
-import { hasFeature } from '../../utils/features';
+import { hasAnyFeature, hasFeature } from '../../utils/features';
 
 import './Layout.css';
 import '../AdminSidebar.css';
@@ -151,11 +151,20 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
 
   const isOrgAdmin = user?.role === 'org_admin';
 
-  // Plan feature flags — org admins always see full workflow + tools in this shell
-  const showConversion    = isOrgAdmin || hasFeature(user, 'conversion.basic');
-  const showAccessibility = isOrgAdmin || hasFeature(user, 'accessibility_tools');
-  const showEpubTools     = isOrgAdmin || hasFeature(user, 'epub_tools');
-  const showInteractive   = isOrgAdmin || hasFeature(user, 'interactive.content');
+  // Plan feature flags — org admins inherit the same org plan as members.
+  const showConversion    = hasFeature(user, 'conversion.basic');
+  const showKitaboo = hasFeature(user, 'kitaboo.import');
+  const planFeatures = user?.features || [];
+  const showEpubSyncImport =
+    planFeatures.includes('reflowable_epub.audio_sync') ||
+    planFeatures.includes('hifi_fxl_epub.audio_sync');
+  const showSyncStudio = hasFeature(user, 'sync_studio');
+  const showWorkflowNav = showConversion || showKitaboo || showEpubSyncImport || showSyncStudio;
+  const showDownload = showConversion || showKitaboo || showEpubSyncImport || showSyncStudio;
+  const showExports = showConversion || showEpubSyncImport;
+  const showAccessibility = hasFeature(user, 'accessibility_tools');
+  const showEpubTools     = hasFeature(user, 'epub_tools');
+  const showInteractive   = hasFeature(user, 'interactive.content');
 
   // Close mobile drawer on route change
   useEffect(() => {
@@ -249,48 +258,66 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
             label="Dashboard"
             isActive={active.home}
           />
+          {showEpubSyncImport && (
+            <NavRow
+              to="/epub-sync-import"
+              icon={RefreshCw}
+              label="EPUB Sync"
+              isActive={active.epubSync}
+            />
+          )}
 
-          {showConversion && (
+          {showWorkflowNav && (
             <>
-              <NavRow
-                to="/pdfs/upload"
-                icon={Upload}
-                label="Upload PDF"
-                isActive={active.pdfsUpload}
-              />
-              <NavRow
-                to="/epub-sync-import"
-                icon={RefreshCw}
-                label="EPUB Sync"
-                isActive={active.epubSync}
-              />
+              {(showConversion || showKitaboo) && (
+                <NavRow
+                  to="/pdfs/upload"
+                  icon={Upload}
+                  label="Upload PDF"
+                  isActive={active.pdfsUpload}
+                />
+              )}
               <ExpandableNav
                 icon={ArrowLeftRight}
                 label="Conversions"
                 isActive={active.conversions}
-                navigateTo="/conversions"
+                navigateTo={
+                  showConversion
+                    ? '/conversions'
+                    : showKitaboo
+                      ? '/conversions/fxl-editor'
+                      : '/conversions/audio-sync'
+                }
                 end={<CountBadge count={conversionCount} tone="mint" />}
               >
-                <SubNav
-                  to="/conversions"
-                  label="Conversion Jobs"
-                  isActive={active.convJobs}
-                />
-                <SubNav
-                  to="/conversions/fxl-editor"
-                  label="FXL Editor"
-                  isActive={active.convFxl}
-                />
-                <SubNav
-                  to="/conversions/audio-sync"
-                  label="Audio Sync Studio"
-                  isActive={active.convAudio}
-                />
-                <SubNav
-                  to="/conversions/download"
-                  label="Download EPUB"
-                  isActive={active.convDownload}
-                />
+                {showConversion && (
+                  <SubNav
+                    to="/conversions"
+                    label="Conversion Jobs"
+                    isActive={active.convJobs}
+                  />
+                )}
+                {showKitaboo && (
+                  <SubNav
+                    to="/conversions/fxl-editor"
+                    label="FXL Editor"
+                    isActive={active.convFxl}
+                  />
+                )}
+                {showSyncStudio && (
+                  <SubNav
+                    to="/conversions/audio-sync"
+                    label="Audio Sync Studio"
+                    isActive={active.convAudio}
+                  />
+                )}
+                {showDownload && (
+                  <SubNav
+                    to="/conversions/download"
+                    label="Download EPUB"
+                    isActive={active.convDownload}
+                  />
+                )}
               </ExpandableNav>
             </>
           )}
@@ -298,12 +325,14 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
           {/* LIBRARY */}
           <span className="admin-sidebar-section-label">Library</span>
 
-          <NavRow
-            to="/exports"
-            icon={Film}
-            label="Exports"
-            isActive={active.exports}
-          />
+          {showExports && (
+            <NavRow
+              to="/exports"
+              icon={Film}
+              label="Exports"
+              isActive={active.exports}
+            />
+          )}
           <NavRow
             to="/media-library"
             icon={FolderOpen}

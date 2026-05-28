@@ -279,14 +279,21 @@ CREATE TABLE IF NOT EXISTS interactive_blocks (
 
 -- Seed feature catalog and default plan / org (first boot)
 INSERT IGNORE INTO features (feature_key, description) VALUES
-    ('conversion.basic', 'PDF conversion and conversion jobs'),
-    ('kitaboo.import', 'Kitaboo / FXL import and studio'),
-    ('sync_studio', 'Sync studio and media overlay'),
-    ('epub_tools', 'EPUB image editor and EPUB checker'),
-    ('accessibility_tools', 'Accessibility remediation'),
-    ('ai_config', 'AI configuration'),
-    ('tts_management', 'TTS management'),
-    ('interactive.content', 'Interactive books and editor');
+    ('reflowable.pdf_to_epub', 'Reflowable Pdf to EPub'),
+    ('reflowable.audio_sync', 'Reflowable Audio Sync'),
+    ('hifi_fxl.pdf_to_epub', 'Hi-fi FXL Pdf to EPub'),
+    ('hifi_fxl.audio_sync', 'Hi-fi FXL Audio Sync'),
+    ('reflowable_epub.audio_sync', 'Reflowable EPUB to Audio Sync'),
+    ('hifi_fxl_epub.audio_sync', 'Hi-fi FXL EPUB to Audio Sync'),
+    ('accessibility', 'Accessibility'),
+    ('epub_checker', 'Epub Checker'),
+    ('interactive_books', 'Interactive Books'),
+    ('conversion.basic', 'Reflowable Pdf to EPub'),
+    ('kitaboo.import', 'Hi-fi FXL Pdf to EPub'),
+    ('sync_studio', 'Reflowable Audio Sync'),
+    ('epub_tools', 'Epub Checker'),
+    ('accessibility_tools', 'Accessibility'),
+    ('interactive.content', 'Interactive Books');
 
 INSERT INTO plans (name, description)
 SELECT 'Full access', 'Default plan with all features'
