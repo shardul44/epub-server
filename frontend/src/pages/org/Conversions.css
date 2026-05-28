@@ -365,6 +365,104 @@
   margin-bottom: 14px;
 }
 
+/* ── Pagination ─────────────────────────────────────────────────── */
+.cv-pagination {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.cv-pagination-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.cv-pagination-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cv-pagination-nav,
+.cv-pagination-page {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cv-pagination-nav {
+  padding: 9px 12px;
+  min-width: 92px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cv-pagination-page {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cv-pagination-nav:hover:not(:disabled),
+.cv-pagination-page:hover:not(.is-active) {
+  transform: translateY(-1px);
+  background: #f8faff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+}
+
+.cv-pagination-page.is-active {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+.cv-pagination-nav:disabled,
+.cv-pagination-page:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.cv-pagination-ellipsis {
+  min-width: 18px;
+  text-align: center;
+  color: #9ca3af;
+  font-weight: 700;
+  user-select: none;
+}
+
+.cv-pagination-info {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 .cv-empty {
   text-align: center;
   padding: 48px;
@@ -583,6 +681,21 @@
   .cv-root { padding: 16px; }
   .cv-grid { grid-template-columns: 1fr; }
   .cv-header { flex-direction: column; align-items: flex-start; }
+  .cv-pagination-shell {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+  .cv-pagination-nav {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+  .cv-pagination-pages {
+    width: 100%;
+    justify-content: center;
+    order: 3;
+  }
 }
 
 /* ── Sub-page extras ───────────────────────────────────────────── */

@@ -124,7 +124,7 @@ export default function UserAppSidebar({ onCollapse }) {
   const { user } = useAuth();
   const onLogout = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { pdfCount, conversionCount } = useSidebarBadges();
+  const { conversionCount } = useSidebarBadges();
   const { activities } = useAppBootstrap();
 
   const activityCount = Array.isArray(activities) ? activities.length : 0;
@@ -144,7 +144,6 @@ export default function UserAppSidebar({ onCollapse }) {
       home: path === '/' || path === '',
       pdfsUpload: path.startsWith('/pdfs/upload'),
       epubSync: path.startsWith('/epub-sync-import'),
-      pdfs: path.startsWith('/pdfs') && !path.startsWith('/pdfs/upload'),
       conversions:
         path.startsWith('/conversions') ||
         path.startsWith('/audio-sync/') ||

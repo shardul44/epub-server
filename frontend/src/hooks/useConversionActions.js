@@ -130,8 +130,8 @@ export function useConversionActions() {
     const job = jobs.find(j => String(j.id ?? j.jobId) === String(jobId));
     const jobType = resolveJobType(job);
     if (jobType === 'FXL') {
-      // FXL jobs have no retry endpoint — send user to PDFs to start fresh
-      navigate('/pdfs');
+      // FXL jobs have no retry endpoint — send user to upload to start fresh
+      navigate('/pdfs/upload');
       return;
     }
     try {

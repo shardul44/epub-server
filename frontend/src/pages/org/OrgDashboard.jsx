@@ -210,8 +210,8 @@ const OrgDashboard = () => {
             <Link to="/conversions" className="wb-btn wb-btn--primary">
               Resume work <ArrowRight size={16} />
             </Link>
-            <Link to="/pdfs" className="wb-btn wb-btn--secondary">
-              <FileText size={16} /> Browse PDFs
+            <Link to="/pdfs/upload" className="wb-btn wb-btn--secondary">
+              <FileText size={16} /> Upload PDF
             </Link>
           </div>
         </div>

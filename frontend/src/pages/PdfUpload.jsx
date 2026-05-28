@@ -116,7 +116,7 @@ const PdfUpload = () => {
     uploadStatus === 'failed'    ? 'error'   :
     'uploading';
 
-  // After successful upload: add to My PDFs only — conversion starts from PdfList "Convert" / Hi-Fi.
+  // After successful upload: keep list cache hot for upload-page library actions.
   useEffect(() => {
     if (uploadStatus !== 'succeeded' || !lastDoc) return undefined;
     upsertPdfInListCache(queryClient, listScope, lastDoc);
@@ -133,6 +133,15 @@ const PdfUpload = () => {
     dispatch(resetUpload());
     clearFile();
   };
+
+  // Auto-close success modal after 1 seconds and return to upload view.
+  useEffect(() => {
+    if (!uploadModalOpen || uploadModalStatus !== 'success') return undefined;
+    const closeTimer = setTimeout(() => {
+      dismissUploadModal();
+    }, 1000);
+    return () => clearTimeout(closeTimer);
+  }, [uploadModalOpen, uploadModalStatus]);
 
   /* ── file helpers ── */
   const validateAndSet = (f) => {

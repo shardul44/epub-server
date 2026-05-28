@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { buildEpubReaderPath } from '../utils/epubReaderUrl';
 import { conversionService } from '../services/conversionService';
 import api from '../services/api';
@@ -12,14 +12,12 @@ import {
   Search,
   FileText,
   ChevronDown,
-  CloudUpload,
   CheckCircle,
   Clock,
   Hourglass,
   AlertCircle,
   LayoutGrid,
   List,
-  Lightbulb,
 } from 'lucide-react';
 import ExportCard, { ExportGrid, ExportCardSkeleton } from '../components/ExportCard';
 import { formatFileSize } from '../components/PdfCard';
@@ -54,13 +52,6 @@ const SORT_OPTIONS = [
   { value: 'latest', label: 'Latest' },
   { value: 'oldest', label: 'Oldest' },
   { value: 'name', label: 'Name A–Z' },
-];
-
-const EXPORT_TIPS = [
-  'Use high-quality, text-based PDFs for best EPUB output.',
-  'Fixed-layout (FXL) preserves exact page design for illustrated books.',
-  'Complete audio sync before downloading your final EPUB package.',
-  'Re-export after edits to pick up the latest narration and zones.',
 ];
 
 const STAT_CARDS = [
@@ -499,52 +490,6 @@ const Exports = () => {
           )}
         </div>
 
-        {/* Bottom: upload + tips */}
-        <div className="exp-bottom">
-          <div
-            className="exp-upload-zone"
-            role="button"
-            tabIndex={0}
-            onClick={() => navigate('/pdfs/upload')}
-            onKeyDown={(e) => e.key === 'Enter' && navigate('/pdfs/upload')}
-          >
-            <div className="exp-upload-zone-icon">
-              <FileText size={32} strokeWidth={1.25} />
-            </div>
-            <p className="exp-upload-zone-title">
-              Drag &amp; drop a PDF file here or browse to upload and convert to EPUB
-            </p>
-            <button
-              type="button"
-              className="exp-btn exp-btn--primary exp-upload-zone-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate('/pdfs/upload');
-              }}
-            >
-              <CloudUpload size={16} />
-              Upload PDF
-            </button>
-          </div>
-
-          <aside className="exp-tips-card">
-            <h3 className="exp-tips-title">
-              <Lightbulb size={16} />
-              Tips for better results
-            </h3>
-            <ul className="exp-tips-list">
-              {EXPORT_TIPS.map((tip, i) => (
-                <li key={i} className="exp-tips-item">
-                  <CheckCircle size={14} className="exp-tips-check" />
-                  {tip}
-                </li>
-              ))}
-            </ul>
-            <Link to="/pdfs/upload" className="exp-tips-link">
-              Learn more about best practices →
-            </Link>
-          </aside>
-        </div>
       </div>
     </div>
   );

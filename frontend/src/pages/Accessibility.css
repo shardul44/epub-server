@@ -77,23 +77,9 @@
 }
 
 /* ── Wizard wrapper ────────────────────────────────────────────── */
-.ac-wizard-wrap {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  overflow: visible;
-}
 
 /* Wizard card sits flush — no extra margin/shadow */
-.ac-wizard-wrap .aw-card {
-  margin: 0;
-  max-width: 100%;
-  border-radius: 0;
-  box-shadow: none;
-  border: none;
-  background: #fff;
-}
+
 
 /* Suppress wizard's own title/subtitle — page header covers it */
 .ac-wizard-wrap .aw-header {

@@ -1,5 +1,10 @@
 import api, { API_BASE_URL } from './api';
 
+const DOWNLOAD_404_RETRY_ATTEMPTS = 3;
+const DOWNLOAD_404_RETRY_DELAY_MS = 1200;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const conversionService = {
   /**
    * Upload EPUB for direct audio sync (reflowable → /sync-studio/:id, FXL → /fxl-sync-studio/:jobId).
@@ -100,7 +105,16 @@ export const conversionService = {
     let response;
     let lastStatus = 0;
     for (const url of tryOrder) {
-      response = await fetch(url, { method: 'GET', headers });
+      let attempt = 0;
+      do {
+        response = await fetch(url, { method: 'GET', headers });
+        if (response.ok || response.status !== 404) break;
+        attempt += 1;
+        if (attempt <= DOWNLOAD_404_RETRY_ATTEMPTS) {
+          await sleep(DOWNLOAD_404_RETRY_DELAY_MS);
+        }
+      } while (attempt <= DOWNLOAD_404_RETRY_ATTEMPTS);
+
       if (response.ok) break;
       lastStatus = response.status;
       if (response.status !== 404) {

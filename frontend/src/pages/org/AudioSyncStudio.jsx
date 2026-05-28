@@ -10,6 +10,7 @@ import { selectActionError, clearActionError } from '../../features/conversions/
 import useAppDispatch from '../../hooks/useAppDispatch';
 import WorkflowStepper from '../../components/WorkflowStepper';
 import PdfThumbnail from '../../components/PdfThumbnail';
+import JobCard, { JobGrid } from '../../components/JobCard';
 import ConfirmModal from '../../components/Loadingmodal';
 import { pdfViewUrl } from '../../services/api';
 import { ArrowLeft, FileText, X, Mic2, ChevronRight, Trash2 } from 'lucide-react';
@@ -141,190 +142,128 @@ const AssPdfThumb = memo(function AssPdfThumb({ pdfId, epubSource = false }) {
 });
 
 /* ─── Job selector ────────────────────────────────────────────── */
-const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope, onSelect, onDelete }) => (
-  <div className="ass-selector-root">
-    <div className="ass-selector-header">
-      <h2 className="ass-selector-title">Audio Sync Studio</h2>
-      <p className="ass-selector-sub">
-        {listScope === 'own'
-          ? 'Select one of your completed jobs to add narration and sync audio'
-          : 'Select a completed conversion job to add narration and sync audio'}
-      </p>
-    </div>
-    {loading ? (
-      <div className="ass-selector-loading">
-        <div className="ass-spinner" /> Loading jobs…
-      </div>
-    ) : jobs.length === 0 ? (
-      <div className="ass-selector-empty">
-        <FileText size={40} />
-        <p>
-          No completed jobs available. Import an EPUB from{' '}
-          <Link to="/epub-sync-import">EPUB → Audio Sync</Link> or complete a PDF conversion first.
+const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope, onSelect, onDelete }) => {
+  const ITEMS_PER_PAGE = 9;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(jobs.length / ITEMS_PER_PAGE));
+  const paginatedJobs = jobs.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, idx) => idx + 1);
+    }
+
+    const pages = [1];
+    const windowStart = Math.max(2, currentPage - 1);
+    const windowEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < totalPages - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+
+    return pages;
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  return (
+    <div className="ass-selector-root">
+      <div className="ass-selector-header">
+        <h2 className="ass-selector-title">Audio Sync Studio</h2>
+        <p className="ass-selector-sub">
+          {listScope === 'own'
+            ? 'Select one of your completed jobs to add narration and sync audio'
+            : 'Select a completed conversion job to add narration and sync audio'}
         </p>
       </div>
-    ) : (
-      <div className="ass-selector-grid">
-        {jobs.map((job) => {
-          const jobId = job.id ?? job.jobId;
-          const pdfId = job.pdfDocumentId ?? job.pdfId;
-          const fxl = isFixedLayout(job);
-          const epubImport = isEpubSourceJob(job);
-          const to = audioSyncPath(job);
-          const status = job.status ?? 'COMPLETED';
-          const pct = job.progressPercentage ?? (status === 'COMPLETED' ? 100 : 0);
-          const displayName = job.pdfFilename || (pdfId != null ? `PDF #${pdfId}` : 'Untitled PDF');
-          const sizeStr = formatFileSize(job.fileSize ?? job.pdfFileSize ?? job.bytes ?? job.size);
-          const pagesPart = job.totalPages != null ? `${job.totalPages} pages` : null;
-          const subMeta = [pagesPart, sizeStr].filter(Boolean).join(' · ') || (pagesPart || '—');
+      {loading ? (
+        <div className="ass-selector-loading">
+          <div className="ass-spinner" /> Loading jobs…
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="ass-selector-empty">
+          <FileText size={40} />
+          <p>
+            No completed jobs available. Import an EPUB from{' '}
+            <Link to="/epub-sync-import">EPUB → Audio Sync</Link> or complete a PDF conversion first.
+          </p>
+        </div>
+      ) : (
+        <>
+          <JobGrid>
+            {paginatedJobs.map((job) => {
+              const jobId = job.id ?? job.jobId;
+              const to = audioSyncPath(job);
 
-          const durMs = jobDurationMs(job);
-          const metrics =
-            status === 'COMPLETED'
-              ? {
-                  c1Label: 'Completed',
-                  c1Val: fmtCompletedNice(job.completedAt || job.updatedAt),
-                  c2Label: 'Duration',
-                  c2Val: durMs != null ? fmtDurationMs(durMs) : '—',
-                  c3Label: 'AI model',
-                  c3Val: job.aiModel || job.modelName || job.model || '—',
-                }
-              : status === 'IN_PROGRESS'
-                ? {
-                    c1Label: 'ETA',
-                    c1Val: estimateEta(job),
-                    c2Label: 'Started',
-                    c2Val: fmtTimeShort(job.createdAt),
-                    c3Label: 'AI model',
-                    c3Val: job.aiModel || job.modelName || '—',
-                  }
-                : {
-                    c1Label: 'Status',
-                    c1Val: status.replace(/_/g, ' '),
-                    c2Label: 'Started',
-                    c2Val: fmtTimeShort(job.createdAt),
-                    c3Label: 'AI model',
-                    c3Val: job.aiModel || job.modelName || '—',
-                  };
+              const handleCardActivate = () => {
+                primeAudioSyncWorkflow(job);
+                onSelect(to);
+              };
 
-          const progressClass =
-            status === 'COMPLETED'
-              ? 'ass-progress-fill--done'
-              : status === 'FAILED' || status === 'CANCELLED'
-                ? 'ass-progress-fill--fail'
-                : fxl
-                  ? 'ass-progress-fill--fxl'
-                  : 'ass-progress-fill--reflow';
-
-          const handleCardActivate = () => {
-            primeAudioSyncWorkflow(job);
-            onSelect(to);
-          };
-
-          return (
-            <div
-              key={`${fxl ? 'FXL' : 'REFLOW'}-${jobId}`}
-              className={[
-                'ass-job-card',
-                fxl ? 'ass-job-card--fxl' : 'ass-job-card--reflow',
-                status === 'IN_PROGRESS' ? 'ass-job-card--running' : '',
-                status === 'COMPLETED' ? 'ass-job-card--done' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              role="button"
-              tabIndex={0}
-              onClick={handleCardActivate}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleCardActivate();
-                }
-              }}
-            >
-              <div className="ass-job-card-header">
-                <span className={`ass-type-pill${fxl ? ' ass-type-pill--fxl' : ' ass-type-pill--reflow'}`}>
-                  {fxl ? 'FXL' : 'REFLOW'}
-                </span>
-                <span className={`ass-status-pill ${STATUS_BADGE[status] ?? 'ass-status-pill--info'}`}>
-                  {statusLabel(status)}
-                </span>
-              </div>
-
-              <div className="ass-job-card-pdf-panel">
-                <div className="ass-job-card-pdf-thumb-col">
-                  <span className="ass-job-card-pdf-badge" aria-hidden>
-                    {epubImport ? 'EPUB' : 'PDF'}
-                  </span>
-                  <div className="ass-job-card-thumb">
-                    <AssPdfThumb pdfId={pdfId} epubSource={epubImport} />
-                  </div>
-                </div>
-                <div className="ass-job-card-pdf-meta">
-                  <div className="ass-job-card-pdf-name" title={displayName}>
-                    {displayName}
-                  </div>
-                  <div className="ass-job-card-pdf-sub">{subMeta}</div>
-                </div>
-              </div>
-
-              <div className="ass-job-card-body">
-                <div className="ass-job-card-job-id">Job #{jobId}</div>
-                <div className="ass-job-card-step-row">
-                  <span className="ass-job-card-step-text">
-                    Step: {fmtStep(job.currentStep) || '—'}
-                  </span>
-                  <span className="ass-job-card-pct">{pct}%</span>
-                </div>
-                <div className="ass-job-card-progress-track">
-                  <div
-                    className={['ass-job-card-progress-fill', progressClass].filter(Boolean).join(' ')}
-                    style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+              return (
+                <div key={`${isFixedLayout(job) ? 'FXL' : 'REFLOW'}-${jobId}`} className="ass-selector-card-wrap">
+                  <JobCard
+                    job={job}
+                    isSelected={false}
+                    onSelect={handleCardActivate}
+                    onOpenEditor={handleCardActivate}
+                    onDelete={onDelete}
                   />
                 </div>
-
-                <div className="ass-job-card-metrics">
-                  <div className="ass-job-card-metric">
-                    <span className="ass-job-card-metric-label">{metrics.c1Label}</span>
-                    <span className="ass-job-card-metric-value">{metrics.c1Val}</span>
-                  </div>
-                  <div className="ass-job-card-metric">
-                    <span className="ass-job-card-metric-label">{metrics.c2Label}</span>
-                    <span className="ass-job-card-metric-value">{metrics.c2Val}</span>
-                  </div>
-                  <div className="ass-job-card-metric">
-                    <span className="ass-job-card-metric-label">{metrics.c3Label}</span>
-                    <span className="ass-job-card-metric-value">{metrics.c3Val}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="ass-job-card-footer">
-                <span className="ass-job-card-cta">
-                  <Mic2 size={16} aria-hidden />
-                  Open Audio Sync
-                  <ChevronRight size={18} aria-hidden />
-                </span>
+              );
+            })}
+          </JobGrid>
+          {jobs.length > ITEMS_PER_PAGE && (
+            <div className="ass-pagination" role="navigation" aria-label="Jobs pagination">
+              <div className="ass-pagination-shell">
                 <button
                   type="button"
-                  className="ass-job-card-del-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete?.(job);
-                  }}
-                  title="Delete job"
-                  aria-label={`Delete job #${jobId}`}
+                  className="ass-pagination-nav"
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
                 >
-                  <Trash2 size={16} aria-hidden />
+                  <span aria-hidden>←</span> Previous
+                </button>
+                <div className="ass-pagination-pages">
+                  {pageNumbers.map((page, idx) =>
+                    typeof page === 'string' ? (
+                      <span key={`${page}-${idx}`} className="ass-pagination-ellipsis" aria-hidden>
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`ass-pagination-page ${currentPage === page ? 'is-active' : ''}`}
+                        onClick={() => setCurrentPage(page)}
+                        aria-current={currentPage === page ? 'page' : undefined}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="ass-pagination-nav"
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next <span aria-hidden>→</span>
                 </button>
               </div>
+          
             </div>
-          );
-        })}
-      </div>
-    )}
-  </div>
-);
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
 /* ─── Main component ──────────────────────────────────────────── */
 const AudioSyncStudio = () => {

@@ -156,6 +156,104 @@
   gap: 12px;
 }
 
+/* ── Pagination ─────────────────────────────────────────────────── */
+.ass-pagination {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.ass-pagination-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ass-pagination-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ass-pagination-nav,
+.ass-pagination-page {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ass-pagination-nav {
+  padding: 9px 12px;
+  min-width: 92px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ass-pagination-page {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ass-pagination-nav:hover:not(:disabled),
+.ass-pagination-page:hover:not(.is-active) {
+  transform: translateY(-1px);
+  background: #f8faff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+}
+
+.ass-pagination-page.is-active {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+.ass-pagination-nav:disabled,
+.ass-pagination-page:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ass-pagination-ellipsis {
+  min-width: 18px;
+  text-align: center;
+  color: #9ca3af;
+  font-weight: 700;
+  user-select: none;
+}
+
+.ass-pagination-info {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 /* ═══ Job card (Link) — aligned with Conversion Jobs layout ═══ */
 .ass-job-card {
   --ass-accent: var(--ass-blue);
@@ -539,5 +637,20 @@
 
   .ass-selector-grid {
     grid-template-columns: 1fr;
+  }
+  .ass-pagination-shell {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px;
+  }
+  .ass-pagination-nav {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 0;
+  }
+  .ass-pagination-pages {
+    width: 100%;
+    justify-content: center;
+    order: 3;
   }
 }

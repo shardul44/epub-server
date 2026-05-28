@@ -175,7 +175,7 @@ const Navigation = () => {
           <NavItem to="/"                  icon={LayoutGrid}    label="Dashboard"     isActive={isActive('/')} />
           {showConversion && (
             <>
-              <NavItem to="/pdfs"          icon={FileText}      label="PDFs"          isActive={isActive('/pdfs') && !isActive('/pdfs/upload')} />
+              <NavItem to="/pdfs/upload"   icon={FileText}      label="Upload PDF"    isActive={isActive('/pdfs/upload')} />
               <NavItem to="/conversions"   icon={RefreshCw}     label="Conversions"   isActive={isActive('/conversions')} />
             </>
           )}
@@ -193,7 +193,7 @@ const Navigation = () => {
         <NavItem to="/"        icon={LayoutGrid} label="Dashboard" isActive={isActive('/')} />
         {showConversion && (
           <>
-            <NavItem to="/pdfs"        icon={FileText}  label="PDFs"        isActive={isActive('/pdfs') && !isActive('/pdfs/upload')} />
+            <NavItem to="/pdfs/upload" icon={FileText}  label="Upload PDF"  isActive={isActive('/pdfs/upload')} />
             <NavItem to="/conversions" icon={RefreshCw} label="Conversions" isActive={isActive('/conversions')} />
           </>
         )}
