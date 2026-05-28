@@ -130,8 +130,6 @@ export default function AppRouter() {
 
           {/* PDF conversion workflow */}
           <Route element={<RequireFeature featureKey="conversion.basic" />}>
-            <Route path="pdfs"                element={lazyEl(PdfList)} />
-            <Route path="pdfs/:pdfId"         element={lazyEl(PdfDetail)} />
             <Route path="pdfs/upload"         element={lazyEl(PdfUpload)} />
             <Route path="chapter-plan/:pdfId" element={lazyEl(ChapterSelector)} />
             <Route path="conversions"                          element={lazyEl(ConversionJobs)} />
