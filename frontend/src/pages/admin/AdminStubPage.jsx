@@ -10,10 +10,6 @@ const META = {
     title: 'Billing & quotas',
     subtitle: 'Plans, invoices, and usage limits.',
   },
-  '/admin/security': {
-    title: 'Security & access',
-    subtitle: 'Authentication policies, API keys, and audit controls.',
-  },
   '/admin/system-logs': {
     title: 'System logs',
     subtitle: 'Server and application diagnostics for operators.',

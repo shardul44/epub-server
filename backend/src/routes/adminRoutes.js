@@ -7,7 +7,6 @@ import { PlanModel } from '../models/Plan.js';
 import { FeatureCatalogModel } from '../models/FeatureCatalog.js';
 import { OrganizationSubscriptionModel } from '../models/OrganizationSubscription.js';
 import { PlatformSettingsModel } from '../models/PlatformSettings.js';
-import { PlatformApiKeyModel } from '../models/PlatformApiKey.js';
 import { UserModel } from '../models/User.js';
 import { UserActivityModel } from '../models/UserActivity.js';
 import { UserService } from '../services/userService.js';
@@ -21,6 +20,7 @@ import {
   forbiddenResponse
 } from '../utils/responseHandler.js';
 import { normIsoDate } from '../utils/isoDate.js';
+import { normalizeClientIp } from '../utils/clientIp.js';
 
 const router = express.Router();
 
@@ -220,7 +220,7 @@ function buildActivityLogFields(row) {
     title: summary || row.action || 'Event',
     detail: detailParts.join(' · ') || 'Platform activity recorded',
     organizationName: row.organization_name || null,
-    ipAddress: meta?.ipAddress ?? meta?.ip ?? null,
+    ipAddress: normalizeClientIp(meta?.ipAddress ?? meta?.ip ?? null),
     host: meta?.hostname ?? meta?.host ?? meta?.source ?? 'web-01'
   };
 }
@@ -365,86 +365,6 @@ router.get('/system-logs', async (req, res) => {
       generatedAt: new Date().toISOString()
     });
   } catch (e) {
-    return errorResponse(res, e.message, 500);
-  }
-});
-
-/** Role × capability matrix (reflects how this product gates routes today). */
-function getRolePermissionMatrix() {
-  return [
-    {
-      role: 'platform_admin',
-      roleLabel: 'Platform Admin',
-      orgs: 'Full',
-      plans: 'Full',
-      users: 'Full',
-      billing: 'Full'
-    },
-    {
-      role: 'org_admin',
-      roleLabel: 'Org Admin',
-      orgs: 'Read',
-      plans: 'Read',
-      users: 'Full',
-      billing: 'Read'
-    },
-    {
-      role: 'member',
-      roleLabel: 'Member',
-      orgs: 'None',
-      plans: 'None',
-      users: 'None',
-      billing: 'None'
-    }
-  ];
-}
-
-router.get('/security/overview', async (_req, res) => {
-  try {
-    const apiKeys = await PlatformApiKeyModel.listForAdmin();
-    return successResponse(res, {
-      rolePermissions: getRolePermissionMatrix(),
-      apiKeys
-    });
-  } catch (e) {
-    return errorResponse(res, e.message, 500);
-  }
-});
-
-router.post('/security/api-keys', async (req, res) => {
-  try {
-    const { name, environment = 'staging' } = req.body || {};
-    const { dto, plainSecret } = await PlatformApiKeyModel.create({ name, environment });
-    return successResponse(res, { key: dto, plainSecret }, 201);
-  } catch (e) {
-    if (e.message === 'name is required') return badRequestResponse(res, e.message);
-    return errorResponse(res, e.message, 500);
-  }
-});
-
-router.patch('/security/api-keys/:id/revoke', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
-    const ok = await PlatformApiKeyModel.revoke(id);
-    if (!ok) return notFoundResponse(res, 'Key not found or already revoked');
-    const list = await PlatformApiKeyModel.listForAdmin();
-    const key = list.find((k) => k.id === id);
-    return successResponse(res, key || { id, revoked: true });
-  } catch (e) {
-    return errorResponse(res, e.message, 500);
-  }
-});
-
-router.patch('/security/api-keys/:id/renew', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
-    const dto = await PlatformApiKeyModel.renew(id);
-    return successResponse(res, dto);
-  } catch (e) {
-    if (e.message === 'API key not found') return notFoundResponse(res, e.message);
-    if (e.message === 'Cannot renew a revoked key') return badRequestResponse(res, e.message);
     return errorResponse(res, e.message, 500);
   }
 });
@@ -638,7 +558,16 @@ router.put('/organizations/:id', async (req, res) => {
       }
       throw e;
     }
-    return successResponse(res, toOrgDto(org));
+
+    let usersDeactivated = 0;
+    if (active !== undefined && !active) {
+      usersDeactivated = await UserModel.deactivateUsersByOrganizationId(id);
+    }
+
+    return successResponse(res, {
+      ...toOrgDto(org),
+      usersDeactivated: usersDeactivated > 0 ? usersDeactivated : undefined
+    });
   } catch (e) {
     return errorResponse(res, e.message, 500);
   }
@@ -1012,6 +941,24 @@ router.patch('/users/:id/status', async (req, res) => {
   }
 });
 
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) return badRequestResponse(res, 'Invalid id');
+    if (req.user.id === id) {
+      return badRequestResponse(res, 'Cannot delete your own account');
+    }
+    const target = await UserModel.findById(id);
+    if (!target) return notFoundResponse(res, 'User not found');
+
+    await UserService.deleteUser(id);
+    return res.status(204).send();
+  } catch (e) {
+    if (e.message?.includes('not found')) return notFoundResponse(res, e.message);
+    return errorResponse(res, e.message, 500);
+  }
+});
+
 // --- Plans ---
 router.get('/plans', async (_req, res) => {
   try {
@@ -1089,6 +1036,18 @@ router.delete('/plans/:id', async (req, res) => {
     const id = parseInt(req.params.id, 10);
     const existing = await PlanModel.findById(id);
     if (!existing) return notFoundResponse(res, 'Plan not found');
+    const orgCount = await PlanModel.countOrganizationSubscriptions(id);
+    if (orgCount > 0) {
+      const label = orgCount === 1 ? 'organization is' : 'organizations are';
+      return badRequestResponse(
+        res,
+        `Cannot delete this plan: ${orgCount} ${label} assigned to it. Reassign those organizations to another plan first.`
+      );
+    }
+    await pool.execute(
+      'UPDATE platform_settings SET default_plan_id = NULL WHERE default_plan_id = ?',
+      [id]
+    );
     await PlanModel.delete(id);
     return res.status(204).send();
   } catch (e) {

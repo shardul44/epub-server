@@ -1,10 +1,13 @@
 /* Professional Layout with Navbar and Sidebar - White Background */
 
 .layout {
-  min-height: 100vh;
   display: flex;
+  width: 100%;
+  min-height: 100vh;
   flex-direction: column;
-  background-color: #ffffff;
+  background-color: #f7f7f2;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ── App shell: org admin, platform admin, and regular users (sidebar rail) ── */

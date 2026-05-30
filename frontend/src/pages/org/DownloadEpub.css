@@ -25,7 +25,8 @@
   background: var(--de-bg);
   height: 100%;
   min-height: 0;
-
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 /* ── Loading ───────────────────────────────────────────────────── */
@@ -60,8 +61,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
-  padding: 0 18px;
+  gap: 10px;
+  min-height: 70px;
+  height: auto;
+  padding: 12px 18px;
   background: var(--de-white);
   border-bottom: 1px solid var(--de-border);
   flex-shrink: 0;
@@ -71,6 +74,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .de-topbar-title {
@@ -209,20 +214,21 @@
   flex-direction: column;
   gap: 14px;
   flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .de-ready-list-header {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ass-text);
-  margin: 0 0 6px;
-
+  margin: 0;
 }
 
 .de-ready-list-heading {
-  font-size: 15px;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
   font-weight: 700;
   color: var(--de-text);
+  margin: 0 0 6px;
+  line-height: 1.3;
 }
 
 
@@ -486,8 +492,20 @@
 .de-ready-list-section {
   width: 100%;
   margin-top: 6px;
-  padding: 18px 18px 16px;
+  padding: 0;
   box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Job grid: 3 → 2 → 1 columns (scoped to this page) */
+.de-ready-list-section > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.de-ready-card-wrap {
+  min-width: 0;
 }
 
 .de-ready-list-title {
@@ -982,27 +1000,150 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 860px) {
+
+/* Tablet: stack summary cards */
+@media (max-width: 1024px) {
   .de-main-row {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .de-ready-list-section > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .de-topbar {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    min-height: 0;
+  }
+
+  .de-topbar-left {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .de-topbar-title {
+    font-size: 14px;
+  }
+
+  .de-back-btn {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
   .de-content {
-    padding: 16px;
+    padding: 14px 14px 20px;
+    gap: 12px;
+  }
+
+  .de-ready-card {
+    padding: 28px 20px 24px;
+  }
+
+  .de-ready-title {
+    font-size: 1.25rem;
+  }
+
+  .de-check-circle {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 12px;
+  }
+
+  .de-validation-panel {
+    padding: 16px 14px 14px;
+  }
+
+  .de-file-row {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .de-ready-badge {
+    margin-left: auto;
+  }
+
+  .de-ready-list-sub {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .de-ready-list-section > div {
+    grid-template-columns: 1fr;
+  }
+
+  .de-ready-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .de-ready-pdf-card-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .de-ready-pdf-card-metric:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .de-content {
+    padding: 12px 12px 18px;
+  }
+
+  /* Job chip also shown in workflow stepper */
+  .de-job-chip-top {
+    display: none;
+  }
+
+  .de-topbar-title {
+    font-size: 13px;
+    flex: 1 1 100%;
+  }
+
+  .de-back-btn {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .de-ready-card {
+    padding: 24px 16px 20px;
+  }
+
+  .de-ready-title {
+    font-size: 1.125rem;
+  }
+
+  .de-ready-sub {
+    font-size: 13px;
+  }
+
+  .de-file-name {
+    white-space: normal;
+    word-break: break-word;
   }
 
   .de-actions {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .de-btn {
     width: 100%;
   }
 
-  .de-ready-card-grid {
-    grid-template-columns: 1fr;
+  .de-val-item {
+    align-items: flex-start;
+  }
+
+  .de-val-label {
+    line-height: 1.4;
   }
 
   .de-pagination-shell {
@@ -1015,6 +1156,7 @@
   .de-pagination-nav {
     flex: 1 1 calc(50% - 8px);
     min-width: 0;
+    min-height: 40px;
   }
 
   .de-pagination-pages {
@@ -1022,4 +1164,25 @@
     justify-content: center;
     order: 3;
   }
+
+  .de-pagination-page {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+  }
+
+  .de-empty {
+    padding: 48px 16px;
+  }
+
+  .de-empty-actions {
+    flex-direction: column;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .de-empty-actions .de-btn {
+    width: 100%;
+  }
+
 }

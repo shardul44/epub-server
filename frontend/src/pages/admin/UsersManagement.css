@@ -283,6 +283,7 @@
   color: #047857;
 }
 
+.umgmt-pill--deactivated,
 .umgmt-pill--suspended {
   background: #fee2e2;
   color: #b91c1c;
@@ -325,6 +326,16 @@
 .umgmt-icon-btn--danger {
   color: #2563eb;
   border-color: #fecaca;
+}
+
+.umgmt-icon-btn--delete {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.umgmt-icon-btn--delete:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #dc2626;
 }
 
 .umgmt-icon-btn:disabled {

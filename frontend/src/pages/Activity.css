@@ -14,14 +14,18 @@
   --act-shadow-hover: 0 4px 14px rgba(37, 99, 235, 0.08);
   min-height: 100%;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   background: var(--act-bg);
-  padding: 28px 32px 40px;
+  padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 32px) clamp(28px, 5vw, 40px);
   box-sizing: border-box;
+  overflow-x: clip;
 }
 
 .act-inner {
   max-width: 100%;
   width: 100%;
+  min-width: 0;
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -53,36 +57,33 @@
 }
 
 .act-header {
-  margin-bottom: 24px;
+  margin-bottom: clamp(16px, 3vw, 24px);
 }
 
 .act-title {
   margin: 0 0 6px;
-  font-size: 1.65rem;
+  font-size: clamp(1.25rem, 4vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--act-text);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.25;
 }
 
 .act-subtitle {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: clamp(0.875rem, 2.5vw, 0.95rem);
   color: var(--act-muted);
   line-height: 1.45;
 }
 
 .act-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 720px) {
-  .act-stats {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(10px, 2vw, 16px);
+  margin-bottom: clamp(16px, 3vw, 24px);
+  width: 100%;
+  min-width: 0;
 }
 
 .act-stat {
@@ -138,11 +139,13 @@
   align-items: stretch;
   gap: 12px;
   margin-bottom: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .act-search-wrap {
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 280px;
+  min-width: 0;
   position: relative;
 }
 
@@ -183,6 +186,8 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .act-select {
@@ -289,14 +294,19 @@
   border-radius: var(--act-radius);
   box-shadow: var(--act-shadow);
   overflow: hidden;
+  width: 100%;
+  min-width: 0;
 }
 
 .act-table-scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .act-table {
   width: 100%;
+  min-width: 520px;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
@@ -356,6 +366,7 @@
   color: var(--act-text);
   line-height: 1.4;
   max-width: 420px;
+  word-break: break-word;
 }
 
 .act-user {
@@ -450,8 +461,117 @@
   color: #fff;
 }
 
-@media (max-width: 768px) {
-  .act-root {
-    padding: 16px;
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .act-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .act-search-wrap {
+    flex: none;
+    width: 100%;
+  }
+
+  .act-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .act-export-wrap {
+    grid-column: 1 / -1;
+  }
+
+  .act-export-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .act-select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .act-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .act-stat {
+    padding: 14px 16px;
+  }
+
+  .act-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .act-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .act-table {
+    min-width: 480px;
+  }
+
+  .act-table thead th:nth-child(3),
+  .act-table tbody td:nth-child(3) {
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 600px) {
+  .act-footer {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 14px;
+  }
+
+  .act-pagination {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .act-page-link,
+  .act-page-num {
+    min-height: 36px;
+  }
+
+  .act-badge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .act-when {
+    font-size: 0.8125rem;
+  }
+
+  .act-empty {
+    padding: 36px 16px;
+  }
+
+  .act-export-menu {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .act-table {
+    min-width: 400px;
+  }
+
+  .act-table thead th,
+  .act-table tbody td {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 }

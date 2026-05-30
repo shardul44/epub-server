@@ -82,6 +82,18 @@ const fmtCardDate = (d) => {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+/** User-facing name; API stores upload name as originalName / original_name. */
+const assetDisplayName = (asset, fallback = '') => {
+  const name =
+    asset?.originalFileName ??
+    asset?.originalName ??
+    asset?.original_name ??
+    asset?.filename ??
+    asset?.name ??
+    fallback;
+  return String(name ?? fallback);
+};
+
 const typeBadgeLabel = (type) => {
   switch (type) {
     case 'Images': return 'Image';
@@ -93,7 +105,7 @@ const typeBadgeLabel = (type) => {
 
 const getAssetType = (asset) => {
   const mime = (asset.mimeType || asset.type || '').toLowerCase();
-  const name = (asset.filename || asset.name || '').toLowerCase();
+  const name = assetDisplayName(asset).toLowerCase();
   if (mime.startsWith('image/gif') || name.endsWith('.gif')) return 'GIFs';
   if (mime.startsWith('image/') || /\.(png|jpg|jpeg|webp|svg|bmp|tiff)$/.test(name)) return 'Images';
   if (mime.startsWith('video/') || /\.(mp4|webm|mov|avi|mkv)$/.test(name)) return 'Videos';
@@ -200,7 +212,7 @@ const AssetCard = ({ asset, index, onPreview, onDownload, onDelete }) => {
   const [favorited, setFavorited] = useState(false);
   const type     = getAssetType(asset);
   const gradient = pickGradient(index);
-  const name     = asset.filename || asset.name || `Asset #${asset.id}`;
+  const name     = assetDisplayName(asset) || `Asset #${asset.id}`;
   const size     = fmtSize(asset.fileSizeBytes ?? asset.fileSize ?? asset.size);
   const date     = fmtCardDate(asset.createdAt ?? asset.uploadedAt);
   const thumbUrl = asset.thumbnailUrl || asset.url;
@@ -271,7 +283,7 @@ const AssetCard = ({ asset, index, onPreview, onDownload, onDelete }) => {
 /* ─── Asset Row (list view) ───────────────────────────────────── */
 const AssetRow = ({ asset, index, onPreview, onDownload, onDelete }) => {
   const type  = getAssetType(asset);
-  const name  = asset.filename || asset.name || `Asset #${asset.id}`;
+  const name  = assetDisplayName(asset) || `Asset #${asset.id}`;
   const size  = fmtSize(asset.fileSizeBytes ?? asset.fileSize ?? asset.size);
   const date  = fmtDate(asset.createdAt ?? asset.uploadedAt);
   const thumbUrl = asset.thumbnailUrl || asset.url;
@@ -326,7 +338,7 @@ const CardSkeleton = () => (
 /* ─── Preview Modal ───────────────────────────────────────────── */
 const PreviewModal = ({ asset, onClose }) => {
   const type = getAssetType(asset);
-  const name = asset.filename || asset.name || 'Asset';
+  const name = assetDisplayName(asset) || 'Asset';
   const url  = asset.url || asset.thumbnailUrl;
   const size = fmtSize(asset.fileSizeBytes ?? asset.fileSize ?? asset.size);
   const date = fmtDate(asset.createdAt ?? asset.uploadedAt);
@@ -553,15 +565,15 @@ const MediaLibrary = () => {
     const q = search.trim().toLowerCase();
     if (q) {
       list = list.filter((a) =>
-        (a.filename || a.name || '').toLowerCase().includes(q)
+        assetDisplayName(a).toLowerCase().includes(q)
       );
     }
 
     list = [...list].sort((a, b) => {
       switch (sort) {
         case 'oldest':    return new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0);
-        case 'name_asc':  return (a.filename || '').localeCompare(b.filename || '');
-        case 'name_desc': return (b.filename || '').localeCompare(a.filename || '');
+        case 'name_asc':  return assetDisplayName(a).localeCompare(assetDisplayName(b));
+        case 'name_desc': return assetDisplayName(b).localeCompare(assetDisplayName(a));
         case 'size_desc': return (b.fileSizeBytes ?? 0) - (a.fileSizeBytes ?? 0);
         default:          return new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0);
       }
@@ -809,7 +821,7 @@ const MediaLibrary = () => {
         subtitle="This action cannot be undone."
         message={
           deleteModal.asset
-            ? `Delete "${deleteModal.asset.filename || deleteModal.asset.name}"? This cannot be undone.`
+            ? `Delete "${assetDisplayName(deleteModal.asset)}"? This cannot be undone.`
             : ''
         }
         confirmLabel="Delete"

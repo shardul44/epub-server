@@ -9,13 +9,16 @@
   --pan-blue: #2563eb;
   min-height: 100%;
   width: 100%;
+  min-width: 0;
   background: var(--pan-bg);
-  padding: 10px 32px 40px;
+  padding: clamp(12px, 2.5vw, 16px) clamp(14px, 3vw, 32px) clamp(24px, 4vw, 40px);
   box-sizing: border-box;
+  overflow-x: clip;
 }
 
 .pan-inner {
   max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
 }
 
@@ -25,7 +28,7 @@
 
 .pan-title {
   margin: 0 0 8px;
-  font-size: 1.65rem;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--pan-text);
@@ -41,21 +44,11 @@
 
 .pan-kpis {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-@media (max-width: 1100px) {
-  .pan-kpis {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 560px) {
-  .pan-kpis {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+  width: 100%;
+  min-width: 0;
 }
 
 .pan-kpi {
@@ -137,9 +130,11 @@
 
 .pan-row {
   display: grid;
-  grid-template-columns: 1.65fr 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  gap: clamp(12px, 2vw, 16px);
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+  width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {
@@ -152,11 +147,12 @@
   background: var(--pan-card);
   border: 1px solid var(--pan-border);
   border-radius: 14px;
-  padding: 20px;
+  padding: clamp(14px, 2.5vw, 20px);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   min-height: 320px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .pan-card h2 {
@@ -177,6 +173,8 @@
   flex: 1;
   min-height: 260px;
   margin-top: 12px;
+  min-width: 0;
+  width: 100%;
 }
 
 .pan-errors {
@@ -229,8 +227,9 @@
   background: var(--pan-card);
   border: 1px solid var(--pan-border);
   border-radius: 14px;
-  padding: 18px 20px;
+  padding: clamp(14px, 2.5vw, 18px) clamp(14px, 2.5vw, 20px);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
 }
 
 .pan-summary h3 {
@@ -295,8 +294,89 @@
   }
 }
 
+/* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .pan-root {
-    padding: 16px;
+  .pan-head {
+    margin-bottom: 18px;
+  }
+
+  .pan-kpi {
+    padding: 14px 16px;
+  }
+
+  .pan-kpi-value {
+    font-size: 1.45rem;
+  }
+
+  .pan-card {
+    min-height: 280px;
+  }
+
+  .pan-chart {
+    min-height: 220px;
+  }
+
+  .pan-card h2 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .pan-kpi {
+    gap: 12px;
+  }
+
+  .pan-kpi-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pan-kpi-value {
+    font-size: 1.35rem;
+  }
+
+  .pan-kpi-trend {
+    font-size: 0.75rem;
+    line-height: 1.35;
+  }
+
+  .pan-card {
+    min-height: auto;
+  }
+
+  .pan-chart {
+    min-height: 200px;
+  }
+
+  .pan-chips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+    gap: 8px;
+  }
+
+  .pan-chip {
+    justify-content: space-between;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .pan-err-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px 8px;
+    font-size: 0.8125rem;
+  }
+
+  .pan-err-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pan-loading,
+  .pan-err-banner {
+    padding: 28px 16px;
   }
 }

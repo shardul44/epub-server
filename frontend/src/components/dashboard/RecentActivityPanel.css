@@ -3,12 +3,15 @@
 ═══════════════════════════════════════════════════════════════ */
 
 .ds-panel.ds-activity {
-  padding: 42px 24px 15px;
+  height: auto;
+  min-height: 0;
+  padding: 42px 24px 24px;
   background: var(--app-bg, #fff);
   border: 1px solid var(--app-border, #e5e7eb);
   border-radius: var(--app-radius-md, 12px);
   box-shadow: var(--app-shadow-card);
   transition: box-shadow var(--app-duration) var(--app-ease);
+  margin-bottom: 30px;
 }
 
 .layout--user .ds-panel.ds-activity:hover {

@@ -5,21 +5,32 @@
 /* ── Grid ──────────────────────────────────────────────────────── */
 .exp-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 280px));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
+  width: 100%;
+  min-width: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 520px) {
   .exp-card-grid {
     grid-template-columns: 1fr;
     gap: 14px;
   }
+
+  .exp-card-view-btn {
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .exp-card-del-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 
-@media (min-width: 701px) and (max-width: 1024px) {
+@media (min-width: 521px) and (max-width: 900px) {
   .exp-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 260px));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
   }
 }
 
@@ -30,6 +41,7 @@
   flex-direction: column;
   min-height: 0;
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 3 / 3.65;
   border-radius: 18px;
   overflow: hidden;

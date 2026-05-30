@@ -20,9 +20,9 @@
 /* ── Page header (matches .pld-navbar) ───────────────────────────── */
 .exp-page-header {
   width: 100%;
-  height: 70px;
   min-height: 70px;
-  padding: 0 32px;
+  height: auto;
+  padding: 12px clamp(14px, 3vw, 32px);
   background: #fff;
   display: flex;
   align-items: center;
@@ -35,22 +35,22 @@
 }
 
 .exp-page-title {
-  font-size: 15px;
+  font-size: clamp(0.875rem, 2.5vw, 0.9375rem);
   font-weight: 700;
   color: #000000;
   margin: 0;
   letter-spacing: -0.2px;
-  white-space: nowrap;
+  line-height: 1.3;
 }
 
 .exp-page {
   width: 100%;
   min-width: 0;
   margin: 0 auto;
-  padding: 28px 32px 0;
+  padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 32px) 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(16px, 3vw, 24px);
   box-sizing: border-box;
 }
 
@@ -102,8 +102,8 @@
 
 .exp-stats-cards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: clamp(10px, 2vw, 16px);
   width: 100%;
 }
 
@@ -316,8 +316,11 @@
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  height: 42px;
+  min-height: 42px;
+  height: auto;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .exp-tab {
@@ -615,23 +618,9 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .exp-stats-cards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .exp-page-header {
-    padding: 0 16px;
-  }
-
-  .exp-page {
-    padding: 28px 16px 0;
-  }
-
-  .exp-stats-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
   }
 }
 
@@ -639,37 +628,164 @@
   .exp-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
   .exp-search-group {
     max-width: none;
+    width: 100%;
+    min-width: 0;
   }
 
   .exp-tabs {
     width: 100%;
+    flex: none;
   }
 
+  .exp-lang-select {
+    width: 100%;
+  }
+
+  .exp-grid-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .exp-grid-bar-right {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .exp-page-header {
+    padding: 10px 16px;
+  }
+
+  .exp-stat-value {
+    font-size: 1.2rem;
+  }
+
+  .exp-search-kbd {
+    display: none;
+  }
+
+  .exp-search-field-btn {
+    padding: 0 10px;
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 640px) {
   .exp-page {
-    padding: 16px 16px 0;
-    gap: 16px;
-  }
-
-  .exp-stats-cards {
-    grid-template-columns: 1fr;
+    gap: 14px;
   }
 
   .exp-stat-card {
     min-height: 68px;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .exp-stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .exp-stat-label {
+    font-size: 10px;
+  }
+
+  .exp-toolbar {
+    padding: 12px;
+  }
+
+  .exp-tab {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  .exp-grid-bar-label {
+    font-size: 0.75rem;
+  }
+
+  .exp-sort {
+    flex: 1;
+    min-width: 0;
+    justify-content: space-between;
+  }
+
+  .exp-sort select {
+    flex: 1;
+    max-width: 160px;
+  }
+
+  .exp-view-toggle {
+    margin-left: auto;
   }
 
   .exp-list-row {
     flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .exp-list-main {
+    flex: 1 1 100%;
+  }
+
+  .exp-list-status {
+    order: -1;
   }
 
   .exp-list-actions {
     width: 100%;
+    justify-content: flex-end;
+  }
+
+  .exp-list-action {
+    flex: 1;
+    text-align: center;
+    min-height: 40px;
+  }
+
+  .exp-empty {
+    padding: 48px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .exp-stats-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .exp-stat-card:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+
+  .exp-grid-bar-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .exp-sort {
+    width: 100%;
+  }
+
+  .exp-sort select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .exp-view-toggle {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .exp-view-btn {
+    flex: 1;
   }
 }

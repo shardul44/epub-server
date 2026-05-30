@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { conversionService } from '../../services/conversionService';
 import useAppDispatch from '../../hooks/useAppDispatch';
 import { setSeatLimit } from '../../features/dashboard/dashboardSlice';
 import { useDashboardQuery } from '../../hooks/queries/useDashboardQuery';
+import { useUsageQuery } from '../../hooks/queries/useUsageQuery';
 import { useConversionsQuery } from '../../hooks/queries/useConversionsQuery';
+import { hasFeature } from '../../utils/features';
 import {
   FileText,
   RefreshCw,
@@ -18,19 +20,17 @@ import {
   Music,
   Download,
   Users,
-  BarChart2,
-  Sparkles,
-  Upload,
+  CloudUpload,
+  ShieldCheck,
+  Accessibility,
 } from 'lucide-react';
 import DashboardHeader from '../../components/layout/Header';
 import MainContent from '../../components/layout/MainContent';
 import RecentActivityPanel from '../../components/dashboard/RecentActivityPanel';
+import QuickActionsFab from '../../components/dashboard/QuickActionsFab';
 import '../Dashboard.css';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
-
-const fmtStorage = (mb) =>
-  mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb.toFixed(1)} MB`;
 
 /* ─── sub-components ──────────────────────────────────────────────────────── */
 
@@ -151,11 +151,22 @@ const OrgDashboard = () => {
     throughputData,
     throughputMeta,
     teamData,
-    systemHealth,
     isLoading:    loading,
     isRefreshing: refreshing,
     refetch:      loadData,
   } = useDashboardQuery();
+
+  const { license, isLoading: licenseLoading, refresh: refreshLicense } = useUsageQuery();
+
+  const seatsUsed = license?.seats?.used ?? teamData.seatUsed;
+  const seatsLimit = license?.seats?.limit ?? null;
+  const pagesUsed = license?.usage?.used ?? 0;
+  const pagesLimit = license?.usage?.limit ?? null;
+
+  const refreshDashboard = () => {
+    loadData();
+    refreshLicense();
+  };
 
   // For the retry button in "Needs attention" panel
   const { refresh: refreshJobs } = useConversionsQuery({ enabled: false });
@@ -171,23 +182,35 @@ const OrgDashboard = () => {
       ? ((stats.completed / stats.totalConversions) * 100).toFixed(0)
       : 0;
 
-  const storageMb = stats.totalPdfs * 2.4;
-
   // Today's short day name for highlighting
   const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const todayName = DAY_NAMES[new Date().getDay()];
 
-  const orgName = user?.organizationName || 'Your Organization';  
   const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+
+  const showConversion = hasFeature(user, 'conversion.basic');
+  const showKitaboo = hasFeature(user, 'kitaboo.import');
+  const showSyncStudio = hasFeature(user, 'sync_studio');
+  const showEpubTools = hasFeature(user, 'epub_tools');
+  const showAccessibility = hasFeature(user, 'accessibility_tools');
+
+  const quickActions = useMemo(
+    () => [
+      { Icon: ShieldCheck, label: 'EPUB Checker', to: '/epub-checker', show: showEpubTools },
+      { Icon: Accessibility, label: 'Accessibility', to: '/accessibility', show: showAccessibility },
+      { Icon: Download, label: 'Download EPUB', to: '/conversions/download', show: showConversion },
+      { Icon: Music, label: 'Audio Sync', to: '/conversions/audio-sync', show: showSyncStudio },
+      { Icon: Image, label: 'FXL Editor', to: '/conversions/fxl-editor', show: showKitaboo },
+      { Icon: CloudUpload, label: 'Upload PDF', to: '/pdfs/upload', show: showConversion },
+    ],
+    [showConversion, showSyncStudio, showEpubTools, showAccessibility, showKitaboo],
+  );
 
   return (
     <div className="ds-root">
 
       {/* ── Header ── */}
-      <DashboardHeader
-        title="Dashboard"
-        healthStatus={systemHealth.api}
-      />
+      <DashboardHeader title="Dashboard" />
 
       {/* ── Main content ── */}
       <MainContent>
@@ -218,7 +241,7 @@ const OrgDashboard = () => {
 
         <div className="ds-welcome-stats">
           {loading ? (
-            [1, 2, 3, 4].map((k) => <StatCardSkeleton key={k} />)
+            [1, 2].map((k) => <StatCardSkeleton key={k} />)
           ) : (
             <>
               <StatCard
@@ -226,18 +249,6 @@ const OrgDashboard = () => {
                 label="Success Rate"
                 valueClass="stat-val--green"
                 isEmpty={stats.totalConversions === 0}
-              />
-              <StatCard
-                value={stats.totalPdfs > 0 ? Math.round(stats.totalPdfs * 8.5) : '—'}
-                label="Avg. Pages"
-                valueClass="stat-val--blue"
-                isEmpty={stats.totalPdfs === 0}
-              />
-              <StatCard
-                value={fmtStorage(storageMb)}
-                label="Storage"
-                valueClass="stat-val--purple"
-                isEmpty={stats.totalPdfs === 0}
               />
               <StatCard
                 value={`+${stats.completed}`}
@@ -321,17 +332,90 @@ const OrgDashboard = () => {
         )}
       </div>
 
-      {/* ── Bottom Grid: Recent Activity + Throughput ── */}
+      {/* ── Bottom Grid: Attention · Team · Throughput ── */}
       <div className="ds-bottom-grid">
 
-        <RecentActivityPanel
-          loading={loading}
-          refreshing={refreshing}
-          recentJobs={recentJobs}
-          onRefresh={() => loadData(true)}
-          titleTag="h3"
-          subtitle="Latest conversion jobs across your library"
-        />
+       
+
+        {/* Team & system — org-admin view */}
+        <div className="ds-panel ds-team-panel">
+          <div className="ds-panel-header">
+            <div>
+              <h3 className="ds-panel-title">Team &amp; system</h3>
+              <p className="ds-panel-sub">Active members and platform health</p>
+            </div>
+            <Link to="/org/team" className="ds-view-all">
+              Manage
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="ds-team-avatars" style={{ marginBottom: 20 }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} className="ds-skel" style={{ width: 36, height: 36, borderRadius: '50%', marginLeft: i === 1 ? 0 : -8, flexShrink: 0 }} />
+              ))}
+            </div>
+          ) : (
+            <div className="ds-team-avatars" style={{ marginBottom: 20 }}>
+              {teamData.members.slice(0, 4).map((m, i) => {
+                const initial = (m.name || m.email || '?')[0].toUpperCase();
+                const colors  = ['#4f46e5','#4f46e5','#4f46e5','#4f46e5'];
+                return (
+                  <span
+                    key={m.id ?? i}
+                    className="ds-avatar"
+                    style={{ zIndex: 10 - i, background: colors[i % colors.length] }}
+                    title={`${m.name || m.email} · ${m.role}`}
+                  >
+                    {initial}
+                  </span>
+                );
+              })}
+              {teamData.members.length > 4 && (
+                <span className="ds-avatar ds-avatar--more" style={{ zIndex: 0 }}>
+                  +{teamData.members.length - 4}
+                </span>
+              )}
+              {teamData.members.length === 0 && (
+                <span className="ds-team-no-members">No members yet</span>
+              )}
+            </div>
+          )}
+
+          <div className="ds-sys-cards">
+            <div className="ds-sys-card">
+              <div className="ds-sys-card-left">
+                <span className="ds-sys-card-icon ds-sys-card-icon--blue">
+                  <Users size={16} />
+                </span>
+                <span className="ds-sys-card-label">Active seats</span>
+              </div>
+              <span className="ds-sys-card-value ds-sys-card-value--blue">
+                {loading || licenseLoading ? '—' : (
+                  seatsLimit != null
+                    ? `${seatsUsed} / ${seatsLimit}`
+                    : `${seatsUsed}`
+                )}
+              </span>
+            </div>
+
+            <div className="ds-sys-card">
+              <div className="ds-sys-card-left">
+                <span className="ds-sys-card-icon ds-sys-card-icon--purple">
+                  <FileText size={16} />
+                </span>
+                <span className="ds-sys-card-label">Pages quota</span>
+              </div>
+              <span className="ds-sys-card-value ds-sys-card-value--purple">
+                {loading || licenseLoading ? '—' : (
+                  pagesLimit != null
+                    ? `${pagesUsed.toLocaleString()} / ${pagesLimit.toLocaleString()}`
+                    : `${pagesUsed.toLocaleString()}`
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Weekly Throughput */}
         <div className="ds-panel ds-throughput">
@@ -368,13 +452,8 @@ const OrgDashboard = () => {
           </div>
         </div>
 
-      </div>
-
-      {/* ── Needs Attention · Quick Actions · Team & System ── */}
-      <div className="ds-three-grid">
-
-        {/* Needs your attention */}
-        <div className="ds-panel ds-attention">
+ {/* Needs your attention */}
+ <div className="ds-panel ds-attention">
           <div className="ds-attn-header">
             <h3 className="ds-panel-title">Needs your attention</h3>
             {!loading && stats.failed + stats.inProgress > 0 && (
@@ -424,14 +503,13 @@ const OrgDashboard = () => {
 
                   return (
                     <div key={`${job.jobType || 'JOB'}-${job.id}`} className="ds-attn-item">
-                      {/* left: name + sub + action */}
                       <div className="ds-attn-body">
                         <span className="ds-attn-name">{name}</span>
                         <span className="ds-attn-sub">{subLabel}</span>
                         {job.status === 'FAILED' ? (
                           <button
                             className="ds-attn-action ds-attn-action--retry"
-                          onClick={() => conversionService.retryConversion(job.id).then(() => { loadData(); refreshJobs(); })}
+                          onClick={() => conversionService.retryConversion(job.id).then(() => { refreshDashboard(); refreshJobs(); })}
                           >
                             <RefreshCw size={13} /> Retry
                           </button>
@@ -444,7 +522,6 @@ const OrgDashboard = () => {
                           </Link>
                         )}
                       </div>
-                      {/* right: status pill */}
                       <span className={`ds-attn-pill ds-attn-pill--${job.status.toLowerCase().replace('_', '-')}`}>
                         {job.status === 'IN_PROGRESS' ? 'IN PROGRESS' : job.status}
                       </span>
@@ -454,150 +531,21 @@ const OrgDashboard = () => {
             </div>
           )}
         </div>
-
-        {/* Quick actions — org-admin specific */}
-        <div className="ds-panel ds-quick-panel">
-          <div className="ds-panel-header">
-            <div>
-              <h3 className="ds-panel-title">Quick actions</h3>
-              <p className="ds-panel-sub">Jump straight into common workflows</p>
-            </div>
-          </div>
-          <div className="ds-qa-grid">
-            <Link to="/pdfs/upload" className="ds-qa-item">
-              <span className="ds-qa-icon ds-qa-icon--blue">
-                <Upload size={20} />
-              </span>
-              <span className="ds-qa-label">Upload PDF</span>
-            </Link>
-            <Link to="/epub-sync-import" className="ds-qa-item">
-              <span className="ds-qa-icon ds-qa-icon--purple">
-                <Image size={20} />
-              </span>
-              <span className="ds-qa-label">Image Editor</span>
-            </Link>
-            <Link to="/epub-sync-import" className="ds-qa-item">
-              <span className="ds-qa-icon ds-qa-icon--teal">
-                <Music size={20} />
-              </span>
-              <span className="ds-qa-label">Audio Sync</span>
-            </Link>
-            <Link to="/conversions" className="ds-qa-item">
-              <span className="ds-qa-icon ds-qa-icon--green">
-                <Download size={20} />
-              </span>
-              <span className="ds-qa-label">Download EPUB</span>
-            </Link>
-            <Link to="/epub-sync-import" className="ds-qa-item">
-              <span className="ds-qa-icon ds-qa-icon--amber">
-                <RefreshCw size={20} />
-              </span>
-              <span className="ds-qa-label">EPUB Sync</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Team & system — org-admin view */}
-        <div className="ds-panel ds-team-panel">
-          <div className="ds-panel-header">
-            <div>
-              <h3 className="ds-panel-title">Team &amp; system</h3>
-              <p className="ds-panel-sub">Active members and platform health</p>
-            </div>
-            <Link to="/org/team" className="ds-view-all">
-              Manage
-            </Link>
-          </div>
-
-          {/* ── Member avatars ── */}
-          {loading ? (
-            <div className="ds-team-avatars" style={{ marginBottom: 20 }}>
-              {[1,2,3,4].map(i => (
-                <div key={i} className="ds-skel" style={{ width: 36, height: 36, borderRadius: '50%', marginLeft: i === 1 ? 0 : -8, flexShrink: 0 }} />
-              ))}
-            </div>
-          ) : (
-            <div className="ds-team-avatars" style={{ marginBottom: 20 }}>
-              {teamData.members.slice(0, 4).map((m, i) => {
-                const initial = (m.name || m.email || '?')[0].toUpperCase();
-                const colors  = ['#4f46e5','#4f46e5','#4f46e5','#4f46e5'];
-                return (
-                  <span
-                    key={m.id ?? i}
-                    className="ds-avatar"
-                    style={{ zIndex: 10 - i, background: colors[i % colors.length] }}
-                    title={`${m.name || m.email} · ${m.role}`}
-                  >
-                    {initial}
-                  </span>
-                );
-              })}
-              {teamData.members.length > 4 && (
-                <span className="ds-avatar ds-avatar--more" style={{ zIndex: 0 }}>
-                  +{teamData.members.length - 4}
-                </span>
-              )}
-              {teamData.members.length === 0 && (
-                <span className="ds-team-no-members">No members yet</span>
-              )}
-            </div>
-          )}
-
-          {/* ── System stat cards ── */}
-          <div className="ds-sys-cards">
-            {/* API uptime */}
-            <div className="ds-sys-card">
-              <div className="ds-sys-card-left">
-                <span className="ds-sys-card-icon ds-sys-card-icon--green">
-                  <BarChart2 size={16} />
-                </span>
-                <span className="ds-sys-card-label">API uptime</span>
-              </div>
-              <span className="ds-sys-card-value ds-sys-card-value--green">
-                {systemHealth.api === 'healthy' ? '99.98%' : systemHealth.api === 'checking' ? '…' : 'Down'}
-              </span>
-            </div>
-
-            {/* Active seats */}
-            <div className="ds-sys-card">
-              <div className="ds-sys-card-left">
-                <span className="ds-sys-card-icon ds-sys-card-icon--blue">
-                  <Users size={16} />
-                </span>
-                <span className="ds-sys-card-label">Active seats</span>
-              </div>
-              <span className="ds-sys-card-value ds-sys-card-value--blue">
-                {loading ? '—' : (
-                  teamData.seatLimit != null
-                    ? `${teamData.seatUsed} / ${teamData.seatLimit}`
-                    : teamData.seatUsed
-                )}
-              </span>
-            </div>
-
-            {/* AI credits */}
-            <div className="ds-sys-card">
-              <div className="ds-sys-card-left">
-                <span className="ds-sys-card-icon ds-sys-card-icon--purple">
-                  <Sparkles size={16} />
-                </span>
-                <span className="ds-sys-card-label">AI credits</span>
-              </div>
-              <span className="ds-sys-card-value ds-sys-card-value--purple">
-                {loading ? '—' : (
-                  user?.aiCredits != null
-                    ? `${user.aiCredits.toLocaleString()} left`
-                    : user?.organization?.aiCredits != null
-                    ? `${user.organization.aiCredits.toLocaleString()} left`
-                    : '—'
-                )}
-              </span>
-            </div>
-          </div>
-        </div>
-
+      </div>
+      {/* ── Recent Activity (full width below bottom grid) ── */}
+      <div className="ds-recent-activity-section">
+        <RecentActivityPanel
+          loading={loading}
+          refreshing={refreshing}
+          recentJobs={recentJobs}
+          onRefresh={refreshDashboard}
+          titleTag="h3"
+          subtitle="Latest conversion jobs across your library"
+        />
       </div>
       </MainContent>
+
+      <QuickActionsFab actions={quickActions} />
     </div>
   );
 };

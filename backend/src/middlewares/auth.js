@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { UserModel } from '../models/User.js';
 import { EntitlementService } from '../services/entitlementService.js';
 import { forbiddenResponse } from '../utils/responseHandler.js';
+import { getAccountAccessBlockReason } from '../services/accountAccessService.js';
 
 const jwtSecret = () => process.env.JWT_SECRET || 'your-secret-key';
 
@@ -36,6 +37,10 @@ function expandFeatureCandidates(featureKey) {
 async function hydrateUserFromDb(decoded) {
   const row = await UserModel.findById(decoded.id);
   if (!row) return null;
+  const accessBlock = await getAccountAccessBlockReason(row);
+  if (accessBlock) {
+    return { blocked: true, message: accessBlock };
+  }
   const features = await EntitlementService.getFeatureKeysForUser(row);
   return {
     id: row.id,
@@ -75,6 +80,9 @@ export const authenticate = async (req, res, next) => {
     if (!hydrated) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
+    if (hydrated.blocked) {
+      return res.status(401).json({ error: hydrated.message, code: 'ACCOUNT_DISABLED' });
+    }
     req.user = hydrated;
     next();
   } catch (error) {
@@ -91,7 +99,7 @@ export const optionalAuth = async (req, res, next) => {
       const decoded = jwt.verify(token, jwtSecret());
       if (decoded?.id) {
         const hydrated = await hydrateUserFromDb(decoded);
-        if (hydrated) req.user = hydrated;
+        if (hydrated && !hydrated.blocked) req.user = hydrated;
       }
     }
     next();

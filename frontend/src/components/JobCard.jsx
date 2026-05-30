@@ -102,8 +102,8 @@ function buildPdfViewUrl(pdfDocumentId) {
  * Responsive grid wrapper that replaces `className="cj-grid"`.
  * Renders children in an auto-fill grid (min 320 px per column).
  */
-export const JobGrid = ({ children }) => (
-  <div className={styles.grid}>{children}</div>
+export const JobGrid = ({ children, className }) => (
+  <div className={[styles.grid, className].filter(Boolean).join(' ')}>{children}</div>
 );
 
 /* ─── JobCard ─────────────────────────────────────────────────── */

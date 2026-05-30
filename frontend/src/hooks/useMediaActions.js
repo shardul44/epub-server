@@ -64,6 +64,7 @@ export function useMediaActions() {
       const link = document.createElement('a');
       link.href = blobUrl;
       const name =
+        asset.originalFileName ||
         asset.originalName ||
         asset.original_name ||
         asset.filename ||

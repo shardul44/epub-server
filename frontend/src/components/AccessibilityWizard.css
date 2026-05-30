@@ -36,10 +36,13 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
-  padding: 30px 32px 26px;
-  
+  padding: clamp(20px, 3vw, 30px) clamp(16px, 3vw, 32px) clamp(18px, 2.5vw, 26px);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 26px -10px rgba(15, 23, 42, 0.10);
   overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Gradient accent line along the top edge */
@@ -59,11 +62,12 @@
 }
 
 .aw-upload-title {
-  font-size: 1.45rem;
+  font-size: clamp(1.15rem, 3.5vw, 1.45rem);
   font-weight: 800;
   letter-spacing: -0.01em;
   margin: 0 0 6px;
   color: #0f172a;
+  line-height: 1.25;
 }
 
 .aw-upload-subtitle {
@@ -80,9 +84,11 @@
 /* Two-column layout */
 .aw-upload-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
+  gap: clamp(14px, 2.5vw, 22px);
   align-items: start;
+  width: 100%;
+  min-width: 0;
 }
 
 .aw-upload-col {
@@ -103,13 +109,15 @@
 .aw-file-chip {
   display: flex;
   align-items: center;
-  width: 60%;
-  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   gap: 12px;
   padding: 14px 14px 14px 18px;
   border-radius: 12px;
   font-size: 14px;
   transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
 }
 
 .aw-file-chip--empty {
@@ -461,8 +469,10 @@
 /* ── Stats cards (white with colored dot + bottom stripe) ── */
 .aw-stats-row {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+  gap: clamp(10px, 2vw, 14px);
+  width: 100%;
+  min-width: 0;
 }
 
 .aw-stat-card {
@@ -2045,19 +2055,25 @@
   }
 
   .aw-upload-col--side {
-    flex-direction: column-reverse;
+    flex-direction: column;
+    max-width: none;
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .aw-prescan-card {
+    max-width: 100%;
+  }
+
+  .aw-run-btn {
+    min-height: 44px;
+    font-size: 13px;
   }
 }
 
 @media (max-width: 700px) {
   .aw-upload-section {
-    margin: 18px 16px 16px;
-    padding: 22px 18px 18px;
     border-radius: 14px;
-  }
-
-  .aw-upload-title {
-    font-size: 1.25rem;
   }
 
   .aw-file-chip {
@@ -2075,21 +2091,46 @@
   .aw-file-chip-status { order: 2; }
   .aw-file-chip-close { order: 3; margin-left: auto; }
   .aw-file-chip-action { order: 2; }
-}
 
-@media (max-width: 1100px) {
-  .aw-stats-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .aw-std-pill {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .aw-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .aw-search {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .aw-sort {
+    width: 100%;
+  }
+
+  .aw-sort-select {
+    width: 100%;
+  }
+
+  .aw-tab-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .aw-tab {
+    flex-shrink: 0;
   }
 }
 
 @media (max-width: 760px) {
-  .aw-stats-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .aw-results {
-    padding: 18px 20px 100px;
+    padding: 0 0 80px;
   }
 
   .aw-diff {
@@ -2102,21 +2143,44 @@
   }
 
   .aw-diff-col:last-child { border-bottom: none; }
-}
 
-@media (max-width: 600px) {
-  .aw-upload-section {
-    margin: 14px 12px 14px;
-    padding: 18px 14px 16px;
-  }
-
-  .aw-toolbar-card {
+  .aw-success-banner {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .aw-stats-row {
-    gap: 8px;
+  .aw-success-actions {
+    width: 100%;
+  }
+
+  .aw-download-btn,
+  .aw-view-report-link,
+  .aw-download-report-link {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .aw-toolbar-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .aw-toolbar-left,
+  .aw-toolbar-right {
+    width: 100%;
+  }
+
+  .aw-toolbar-right {
+    flex-direction: column;
+  }
+
+  .aw-ai-btn,
+  .aw-approve-all-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
 
   .aw-stat-card {
@@ -2142,13 +2206,25 @@
   }
 
   .aw-sticky-actions {
-    justify-content: stretch;
+    flex-direction: column;
+    width: 100%;
   }
 
   .aw-save-btn,
   .aw-view-report-link,
   .aw-download-report-link {
-    flex: 1 1 auto;
+    width: 100%;
     justify-content: center;
+    min-height: 44px;
+  }
+
+  .aw-heading-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .aw-heading-arrow {
+    transform: rotate(90deg);
+    align-self: center;
   }
 }

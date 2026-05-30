@@ -6,12 +6,14 @@
 .ot-page {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   background: #f7f7f2;
-  padding: 28px 32px 48px;
+  padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 32px) clamp(32px, 5vw, 48px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(14px, 3vw, 20px);
+  overflow-x: clip;
 }
 
 /* ── Header ─────────────────────────────────────────────────── */
@@ -27,6 +29,8 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
+  flex: 1;
+  min-width: 0;
 }
 
 .ot-header-icon {
@@ -53,16 +57,16 @@
 
 .ot-title {
   margin: 0 0 4px;
-  font-size: 26px;
+  font-size: clamp(1.25rem, 4vw, 1.625rem);
   font-weight: 800;
   color: #111827;
   letter-spacing: -0.5px;
-  line-height: 1.1;
+  line-height: 1.15;
 }
 
 .ot-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: clamp(12px, 2.5vw, 13px);
   color: #6b7280;
   max-width: 480px;
   line-height: 1.5;
@@ -73,6 +77,7 @@
   gap: 10px;
   align-items: center;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
@@ -186,8 +191,10 @@
 /* ── Stat cards ─────────────────────────────────────────────── */
 .ot-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(10px, 2vw, 14px);
+  width: 100%;
+  min-width: 0;
 }
 
 .ot-stat-card {
@@ -250,9 +257,11 @@
 /* ── Body layout ─────────────────────────────────────────────── */
 .ot-body {
   display: grid;
-  grid-template-columns: 1fr 470px;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 470px);
+  gap: clamp(14px, 3vw, 20px);
   align-items: start;
+  width: 100%;
+  min-width: 0;
 }
 
 .ot-main {
@@ -268,12 +277,16 @@
   border-radius: 14px;
   border: 1px solid #e9ecf3;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 22px 24px;
+  padding: clamp(16px, 3vw, 22px) clamp(16px, 3vw, 24px);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ot-card--table {
   padding: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ot-card-header {
@@ -282,6 +295,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 22px;
+  flex-wrap: wrap;
 }
 
 .ot-card-header-left {
@@ -554,7 +568,9 @@
   color: #111827;
   background: #f9fafb;
   outline: none;
-  width: 210px;
+  width: min(210px, 100%);
+  min-width: 0;
+  box-sizing: border-box;
   transition: border-color 0.18s, box-shadow 0.18s;
 }
 .ot-search:focus {
@@ -587,6 +603,7 @@
 /* ── Table ───────────────────────────────────────────────────── */
 .ot-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 13.5px;
 }
@@ -842,6 +859,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .ot-sidebar-card {
@@ -1198,34 +1216,162 @@
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
-@media (max-width: 1200px) {
-  .ot-stats { grid-template-columns: repeat(2, 1fr); }
-}
-
 @media (max-width: 1100px) {
-  .ot-body { grid-template-columns: 1fr; }
-  .ot-sidebar { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .ot-body {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-sidebar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: clamp(12px, 2vw, 16px);
+  }
 }
 
 @media (max-width: 900px) {
-  .ot-role-selector { grid-template-columns: repeat(2, 1fr); }
+  .ot-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ot-header-actions {
+    width: 100%;
+  }
+
+  .ot-btn-primary,
+  .ot-btn-secondary {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .ot-role-selector {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ot-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-table-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ot-table-header-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ot-search-wrap {
+    width: 100%;
+  }
+
+  .ot-search,
+  .ot-role-filter {
+    width: 100%;
+  }
+
+  .ot-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ot-link-btn {
+    align-self: flex-start;
+  }
 }
 
 @media (max-width: 768px) {
-  .ot-page { padding: 16px 16px 40px; gap: 16px; }
-  .ot-stats { grid-template-columns: repeat(2, 1fr); }
-  .ot-sidebar { grid-template-columns: 1fr; }
-  .ot-form-row { grid-template-columns: 1fr; }
+  .ot-stat-value {
+    font-size: 24px;
+  }
+
+  .ot-stat-card {
+    padding: 14px 16px;
+  }
+
+  .ot-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-table {
+    min-width: 560px;
+  }
+
   .ot-table th:nth-child(3),
   .ot-table td:nth-child(3),
   .ot-table th:nth-child(6),
-  .ot-table td:nth-child(6) { display: none; }
+  .ot-table td:nth-child(6) {
+    display: none;
+  }
+
+  .ot-qa-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-form-footer-btns {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .ot-form-footer-btns .ot-btn-primary,
+  .ot-form-footer-btns .ot-btn-ghost {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ot-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ot-btn-primary,
+  .ot-btn-secondary {
+    width: 100%;
+  }
+
+  .ot-role-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .ot-table {
+    min-width: 480px;
+  }
+
+  .ot-table th:nth-child(2),
+  .ot-table td:nth-child(2) {
+    display: none;
+  }
+
+  .ot-action-icon,
+  .ot-icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ot-toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    align-items: stretch;
+  }
+
+  .ot-toast {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
-  .ot-stats { grid-template-columns: 1fr; }
-  .ot-title { font-size: 22px; }
-  .ot-role-selector { grid-template-columns: 1fr 1fr; }
+  .ot-role-chart-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════

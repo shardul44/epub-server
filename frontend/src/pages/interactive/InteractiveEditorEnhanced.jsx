@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { interactiveService } from '../../services/interactiveService';
 import CKEditorEnhanced from '../../components/interactive/CKEditorEnhanced';
+import './InteractiveReader.css';
 import './InteractiveEditorEnhanced.css';
 
 function stripHtml(html) {
@@ -247,27 +248,25 @@ export default function InteractiveEditorEnhanced() {
 
   return (
     <div className="iee-shell">
-      <header className="iee-header">
-        <div className="iee-header-inner">
-          <div>
-            <Link to="/interactive" className="iee-back">
-              <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-              Back to books
-            </Link>
-            <div className="iee-title-row">
-              <div className="iee-title-icon" aria-hidden>
-                <BookOpen size={22} strokeWidth={2} />
-              </div>
-              <div>
-                <h1 className="iee-title">{book.title}</h1>
-                <p className="iee-meta">
-                  Interactive editor · {chapters.length} chapter{chapters.length === 1 ? '' : 's'}
-                </p>
-              </div>
+      <header className="irr-header">
+        <div className="irr-header-inner">
+          <div className="irr-title-row">
+            <div className="irr-title-icon" aria-hidden>
+              <BookOpen size={22} strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="irr-title">{book.title}</h1>
+              <p className="irr-meta">
+                Interactive editor · {chapters.length} chapter{chapters.length === 1 ? '' : 's'}
+              </p>
             </div>
           </div>
-          <div className="iee-header-actions">
-            <Link to={`/interactive/reader/${book.id}`} className="iee-btn iee-btn-primary">
+          <div className="irr-header-actions">
+            <Link to="/interactive" className="irr-btn irr-btn-secondary">
+              <ArrowLeft size={18} strokeWidth={2} aria-hidden />
+              Back to books
+            </Link>
+            <Link to={`/interactive/reader/${book.id}`} className="irr-btn irr-btn-primary">
               <Eye size={18} strokeWidth={2} aria-hidden />
               Preview reader
             </Link>
@@ -284,6 +283,7 @@ export default function InteractiveEditorEnhanced() {
         </div>
       )}
 
+      <div className="ib-page">
       <div className="iee-layout">
         <aside className="iee-sidebar">
           <div className="iee-card">
@@ -405,7 +405,7 @@ export default function InteractiveEditorEnhanced() {
                           </div>
                           <div className="iee-block-body">
                             <div className="iee-block-type">
-                              {block.type} · #{index + 1}
+                              {block.type} – #{index + 1}
                             </div>
                             <div className="iee-block-preview">{blockPreview(block)}</div>
                           </div>
@@ -443,6 +443,7 @@ export default function InteractiveEditorEnhanced() {
             </>
           )}
         </main>
+      </div>
       </div>
     </div>
   );
