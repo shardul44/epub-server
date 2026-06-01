@@ -98,7 +98,7 @@ const ExportCard = ({
 
   const pdfId     = job.pdfDocumentId ?? job.pdfId;
 
-  const rawName   = job.pdfFilename || job.originalFileName || '';
+  const rawName   = String(job.originalFileName ?? job.pdfFilename ?? '');
   const title     = rawName.replace(/\.(pdf|epub)$/i, '') || `Job #${jobId}`;
   const description =
     job.bookDescription ??

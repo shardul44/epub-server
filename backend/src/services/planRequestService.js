@@ -4,11 +4,20 @@ import { OrganizationModel } from '../models/Organization.js';
 import { OrganizationSubscriptionModel } from '../models/OrganizationSubscription.js';
 
 const ADDON_DELTAS = {
-  'pages-500': { pdfPageQuota: 500, label: '500 Extra Pages' },
-  'pages-2000': { pdfPageQuota: 2000, label: '2,000 Extra Pages' },
-  'seats-5': { memberSeatLimit: 5, label: '5 Extra Seats' },
-  'tts-60': { label: '60 TTS Minutes' },
+  
+  'pages-2000': { pdfPageQuota: 2000, label: '2,000 Extra Pages', quantityType: 'pages', defaultQuantity: 2000 },
+  'seats-5': { memberSeatLimit: 5, label: '5 Extra Seats', quantityType: 'seats', defaultQuantity: 5 },
+
 };
+
+function parseAddonQuantity(memberNote) {
+  if (!memberNote) return null;
+  const m = String(memberNote).match(/requested\s+quantity\s*:\s*(\d+)/i);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.floor(n);
+}
 
 function addDaysIso(days) {
   const d = new Date();
@@ -92,12 +101,20 @@ export class PlanRequestService {
       err.code = 'DUPLICATE';
       throw err;
     }
+    const requestedQuantity = parseAddonQuantity(memberNote);
+    let requestLabel = meta.label;
+    if (meta.quantityType === 'pages' && requestedQuantity) {
+      requestLabel = `${requestedQuantity.toLocaleString('en-US')} Extra Pages`;
+    } else if (meta.quantityType === 'seats' && requestedQuantity) {
+      requestLabel = `${requestedQuantity.toLocaleString('en-US')} Extra Seats`;
+    }
+
     const row = await PlanRequestModel.create({
       organizationId,
       requestedByUserId: userId,
       requestType: 'addon',
       addonKey,
-      requestLabel: meta.label,
+      requestLabel,
       memberNote,
     });
     return toDto(row);
@@ -179,13 +196,16 @@ export class PlanRequestService {
       }
       const org = await OrganizationModel.findById(orgId);
       const updates = {};
+      const requestedQuantity = parseAddonQuantity(row.member_note);
       if (meta.pdfPageQuota) {
+        const increment = requestedQuantity || meta.defaultQuantity || meta.pdfPageQuota;
         const base = org.pdf_page_quota != null ? Number(org.pdf_page_quota) : 0;
-        updates.pdfPageQuota = base + meta.pdfPageQuota;
+        updates.pdfPageQuota = base + increment;
       }
       if (meta.memberSeatLimit) {
+        const increment = requestedQuantity || meta.defaultQuantity || meta.memberSeatLimit;
         const base = org.member_seat_limit != null ? Number(org.member_seat_limit) : 0;
-        updates.memberSeatLimit = base + meta.memberSeatLimit;
+        updates.memberSeatLimit = base + increment;
       }
       if (Object.keys(updates).length) {
         await OrganizationModel.update(orgId, updates);

@@ -25,9 +25,11 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
+  min-width: 0;
   flex: 1;
   background: var(--ife-bg);
   overflow: hidden;
+  overflow-x: clip;
 }
 
 /* ── Top bar ───────────────────────────────────────────────────── */
@@ -35,8 +37,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: var(--ife-topbar-h);
-  padding: 0 18px;
+  min-height: var(--ife-topbar-h);
+  height: auto;
+  padding: 12px 18px;
   background: var(--ife-white);
   border-bottom: 1px solid var(--ife-border);
   flex-shrink: 0;
@@ -96,37 +99,52 @@
 /* ── Job selector ──────────────────────────────────────────────── */
 .ife-selector-root {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  padding: 32px 28px;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(16px, 3vw, 32px) clamp(14px, 3vw, 28px);
+  box-sizing: border-box;
 }
-.ife-selector-header { margin-bottom: 20px; }
+.ife-selector-header {
+  margin-bottom: clamp(14px, 2.5vw, 20px);
+}
 .ife-selector-title {
-  font-size: 22px;
+  font-size: clamp(1.125rem, 2.8vw, 1.375rem);
   font-weight: 700;
   color: var(--ife-text);
   margin: 0 0 6px;
+  line-height: 1.3;
 }
 .ife-selector-sub {
-  font-size: 14px;
+  font-size: clamp(0.8125rem, 2vw, 0.875rem);
   color: var(--ife-muted);
   margin: 0;
+  line-height: 1.45;
+  max-width: 52rem;
 }
 
 /* Tab switcher */
 .ife-selector-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   background: #f3f4f6;
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 14px;
-  width: fit-content;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .ife-selector-tab {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 12px;
   border: none;
   border-radius: 7px;
   background: transparent;
@@ -163,7 +181,7 @@
 /* Info banner */
 .ife-selector-info {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 9px 14px;
   border-radius: 8px;
@@ -172,7 +190,13 @@
   color: var(--ife-blue);
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.45;
   margin-bottom: 16px;
+}
+
+.ife-selector-info svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 .ife-selector-info--warn {
   background: #fffbeb;
@@ -200,10 +224,14 @@
 }
 .ife-selector-empty p { margin: 0; }
 
-.ife-selector-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 12px;
+/* Job grid: 3 → 2 → 1 columns (used with JobGrid) */
+.ife-job-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ife-selector-card-wrap {
+  min-width: 0;
 }
 
 /* ── Pagination ─────────────────────────────────────────────────── */
@@ -661,22 +689,116 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .ife-job-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .ife-topbar {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    min-height: 0;
+  }
+
+  .ife-topbar-title {
+    font-size: 14px;
+    white-space: normal;
+  }
+
+  .ife-back-btn {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .ife-selector-root {
+    padding: 14px 14px 20px;
+  }
+
+  .ife-selector-tab {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .ife-selector-info {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .ife-selector-empty {
+    padding: 40px 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ife-job-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 480px) {
-  .ife-selector-root { padding: 16px; }
-  .ife-selector-grid { grid-template-columns: 1fr; }
+  .ife-topbar-left {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .ife-topbar-title {
+    font-size: 13px;
+  }
+
+  .ife-topbar-right {
+    width: 100%;
+  }
+
+  .ife-back-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ife-selector-root {
+    padding: 12px 12px 18px;
+  }
+
+  .ife-selector-header {
+    margin-bottom: 12px;
+  }
+
+  .ife-selector-tabs {
+    flex-direction: column;
+  }
+
+  .ife-selector-tab {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .ife-selector-empty {
+    padding: 32px 12px;
+  }
+
   .ife-pagination-shell {
     width: 100%;
     flex-wrap: wrap;
     gap: 8px;
     padding: 8px;
   }
+
   .ife-pagination-nav {
     flex: 1 1 calc(50% - 8px);
     min-width: 0;
+    min-height: 40px;
   }
+
   .ife-pagination-pages {
     width: 100%;
     justify-content: center;
     order: 3;
+  }
+
+  .ife-pagination-page {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
   }
 }

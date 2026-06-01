@@ -115,10 +115,9 @@
   background: #cbd5e1;
 }
 
-.iee-header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+.iee-btn-primary:hover {
+  background: #1d4ed8;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
 /* —— Buttons —— */
@@ -644,7 +643,7 @@
 .iee-blocks-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 15px;
 }
 
 .iee-blocks-loading {
@@ -746,9 +745,9 @@
 }
 
 .iee-block-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;

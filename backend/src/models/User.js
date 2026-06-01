@@ -107,6 +107,16 @@ export class UserModel {
     return await this.findById(id);
   }
 
+  /** Set all non-suspended users in an org to suspended (e.g. when org is deactivated). */
+  static async deactivateUsersByOrganizationId(organizationId) {
+    const [result] = await pool.execute(
+      `UPDATE users SET status = 'suspended', updated_at = CURRENT_TIMESTAMP
+       WHERE organization_id = ? AND status != 'suspended'`,
+      [organizationId]
+    );
+    return result.affectedRows ?? 0;
+  }
+
   static async delete(id) {
     await pool.execute('DELETE FROM users WHERE id = ?', [id]);
   }

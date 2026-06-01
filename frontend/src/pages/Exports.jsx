@@ -68,7 +68,7 @@ function jobSortTime(job) {
 }
 
 function jobTitle(job) {
-  const name = job.pdfFilename || job.originalFileName || '';
+  const name = String(job.originalFileName ?? job.pdfFilename ?? '');
   return name.replace(/\.(pdf|epub)$/i, '') || `Job #${job.id ?? job.jobId}`;
 }
 
@@ -123,7 +123,7 @@ const Exports = () => {
     if (q) {
       list = list.filter((j) => {
         const id = String(j.id ?? j.jobId ?? '');
-        const name = (j.pdfFilename ?? '').toLowerCase();
+        const name = (j.originalFileName).toLowerCase();
         const owner = (j.ownerName ?? j.createdBy ?? j.owner ?? '').toLowerCase();
         if (searchField === 'title') return name.includes(q);
         if (searchField === 'owner') return owner.includes(q) || id.includes(q);

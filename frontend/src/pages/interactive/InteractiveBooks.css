@@ -6,13 +6,15 @@
 .ib-page {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   min-height: 100vh;
   box-sizing: border-box;
   background: #f7f7f2;
-  padding: 28px 32px 48px;
+  padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 32px) clamp(32px, 5vw, 48px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(14px, 3vw, 20px);
+  overflow-x: clip;
 }
 
 /* ── Header ─────────────────────────────────────────────────── */
@@ -28,6 +30,8 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
+  flex: 1;
+  min-width: 0;
 }
 
 .ib-header-icon {
@@ -45,15 +49,16 @@
 
 .ib-title {
   margin: 0 0 4px;
-  font-size: 22px;
+  font-size: clamp(1.125rem, 4vw, 1.375rem);
   font-weight: 800;
   color: #111827;
   letter-spacing: -0.4px;
+  line-height: 1.25;
 }
 
 .ib-subtitle {
   margin: 0;
-  font-size: 13px;
+  font-size: clamp(12px, 2.5vw, 13px);
   color: #6b7280;
   max-width: 520px;
   line-height: 1.5;
@@ -64,6 +69,7 @@
   gap: 10px;
   align-items: center;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
@@ -162,8 +168,10 @@
 /* ── Stat cards ─────────────────────────────────────────────── */
 .ib-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(10px, 2vw, 16px);
+  width: 100%;
+  min-width: 0;
 }
 
 .ib-stat-card {
@@ -218,9 +226,11 @@
 /* ── Body layout ─────────────────────────────────────────────── */
 .ib-body {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: clamp(14px, 3vw, 20px);
   align-items: start;
+  width: 100%;
+  min-width: 0;
 }
 
 .ib-main {
@@ -233,15 +243,19 @@
 /* ── Cards ───────────────────────────────────────────────────── */
 .ib-card {
   background: #fff;
-  border-radius: 16px;
-  border: 1px solid #e9ecf3;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06), 0 10px 40px -12px rgba(15, 23, 42, 0.12);
-  padding: 22px 24px; 
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06), 0 8px 24px -8px rgba(15, 23, 42, 0.08);
+  padding: clamp(16px, 3vw, 22px) clamp(16px, 3vw, 24px);
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ib-card--table {
   padding: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
   border-radius: 16px;
 }
 
@@ -251,6 +265,7 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .ib-card-title {
@@ -361,6 +376,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 /* ── Table header ────────────────────────────────────────────── */
@@ -395,8 +411,10 @@
   color: #111827;
   background: #fafaf8;
   outline: none;
-  width: 220px;
+  width: min(220px, 100%);
+  min-width: 0;
   transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+  box-sizing: border-box;
 }
 .ib-search:focus {
   border-color: #2563eb;
@@ -408,6 +426,7 @@
 /* ── Table ───────────────────────────────────────────────────── */
 .ib-table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
   font-size: 13.5px;
 }
@@ -566,15 +585,13 @@
 }
 
 .ib-dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
+  /* position: fixed + top/left set inline via portal */
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   min-width: 210px;
-  z-index: 100;
+  z-index: 9999;
   overflow: hidden;
   padding: 4px;
 }
@@ -655,6 +672,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .ib-sidebar-card {
@@ -738,22 +756,167 @@
 
 /* ── Responsive ─────────────────────────────────────────────── */
 @media (max-width: 1100px) {
-  .ib-body { grid-template-columns: 1fr; }
-  .ib-sidebar { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .ib-body {
+    grid-template-columns: 1fr;
+  }
+
+  .ib-sidebar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: clamp(12px, 2vw, 16px);
+  }
+}
+
+@media (max-width: 900px) {
+  .ib-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ib-header-actions {
+    width: 100%;
+  }
+
+  .ib-btn-primary,
+  .ib-btn-secondary {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .ib-table-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px 18px 14px;
+  }
+
+  .ib-search-wrap {
+    width: 100%;
+  }
+
+  .ib-search {
+    width: 100%;
+  }
+
+  .ib-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ib-form-hints {
+    width: 100%;
+  }
+
+  .ib-form-btns {
+    width: 100%;
+  }
+
+  .ib-form-btns .ib-btn-primary,
+  .ib-form-btns .ib-btn-ghost {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 768px) {
-  .ib-page { padding: 16px 16px 40px; gap: 16px; }
-  .ib-stats { grid-template-columns: repeat(2, 1fr); }
-  .ib-sidebar { grid-template-columns: 1fr; }
+  .ib-stat-value {
+    font-size: 22px;
+  }
+
+  .ib-stat-card {
+    padding: 14px 16px;
+  }
+
+  .ib-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .ib-table {
+    min-width: 520px;
+  }
+
   .ib-table th:nth-child(3),
   .ib-table td:nth-child(3),
   .ib-table th:nth-child(4),
-  .ib-table td:nth-child(4) { display: none; }
+  .ib-table td:nth-child(4) {
+    display: none;
+  }
+
+  .ib-td-title {
+    max-width: 200px;
+  }
+
+  .ib-book-desc {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ib-header-left {
+    flex-wrap: wrap;
+  }
+
+  .ib-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ib-btn-primary,
+  .ib-btn-secondary {
+    width: 100%;
+  }
+
+  .ib-table {
+    min-width: 480px;
+  }
+
+  .ib-table th:nth-child(5),
+  .ib-table td:nth-child(5) {
+    display: none;
+  }
+
+  .ib-table th,
+  .ib-table td {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .ib-row-actions {
+    gap: 0;
+  }
+
+  .ib-action-icon,
+  .ib-icon-btn {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 @media (max-width: 480px) {
-  .ib-stats { grid-template-columns: 1fr; }
-  .ib-title { font-size: 18px; }
-  .ib-header-actions { flex-wrap: wrap; }
+  .ib-stat-value {
+    font-size: 20px;
+  }
+
+  .ib-card-header {
+    margin-bottom: 16px;
+  }
+
+  .ib-badge-draft {
+    width: 100%;
+    text-align: center;
+  }
+
+  .ib-form-btns {
+    flex-direction: column;
+  }
+
+  .ib-form-btns .ib-btn-primary,
+  .ib-form-btns .ib-btn-ghost {
+    width: 100%;
+  }
+
+  .ib-empty {
+    padding: 40px 16px;
+  }
 }

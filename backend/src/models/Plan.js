@@ -57,6 +57,14 @@ export class PlanModel {
     return await this.findById(id);
   }
 
+  static async countOrganizationSubscriptions(planId) {
+    const [rows] = await pool.execute(
+      'SELECT COUNT(*) AS n FROM organization_subscriptions WHERE plan_id = ?',
+      [planId]
+    );
+    return Number(rows[0]?.n ?? 0);
+  }
+
   static async delete(id) {
     await pool.execute('DELETE FROM plans WHERE id = ?', [id]);
   }

@@ -1,11 +1,14 @@
 /* Plan requests — platform admin (apr- prefix) */
 
 .apr-root {
-  padding: 10px 28px 48px;
+  padding: clamp(12px, 2.5vw, 16px) clamp(14px, 3vw, 28px) clamp(28px, 4vw, 48px);
   margin: 0 auto;
   box-sizing: border-box;
   min-height: 100%;
+  width: 100%;
+  min-width: 0;
   background: #f7f7f2;
+  overflow-x: clip;
 }
 
 .apr-head {
@@ -14,7 +17,7 @@
 
 .apr-title {
   margin: 0 0 8px;
-  font-size: 1.65rem;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: #111827;
@@ -42,6 +45,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .apr-tab {
@@ -207,21 +212,11 @@
 /* Summary stat cards */
 .apr-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 1100px) {
-  .apr-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 560px) {
-  .apr-stats {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
+  margin-bottom: clamp(18px, 3vw, 24px);
+  width: 100%;
+  min-width: 0;
 }
 
 .apr-stat-card {
@@ -334,9 +329,11 @@
 /* Request cards — 2 per row */
 .apr-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: clamp(14px, 2.5vw, 18px);
   align-items: start;
+  width: 100%;
+  min-width: 0;
 }
 
 .apr-card {
@@ -694,23 +691,123 @@
   border-color: #fca5a5;
 }
 
-@media (max-width: 960px) {
-  .apr-list {
-    grid-template-columns: 1fr;
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .apr-head {
+    margin-bottom: 18px;
+  }
+
+  .apr-stat-card {
+    padding: 14px 16px;
+  }
+
+  .apr-stat-value {
+    font-size: 1.35rem;
+  }
+
+  .apr-card {
+    padding: 16px;
+  }
+
+  .apr-card-title {
+    font-size: 1rem;
+    margin-bottom: 14px;
   }
 }
 
 @media (max-width: 640px) {
-  .apr-root {
-    padding: 10px 16px 32px;
-  }
-
   .apr-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+  }
+
+  .apr-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    margin: 0 -2px;
+    scrollbar-width: thin;
+  }
+
+  .apr-tab {
+    flex-shrink: 0;
+    min-height: 40px;
   }
 
   .apr-toolbar-right {
+    width: 100%;
     justify-content: space-between;
+    gap: 10px;
+  }
+
+  .apr-sort {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .apr-sort-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .apr-sort-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .apr-filters-wrap {
+    flex-shrink: 0;
+  }
+
+  .apr-filters-btn {
+    min-height: 40px;
+  }
+
+  .apr-filters-menu {
+    left: 0;
+    right: auto;
+    min-width: min(220px, calc(100vw - 32px));
+  }
+
+  .apr-card-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .apr-card-head-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .apr-card-date {
+    white-space: normal;
+  }
+
+  .apr-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .apr-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .apr-loading,
+  .apr-empty {
+    padding: 32px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .apr-note-input {
+    font-size: 16px;
+  }
+
+  .apr-info-grid {
+    gap: 12px;
   }
 }

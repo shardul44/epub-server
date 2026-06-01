@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Bell, CircleHelp, ArrowUp, ShoppingCart, Inbox } from 'lucide-react';
+import { Bell, CircleHelp, ArrowUp, ShoppingCart, Inbox } from 'lucide-react';
 import { adminService } from '../services/adminService';
+import AdminGlobalSearch from '../components/admin/AdminGlobalSearch';
+import HelpCenterPanel from '../components/admin/HelpCenterPanel';
 import './PlatformAdminHeader.css';
 
 function fmtTimeAgo(d) {
@@ -21,8 +23,8 @@ function fmtTimeAgo(d) {
  * and utility actions.
  */
 export default function PlatformAdminHeader() {
-  const [query, setQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const notifWrapRef = useRef(null);
 
   const { data: pendingCount = 0 } = useQuery({
@@ -76,10 +78,16 @@ export default function PlatformAdminHeader() {
   }, [notifOpen]);
 
   const toggleNotifs = () => {
+    setHelpOpen(false);
     setNotifOpen((o) => {
       if (!o) void refetchNotifs();
       return !o;
     });
+  };
+
+  const openHelp = () => {
+    setNotifOpen(false);
+    setHelpOpen(true);
   };
 
   const badge = pendingCount > 0 ? (pendingCount > 99 ? '99+' : String(pendingCount)) : null;
@@ -94,21 +102,7 @@ export default function PlatformAdminHeader() {
       </div>
 
       <div className="pah-right">
-        <label className="pah-search" htmlFor="pah-global-search">
-          <span className="pah-search-icon" aria-hidden>
-            <Search size={18} strokeWidth={2} />
-          </span>
-          <input
-            id="pah-global-search"
-            className="pah-search-input"
-            type="search"
-            placeholder="Search users, orgs, plans…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </label>
+        <AdminGlobalSearch />
 
         <div className="pah-notif-wrap" ref={notifWrapRef}>
           <button
@@ -196,10 +190,19 @@ export default function PlatformAdminHeader() {
           )}
         </div>
 
-        <button type="button" className="pah-icon-btn" aria-label="Help" title="Help">
+        <button
+          type="button"
+          className={`pah-icon-btn${helpOpen ? ' pah-icon-btn--active' : ''}`}
+          aria-label="Help center"
+          title="Help center"
+          aria-expanded={helpOpen}
+          onClick={openHelp}
+        >
           <CircleHelp size={20} strokeWidth={2} />
         </button>
       </div>
+
+      <HelpCenterPanel open={helpOpen} onClose={() => setHelpOpen(false)} />
     </header>
   );
 }

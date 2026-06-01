@@ -445,7 +445,7 @@ const ConversionJobs = () => {
             </button>
           </div>
         ) : viewMode === 'card' ? (
-          <JobGrid>
+          <JobGrid className="cj-job-grid">
             {paginatedJobs.map(job => (
               <JobCard
                 key={`${job.jobType ?? 'REFLOW'}-${job.id ?? job.jobId}`}

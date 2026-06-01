@@ -2,20 +2,10 @@
 
 /* Full main column width (no 1400px cap); uses shared .ds-container gutters */
 .ds-container.ecc-page-shell {
-  padding: 28px 32px 0;
-}
-
-@media (max-width: 768px) {
-  .ds-container.ecc-page-shell {
-    padding: 28px 16px 0;
-  }
-}
-
-@media (max-width: 640px) {
-  .ds-container.ecc-page-shell {
-    padding: 16px 16px 0;
-    gap: 16px;
-  }
+  padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 32px) 0;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 /* Header right: nav tabs (same button style as Org dashboard navbar) */
@@ -25,6 +15,8 @@
   justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ecc-checker-header-actions a.ds-navbar-btn,
@@ -47,18 +39,40 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 768px) {
+  .ecc-checker-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 640px) {
+  .ecc-checker-header-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+
   .ecc-checker-header-actions .ds-navbar-btn {
-    padding: 7px 10px;
-    font-size: 12px;
+    padding: 8px 6px;
+    font-size: 11px;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .ecc-checker-header-actions .ds-navbar-btn svg {
+    flex-shrink: 0;
   }
 }
 
 .ecc-hero {
   text-align: center;
-  padding: 1rem 0 1.5rem;
+  padding: clamp(0.75rem, 2vw, 1rem) 0 clamp(1rem, 3vw, 1.5rem);
   max-width: min(40rem, 100%);
   margin: 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ecc-hero h1 {
@@ -72,22 +86,32 @@
 
 .ecc-hero-desc {
   margin: 0 auto;
-  font-size: 14px;
+  font-size: clamp(13px, 2.5vw, 14px);
   line-height: 1.6;
   color: #6b7280;
+  padding: 0 clamp(4px, 2vw, 12px);
 }
 
 .ecc-hero-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 1.15rem;
-  padding: 0.45rem 1rem;
+  padding: 0.45rem clamp(0.75rem, 3vw, 1rem);
   border-radius: 999px;
-  font-size: 0.84rem;
+  font-size: clamp(0.78rem, 2.5vw, 0.84rem);
   font-weight: 600;
   border: 1px solid transparent;
   transition: background 0.2s ease, border-color 0.2s ease;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.ecc-hero-badge code {
+  word-break: break-word;
 }
 
 .ecc-hero-badge--ok {
@@ -127,9 +151,12 @@
 .ecc-stepper-wrap {
   width: 100%;
   max-width: 100%;
-  margin: 0 auto 1.75rem;
+  margin: 0 auto clamp(1.25rem, 3vw, 1.75rem);
   padding: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  min-width: 0;
 }
 
 .ecc-stepper {
@@ -138,7 +165,7 @@
   justify-content: space-between;
   gap: 0.25rem;
   width: 100%;
-  min-width: 0;
+  min-width: min(100%, 36rem);
   margin: 0 auto;
 }
 
@@ -229,7 +256,9 @@
 .ecc-main {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   margin: 0;
+  box-sizing: border-box;
 }
 
 .ecc-results-wrap .aw-results {
@@ -597,4 +626,63 @@
   background: #e5e7eb;
   color: #111827;
   transform: rotate(90deg);
+}
+
+/* ── Responsive (stepper & layout) ───────────────────────────── */
+@media (max-width: 900px) {
+  .ecc-stepper {
+    min-width: 34rem;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    padding-bottom: 4px;
+  }
+
+  .ecc-step {
+    flex: 0 0 auto;
+    min-width: 4.25rem;
+  }
+
+  .ecc-step-label {
+    font-size: 0.65rem;
+    max-width: 4.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ecc-stepper-wrap {
+    margin-left: calc(-1 * clamp(14px, 3vw, 16px));
+    margin-right: calc(-1 * clamp(14px, 3vw, 16px));
+    padding: 0 clamp(14px, 3vw, 16px);
+  }
+
+  .ecc-stepper {
+    min-width: 32rem;
+  }
+
+  .ecc-step-circle {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.7rem;
+  }
+
+  .ecc-step::after {
+    top: 0.875rem;
+    left: calc(50% + 0.95rem);
+    right: calc(-50% + 0.95rem);
+  }
+
+  .ecc-success-modal {
+    padding: 28px 20px 24px;
+    border-radius: 16px;
+  }
+
+  .ecc-success-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  .ecc-modal {
+    max-height: 88vh;
+  }
 }

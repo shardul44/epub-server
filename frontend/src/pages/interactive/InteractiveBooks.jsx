@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
   RefreshCw,
@@ -51,55 +52,82 @@ const StatCard = ({ icon, label, value, accent }) => (
 );
 
 /* ─── Row actions dropdown ────────────────────────────────── */
+const DROPDOWN_WIDTH = 210;
+const DROPDOWN_HEIGHT_EDIT = 180;
+const DROPDOWN_HEIGHT_VIEW = 110;
+
 const RowMenu = ({ book, canEdit, onExport, onDelete, busyId }) => {
   const [open, setOpen] = useState(false);
-  const [placement, setPlacement] = useState('bottom');
-  const ref = useRef(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef(null);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
+    const close = (e) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        btnRef.current && !btnRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    const closeScroll = () => setOpen(false);
+    document.addEventListener('mousedown', close);
+    window.addEventListener('scroll', closeScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('scroll', closeScroll, true);
+    };
+  }, [open]);
 
-    // Auto-flip: if there's not enough room below the button, open upward.
-    if (btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const estHeight = canEdit ? 180 : 110; // rough dropdown height
-      if (spaceBelow < estHeight && spaceAbove > spaceBelow) {
-        setPlacement('top');
-      } else {
-        setPlacement('bottom');
-      }
+  const handleToggle = (e) => {
+    e.stopPropagation();
+    if (open) {
+      setOpen(false);
+      return;
     }
 
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open, canEdit]);
+    const rect = btnRef.current.getBoundingClientRect();
+    const estHeight = canEdit ? DROPDOWN_HEIGHT_EDIT : DROPDOWN_HEIGHT_VIEW;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow < estHeight + 8
+      ? rect.top - estHeight - 4
+      : rect.bottom + 6;
+    const left = Math.min(
+      rect.right - DROPDOWN_WIDTH,
+      window.innerWidth - DROPDOWN_WIDTH - 8
+    );
+    setPos({ top, left });
+    setOpen(true);
+  };
+
+  function close() {
+    setOpen(false);
+  }
 
   return (
-    <div className="ib-row-menu" ref={ref}>
+    <div className="ib-row-menu">
       <button
         ref={btnRef}
         className="ib-icon-btn"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        onClick={handleToggle}
         aria-haspopup="true"
         aria-expanded={open}
         title="More options"
       >
         <MoreVertical size={16} />
       </button>
-      {open && (
+      {open && createPortal(
         <div
-          className={`ib-dropdown ib-dropdown--${placement}`}
+          ref={menuRef}
+          className="ib-dropdown"
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: DROPDOWN_WIDTH }}
           onClick={(e) => e.stopPropagation()}
           role="menu"
         >
-          <button className="ib-dropdown-item" onClick={() => { setOpen(false); onExport(book, false); }}>
+          <button className="ib-dropdown-item" onClick={() => { close(); onExport(book, false); }}>
             <Download size={15} /> Export EPUB (Strict)
           </button>
-          <button className="ib-dropdown-item" onClick={() => { setOpen(false); onExport(book, true); }}>
+          <button className="ib-dropdown-item" onClick={() => { close(); onExport(book, true); }}>
             <Download size={15} /> Export EPUB (JS Interactive)
           </button>
           {canEdit && (
@@ -107,14 +135,15 @@ const RowMenu = ({ book, canEdit, onExport, onDelete, busyId }) => {
               <div className="ib-dropdown-divider" />
               <button
                 className="ib-dropdown-item ib-dropdown-item--danger"
-                onClick={() => { setOpen(false); onDelete(book); }}
+                onClick={() => { close(); onDelete(book); }}
                 disabled={busyId === book.id}
               >
                 <Trash2 size={15} /> Delete book
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

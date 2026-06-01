@@ -12,13 +12,16 @@
   --pcv-amber: #d97706;
   min-height: 100%;
   width: 100%;
+  min-width: 0;
   background: var(--pcv-bg);
-  padding: 10px 32px 40px;
+  padding: clamp(12px, 2.5vw, 16px) clamp(14px, 3vw, 32px) clamp(24px, 4vw, 40px);
   box-sizing: border-box;
+  overflow-x: clip;
 }
 
 .pcv-inner {
-  max-width: 100%; 
+  max-width: 100%;
+  min-width: 0;
   margin: 0 auto;
 }
 
@@ -37,7 +40,7 @@
 
 .pcv-title {
   margin: 0 0 8px;
-  font-size: 1.65rem;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--pcv-text);
@@ -98,21 +101,11 @@
 
 .pcv-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 1000px) {
-  .pcv-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 520px) {
-  .pcv-stats {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
+  margin-bottom: clamp(18px, 3vw, 24px);
+  width: 100%;
+  min-width: 0;
 }
 
 .pcv-stat {
@@ -200,8 +193,9 @@
   background: var(--pcv-card);
   border: 1px solid var(--pcv-border);
   border-radius: 14px;
-  padding: 20px 22px 24px;
+  padding: clamp(14px, 2.5vw, 20px) clamp(14px, 2.5vw, 22px) clamp(18px, 3vw, 24px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-width: 0;
 }
 
 .pcv-panel-head {
@@ -264,33 +258,17 @@
 
 .pcv-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-@media (max-width: 1280px) {
-  .pcv-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 1024px) {
-  .pcv-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .pcv-grid {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: clamp(10px, 2vw, 14px);
+  width: 100%;
+  min-width: 0;
 }
 
 .pcv-card {
-  border: 1px solid rgb(71, 154, 248);
+  border: 1px solid rgb(200 220 243);
   border-radius: 12px;
   padding: 10px 10px 8px;
-  background: rgb(192, 209, 233);
+  background: rgb(247 251 255);
   display: flex;
   flex-direction: column;
   gap: 7px;
@@ -527,12 +505,15 @@
 
 .pcv-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
   border-radius: 10px;
   border: 1px solid var(--pcv-border);
 }
 
 .pcv-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
@@ -591,6 +572,105 @@
   padding: 40px 20px;
   color: var(--pcv-muted);
   font-size: 0.9375rem;
+}
+
+/* ── Responsive (list page) ─────────────────────────────────── */
+@media (max-width: 768px) {
+  .pcv-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .pcv-toolbar {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pcv-select,
+  .pcv-btn-export {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .pcv-stat {
+    padding: 16px;
+  }
+
+  .pcv-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .pcv-panel-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pcv-view-toggle {
+    width: 100%;
+  }
+
+  .pcv-view-btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 40px;
+  }
+
+  .pcv-card-actions {
+    gap: 8px;
+  }
+
+  .pcv-card-btn {
+    min-height: 40px;
+    font-size: 0.75rem;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pcv-meta-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pcv-table th:nth-child(4),
+  .pcv-table td:nth-child(4),
+  .pcv-table th:nth-child(5),
+  .pcv-table td:nth-child(5),
+  .pcv-table th:nth-child(6),
+  .pcv-table td:nth-child(6) {
+    display: none;
+  }
+
+  .pcv-table {
+    min-width: 520px;
+  }
+
+  .pcv-table th,
+  .pcv-table td {
+    padding: 10px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pcv-select {
+    font-size: 16px;
+  }
+
+  .pcv-card-btn {
+    min-height: 44px;
+  }
+
+  .pcv-table th:nth-child(7),
+  .pcv-table td:nth-child(7) {
+    display: none;
+  }
+
+  .pcv-table {
+    min-width: 400px;
+  }
 }
 
 /* ── Job detail (/admin/conversions/job/:id) ── */
@@ -835,8 +915,21 @@
 }
 
 @media (max-width: 560px) {
+  .pcv-summary-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
   .pcv-summary-modal {
     max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .pcv-summary-head,
+  .pcv-summary-body,
+  .pcv-summary-foot {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .pcv-summary-body .pcv-detail-dl {
@@ -845,5 +938,16 @@
 
   .pcv-summary-body .pcv-detail-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .pcv-detail-panel {
+    padding: 16px;
+  }
+
+  .pcv-detail-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

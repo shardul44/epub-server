@@ -19,7 +19,6 @@ import {
   Database,
   Languages,
   Info,
-  ArrowUp,
   Clock,
   FileText,
   BarChart2,
@@ -240,33 +239,24 @@ function UpgradeModal({ currentPlanName, plans, loading, error, onClose, isMembe
 /* ─── AddOnsModal ─────────────────────────────────────────────── */
 const ADD_ONS = [
   {
-    id: 'pages-500',
-    icon: <FileText size={22} />,
-    name: '500 Extra Pages',
-    desc: 'Add 500 PDF pages to your current subscription period.',
-    tag: 'Pages',
-  },
-  {
     id: 'pages-2000',
     icon: <FileText size={22} />,
     name: '2,000 Extra Pages',
-    desc: 'Best value — add 2,000 PDF pages to your current subscription period.',
+    desc: 'Most popular base pack. Enter the exact page quantity you want to request.',
     tag: 'Pages',
     popular: true,
+    inputLabel: 'Requested pages',
+    inputPlaceholder: 'e.g. 3500',
   },
   {
     id: 'seats-5',
     icon: <Database size={22} />,
     name: '5 Extra Seats',
-    desc: 'Add 5 member seats to your organization.',
+    desc: 'Most popular base pack. Enter the exact seat count you want to request.',
     tag: 'Seats',
-  },
-  {
-    id: 'tts-60',
-    icon: <Mic size={22} />,
-    name: '60 TTS Minutes',
-    desc: 'Add 60 minutes of text-to-speech generation.',
-    tag: 'TTS',
+    popular: true,
+    inputLabel: 'Requested seats',
+    inputPlaceholder: 'e.g. 8',
   },
 ];
 
@@ -281,6 +271,10 @@ function planRequestErrorMessage(e, fallback) {
 
 function AddOnsModal({ onClose, onRequestSent, canSubmit }) {
   const [selected, setSelected] = useState(null);
+  const [quantities, setQuantities] = useState({
+    'pages-2000': '2000',
+    'seats-5': '5',
+  });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState('');
@@ -300,11 +294,17 @@ function AddOnsModal({ onClose, onRequestSent, canSubmit }) {
       setSubmitError('Please select an add-on.');
       return;
     }
+    const qtyRaw = quantities[selected];
+    const qty = Number.parseInt(String(qtyRaw || '').trim(), 10);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      setSubmitError('Please enter a valid quantity greater than 0.');
+      return;
+    }
     setSubmitError('');
     setSubmitSuccess('');
     setSubmitting(true);
     try {
-      await planRequestService.submitAddon(selected);
+      await planRequestService.submitAddon(selected, `Requested quantity: ${qty}`);
       setSubmitSuccess(
         'Your add-on request was sent to the platform admin. Limits will update after approval.',
       );
@@ -359,6 +359,26 @@ function AddOnsModal({ onClose, onRequestSent, canSubmit }) {
               <span className="addon-card__name">{addon.name}</span>
               <span className="addon-card__desc">{addon.desc}</span>
               {selected === addon.id && (
+                <label className="addon-card__input-wrap">
+                  <span className="addon-card__input-label">{addon.inputLabel}</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    className="addon-card__input"
+                    placeholder={addon.inputPlaceholder}
+                    value={quantities[addon.id] ?? ''}
+                    onChange={(e) =>
+                      setQuantities((prev) => ({
+                        ...prev,
+                        [addon.id]: e.target.value,
+                      }))
+                    }
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </label>
+              )}
+              {selected === addon.id && (
                 <CheckCircle size={18} className="addon-card__check" />
               )}
             </button>
@@ -404,6 +424,7 @@ export default function Usage() {
   const listScope  = useListScope();
   const dispatch   = useAppDispatch();
   const isMember   = user?.role === 'member';
+  const isOrgAdmin = user?.role === 'org_admin';
   const isOrgUser  = user?.role === 'member' || user?.role === 'org_admin';
   const hasOrg     = user?.organizationId != null && user?.organizationId !== '';
   const canUseUsage = isOrgUser && hasOrg;
@@ -459,32 +480,11 @@ export default function Usage() {
       limit: pagesLimit,
     },
     {
-      icon: <Mic size={20} />,
-      label: 'Voice-Over Generation',
-      unit: 'mins',
-      used: 0,
-      limit: null,
-    },
-    {
       icon: <RefreshCw size={20} />,
-      label: 'Renders',
-      unit: 'renders',
-      used: 0,
-      limit: null,
-    },
-    {
-      icon: <Database size={20} />,
-      label: 'Storage',
-      unit: 'GB',
-      used: 0,
-      limit: null,
-    },
-    {
-      icon: <Languages size={20} />,
-      label: 'Scripts & Translations',
-      unit: 'generations',
-      used: 0,
-      limit: null,
+      label: 'Team seats',
+      unit: 'seats',
+      used: seatsUsed,
+      limit: seatsLimit,
     },
   ];
 
@@ -521,6 +521,14 @@ export default function Usage() {
       value: '15',
     },
   ];
+  const visiblePlanLimits = isOrgAdmin
+    ? planLimits.filter(
+        (item) =>
+          item.label !== 'Voice-over minutes' &&
+          item.label !== 'Team seats' &&
+          item.label !== 'Monthly scripts & translations',
+      )
+    : planLimits;
 
   return (
     <div className="usage-page">
@@ -569,10 +577,11 @@ export default function Usage() {
                 <span className="usage-plan-banner__reset-date">{fmtDate(validUntil)}</span>
               </div>
             )}
-            <button className="usage-plan-banner__upgrade" onClick={() => dispatch(openUpgradeModal())}>
-              <ArrowUp size={14} />
-              Upgrade Plan
-            </button>
+            {!isOrgAdmin && (
+              <button className="usage-plan-banner__upgrade" onClick={() => dispatch(openUpgradeModal())}>
+                Upgrade Plan
+              </button>
+            )}
           </div>
         </div>
 
@@ -617,7 +626,7 @@ export default function Usage() {
             <section className="usage-section">
               <h3 className="usage-section__title">Plan Limits</h3>
               <div className="usage-limits-grid">
-                {planLimits.map((item) => (
+                {visiblePlanLimits.map((item) => (
                   <PlanLimitItem key={item.label} {...item} />
                 ))}
               </div>

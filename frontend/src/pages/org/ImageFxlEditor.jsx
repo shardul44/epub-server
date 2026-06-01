@@ -115,7 +115,7 @@ const JobSelector = ({ jobs, onSelect, onDelete, loading, listScope }) => {
           </p>
         </div>
       ) : (
-        <JobGrid>
+        <JobGrid className="ife-job-grid">
           {paginatedVisible.map((job) => {
             const jobId = job.id ?? job.jobId;
             return (

@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
-  Server,
   Copy,
   ArrowUpDown,
 } from 'lucide-react';
@@ -95,7 +94,6 @@ function normalizeLog(log) {
     title,
     detail: detail || '—',
     organizationName: log.organizationName || orgFromMsg?.[1]?.trim() || null,
-    host: log.source || 'web-01',
   };
 }
 
@@ -206,7 +204,6 @@ export default function SystemLogs() {
           log.detail,
           log.message,
           log.level,
-          log.host,
           log.organizationName,
           log.ipAddress,
         ]
@@ -439,7 +436,6 @@ export default function SystemLogs() {
                   <th>Level</th>
                   <th>Event</th>
                   <th>Message</th>
-                  <th>Source</th>
                   <th>IP Address</th>
                   <th>Organization</th>
                   <th className="slog-th-actions" aria-label="Actions" />
@@ -448,7 +444,7 @@ export default function SystemLogs() {
               <tbody>
                 {pageItems.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="slog-empty-cell">
+                    <td colSpan={7} className="slog-empty-cell">
                       No log entries match your filters.
                     </td>
                   </tr>
@@ -467,12 +463,6 @@ export default function SystemLogs() {
                         {log.detail && log.detail !== '—' && (
                           <span className="slog-msg-detail">{log.detail}</span>
                         )}
-                      </td>
-                      <td>
-                        <span className="slog-source">
-                          <Server size={14} aria-hidden />
-                          {log.host}
-                        </span>
                       </td>
                       <td className="slog-td-muted">
                         {log.ipAddress || '—'}

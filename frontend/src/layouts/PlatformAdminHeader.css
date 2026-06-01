@@ -319,18 +319,49 @@
 @media (max-width: 900px) {
   .pah {
     flex-wrap: wrap;
-    padding: 10px 16px;
+    padding: 10px clamp(14px, 3vw, 16px);
+    min-height: auto;
+    gap: 10px;
+  }
+
+  .pah-title {
+    font-size: 1rem;
+    flex: 1;
+    min-width: 0;
   }
 
   .pah-right {
     flex-wrap: wrap;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: flex-end;
+    gap: 8px;
   }
 
   .pah-search {
+    flex: 1 1 100%;
     max-width: none;
     width: 100%;
     order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .pah {
+    align-items: stretch;
+  }
+
+  .pah-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 400px) {
+  .pah-search-input {
+    font-size: 16px;
+  }
+
+  .pah-search-input::placeholder {
+    font-size: 0.8125rem;
   }
 }

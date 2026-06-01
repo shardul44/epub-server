@@ -7,13 +7,11 @@ import { CloudUpload } from 'lucide-react';
  * Props:
  *   title        {string}   Page title shown on the left
  *   subtitle     {string}   Optional secondary line under the title (smaller, muted)
- *   healthStatus {string}   'healthy' | 'unhealthy' | 'checking'
  *   actions      {ReactNode} Optional extra buttons/links on the right
  */
 const DashboardHeader = ({
   title = 'Dashboard',
   subtitle,
-  healthStatus: _healthStatus,
   actions,
   className = '',
   actionsClassName = '',

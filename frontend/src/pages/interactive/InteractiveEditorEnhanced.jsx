@@ -482,8 +482,12 @@ export default function InteractiveEditorEnhanced() {
               </div>
             </div>
           </div>
-          <div className="iee-header-actions">
-            <Link to={`/interactive/reader/${book.id}`} className="iee-btn iee-btn-primary">
+          <div className="irr-header-actions">
+            <Link to="/interactive" className="irr-btn irr-btn-secondary">
+              <ArrowLeft size={18} strokeWidth={2} aria-hidden />
+              Back to books
+            </Link>
+            <Link to={`/interactive/reader/${book.id}`} className="irr-btn irr-btn-primary">
               <Eye size={18} strokeWidth={2} aria-hidden />
               Preview reader
             </Link>

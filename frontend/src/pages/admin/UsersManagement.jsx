@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Users, UserCheck, AlertTriangle, UserPlus, Download, Pencil } from 'lucide-react';
+import { Users, UserCheck, AlertTriangle, UserPlus, Download, Pencil, Trash2 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import { queryKeys } from '../../lib/queryKeys';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmModal from '../../components/Loadingmodal';
 import './UsersManagement.css';
 
 const ROLES = {
@@ -35,13 +36,13 @@ function rolePillClass(role) {
 }
 
 function statusPillClass(status) {
-  if (status === 'suspended') return 'umgmt-pill umgmt-pill--suspended';
+  if (status === 'suspended') return 'umgmt-pill umgmt-pill--deactivated';
   if (status === 'pending_verification') return 'umgmt-pill umgmt-pill--pending';
   return 'umgmt-pill umgmt-pill--active';
 }
 
 function statusLabel(status) {
-  if (status === 'suspended') return 'Suspended';
+  if (status === 'suspended') return 'Deactivated';
   if (status === 'pending_verification') return 'Pending';
   return 'Active';
 }
@@ -83,6 +84,7 @@ export default function UsersManagement() {
   const [editRole, setEditRole] = useState(ROLES.MEMBER);
   const [editOrgId, setEditOrgId] = useState('');
   const [editPassword, setEditPassword] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const usersQuery = useQuery({
     queryKey: queryKeys.admin.users(),
@@ -143,6 +145,20 @@ export default function UsersManagement() {
     },
     onError: (e) => {
       setPageError(e.response?.data?.error || e.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => adminService.deleteUser(id),
+    onSuccess: async (_data, deletedId) => {
+      setDeleteTarget(null);
+      setPageError('');
+      setEditUser((prev) => (prev?.id === deletedId ? null : prev));
+      await invalidateAll();
+    },
+    onError: (e) => {
+      setPageError(e.response?.data?.error || e.message);
+      setDeleteTarget(null);
     },
   });
 
@@ -240,14 +256,28 @@ export default function UsersManagement() {
     URL.revokeObjectURL(url);
   };
 
-  const toggleSuspend = (u) => {
+  const toggleUserActive = (u) => {
     setPageError('');
     const next = u.status === 'suspended' ? 'active' : 'suspended';
     if (next === 'suspended' && currentUser?.id === u.id) {
-      setPageError('You cannot suspend your own account.');
+      setPageError('You cannot deactivate your own account.');
       return;
     }
     statusMutation.mutate({ id: u.id, status: next });
+  };
+
+  const requestDelete = (u) => {
+    setPageError('');
+    if (currentUser?.id === u.id) {
+      setPageError('You cannot delete your own account.');
+      return;
+    }
+    setDeleteTarget(u);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget.id);
   };
 
   if (usersQuery.isLoading) {
@@ -278,7 +308,7 @@ export default function UsersManagement() {
       <div className="umgmt-inner">
         <header className="umgmt-head">
           <h1 className="umgmt-title">User Management</h1>
-          <p className="umgmt-sub">View, edit, suspend or remove users across all organizations.</p>
+          <p className="umgmt-sub">View, edit, activate or deactivate users across all organizations.</p>
         </header>
 
         {pageError && <div className="umgmt-alert">{pageError}</div>}
@@ -375,9 +405,18 @@ export default function UsersManagement() {
                           type="button"
                           className="umgmt-icon-btn umgmt-icon-btn--danger"
                           disabled={statusMutation.isPending || (currentUser?.id === u.id && u.status !== 'suspended')}
-                          onClick={() => toggleSuspend(u)}
+                          onClick={() => toggleUserActive(u)}
                         >
-                          {u.status === 'suspended' ? 'Activate' : 'Suspend'}
+                          {u.status === 'suspended' ? 'Activate' : 'Deactivate'}
+                        </button>
+                        <button
+                          type="button"
+                          className="umgmt-icon-btn umgmt-icon-btn--delete"
+                          disabled={deleteMutation.isPending || currentUser?.id === u.id}
+                          onClick={() => requestDelete(u)}
+                        >
+                          <Trash2 size={15} aria-hidden />
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -497,6 +536,22 @@ export default function UsersManagement() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => !deleteMutation.isPending && setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete user"
+        subtitle="This action cannot be undone."
+        message={
+          deleteTarget
+            ? `Permanently delete "${deleteTarget.name || deleteTarget.email}"? All data associated with this account will be removed.`
+            : ''
+        }
+        confirmLabel="Delete user"
+        variant="danger"
+        loading={deleteMutation.isPending}
+      />
 
       {editUser && (
         <div
