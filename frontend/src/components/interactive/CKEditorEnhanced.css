@@ -1,4 +1,104 @@
-/* CKEditor Enhanced Styles */
+/* CKEditor panel — matches Interactive Editor studio */
+
+.cke-panel {
+  border: 1px solid var(--iee-border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.cke-panel__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--iee-border, #e2e8f0);
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+}
+
+.cke-panel__toolbar-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.cke-panel__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.cke-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  color: #fff;
+  transition: filter 0.15s, transform 0.12s;
+}
+
+.cke-tool-btn:hover {
+  filter: brightness(1.06);
+}
+
+.cke-tool-btn:active {
+  transform: scale(0.98);
+}
+
+.cke-tool-btn--quiz {
+  background: #7c3aed;
+}
+
+.cke-tool-btn--image {
+  background: #059669;
+}
+
+.cke-tool-btn--audio {
+  background: #d97706;
+}
+
+.cke-tool-btn--drag {
+  background: #0284c7;
+}
+
+.cke-tool-btn--primary {
+  background: linear-gradient(135deg, #4f46e5, #4338ca);
+  padding: 7px 14px;
+}
+
+.cke-panel__editor {
+  position: relative;
+  padding: 4px 8px 12px;
+  min-height: 260px;
+  background: #fff;
+}
+
+.cke-panel__hint {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1d4ed8;
+  pointer-events: none;
+}
 
 /* CKEditor container */
 .ck-editor__editable {

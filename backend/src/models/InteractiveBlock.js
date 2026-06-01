@@ -1,7 +1,7 @@
 import pool from '../config/database.js';
 
 const cols =
-  'id, chapter_id, type, content_json, position, created_at, updated_at';
+  'id, chapter_id, type, content_json, h5p_content_id, layout_json, position, created_at, updated_at';
 
 /** JSON column + mysql2: bind JSON text to avoid mysqld_stmt_execute / ER_WRONG_ARGUMENTS. */
 function contentJsonForDb(value) {
@@ -28,6 +28,15 @@ function normalizeBlockRow(row) {
   const o = { ...row };
   if (typeof o.id === 'bigint') o.id = Number(o.id);
   if (typeof o.chapter_id === 'bigint') o.chapter_id = Number(o.chapter_id);
+  if (typeof o.h5p_content_id === 'bigint') o.h5p_content_id = Number(o.h5p_content_id);
+  const lj = o.layout_json;
+  if (lj != null && typeof lj === 'string') {
+    try {
+      o.layout_json = JSON.parse(lj);
+    } catch {
+      o.layout_json = null;
+    }
+  }
   const cj = o.content_json;
   if (cj != null && typeof cj === 'string') {
     try {
@@ -53,23 +62,25 @@ export class InteractiveBlockModel {
     return rows.map((r) => normalizeBlockRow(r));
   }
 
-  static async create({ chapterId, type, contentJson, position = 0 }) {
+  static async create({ chapterId, type, contentJson, position = 0, h5pContentId = null, layoutJson = null }) {
     const chId = idNumber(chapterId);
     if (chId == null || chId < 1) {
       throw new Error('Invalid chapterId');
     }
     const jsonStr = contentJsonForDb(contentJson);
     const pos = intOrZero(position);
+    const layoutStr = layoutJson != null ? contentJsonForDb(layoutJson) : null;
+    const h5pId = h5pContentId != null ? idNumber(h5pContentId) : null;
     const [result] = await pool.execute(
-      'INSERT INTO interactive_blocks (chapter_id, type, content_json, position) VALUES (?, ?, ?, ?)',
-      [chId, String(type), jsonStr, pos]
+      'INSERT INTO interactive_blocks (chapter_id, type, content_json, h5p_content_id, layout_json, position) VALUES (?, ?, ?, ?, ?, ?)',
+      [chId, String(type), jsonStr, h5pId, layoutStr, pos]
     );
     const rawId = result.insertId;
     const insertId = rawId != null ? idNumber(rawId) : null;
     return await this.findById(insertId);
   }
 
-  static async update(id, { type, contentJson, position }) {
+  static async update(id, { type, contentJson, position, h5pContentId, layoutJson }) {
     const updates = [];
     const values = [];
     if (type !== undefined) {
@@ -79,6 +90,14 @@ export class InteractiveBlockModel {
     if (contentJson !== undefined) {
       updates.push('content_json = ?');
       values.push(contentJsonForDb(contentJson));
+    }
+    if (h5pContentId !== undefined) {
+      updates.push('h5p_content_id = ?');
+      values.push(h5pContentId != null ? idNumber(h5pContentId) : null);
+    }
+    if (layoutJson !== undefined) {
+      updates.push('layout_json = ?');
+      values.push(layoutJson != null ? contentJsonForDb(layoutJson) : null);
     }
     if (position !== undefined) {
       updates.push('position = ?');

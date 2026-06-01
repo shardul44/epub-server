@@ -85,6 +85,8 @@ export default function PlatformBilling() {
   const [planModalError, setPlanModalError] = useState('');
   const [editOrg, setEditOrg] = useState(null);
   const [quotaInput, setQuotaInput] = useState('');
+  const [editSeatOrg, setEditSeatOrg] = useState(null);
+  const [seatInput, setSeatInput] = useState('');
   const [planOrg, setPlanOrg] = useState(null);
   const [planId, setPlanId] = useState('');
   const [subValidFrom, setSubValidFrom] = useState('');
@@ -138,11 +140,21 @@ export default function PlatformBilling() {
   });
 
   const openEditQuota = (org) => {
+    setEditSeatOrg(null);
     setPlanOrg(null);
     setPlanModalError('');
     setModalError('');
     setEditOrg(org);
     setQuotaInput(org.pdfPageQuota == null ? '' : String(org.pdfPageQuota));
+  };
+
+  const openEditSeat = (org) => {
+    setEditOrg(null);
+    setPlanOrg(null);
+    setPlanModalError('');
+    setModalError('');
+    setEditSeatOrg(org);
+    setSeatInput(org.memberSeatLimit == null ? '' : String(org.memberSeatLimit));
   };
 
   const openManagePlan = (org) => {
@@ -159,6 +171,12 @@ export default function PlatformBilling() {
   const closeQuotaModal = () => {
     if (updateMutation.isPending) return;
     setEditOrg(null);
+    setModalError('');
+  };
+
+  const closeSeatModal = () => {
+    if (updateMutation.isPending) return;
+    setEditSeatOrg(null);
     setModalError('');
   };
 
@@ -214,6 +232,25 @@ export default function PlatformBilling() {
         status: 'active',
       },
     });
+  };
+
+  const submitSeat = (e) => {
+    e.preventDefault();
+    if (!editSeatOrg) return;
+    setModalError('');
+    const raw = String(seatInput).trim();
+    let memberSeatLimit;
+    if (raw === '') {
+      memberSeatLimit = null;
+    } else {
+      const n = parseInt(raw, 10);
+      if (Number.isNaN(n) || n < 1) {
+        setModalError('Enter a positive integer, or leave empty for unlimited seats.');
+        return;
+      }
+      memberSeatLimit = n;
+    }
+    updateMutation.mutate({ id: editSeatOrg.id, body: { memberSeatLimit } });
   };
 
   if (billingQuery.isLoading) {
@@ -341,6 +378,9 @@ export default function PlatformBilling() {
                             <button type="button" className="pbl-btn pbl-btn--compact" onClick={() => openEditQuota(org)}>
                               Edit quota
                             </button>
+                            <button type="button" className="pbl-btn pbl-btn--compact" onClick={() => openEditSeat(org)}>
+                              Edit seats
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -386,6 +426,50 @@ export default function PlatformBilling() {
               </p>
               <div className="pbl-modal-actions">
                 <button type="button" className="pbl-btn" onClick={closeQuotaModal} disabled={updateMutation.isPending}>
+                  Cancel
+                </button>
+                <button type="submit" className="pbl-btn pbl-btn--primary" disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editSeatOrg && (
+        <div
+          className="pbl-modal-overlay"
+          role="presentation"
+          onClick={(ev) => {
+            if (ev.target === ev.currentTarget) closeSeatModal();
+          }}
+        >
+          <div className="pbl-modal" role="dialog" aria-labelledby="pbl-seat-title" aria-modal="true">
+            <h3 id="pbl-seat-title">Edit seat limit</h3>
+            <p className="pbl-modal-meta">{editSeatOrg.name}</p>
+
+            {modalError ? <div className="pbl-err" style={{ marginBottom: 12 }}>{modalError}</div> : null}
+
+            <form onSubmit={submitSeat}>
+              <label className="pbl-modal-label" htmlFor="pbl-seat-input">
+                Member seat limit
+              </label>
+              <input
+                id="pbl-seat-input"
+                className="pbl-modal-input"
+                type="text"
+                inputMode="numeric"
+                value={seatInput}
+                onChange={(e) => setSeatInput(e.target.value)}
+                placeholder="Leave empty for unlimited"
+                autoComplete="off"
+              />
+              <p className="pbl-modal-hint">
+                Maximum total seats (members and org admins) allowed for this organization.
+              </p>
+              <div className="pbl-modal-actions">
+                <button type="button" className="pbl-btn" onClick={closeSeatModal} disabled={updateMutation.isPending}>
                   Cancel
                 </button>
                 <button type="submit" className="pbl-btn pbl-btn--primary" disabled={updateMutation.isPending}>
