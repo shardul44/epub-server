@@ -383,7 +383,7 @@ router.post('/chapters/:chapterId/blocks', async (req, res) => {
     const row = await getChapterWithBookOr404(req, res, chapterId);
     if (!row) return;
 
-    const { type, contentJson, position = 0 } = req.body || {};
+    const { type, contentJson, position = 0, h5pContentId, layoutJson } = req.body || {};
     if (!type || !String(type).trim()) return badRequestResponse(res, 'type is required');
     if (contentJson == null || typeof contentJson !== 'object') {
       return badRequestResponse(res, 'contentJson must be an object');
@@ -393,7 +393,9 @@ router.post('/chapters/:chapterId/blocks', async (req, res) => {
       chapterId,
       type: String(type).trim(),
       contentJson: contentJson,
-      position: Number(position) || 0
+      position: Number(position) || 0,
+      h5pContentId: h5pContentId != null ? Number(h5pContentId) : null,
+      layoutJson: layoutJson != null ? layoutJson : null
     });
     logActivity(req, {
       action: 'interactive.block.create',
@@ -433,7 +435,7 @@ router.put('/blocks/:blockId', async (req, res) => {
     const row = await getBlockWithChapterBookOr404(req, res, blockId);
     if (!row) return;
 
-    const { type, contentJson, position } = req.body || {};
+    const { type, contentJson, position, h5pContentId, layoutJson } = req.body || {};
     if (type !== undefined && !String(type).trim()) return badRequestResponse(res, 'type cannot be empty');
     if (contentJson !== undefined && (contentJson == null || typeof contentJson !== 'object')) {
       return badRequestResponse(res, 'contentJson must be an object');
@@ -442,7 +444,9 @@ router.put('/blocks/:blockId', async (req, res) => {
     const updated = await InteractiveBlockModel.update(blockId, {
       type: type !== undefined ? String(type).trim() : undefined,
       contentJson: contentJson !== undefined ? contentJson : undefined,
-      position: position !== undefined ? (Number(position) || 0) : undefined
+      position: position !== undefined ? (Number(position) || 0) : undefined,
+      h5pContentId: h5pContentId !== undefined ? (h5pContentId != null ? Number(h5pContentId) : null) : undefined,
+      layoutJson: layoutJson !== undefined ? layoutJson : undefined
     });
     const changed = [];
     if (type !== undefined) changed.push('type');
@@ -462,6 +466,32 @@ router.put('/blocks/:blockId', async (req, res) => {
       }
     });
     return successResponse(res, updated);
+  } catch (e) {
+    return errorResponse(res, e.message, 500);
+  }
+});
+
+router.post('/blocks/:blockId/duplicate', async (req, res) => {
+  try {
+    const blockId = parseInt(req.params.blockId, 10);
+    if (Number.isNaN(blockId)) return badRequestResponse(res, 'Invalid blockId');
+    const row = await getBlockWithChapterBookOr404(req, res, blockId);
+    if (!row) return;
+    const source = await InteractiveBlockModel.findById(blockId);
+    if (!source) return notFoundResponse(res, 'Block not found');
+
+    const chapterBlocks = await InteractiveBlockModel.findByChapterId(row.chapter_id);
+    const position = chapterBlocks.length;
+
+    const block = await InteractiveBlockModel.create({
+      chapterId: row.chapter_id,
+      type: source.type,
+      contentJson: source.content_json,
+      h5pContentId: source.h5p_content_id,
+      layoutJson: source.layout_json,
+      position
+    });
+    return successResponse(res, block, 201);
   } catch (e) {
     return errorResponse(res, e.message, 500);
   }

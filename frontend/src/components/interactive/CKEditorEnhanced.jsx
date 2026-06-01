@@ -28,7 +28,6 @@ export default function CKEditorEnhanced({ onAddBlock }) {
   const handleAddTextBlock = () => {
     if (editorData && editorData.trim() !== '' && editorData !== '<p>&nbsp;</p>') {
       onAddBlock({ type: 'text', content: editorData });
-      // Clear editor
       if (editorRef.current) {
         editorRef.current.setData('');
       }
@@ -36,249 +35,146 @@ export default function CKEditorEnhanced({ onAddBlock }) {
     }
   };
 
-  // Handle paste event for images
   const handleEditorReady = (editor) => {
     editorRef.current = editor;
 
-    // Listen for paste events
-    editor.editing.view.document.on('clipboardInput', (evt, data) => {
-      const dataTransfer = data.dataTransfer;
-      
-      // Check if there are files
-      if (dataTransfer.files && dataTransfer.files.length > 0) {
-        const file = dataTransfer.files[0];
-        
-        // Check if it's an image
-        if (file.type.startsWith('image/')) {
-          evt.stop(); // Prevent default CKEditor handling
-          
-          // Check file size (max 5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            alert('Image size must be less than 5MB');
-            return;
+    editor.editing.view.document.on(
+      'clipboardInput',
+      (evt, data) => {
+        const dataTransfer = data.dataTransfer;
+        if (dataTransfer.files && dataTransfer.files.length > 0) {
+          const file = dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            evt.stop();
+            if (file.size > 5 * 1024 * 1024) {
+              alert('Image size must be less than 5MB');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              onAddBlock({
+                type: 'image',
+                data: {
+                  url: e.target.result,
+                  alt: 'Pasted image',
+                  caption: '',
+                  width: '100%',
+                },
+              });
+            };
+            reader.readAsDataURL(file);
           }
-          
-          // Convert to base64
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const base64 = e.target.result;
-            onAddBlock({ 
-              type: 'image', 
-              data: {
-                url: base64,
-                alt: 'Pasted image',
-                caption: '',
-                width: '100%'
-              }
-            });
-          };
-          reader.readAsDataURL(file);
         }
-      }
-    }, { priority: 'high' });
+      },
+      { priority: 'high' },
+    );
 
-    // Handle drop events
-    editor.editing.view.document.on('drop', (evt, data) => {
-      const dataTransfer = data.dataTransfer;
-      
-      if (dataTransfer.files && dataTransfer.files.length > 0) {
-        const file = dataTransfer.files[0];
-        
-        if (file.type.startsWith('image/')) {
-          evt.stop();
-          
-          // Check file size
-          if (file.size > 5 * 1024 * 1024) {
-            alert('Image size must be less than 5MB');
-            return;
+    editor.editing.view.document.on(
+      'drop',
+      (evt, data) => {
+        const dataTransfer = data.dataTransfer;
+        if (dataTransfer.files && dataTransfer.files.length > 0) {
+          const file = dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            evt.stop();
+            if (file.size > 5 * 1024 * 1024) {
+              alert('Image size must be less than 5MB');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              onAddBlock({
+                type: 'image',
+                data: {
+                  url: e.target.result,
+                  alt: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
+                  caption: '',
+                  width: '100%',
+                },
+              });
+            };
+            reader.readAsDataURL(file);
           }
-          
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const base64 = e.target.result;
-            onAddBlock({ 
-              type: 'image', 
-              data: {
-                url: base64,
-                alt: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '),
-                caption: '',
-                width: '100%'
-              }
-            });
-          };
-          reader.readAsDataURL(file);
         }
-      }
-    }, { priority: 'high' });
+      },
+      { priority: 'high' },
+    );
   };
 
   return (
-    <div style={{ border: '1px solid #e0e0e0', borderRadius: 12, overflow: 'hidden', background: '#fff' }}>
-      {/* Custom Toolbar */}
-      <div style={{ 
-        padding: '12px 16px', 
-        borderBottom: '1px solid #e0e0e0', 
-        background: 'linear-gradient(to bottom, #fafafa, #f5f5f5)',
-        display: 'flex',
-        gap: 8,
-        flexWrap: 'wrap',
-        alignItems: 'center'
-      }}>
-        {/* Interactive Blocks Section */}
-        <div style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
+    <div className="cke-panel">
+      <div className="cke-panel__toolbar">
+        <span className="cke-panel__toolbar-label">Quick blocks</span>
+        <div className="cke-panel__toolbar-actions">
           <button
             type="button"
-            className="btn"
+            className="cke-tool-btn cke-tool-btn--quiz"
             onClick={() => setShowQuizModal(true)}
             title="Add Quiz"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              background: '#9c27b0',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
           >
             <HelpCircle {...toolbarIcon} />
             Quiz
           </button>
           <button
             type="button"
-            className="btn"
+            className="cke-tool-btn cke-tool-btn--image"
             onClick={() => setShowImageModal(true)}
             title="Add Image"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              background: '#4caf50',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
           >
             <ImageIcon {...toolbarIcon} />
             Image
           </button>
           <button
             type="button"
-            className="btn"
+            className="cke-tool-btn cke-tool-btn--audio"
             onClick={() => setShowAudioModal(true)}
             title="Add Audio"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              background: '#ff9800',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
           >
             <Volume2 {...toolbarIcon} />
             Audio
           </button>
           <button
             type="button"
-            className="btn"
+            className="cke-tool-btn cke-tool-btn--drag"
             onClick={() => setShowDragDropModal(true)}
             title="Add Drag & Drop"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              background: '#2196f3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 4,
-              cursor: 'pointer',
-            }}
           >
             <Layers {...toolbarIcon} />
             Drag-Drop
           </button>
+          <button
+            type="button"
+            className="cke-tool-btn cke-tool-btn--primary"
+            onClick={handleAddTextBlock}
+            title="Add Text Block"
+          >
+            <Check {...toolbarIcon} />
+            Add text block
+          </button>
         </div>
-
-        {/* Save Text Block */}
-        <button
-          type="button"
-          className="btn btn-success"
-          onClick={handleAddTextBlock}
-          title="Add Text Block"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 16px',
-            background: '#4caf50',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
-        >
-          <Check {...toolbarIcon} />
-          Add Text Block
-        </button>
       </div>
 
-      {/* CKEditor */}
-      <div style={{ 
-        padding: '20px', 
-        minHeight: '300px', 
-        background: '#fff',
-        position: 'relative'
-      }}>
+      <div className="cke-panel__editor">
         <CKEditor
           editor={ClassicEditor}
           data={editorData}
           onReady={handleEditorReady}
           onChange={(event, editor) => {
-            const data = editor.getData();
-            setEditorData(data);
+            setEditorData(editor.getData());
           }}
           config={{
-            placeholder: 'Start writing your content...',
-            // Use Classic build’s default toolbar only — custom items must exist in this build
-            // or you get toolbarview-item-unavailable (names/plugins change between versions).
+            placeholder: 'Write lesson content here, then click “Add text block”…',
           }}
         />
-        
-        {/* Paste hint */}
+
         {(!editorData || editorData === '') && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 20,
-              right: 20,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 12px',
-              background: '#e3f2fd',
-              border: '1px solid #2196f3',
-              borderRadius: 6,
-              fontSize: 12,
-              color: '#1565c0',
-              pointerEvents: 'none',
-            }}
-          >
+          <div className="cke-panel__hint">
             <Lightbulb size={16} strokeWidth={2} aria-hidden />
-            <span>Tip: Paste images here with Ctrl+V</span>
+            <span>Tip: Paste images with Ctrl+V</span>
           </div>
         )}
       </div>
 
-      {/* Modals */}
       {showQuizModal && (
         <QuizModal
           onAdd={(quizData) => {
