@@ -56,8 +56,9 @@ export const authenticate = async (req, res, next) => {
   try {
     let authHeader = req.headers.authorization;
     // Allow JWT in query for assets and H5P editor AJAX (cannot send Authorization headers).
+    const pathOrUrl = req.originalUrl || req.url || '';
     const h5pRoute =
-      req.originalUrl?.startsWith('/h5p') || req.baseUrl === '/h5p';
+      /\/h5p(\/|$)/.test(pathOrUrl) || req.baseUrl === '/h5p' || req.path?.startsWith('/h5p');
     const allowQueryToken =
       req.method === 'GET' ||
       req.method === 'HEAD' ||

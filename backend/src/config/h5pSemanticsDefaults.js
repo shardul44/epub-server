@@ -31,6 +31,39 @@ function defaultListValue(field) {
   return Array.from({ length: min }, () => structuredClone(defaultListItem(field)));
 }
 
+function isEffectivelyEmptyParamValue(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object') {
+    return Object.keys(value).every((k) => isEffectivelyEmptyParamValue(value[k]));
+  }
+  return false;
+}
+
+/**
+ * Optional single-field groups (e.g. Flashcards `tip.tip`) with empty values break
+ * @lumieducation/h5p-server SemanticsEnforcer (sanitize-html expects a string).
+ */
+export function stripEmptyNestedSingleFieldGroups(node) {
+  if (!node || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (const item of node) stripEmptyNestedSingleFieldGroups(item);
+    return;
+  }
+  for (const key of Object.keys(node)) {
+    const val = node[key];
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      const childKeys = Object.keys(val);
+      if (childKeys.length === 1 && childKeys[0] === key && isEffectivelyEmptyParamValue(val[key])) {
+        delete node[key];
+        continue;
+      }
+      stripEmptyNestedSingleFieldGroups(val);
+    }
+  }
+}
+
 /** Build default params object from library semantics (for new editor instances). */
 export function semanticsToDefaultParams(semantics) {
   if (!Array.isArray(semantics)) return {};
@@ -38,9 +71,13 @@ export function semanticsToDefaultParams(semantics) {
   for (const field of semantics) {
     if (!field?.name) continue;
     switch (field.type) {
-      case 'group':
-        params[field.name] = semanticsToDefaultParams(field.fields);
+      case 'group': {
+        const groupParams = semanticsToDefaultParams(field.fields);
+        if (!(field.optional && isEffectivelyEmptyParamValue(groupParams))) {
+          params[field.name] = groupParams;
+        }
         break;
+      }
       case 'list':
         params[field.name] = defaultListValue(field);
         break;
@@ -57,7 +94,7 @@ export function semanticsToDefaultParams(semantics) {
         if (!field.optional && field.options?.length) {
           const opt = field.options[0];
           const lib = typeof opt === 'string' ? opt : opt?.name;
-          params[field.name] = { library: lib, params: {}, metadata: null, subContentId: null };
+          params[field.name] = { library: lib, params: {}, metadata: {}, subContentId: null };
         }
         break;
       case 'text':
@@ -117,20 +154,66 @@ export function enforceSemanticsMinimums(params, semantics) {
   return out;
 }
 
+const H5P_SERVED_MEDIA_PATH_RE = /\/(?:content\/\d+|temp-files)\/(.+)$/i;
+
+/** Convert signed absolute H5P media URLs back to stored relative paths (images/foo.jpg). */
+export function relativizeH5pMediaPath(pathOrUrl) {
+  if (typeof pathOrUrl !== 'string' || !pathOrUrl) return pathOrUrl;
+  const isTmp = pathOrUrl.endsWith('#tmp');
+  const withoutHash = isTmp ? pathOrUrl.slice(0, -4) : pathOrUrl;
+  const withoutQuery = withoutHash.split('?')[0];
+  if (!/^https?:\/\//i.test(withoutQuery)) {
+    return isTmp ? withoutQuery.replace(/^\//, '') + '#tmp' : withoutQuery.replace(/^\//, '');
+  }
+  const match = withoutQuery.match(H5P_SERVED_MEDIA_PATH_RE);
+  if (!match?.[1]) return pathOrUrl;
+  const rel = decodeURIComponent(match[1]).replace(/^\//, '');
+  return isTmp || withoutQuery.includes('/temp-files/') ? `${rel}#tmp` : rel;
+}
+
+export function stripSignedH5pMediaPaths(node) {
+  if (!node || typeof node !== 'object') return;
+  if (Array.isArray(node)) {
+    for (const item of node) stripSignedH5pMediaPaths(item);
+    return;
+  }
+  for (const key of Object.keys(node)) {
+    const val = node[key];
+    if (key === 'path' && typeof val === 'string') {
+      node[key] = relativizeH5pMediaPath(val);
+    } else if (val && typeof val === 'object') {
+      stripSignedH5pMediaPaths(val);
+    }
+  }
+}
+
 export function coerceH5pMediaFields(node) {
   if (!node || typeof node !== 'object') return;
   if (Array.isArray(node)) {
     for (const item of node) coerceH5pMediaFields(item);
     return;
   }
+  stripSignedH5pMediaPaths(node);
   for (const key of Object.keys(node)) {
     const val = node[key];
     if ((key === 'files' || key === 'file') && (val === '' || val === null)) {
       node[key] = [];
     } else if (key === 'poster' && (val === '' || val === null)) {
       delete node[key];
+    } else if (isEmptyH5pUploadedMedia(val)) {
+      // Empty `{}` image objects break the editor (shows Edit without upload).
+      delete node[key];
     } else if (val && typeof val === 'object') {
       coerceH5pMediaFields(val);
     }
   }
+}
+
+/** H5P image/file param with no upload — must be absent, not `{}`. */
+function isEmptyH5pUploadedMedia(val) {
+  if (!val || typeof val !== 'object' || Array.isArray(val)) return false;
+  if (val.path || val.mime) return false;
+  const keys = Object.keys(val);
+  if (keys.length === 0) return true;
+  return keys.every((k) => k === 'copyright' || k === 'decorative');
 }

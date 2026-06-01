@@ -8,7 +8,8 @@ import {
   getEditorModel,
   getPlayerModel,
   getH5pPaths,
-  installLibrary
+  installLibrary,
+  buildAuthGetPathScript
 } from '../services/h5p/h5pService.js';
 import {
   successResponse,
@@ -128,6 +129,20 @@ export const h5pController = {
     } catch (err) {
       return handleError(res, err);
     }
+  },
+
+  serveAuthGetPath(req, res) {
+    const header = req.headers?.authorization;
+    const token =
+      (header?.startsWith('Bearer ') ? header.slice(7).trim() : null) ||
+      (typeof req.query?.token === 'string' ? req.query.token.trim() : null);
+    if (!token) {
+      return res.status(401).type('application/javascript').send('/* unauthorized */');
+    }
+    return res
+      .type('application/javascript')
+      .set('Cache-Control', 'no-store')
+      .send(buildAuthGetPathScript(token));
   },
 
   async getSetupStatus(req, res) {

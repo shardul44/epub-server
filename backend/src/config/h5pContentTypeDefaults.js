@@ -5,7 +5,8 @@ import { CURATED_MACHINE_NAMES } from './h5pContentTypes.js';
 import {
   coerceH5pMediaFields,
   enforceSemanticsMinimums,
-  semanticsToDefaultParams
+  semanticsToDefaultParams,
+  stripEmptyNestedSingleFieldGroups
 } from './h5pSemanticsDefaults.js';
 
 const DRAG_TEXT_SAMPLE =
@@ -89,20 +90,99 @@ function repairInteractiveVideoParams(params) {
   return out;
 }
 
+/** Remove empty card images and optional tip groups that crash SemanticsEnforcer. */
+function repairFlashcardsParams(params) {
+  const out = { ...params };
+  if (!Array.isArray(out.cards)) return out;
+  out.cards = out.cards.map((card) => {
+    if (!card || typeof card !== 'object') return card;
+    const c = { ...card };
+    if (c.image && typeof c.image === 'object' && !c.image.path) {
+      delete c.image;
+    }
+    if (typeof c.imageAltText === 'string' && !c.imageAltText.trim()) {
+      delete c.imageAltText;
+    }
+    stripEmptyNestedSingleFieldGroups(c);
+    return c;
+  });
+  return out;
+}
+
+/** Hotspot popup `content` is a semantics list — must be an array, not a single library object. */
+function repairImageHotspotsParams(params) {
+  const out = { ...params };
+  if (!Array.isArray(out.hotspots)) return out;
+
+  out.hotspots = out.hotspots.map((hotspot) => {
+    if (!hotspot || typeof hotspot !== 'object') return hotspot;
+    const h = { ...hotspot };
+
+    let content = h.content;
+    if (content != null && !Array.isArray(content)) {
+      content = typeof content === 'object' && content.library ? [content] : [];
+    }
+    if (!Array.isArray(content)) {
+      content = [];
+    }
+    h.content = content.map((item) => {
+      if (!item || typeof item !== 'object') return item;
+      const lib = item.library;
+      const base = {
+        ...item,
+        params: item.params && typeof item.params === 'object' ? item.params : {},
+        metadata: item.metadata != null && typeof item.metadata === 'object' ? item.metadata : {},
+        subContentId: item.subContentId ?? null
+      };
+      if (typeof lib === 'string' && lib.startsWith('H5P.AdvancedText')) {
+        return {
+          ...base,
+          library: 'H5P.Text 1.1',
+          params: item.params?.text != null ? { text: item.params.text } : { text: '<p>Hotspot content</p>' }
+        };
+      }
+      return base;
+    });
+
+    if (!h.position || typeof h.position !== 'object' || Array.isArray(h.position)) {
+      h.position = { x: 50, y: 50, legacyPositioning: false };
+    }
+
+    return h;
+  });
+
+  if (out.image && typeof out.image === 'object' && !out.image.path) {
+    delete out.image;
+  }
+
+  return out;
+}
+
+function isEmptyDefaultSlot(value) {
+  if (value === undefined || value === null) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+}
+
+/** Fill only missing keys — never replace user lists, media paths, or edited text. */
 function deepMergeDefaults(target, source) {
   if (!source || typeof source !== 'object') return target ?? {};
   const out = target && typeof target === 'object' && !Array.isArray(target) ? { ...target } : {};
   for (const [key, val] of Object.entries(source)) {
+    const existing = out[key];
     if (
       val &&
       typeof val === 'object' &&
       !Array.isArray(val) &&
-      out[key] &&
-      typeof out[key] === 'object' &&
-      !Array.isArray(out[key])
+      existing &&
+      typeof existing === 'object' &&
+      !Array.isArray(existing)
     ) {
-      out[key] = deepMergeDefaults(out[key], val);
-    } else {
+      out[key] = deepMergeDefaults(existing, val);
+      continue;
+    }
+    if (isEmptyDefaultSlot(existing)) {
       out[key] = structuredClone(val);
     }
   }
@@ -176,7 +256,7 @@ export const H5P_CONTENT_PARAM_DEFAULTS = {
         content: {
           library: 'H5P.AdvancedText 1.1',
           params: { text: '<p>Add your content here.</p>' },
-          metadata: null,
+          metadata: {},
           subContentId: null
         }
       }
@@ -195,13 +275,17 @@ export const H5P_CONTENT_PARAM_DEFAULTS = {
   'H5P.ImageHotspots': {
     hotspots: [
       {
+        position: { x: 50, y: 50, legacyPositioning: false },
+        alwaysFullscreen: false,
         header: 'Hotspot 1',
-        content: {
-          library: 'H5P.AdvancedText 1.1',
-          params: { text: '<p>Hotspot content</p>' },
-          metadata: null,
-          subContentId: null
-        }
+        content: [
+          {
+            library: 'H5P.Text 1.1',
+            params: { text: '<p>Hotspot content</p>' },
+            metadata: {},
+            subContentId: null
+          }
+        ]
       }
     ]
   },
@@ -281,6 +365,7 @@ export function repairContentParamsForLibrary(machineName, params) {
   const out = structuredClone(params);
 
   coerceH5pMediaFields(out);
+  stripEmptyNestedSingleFieldGroups(out);
 
   switch (machineName) {
     case 'H5P.CoursePresentation':
@@ -293,6 +378,10 @@ export function repairContentParamsForLibrary(machineName, params) {
       return repairBlanksParams(out);
     case 'H5P.InteractiveVideo':
       return repairInteractiveVideoParams(out);
+    case 'H5P.ImageHotspots':
+      return repairImageHotspotsParams(out);
+    case 'H5P.Flashcards':
+      return repairFlashcardsParams(out);
     default:
       return out;
   }
@@ -310,8 +399,33 @@ export function buildInitialContentParams(machineName, semantics) {
   return mergeContentTypeParamDefaults(machineName, withMins);
 }
 
-export function repairStoredContentParams(machineName, params, semantics = null) {
+/** H5P editor crashes if nested library entries use `metadata: null`. */
+export function repairNestedLibraryMetadata(node) {
+  if (node == null) return node;
+  if (Array.isArray(node)) {
+    return node.map(repairNestedLibraryMetadata);
+  }
+  if (typeof node !== 'object') return node;
+  if (typeof node.library === 'string' && node.library) {
+    const fixed = {
+      ...node,
+      params: node.params != null && typeof node.params === 'object' ? node.params : {},
+      metadata: node.metadata != null && typeof node.metadata === 'object' ? node.metadata : {},
+      subContentId: node.subContentId ?? null
+    };
+    fixed.params = repairNestedLibraryMetadata(fixed.params);
+    return fixed;
+  }
+  const out = { ...node };
+  for (const key of Object.keys(out)) {
+    out[key] = repairNestedLibraryMetadata(out[key]);
+  }
+  return out;
+}
+
+export function repairStoredContentParams(machineName, params, semantics = null, { forSave = false } = {}) {
   let out = params && typeof params === 'object' ? structuredClone(params) : {};
+  out = repairNestedLibraryMetadata(out);
   if (Array.isArray(out.questions)) {
     out.questions = out.questions.map((q) => {
       if (typeof q === 'object' && q !== null && q.question != null) return q.question;
@@ -322,9 +436,14 @@ export function repairStoredContentParams(machineName, params, semantics = null)
     out = enforceSemanticsMinimums(out, semantics);
   }
   if (machineName) {
-    return mergeContentTypeParamDefaults(machineName, out);
+    out = mergeContentTypeParamDefaults(machineName, out);
+    coerceH5pMediaFields(out);
+    if (forSave) {
+      return repairContentParamsForLibrary(machineName, out);
+    }
+  } else {
+    coerceH5pMediaFields(out);
   }
-  coerceH5pMediaFields(out);
   if (out.presentation != null) {
     return repairCoursePresentationParams(out);
   }

@@ -7,8 +7,12 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
+import { scheduleH5pEditorDomCleanup } from '../../../utils/h5pEditorDomCleanup';
 
 export default function H5pFixedLayoutDialog({ open, onClose, onConfirm, initial = {} }) {
+  const handleClose = () => {
+    onClose();
+  };
   const [x, setX] = useState(initial.x ?? 5);
   const [y, setY] = useState(initial.y ?? 10);
   const [width, setWidth] = useState(initial.width ?? 40);
@@ -16,7 +20,15 @@ export default function H5pFixedLayoutDialog({ open, onClose, onConfirm, initial
   const [zIndex, setZIndex] = useState(initial.zIndex ?? 1);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="xs"
+      fullWidth
+      slotProps={{
+        transition: { onExited: scheduleH5pEditorDomCleanup },
+      }}
+    >
       <DialogTitle>Fixed layout position</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -41,7 +53,7 @@ export default function H5pFixedLayoutDialog({ open, onClose, onConfirm, initial
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleClose}>Cancel</Button>
         <Button variant="contained" onClick={() => onConfirm({ x, y, width, height, zIndex })}>
           Place block
         </Button>

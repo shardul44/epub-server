@@ -11,7 +11,9 @@
 *.7z
 
 # OS / editor
-# Windows: "nul" is reserved; Git cannot index frontend/nul.css if recreated by mistake
+# Windows: NUL/nul are reserved device names — Git cannot index them
+frontend/NUL
+frontend/nul
 frontend/nul.css
 .DS_Store
 Thumbs.db
@@ -42,5 +44,10 @@ backend/temp/
 backend/uploads/
 backend/reports/
 backend/brain/
+
+# H5P local runtime (editor drafts, uploads, temp) — not source code
+backend/h5p/upload-temp/
+backend/h5p/temporary-storage/
+backend/h5p/content/**
 
 

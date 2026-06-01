@@ -14,6 +14,7 @@ export default function H5pBlockCard({
   onDuplicate,
   onDelete,
   bookLayoutMode = 'reflow',
+  suspendPreview = false,
 }) {
   const c = block.content_json ?? block.contentJson ?? {};
   const layout = block.layout_json ?? c.layout ?? {};
@@ -65,7 +66,11 @@ export default function H5pBlockCard({
         ) : null}
 
         <div className="iee-block-card__preview">
-          <H5pPlayerEmbed h5pContentId={h5pId} title={title} minHeight={160} />
+          {suspendPreview ? (
+            <p className="iee-block-card__preview-paused">Preview paused while the H5P editor is open.</p>
+          ) : (
+            <H5pPlayerEmbed h5pContentId={h5pId} title={title} minHeight={160} />
+          )}
         </div>
       </div>
     </article>

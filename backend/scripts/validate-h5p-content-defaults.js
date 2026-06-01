@@ -28,9 +28,18 @@ function listIssues(machineName, params, semantics, pathPrefix = '') {
     if (field.type === 'list' && field.field) {
       const min = Math.max(field.min ?? 0, field.defaultNum ?? 0);
       const arr = params?.[field.name];
-      const len = Array.isArray(arr) ? arr.length : 0;
-      if (len < min) {
-        issues.push(`${machineName}: ${p} has ${len} items (min ${min})`);
+      if (arr != null && !Array.isArray(arr)) {
+        issues.push(`${machineName}: ${p} must be an array (got ${typeof arr})`);
+      } else {
+        const len = Array.isArray(arr) ? arr.length : 0;
+        if (len < min) {
+          issues.push(`${machineName}: ${p} has ${len} items (min ${min})`);
+        }
+        if (Array.isArray(arr) && field.field.type === 'group' && field.field.fields) {
+          for (let i = 0; i < arr.length; i++) {
+            issues.push(...listIssues(machineName, arr[i] ?? {}, field.field.fields, `${p}[${i}]`));
+          }
+        }
       }
     }
   }
