@@ -22,21 +22,28 @@
   width: 100%;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
-  padding: 0 32px;
-  height: 70px;
+  padding: 12px clamp(14px, 3vw, 32px);
+  min-height: 70px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   flex-shrink: 0;
   position: sticky;
   top: 0;
   z-index: 50;
+  box-sizing: border-box;
 }
 
 .esi-topbar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .esi-topbar-icon {
@@ -97,9 +104,9 @@
 /* ── Body layout ───────────────────────────────────────────────── */
 .esi-body {
   display: grid;
-  grid-template-columns: 1fr 310px;
-  gap: 20px;
-  padding: 28px 32px 0;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 310px);
+  gap: clamp(16px, 2.5vw, 20px);
+  padding: clamp(16px, 3vw, 28px) clamp(14px, 3vw, 32px) 0;
   align-items: start;
   width: 100%;
   min-width: 0;
@@ -109,7 +116,7 @@
 
 .esi-epubs-section {
   min-width: 0;
-  margin: 24px 32px 0;
+  margin: clamp(16px, 3vw, 24px) clamp(14px, 3vw, 32px) 0;
   padding: 0;
   box-sizing: border-box;
 }
@@ -186,11 +193,12 @@
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 24px;
+  padding: clamp(18px, 3vw, 24px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
   gap: 0;
+  min-width: 0;
 }
 
 /* ── Section sub-header (EPUB FILE / LAYOUT) ───────────────────── */
@@ -295,8 +303,8 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -690,30 +698,159 @@
 .esi-tip-link:hover { color: #1e40af; }
 
 /* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .esi-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
+
   .esi-sidebar {
     position: static;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
-  .esi-tip-card { grid-column: 1 / -1; }
+
+  .esi-tip-card {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 768px) {
-  .esi-topbar { padding: 0 16px; }
-  .esi-body { padding: 28px 16px 0; }
-  .esi-epubs-section { margin-left: 16px; margin-right: 16px; }
+  .esi-topbar {
+    padding: 10px 16px;
+    align-items: flex-start;
+  }
+
+  .esi-topbar-title {
+    font-size: 14px;
+  }
+
+  .esi-back-link {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+
+  .esi-hero-card {
+    padding: 18px 16px;
+  }
+
+  .esi-hero-title {
+    font-size: 16px;
+  }
+
+  .esi-dropzone {
+    padding: 32px 16px;
+  }
+
+  .esi-dropzone-sub {
+    font-size: 12px;
+  }
+
+  .esi-file-preview {
+    flex-wrap: wrap;
+  }
+
+  .esi-file-preview-info {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .esi-file-preview-name {
+    white-space: normal;
+    word-break: break-word;
+  }
 }
 
 @media (max-width: 640px) {
-  .esi-body { padding: 16px 16px 0; gap: 12px; }
-  .esi-layout-grid { grid-template-columns: 1fr; }
-  .esi-hero-card { flex-direction: column; gap: 12px; }
-  .esi-section-footer { flex-direction: column; align-items: stretch; }
-  .esi-submit-btn { justify-content: center; }
-  .esi-sidebar { grid-template-columns: 1fr; }
+  .esi-body {
+    gap: 14px;
+  }
+
+  .esi-topbar-left {
+    width: 100%;
+  }
+
+  .esi-back-link {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .esi-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .esi-layout-card {
+    padding: 14px;
+  }
+
+  .esi-layout-card-top {
+    flex-wrap: wrap;
+  }
+
+  .esi-hero-card {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .esi-hero-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .esi-section-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .esi-back-link-footer {
+    text-align: center;
+  }
+
+  .esi-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .esi-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .esi-choose-btn {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .esi-topbar-title {
+    font-size: 13px;
+    flex: 1 1 100%;
+  }
+
+  .esi-skip-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+
+  .esi-hero-desc {
+    font-size: 13px;
+  }
+
+  .esi-dropzone {
+    padding: 28px 12px;
+  }
+
+  .esi-dropzone-title {
+    font-size: 14px;
+  }
+
+  .esi-section-header--layout {
+    margin-top: 16px;
+  }
 }

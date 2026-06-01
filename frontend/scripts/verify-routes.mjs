@@ -25,7 +25,6 @@ const adminSidebarLinks = [
   '/admin/conversions',
   '/admin/activity',
   '/admin/billing',
-  '/admin/security',
   '/admin/system-logs',
   '/admin/settings',
 ];
@@ -36,6 +35,7 @@ const legacyRedirects = [
   { from: 'org/media-library', to: '/media-library' },
   { from: 'org/usage', to: '/usage' },
   { from: 'admin/tts-management', to: '/admin/settings?tab=tts' },
+  { from: 'admin/security', to: '/admin/settings' },
 ];
 
 const requiredSnippets = [

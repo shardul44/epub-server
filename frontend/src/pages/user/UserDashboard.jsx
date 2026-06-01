@@ -261,19 +261,9 @@ export default function UserDashboard() {
 
   const headerActions = showConversion ? (
     <>
-      <span className="ud-page-header-divider" aria-hidden="true" />
-      <Link
-        to="/conversions"
-        title="Activity"
-        aria-label="Activity"
-        className={`ui-icon-btn ud-icon-btn${notifyAttention ? ' ud-icon-btn--notify' : ''}`}
-      >
-        <Bell size={18} strokeWidth={2} aria-hidden />
-        {notifyAttention ? <span className="ud-icon-btn-dot" aria-hidden /> : null}
-      </Link>
-      <Link to="/pdfs/upload" title="Upload PDF" aria-label="Upload PDF" className="ui-icon-btn ud-icon-btn">
-        <Search size={18} strokeWidth={2} aria-hidden />
-      </Link>
+      
+      
+     
       <Link to="/pdfs/upload" className="ds-navbar-btn ds-navbar-btn--ghost">
         <CloudUpload size={16} strokeWidth={2} aria-hidden className="ds-navbar-btn-icon" />
         Upload PDF

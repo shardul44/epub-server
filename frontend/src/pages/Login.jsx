@@ -152,6 +152,9 @@ const Login = () => {
     const lower = String(message).toLowerCase();
     if (lower.includes('invalid')) {
       showInlineToast('Invalid email or password. Please try again.');
+    } else {
+      setLocalError(message);
+      showInlineToast(message);
     }
   };
 

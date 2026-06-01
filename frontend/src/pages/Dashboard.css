@@ -5,11 +5,12 @@
 /* ── Dashboard root wrapper (matches .pld-page) ─────────────────── */
 .ds-root {
   width: 100%;
- 
+  min-width: 0;
   box-sizing: border-box;
   background: #f7f7f2;
   display: flex;
   flex-direction: column;
+  overflow-x: clip;
 }
 
 /* ── Top Navbar (matches .pld-navbar) ────────────────────────────── */
@@ -21,9 +22,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 70px;
+  flex-wrap: wrap;
+  gap: 10px;
   min-height: 70px;
-  padding: 0 32px;
+  height: auto;
+  padding: 12px clamp(14px, 3vw, 32px);
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
@@ -233,18 +236,64 @@
 
 @media (max-width: 768px) {
   .ds-topnav {
-    padding: 0 16px;
+    padding: 10px 16px;
+    align-items: flex-start;
+  }
+
+  .ds-topnav-right {
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .ds-container {
-    padding: 28px 16px 0;
+    padding: 20px 16px 0;
+    gap: 20px;
   }
 }
 
 @media (max-width: 640px) {
   .ds-container {
-    padding: 16px 16px 0;
+    padding: 16px 14px 0;
     gap: 16px;
+  }
+
+  .ds-topnav-left {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .ds-topnav-title {
+    white-space: normal;
+    font-size: 14px;
+  }
+
+  .ds-topnav-subtitle {
+    white-space: normal;
+    max-width: 100%;
+  }
+
+  .ds-topnav-right {
+    width: 100%;
+    margin-left: 0;
+    justify-content: stretch;
+  }
+
+  .ds-topnav-right .ds-navbar-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ds-topnav-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ds-topnav-right .ds-navbar-btn {
+    width: 100%;
   }
 }
 
@@ -321,12 +370,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 25px 28px 25px;
+  padding: clamp(18px, 3vw, 25px) clamp(16px, 3vw, 28px);
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  min-width: 0;
 }
 
 .ds-welcome-left {
@@ -367,7 +418,7 @@
 }
 
 .ds-welcome-title {
-  font-size: 20px;
+  font-size: clamp(1.125rem, 3.5vw, 1.25rem);
   font-weight: 700;
   color: #111827;
   margin: 0;
@@ -375,6 +426,7 @@
   letter-spacing: -0.2px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
@@ -411,9 +463,19 @@
 /* Welcome stat mini-cards */
 .ds-welcome-stats {
   display: grid;
-  grid-template-columns: repeat(4, minmax(110px, 140px));
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 10px;
   flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 901px) {
+  .ds-welcome-stats {
+    width: auto;
+    max-width: none;
+    grid-template-columns: repeat(2, minmax(110px, 140px));
+  }
 }
 
 .ds-stat-card {
@@ -464,8 +526,10 @@
 /* ── Stat Row (4 tiles) ────────────────────────────────────────── */
 .ds-stat-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: clamp(12px, 2vw, 16px);
+  min-width: 0;
+  width: 100%;
 }
 
 .ds-stat-tile {
@@ -484,9 +548,11 @@
 
 .ds-tile-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 10px;
+  flex-wrap: wrap;
 }
 
 .ds-tile-icon {
@@ -526,9 +592,21 @@
 /* ── Bottom Grid ───────────────────────────────────────────────── */
 .ds-bottom-grid {
   display: grid;
-  grid-template-columns: 1fr 550px;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(min(100%, 280px), 34%);
+  gap: clamp(12px, 2vw, 16px);
   align-items: start;
+  min-width: 0;
+  width: 100%;
+}
+
+.ds-bottom-grid > .ds-panel {
+  min-width: 0;
+}
+
+.ds-recent-activity-section {
+  margin-top: clamp(12px, 2vw, 16px);
+  min-width: 0;
+  width: 100%;
 }
 
 /* ── Panel base ────────────────────────────────────────────────── */
@@ -536,8 +614,13 @@
   background: var(--app-bg, #fff);
   border: 1px solid var(--app-border, #e5e7eb);
   border-radius: var(--app-radius-md, 12px);
-  padding: 22px 24px;
+  padding: clamp(16px, 3vw, 22px) clamp(16px, 3vw, 24px);
   box-shadow: var(--app-shadow-card);
+  height: 350px;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 .ds-panel-header {
@@ -546,6 +629,7 @@
   justify-content: space-between;
   margin-bottom: 18px;
   gap: 12px;
+  flex-wrap: wrap;
 }
 .ds-panel-title {
   font-size: 15px;
@@ -1020,7 +1104,9 @@
   gap: 24px;
   padding-top: 14px;
   border-top: 1px solid #f3f4f6;
-  height: 200px;
+  min-height: 0;
+  flex-wrap: wrap;
+  margin-top: auto;
 }
 .ds-meta-item {
   display: flex;
@@ -1047,6 +1133,14 @@
 .ds-three-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Two-panel row (org admin: attention + team) ───────────────── */
+.ds-two-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   align-items: start;
 }
@@ -1085,6 +1179,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   gap: 14px;
   padding: 16px 0;
   border-bottom: 1px solid #f3f4f6;
@@ -1360,7 +1456,6 @@
   font-size: 15px;
   flex-shrink: 0;
 }
-.ds-sys-card-icon--green  { background: #f0fdf4; color: #16a34a; }
 .ds-sys-card-icon--blue   { background: #eff6ff; color: #2563eb; }
 .ds-sys-card-icon--purple { background: #f5f3ff; color: #7c3aed; }
 
@@ -1374,7 +1469,6 @@
   font-size: 14px;
   font-weight: 700;
 }
-.ds-sys-card-value--green  { color: #16a34a; }
 .ds-sys-card-value--blue   { color: #2563eb; }
 .ds-sys-card-value--purple { color: #7c3aed; }
 
@@ -1399,10 +1493,21 @@
 .ds-sys-dot--checking  { background: #f59e0b; }
 
 /* ── Responsive for three-grid ─────────────────────────────────── */
+@media (max-width: 1280px) {
+  .ds-bottom-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-bottom-grid > .ds-attention {
+    grid-column: 1 / -1;
+  }
+}
+
 @media (max-width: 1100px) {
   .ds-three-grid {
     grid-template-columns: 1fr 1fr;
   }
+
   .ds-team-panel {
     grid-column: 1 / -1;
   }
@@ -1412,6 +1517,11 @@
   .ds-three-grid {
     grid-template-columns: 1fr;
   }
+
+  .ds-two-grid {
+    grid-template-columns: 1fr;
+  }
+
   .ds-team-panel {
     grid-column: auto;
   }
@@ -1448,22 +1558,62 @@
   .ds-bottom-grid {
     grid-template-columns: 1fr;
   }
+
+  .ds-bottom-grid > .ds-attention {
+    grid-column: auto;
+  }
+
   .ds-welcome-stats {
-    grid-template-columns: repeat(4, 1fr);
     width: 100%;
+    max-width: none;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }
 
 @media (max-width: 900px) {
-  .ds-stat-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .ds-welcome {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
   }
+
   .ds-welcome-stats {
-    grid-template-columns: repeat(4, 1fr);
     width: 100%;
+    max-width: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-stat-tile {
+    padding: 16px 18px;
+  }
+
+  .ds-tile-value {
+    font-size: 26px;
+  }
+
+  .ds-panel {
+    height: auto;
+    min-height: 280px;
+  }
+
+  .ds-throughput.ds-panel {
+    min-height: 320px;
+  }
+
+  .ds-attention.ds-panel {
+    min-height: 0;
+  }
+
+  .ds-team-panel.ds-panel {
+    min-height: 0;
+  }
+
+  .ds-sys-card {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ds-sys-card-value {
+    margin-left: auto;
   }
 }
 
@@ -1471,25 +1621,91 @@
   .ds-activity-row {
     grid-template-columns: 32px 1fr 90px;
   }
-  .ds-activity-progress { display: none; }
+
+  .ds-activity-progress {
+    display: none;
+  }
 
   .ds-welcome-stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ds-chart-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    margin: 0 -4px;
+    padding: 0 4px 4px;
+  }
+
+  .ds-chart {
+    min-width: 320px;
+  }
+
+  .ds-throughput-meta {
+    gap: 16px;
+  }
+
+  .ds-attn-pill {
+    margin-left: auto;
+  }
+
+  .ds-attn-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 }
 
 @media (max-width: 520px) {
-  .ds-stat-row {
-    grid-template-columns: 1fr 1fr;
+  .ds-welcome-desc {
+    font-size: 12px;
   }
-  .ds-welcome-title { font-size: 20px; }
-  .ds-welcome { padding: 20px; }
+
   .ds-welcome-actions {
     flex-direction: column;
     align-items: stretch;
   }
-  .wb-btn { justify-content: center; }
+
+  .wb-btn {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .ds-welcome-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ds-stat-tile {
+    padding: 14px 16px;
+  }
+
+  .ds-tile-value {
+    font-size: 24px;
+  }
+
+  .ds-tile-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
   .ds-activity-row {
     grid-template-columns: 32px 1fr 80px;
+  }
+
+  .ds-recent-activity-section {
+    margin-top: 12px;
+  }
+
+  .ds-panel {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .ds-view-all {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
   }
 }

@@ -18,7 +18,6 @@ import {
   RefreshCw,
   Settings,
   CreditCard,
-  Shield,
   Terminal,
   FileText,
   Inbox,
@@ -95,7 +94,6 @@ const AdminSidebar = ({ onCollapse }) => {
       conversions: path.startsWith('/admin/conversions'),
       settings: path.startsWith('/admin/settings') || path.startsWith('/admin/tts-management'),
       billing: path.startsWith('/admin/billing'),
-      security: path.startsWith('/admin/security'),
       logs: path.startsWith('/admin/system-logs'),
     }),
     [path],
@@ -192,12 +190,6 @@ const AdminSidebar = ({ onCollapse }) => {
             isActive={active.billing}
           />
           <NavRow
-            to="/admin/security"
-            icon={Shield}
-            label="Security & access"
-            isActive={active.security}
-          />
-          <NavRow
             to="/admin/system-logs"
             icon={Terminal}
             label="System Logs"
@@ -209,9 +201,6 @@ const AdminSidebar = ({ onCollapse }) => {
             label="Settings"
             isActive={active.settings}
           />
-
-
-
         </nav>
 
         <div className="admin-sidebar-footer">

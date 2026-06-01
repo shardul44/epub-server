@@ -40,6 +40,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3667;
 
+// Honor X-Forwarded-For when behind nginx / load balancer
+app.set('trust proxy', true);
+
 // Middleware
 const allowedOrigins = new Set([
   'https://epub.kodeit.digital',
@@ -199,12 +202,6 @@ async function startServer(retryCount = 0) {
     await ensurePlatformSettings();
   } catch (e) {
     console.warn('[bootstrap] ensurePlatformSettings failed:', e.message);
-  }
-  try {
-    const { ensurePlatformApiKeys } = await import('./src/bootstrap/ensurePlatformApiKeys.js');
-    await ensurePlatformApiKeys();
-  } catch (e) {
-    console.warn('[bootstrap] ensurePlatformApiKeys failed:', e.message);
   }
   try {
     const { ensurePlanRequests } = await import('./src/bootstrap/ensurePlanRequests.js');

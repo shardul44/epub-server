@@ -11,6 +11,7 @@ import { OrganizationModel } from '../models/Organization.js';
 import { PlatformSettingsModel } from '../models/PlatformSettings.js';
 import { ROLES } from '../constants/roles.js';
 import { LICENSING_MODE } from '../constants/licensingMode.js';
+import { getAccountAccessBlockReason } from '../services/accountAccessService.js';
 
 const router = express.Router();
 
@@ -100,6 +101,11 @@ router.post('/login', async (req, res) => {
     const isValid = await UserModel.verifyPassword(password, userRow.password);
     if (!isValid) {
       return errorResponse(res, 'Invalid email or password', 401);
+    }
+
+    const accessBlock = await getAccountAccessBlockReason(userRow);
+    if (accessBlock) {
+      return errorResponse(res, accessBlock, 403);
     }
 
     const sessionMin = await PlatformSettingsModel.getSessionTimeoutMinutes();

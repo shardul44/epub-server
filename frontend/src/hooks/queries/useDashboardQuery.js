@@ -3,8 +3,8 @@
  *
  * Does NOT make its own /conversions call. Reads from the same
  * ['conversions'] cache that every other component uses.
- * Optionally fetches GET /users + /health (org admin dashboards), or /health only
- * when `includeTeamUsers` is false (regular members lack GET /users).
+ * Optionally fetches GET /users for org-admin dashboards when `includeTeamUsers` is true
+ * (regular members lack GET /users).
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,35 +52,13 @@ function buildThroughputMeta(data) {
   return { peakDay, trend, totalWeek };
 }
 
-/* ─── Team + health query (separate, cached 5 min) ───────────── */
-async function fetchTeamAndHealth() {
-  const [membersRes, healthRes] = await Promise.all([
-    api.get('/users').catch(() => ({ data: { data: [] } })),
-    api.get('/health').catch(() => ({ data: { status: 'ERROR' } })),
-  ]);
+/* ─── Team query (separate, cached 5 min) ─────────────────────── */
+async function fetchTeamUsers() {
+  const membersRes = await api.get('/users').catch(() => ({ data: { data: [] } }));
   const members = Array.isArray(membersRes.data?.data)
     ? membersRes.data.data
     : Array.isArray(membersRes.data) ? membersRes.data : [];
-  const hStatus = healthRes.data?.status;
-  return {
-    members,
-    systemHealth: {
-      api: hStatus === 'OK' || hStatus === 'SERVICE_UNAVAILABLE' ? 'healthy' : 'unhealthy',
-      db:  hStatus === 'OK' ? 'healthy' : 'unhealthy',
-    },
-  };
-}
-
-async function fetchHealthOnly() {
-  const healthRes = await api.get('/health').catch(() => ({ data: { status: 'ERROR' } }));
-  const hStatus = healthRes.data?.status;
-  return {
-    members: [],
-    systemHealth: {
-      api: hStatus === 'OK' || hStatus === 'SERVICE_UNAVAILABLE' ? 'healthy' : 'unhealthy',
-      db:  hStatus === 'OK' ? 'healthy' : 'unhealthy',
-    },
-  };
+  return { members };
 }
 
 export function useDashboardQuery({
@@ -89,19 +67,17 @@ export function useDashboardQuery({
   scope: scopeOverride,
 } = {}) {
   const queryClient = useQueryClient();
-  const orgMode = includeTeamUsers ? 'full' : 'health';
-
   // ── Read from the shared conversions cache (no extra fetch) ───
   const { allJobs, isLoading: jobsLoading, isFetching: jobsFetching } = useConversionsQuery({
     enabled,
     scope: scopeOverride,
   });
 
-  // ── Fetch team + health separately (cached 5 min) ─────────────
+  // ── Fetch team members separately (cached 5 min) ──────────────
   const teamQuery = useQuery({
-    queryKey: queryKeys.dashboard.org(orgMode),
-    queryFn: includeTeamUsers ? fetchTeamAndHealth : fetchHealthOnly,
-    enabled,
+    queryKey: queryKeys.dashboard.org('team'),
+    queryFn: fetchTeamUsers,
+    enabled: enabled && includeTeamUsers,
     staleTime:            5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect:   false,
@@ -131,8 +107,6 @@ export function useDashboardQuery({
     members:  teamQuery.data?.members  ?? [],
     seatUsed: teamQuery.data?.members?.length ?? 0,
   };
-  const systemHealth = teamQuery.data?.systemHealth ?? { api: 'checking', db: 'checking' };
-
   const refetch = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.conversions.all() });
     queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.orgPrefix() });
@@ -145,7 +119,6 @@ export function useDashboardQuery({
     throughputData,
     throughputMeta,
     teamData,
-    systemHealth,
     lastUpdated:  null,
     isLoading:    jobsLoading || teamQuery.isLoading,
     isFetching:   jobsFetching || teamQuery.isFetching,

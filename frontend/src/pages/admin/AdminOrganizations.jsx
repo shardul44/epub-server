@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Users } from 'lucide-react';
+import { Users, Trash2 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
+import ConfirmModal from '../../components/Loadingmodal';
+import useAppDispatch from '../../hooks/useAppDispatch';
+import { showToast } from '../../slices/uiSlice';
 import './AdminOrganizations.css';
 
 function planBadgeClass(planName) {
@@ -24,6 +27,7 @@ function fmtNum(n) {
 }
 
 export default function AdminOrganizations() {
+  const dispatch = useAppDispatch();
   const [list, setList] = useState([]);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
@@ -44,6 +48,8 @@ export default function AdminOrganizations() {
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setError('');
@@ -133,11 +139,25 @@ export default function AdminOrganizations() {
 
   const toggleActive = async (org) => {
     setError('');
+    const nextActive = !org.active;
     try {
-      await adminService.updateOrganization(org.id, { active: !org.active });
+      const updated = await adminService.updateOrganization(org.id, { active: nextActive });
       await load();
+      const usersDeactivated = updated?.usersDeactivated;
+      dispatch(
+        showToast({
+          type: 'success',
+          message: nextActive
+            ? `${org.name} is now active.`
+            : usersDeactivated
+              ? `${org.name} has been deactivated. ${usersDeactivated} user${usersDeactivated === 1 ? '' : 's'} deactivated.`
+              : `${org.name} has been deactivated.`,
+        }),
+      );
     } catch (e) {
-      setError(e.response?.data?.error || e.message);
+      const msg = e.response?.data?.error || e.message;
+      setError(msg);
+      dispatch(showToast({ type: 'error', message: msg || 'Failed to update organization status.' }));
     }
   };
 
@@ -158,6 +178,31 @@ export default function AdminOrganizations() {
     } catch (e) {
       setError(e.response?.data?.error || e.message);
       setOrgAdmins([]);
+    }
+  };
+
+  const requestDelete = (org) => {
+    setError('');
+    setDeleteTarget(org);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setError('');
+    setDeleting(true);
+    try {
+      await adminService.deleteOrganization(deleteTarget.id);
+      if (manageOrgId === deleteTarget.id) {
+        setManageOrgId(null);
+        setOrgAdmins([]);
+      }
+      setDeleteTarget(null);
+      await load();
+    } catch (e) {
+      setError(e.response?.data?.error || e.message);
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -387,26 +432,32 @@ export default function AdminOrganizations() {
                           : fmtNum(o.pdfPageQuota)}
                       </td>
                       <td>{fmtNum(o.pdfPagesUsed)}</td>
-                      <td>
-                        <span className={`aorg-badge ${o.active ? 'aorg-badge--yes' : 'aorg-badge--no'}`}>
-                          {o.active ? 'Yes' : 'No'}
-                        </span>
+                      <td className="aorg-active-cell">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={o.active}
+                          aria-label={o.active ? 'Deactivate organization' : 'Activate organization'}
+                          className={`aorg-switch ${o.active ? 'aorg-switch--on' : ''}`}
+                          onClick={() => toggleActive(o)}
+                        >
+                          <span className="aorg-switch-thumb" aria-hidden />
+                        </button>
                       </td>
                       <td>
                         <div className="aorg-actions">
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={o.active}
-                            aria-label={o.active ? 'Deactivate organization' : 'Activate organization'}
-                            className={`aorg-switch ${o.active ? 'aorg-switch--on' : ''}`}
-                            onClick={() => toggleActive(o)}
-                          >
-                            <span className="aorg-switch-thumb" aria-hidden />
-                          </button>
                           <button type="button" className="aorg-btn-ghost" onClick={() => openManageUsers(o.id)}>
                             <Users size={16} aria-hidden />
                             Users
+                          </button>
+                          <button
+                            type="button"
+                            className="aorg-btn-delete"
+                            disabled={deleting}
+                            onClick={() => requestDelete(o)}
+                          >
+                            <Trash2 size={16} aria-hidden />
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -482,6 +533,22 @@ export default function AdminOrganizations() {
             )}
           </div>
         </section>
+
+        <ConfirmModal
+          isOpen={Boolean(deleteTarget)}
+          onClose={() => !deleting && setDeleteTarget(null)}
+          onConfirm={confirmDelete}
+          title="Delete organization"
+          subtitle="This action cannot be undone."
+          message={
+            deleteTarget
+              ? `Permanently delete "${deleteTarget.name}"? All users and data for this organization will be removed.`
+              : ''
+          }
+          confirmLabel="Delete organization"
+          variant="danger"
+          loading={deleting}
+        />
       </div>
     </div>
   );

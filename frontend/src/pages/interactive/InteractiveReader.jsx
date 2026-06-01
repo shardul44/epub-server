@@ -556,24 +556,24 @@ export default function InteractiveReader() {
 
       <header className="irr-header">
         <div className="irr-header-inner">
-          <div>
-            <Link to="/interactive" className="irr-back">
-              <ArrowLeft size={16} aria-hidden />
-              Books
-            </Link>
-            <div className="irr-title-row">
-              <div className="irr-title-icon" aria-hidden>
-                <BookOpen size={24} />
-              </div>
-              <div>
-                <h1 className="irr-title">{book.title}</h1>
-                <p className="irr-meta">Interactive reader · {ordered.length} chapter{ordered.length === 1 ? '' : 's'}</p>
-              </div>
+          <div className="irr-title-row">
+            <div className="irr-title-icon" aria-hidden>
+              <BookOpen size={22} strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="irr-title">{book.title}</h1>
+              <p className="irr-meta">
+                Interactive reader · {ordered.length} chapter{ordered.length === 1 ? '' : 's'}
+              </p>
             </div>
           </div>
           <div className="irr-header-actions">
+            <Link to="/interactive" className="irr-btn irr-btn-secondary">
+              <ArrowLeft size={18} strokeWidth={2} aria-hidden />
+              Back to books
+            </Link>
             <Link to={`/interactive/editor/${book.id}`} className="irr-btn irr-btn-primary">
-              <Pencil size={18} aria-hidden />
+              <Pencil size={18} strokeWidth={2} aria-hidden />
               Edit book
             </Link>
           </div>

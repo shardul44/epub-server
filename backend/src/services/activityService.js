@@ -1,8 +1,16 @@
 import { UserActivityModel } from '../models/UserActivity.js';
+import { getClientIpFromRequest } from '../utils/clientIp.js';
 
 export class ActivityService {
   static async logFromRequest(req, { action, entityType, entityId, summary, metadata }) {
     if (!req.user?.id) return null;
+    const baseMeta =
+      metadata && typeof metadata === 'object' && !Array.isArray(metadata) ? { ...metadata } : {};
+    const ip = getClientIpFromRequest(req);
+    if (ip && baseMeta.ipAddress == null && baseMeta.ip == null) {
+      baseMeta.ipAddress = ip;
+    }
+    const mergedMetadata = Object.keys(baseMeta).length > 0 ? baseMeta : null;
     return UserActivityModel.insert({
       userId: req.user.id,
       organizationId: req.user.organizationId ?? null,
@@ -10,7 +18,7 @@ export class ActivityService {
       entityType,
       entityId,
       summary,
-      metadata
+      metadata: mergedMetadata
     });
   }
 

@@ -23,6 +23,8 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableItem } from '../../components/SortableItem';
 import { interactiveService } from '../../services/interactiveService';
+import CKEditorEnhanced from '../../components/interactive/CKEditorEnhanced';
+import './InteractiveReader.css';
 import InteractiveContentSidebar from '../../components/interactive/h5p/InteractiveContentSidebar';
 import H5pEditorDialog from '../../components/interactive/h5p/H5pEditorDialog';
 import H5pBlockCard from '../../components/interactive/h5p/H5pBlockCard';
@@ -482,8 +484,12 @@ export default function InteractiveEditorEnhanced() {
               </div>
             </div>
           </div>
-          <div className="iee-header-actions">
-            <Link to={`/interactive/reader/${book.id}`} className="iee-btn iee-btn-primary">
+          <div className="irr-header-actions">
+            <Link to="/interactive" className="irr-btn irr-btn-secondary">
+              <ArrowLeft size={18} strokeWidth={2} aria-hidden />
+              Back to books
+            </Link>
+            <Link to={`/interactive/reader/${book.id}`} className="irr-btn irr-btn-primary">
               <Eye size={18} strokeWidth={2} aria-hidden />
               Preview reader
             </Link>

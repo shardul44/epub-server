@@ -1,5 +1,12 @@
 import pool from '../config/database.js';
 
+function serializeMetadata(metadata) {
+  if (metadata == null) return null;
+  if (typeof metadata === 'string') return metadata;
+  if (typeof metadata === 'object') return JSON.stringify(metadata);
+  return null;
+}
+
 export class UserActivityModel {
   static async insert({ userId, organizationId, action, entityType, entityId, summary, metadata }) {
     const [result] = await pool.execute(
@@ -12,7 +19,7 @@ export class UserActivityModel {
         entityType ?? null,
         entityId ?? null,
         summary ?? null,
-        metadata ?? null
+        serializeMetadata(metadata)
       ]
     );
     return result.insertId;

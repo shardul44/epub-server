@@ -194,7 +194,7 @@ const JobSelector = ({ jobs, loading, primeAudioSyncWorkflow, listScope, onSelec
         </div>
       ) : (
         <>
-          <JobGrid>
+          <JobGrid className="ass-job-grid">
             {paginatedJobs.map((job) => {
               const jobId = job.id ?? job.jobId;
               const to = audioSyncPath(job);

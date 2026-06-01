@@ -44,7 +44,6 @@ import { WORKFLOW_LIBRARY_FEATURES } from '../utils/features';
 import Dashboard from '../pages/Dashboard';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
-import NotFound from '../pages/NotFound';
 
 /* ─── Lazy-loaded pages (one chunk per page) ──────────────────── */
 const PdfUpload               = lazy(() => import('../pages/PdfUpload'));
@@ -84,7 +83,6 @@ const PlatformConversions     = lazy(() => import('../pages/admin/PlatformConver
 const PlatformConversionJobDetail = lazy(() => import('../pages/admin/PlatformConversionJobDetail'));
 const PlatformBilling         = lazy(() => import('../pages/admin/PlatformBilling'));
 const AdminPlanRequests       = lazy(() => import('../pages/admin/AdminPlanRequests'));
-const PlatformSecurity        = lazy(() => import('../pages/admin/PlatformSecurity'));
 const ApiDebugger             = lazy(() => import('../components/ApiDebugger'));
 
 /* ─── Helper: wrap a lazy element in a local Suspense fallback ── */
@@ -220,7 +218,10 @@ export default function AppRouter() {
           <Route path="ai-config" element={<Navigate to="/" replace />} />
 
           <Route path="api-debugger"     element={lazyEl(ApiDebugger)} />
-          <Route path="usage"            element={lazyEl(Usage)} />
+          <Route
+            path="usage"
+            element={<RequireOrgAdmin>{lazyEl(Usage)}</RequireOrgAdmin>}
+          />
           <Route path="org/media-library" element={<Navigate to="/media-library" replace />} />
           <Route path="org/usage"         element={<Navigate to="/usage" replace />} />
           <Route path="activity"          element={lazyEl(Activity)} />
@@ -271,10 +272,7 @@ export default function AppRouter() {
             path="admin/billing"
             element={<RequirePlatformAdmin>{lazyEl(PlatformBilling)}</RequirePlatformAdmin>}
           />
-          <Route
-            path="admin/security"
-            element={<RequirePlatformAdmin>{lazyEl(PlatformSecurity)}</RequirePlatformAdmin>}
-          />
+          <Route path="admin/security" element={<Navigate to="/admin/settings" replace />} />
           <Route
             path="admin/system-logs"
             element={<RequirePlatformAdmin>{lazyEl(SystemLogs)}</RequirePlatformAdmin>}
@@ -329,7 +327,7 @@ export default function AppRouter() {
             }
           />
 
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>
     </Routes>

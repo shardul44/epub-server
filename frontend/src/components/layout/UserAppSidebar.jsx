@@ -4,11 +4,9 @@ import {
   LayoutGrid,
   Upload,
   RefreshCw,
-  FileText,
   ArrowLeftRight,
   Film,
   FolderOpen,
-  Gauge,
   Accessibility,
   ClipboardCheck,
   BookOpen,
@@ -164,7 +162,6 @@ export default function UserAppSidebar({ onCollapse }) {
       convDownload: path.startsWith('/conversions/download'),
       exports: path.startsWith('/exports'),
       mediaLibrary: path.startsWith('/media-library'),
-      usage: path.startsWith('/usage'),
       accessibility: path.startsWith('/accessibility'),
       epubChecker: path.startsWith('/epub-checker'),
       interactive: path.startsWith('/interactive'),
@@ -297,7 +294,6 @@ export default function UserAppSidebar({ onCollapse }) {
               isActive={active.mediaLibrary}
             />
           )}
-          <NavRow to="/usage" icon={Gauge} label="Usage" isActive={active.usage} />
 
           {showToolsSection && (
             <span className="user-sidebar-section-label">Tools</span>
