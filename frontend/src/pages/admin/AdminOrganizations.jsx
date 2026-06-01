@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Users, Trash2 } from 'lucide-react';
+import { Users, Trash2, X } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import ConfirmModal from '../../components/Loadingmodal';
 import useAppDispatch from '../../hooks/useAppDispatch';
@@ -43,7 +43,9 @@ export default function AdminOrganizations() {
   const [validFrom, setValidFrom] = useState('');
   const [validUntil, setValidUntil] = useState('');
 
-  const [manageOrgId, setManageOrgId] = useState(null);
+  const [usersModalOrg, setUsersModalOrg] = useState(null);
+  const [usersModalError, setUsersModalError] = useState('');
+  const [usersLoading, setUsersLoading] = useState(false);
   const [orgAdmins, setOrgAdmins] = useState([]);
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
@@ -161,23 +163,30 @@ export default function AdminOrganizations() {
     }
   };
 
-  const openManageUsers = async (orgId) => {
-    if (manageOrgId === orgId) {
-      setManageOrgId(null);
-      setOrgAdmins([]);
-      return;
-    }
-    setError('');
-    setManageOrgId(orgId);
+  const closeUsersModal = () => {
+    setUsersModalOrg(null);
+    setOrgAdmins([]);
+    setUsersModalError('');
     setAdminName('');
     setAdminEmail('');
     setAdminPassword('');
+  };
+
+  const openManageUsers = async (org) => {
+    setUsersModalError('');
+    setUsersModalOrg(org);
+    setAdminName('');
+    setAdminEmail('');
+    setAdminPassword('');
+    setUsersLoading(true);
     try {
-      const users = await adminService.getOrgUsers(orgId);
+      const users = await adminService.getOrgUsers(org.id);
       setOrgAdmins((users || []).filter((u) => u.role === 'org_admin'));
     } catch (e) {
-      setError(e.response?.data?.error || e.message);
+      setUsersModalError(e.response?.data?.error || e.message);
       setOrgAdmins([]);
+    } finally {
+      setUsersLoading(false);
     }
   };
 
@@ -192,9 +201,8 @@ export default function AdminOrganizations() {
     setDeleting(true);
     try {
       await adminService.deleteOrganization(deleteTarget.id);
-      if (manageOrgId === deleteTarget.id) {
-        setManageOrgId(null);
-        setOrgAdmins([]);
+      if (usersModalOrg?.id === deleteTarget.id) {
+        closeUsersModal();
       }
       setDeleteTarget(null);
       await load();
@@ -206,23 +214,24 @@ export default function AdminOrganizations() {
     }
   };
 
-  const createOrgAdmin = async (orgId) => {
-    setError('');
+  const createOrgAdmin = async () => {
+    if (!usersModalOrg) return;
+    setUsersModalError('');
     const email = adminEmail.trim().toLowerCase();
     if (!adminName.trim()) {
-      setError('Org admin name is required');
+      setUsersModalError('Org admin name is required');
       return;
     }
     if (!email) {
-      setError('Org admin email is required');
+      setUsersModalError('Org admin email is required');
       return;
     }
     if (!adminPassword || adminPassword.length < 6) {
-      setError('Org admin password must be at least 6 characters');
+      setUsersModalError('Org admin password must be at least 6 characters');
       return;
     }
     try {
-      await adminService.createOrgUser(orgId, {
+      await adminService.createOrgUser(usersModalOrg.id, {
         name: adminName.trim(),
         email,
         password: adminPassword,
@@ -231,10 +240,10 @@ export default function AdminOrganizations() {
       setAdminName('');
       setAdminEmail('');
       setAdminPassword('');
-      const users = await adminService.getOrgUsers(orgId);
+      const users = await adminService.getOrgUsers(usersModalOrg.id);
       setOrgAdmins((users || []).filter((u) => u.role === 'org_admin'));
     } catch (e) {
-      setError(e.response?.data?.error || e.message);
+      setUsersModalError(e.response?.data?.error || e.message);
     }
   };
 
@@ -416,113 +425,51 @@ export default function AdminOrganizations() {
               </thead>
               <tbody>
                 {list.map((o) => (
-                  <React.Fragment key={o.id}>
-                    <tr>
-                      <td className="aorg-name">{o.name}</td>
-                      <td className="aorg-slug">{o.slug || '—'}</td>
-                      <td>
-                        <span className={planBadgeClass(o.planName)}>{o.planName || '—'}</span>
-                      </td>
-                      <td>{fmtDate(o.validFrom)}</td>
-                      <td>{fmtDate(o.validUntil)}</td>
-                      <td>{fmtNum(o.memberSeatLimit)}</td>
-                      <td>
-                        {o.pdfPageQuota == null || o.pdfPageQuota === ''
-                          ? 'Unlimited'
-                          : fmtNum(o.pdfPageQuota)}
-                      </td>
-                      <td>{fmtNum(o.pdfPagesUsed)}</td>
-                      <td className="aorg-active-cell">
+                  <tr key={o.id}>
+                    <td className="aorg-name">{o.name}</td>
+                    <td className="aorg-slug">{o.slug || '—'}</td>
+                    <td>
+                      <span className={planBadgeClass(o.planName)}>{o.planName || '—'}</span>
+                    </td>
+                    <td>{fmtDate(o.validFrom)}</td>
+                    <td>{fmtDate(o.validUntil)}</td>
+                    <td>{fmtNum(o.memberSeatLimit)}</td>
+                    <td>
+                      {o.pdfPageQuota == null || o.pdfPageQuota === ''
+                        ? 'Unlimited'
+                        : fmtNum(o.pdfPageQuota)}
+                    </td>
+                    <td>{fmtNum(o.pdfPagesUsed)}</td>
+                    <td className="aorg-active-cell">
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={o.active}
+                        aria-label={o.active ? 'Deactivate organization' : 'Activate organization'}
+                        className={`aorg-switch ${o.active ? 'aorg-switch--on' : ''}`}
+                        onClick={() => toggleActive(o)}
+                      >
+                        <span className="aorg-switch-thumb" aria-hidden />
+                      </button>
+                    </td>
+                    <td>
+                      <div className="aorg-actions">
+                        <button type="button" className="aorg-btn-ghost" onClick={() => openManageUsers(o)}>
+                          <Users size={16} aria-hidden />
+                          Users
+                        </button>
                         <button
                           type="button"
-                          role="switch"
-                          aria-checked={o.active}
-                          aria-label={o.active ? 'Deactivate organization' : 'Activate organization'}
-                          className={`aorg-switch ${o.active ? 'aorg-switch--on' : ''}`}
-                          onClick={() => toggleActive(o)}
+                          className="aorg-btn-delete"
+                          disabled={deleting}
+                          onClick={() => requestDelete(o)}
                         >
-                          <span className="aorg-switch-thumb" aria-hidden />
+                          <Trash2 size={16} aria-hidden />
+                          Delete
                         </button>
-                      </td>
-                      <td>
-                        <div className="aorg-actions">
-                          <button type="button" className="aorg-btn-ghost" onClick={() => openManageUsers(o.id)}>
-                            <Users size={16} aria-hidden />
-                            Users
-                          </button>
-                          <button
-                            type="button"
-                            className="aorg-btn-delete"
-                            disabled={deleting}
-                            onClick={() => requestDelete(o)}
-                          >
-                            <Trash2 size={16} aria-hidden />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {manageOrgId === o.id && (
-                      <tr>
-                        <td colSpan={10}>
-                          <div className="aorg-users-panel">
-                            <h4>Create org admin</h4>
-                            <div className="aorg-users-grid">
-                              <div className="aorg-field">
-                                <label className="aorg-label" htmlFor={`aorg-admin-name-${o.id}`}>
-                                  Name
-                                </label>
-                                <input
-                                  id={`aorg-admin-name-${o.id}`}
-                                  className="aorg-input"
-                                  placeholder="Name"
-                                  value={adminName}
-                                  onChange={(e) => setAdminName(e.target.value)}
-                                />
-                              </div>
-                              <div className="aorg-field">
-                                <label className="aorg-label" htmlFor={`aorg-admin-email-${o.id}`}>
-                                  Email
-                                </label>
-                                <input
-                                  id={`aorg-admin-email-${o.id}`}
-                                  className="aorg-input"
-                                  type="email"
-                                  placeholder="Email"
-                                  value={adminEmail}
-                                  onChange={(e) => setAdminEmail(e.target.value)}
-                                />
-                              </div>
-                              <div className="aorg-field">
-                                <label className="aorg-label" htmlFor={`aorg-admin-pass-${o.id}`}>
-                                  Password
-                                </label>
-                                <input
-                                  id={`aorg-admin-pass-${o.id}`}
-                                  className="aorg-input"
-                                  type="password"
-                                  placeholder="Password"
-                                  value={adminPassword}
-                                  onChange={(e) => setAdminPassword(e.target.value)}
-                                />
-                              </div>
-                              <button
-                                type="button"
-                                className="aorg-btn-primary-sm"
-                                onClick={() => createOrgAdmin(o.id)}
-                              >
-                                Create org admin
-                              </button>
-                            </div>
-                            <div className="aorg-admin-list">
-                              Existing org admins:{' '}
-                              {orgAdmins.length ? orgAdmins.map((u) => u.email).join(', ') : 'none'}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                      </div>
+                    </td>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -533,6 +480,98 @@ export default function AdminOrganizations() {
             )}
           </div>
         </section>
+
+        {usersModalOrg && (
+          <div
+            className="aorg-modal-backdrop"
+            role="presentation"
+            onClick={(e) => e.target === e.currentTarget && closeUsersModal()}
+          >
+            <div
+              className="aorg-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="aorg-users-modal-title"
+            >
+              <div className="aorg-modal-head">
+                <div>
+                  <h3 id="aorg-users-modal-title">Organization users</h3>
+                  <p className="aorg-modal-meta">{usersModalOrg.name}</p>
+                </div>
+                <button
+                  type="button"
+                  className="aorg-modal-close"
+                  onClick={closeUsersModal}
+                  aria-label="Close"
+                >
+                  <X size={18} aria-hidden />
+                </button>
+              </div>
+
+              {usersModalError && <div className="aorg-modal-error">{usersModalError}</div>}
+
+              {usersLoading ? (
+                <div className="aorg-modal-loading">
+                  <div className="aorg-spinner" aria-hidden />
+                  Loading users…
+                </div>
+              ) : (
+                <>
+                  <h4 className="aorg-modal-section-title">Create org admin</h4>
+                  <div className="aorg-modal-form">
+                    <div className="aorg-field">
+                      <label className="aorg-label" htmlFor="aorg-admin-name">
+                        Name
+                      </label>
+                      <input
+                        id="aorg-admin-name"
+                        className="aorg-input"
+                        placeholder="Name"
+                        value={adminName}
+                        onChange={(e) => setAdminName(e.target.value)}
+                      />
+                    </div>
+                    <div className="aorg-field">
+                      <label className="aorg-label" htmlFor="aorg-admin-email">
+                        Email
+                      </label>
+                      <input
+                        id="aorg-admin-email"
+                        className="aorg-input"
+                        type="email"
+                        placeholder="Email"
+                        value={adminEmail}
+                        onChange={(e) => setAdminEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="aorg-field">
+                      <label className="aorg-label" htmlFor="aorg-admin-pass">
+                        Password
+                      </label>
+                      <input
+                        id="aorg-admin-pass"
+                        className="aorg-input"
+                        type="password"
+                        placeholder="Password"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                      />
+                    </div>
+                    <button type="button" className="aorg-btn-primary-sm" onClick={createOrgAdmin}>
+                      Create org admin
+                    </button>
+                  </div>
+                  <div className="aorg-admin-list">
+                    Existing org admins:{' '}
+                    {orgAdmins.length ? orgAdmins.map((u) => u.email).join(', ') : 'none'}
+                  </div>
+                </>
+              )}
+
+      
+            </div>
+          </div>
+        )}
 
         <ConfirmModal
           isOpen={Boolean(deleteTarget)}

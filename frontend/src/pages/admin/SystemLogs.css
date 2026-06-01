@@ -463,19 +463,6 @@
   letter-spacing: 0.02em;
 }
 
-.slog-source {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--slog-muted);
-  font-size: 0.75rem;
-}
-
-.slog-source svg {
-  flex-shrink: 0;
-  opacity: 0.7;
-}
-
 .slog-td-muted {
   color: var(--slog-muted);
   font-size: 0.75rem;
@@ -735,15 +722,15 @@
 }
 
 @media (max-width: 1100px) {
-  .slog-table thead th:nth-child(6),
-  .slog-table tbody td:nth-child(6) {
+  .slog-table thead th:nth-child(5),
+  .slog-table tbody td:nth-child(5) {
     display: none;
   }
 }
 
 @media (max-width: 900px) {
-  .slog-table thead th:nth-child(7),
-  .slog-table tbody td:nth-child(7) {
+  .slog-table thead th:nth-child(6),
+  .slog-table tbody td:nth-child(6) {
     display: none;
   }
 }

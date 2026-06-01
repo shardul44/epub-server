@@ -945,8 +945,6 @@
 
 /* ── Legacy section/violation/auto-fix styles — kept for EpubConformanceCheck ── */
 .aw-fix-panel {
-  border: 1.5px solid #e5e7eb;
-  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -1431,6 +1429,99 @@
   font-size: 0.85rem;
   cursor: pointer;
 }
+
+/* ── Code violations pagination ── */
+.aw-pagination {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.aw-pagination-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px;
+  margin-top: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.aw-pagination-pages {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aw-pagination-nav,
+.aw-pagination-page {
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aw-pagination-nav {
+  padding: 9px 12px;
+  min-width: 92px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.aw-pagination-page {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aw-pagination-nav:hover:not(:disabled),
+.aw-pagination-page:hover:not(.is-active) {
+  transform: translateY(-1px);
+  background: #f8faff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
+}
+
+.aw-pagination-page.is-active {
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+}
+
+.aw-pagination-nav:disabled,
+.aw-pagination-page:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.aw-pagination-ellipsis {
+  min-width: 18px;
+  text-align: center;
+  color: #9ca3af;
+  font-weight: 700;
+  user-select: none;
+}
+
 
 /* ── Collapsible violation cards (vcard) ── */
 .aw-vcard-list {
@@ -1950,16 +2041,132 @@
   flex-wrap: wrap;
 }
 
-/* Legacy save bar (kept in case other components use it) */
+/* Bottom action bar (EPUB Checker & shared) */
 .aw-save-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  margin-top: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.10);
+}
+
+.aw-save-bar-leading {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.aw-save-bar-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.aw-save-bar-status--success {
+  color: #047857;
+}
+
+.aw-save-bar-status--success svg {
+  flex-shrink: 0;
+  color: #10b981;
+}
+
+.aw-save-bar-status--muted {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.aw-save-bar-hint {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f766e;
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.aw-save-bar-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 16px 20px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+  flex: 1 1 auto;
+}
+
+.aw-save-bar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.aw-save-bar-group--primary {
+  padding-left: 12px;
+  border-left: 1px solid #e2e8f0;
+}
+
+.aw-save-bar .aw-save-bar-actions button,
+.aw-save-bar .aw-save-bar-actions a {
+  position: relative;
+  z-index: 2;
+}
+
+.aw-save-bar .aw-save-bar-actions button svg,
+.aw-save-bar .aw-save-bar-actions a svg {
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.aw-save-bar-btn--autofix {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s;
+  box-shadow: 0 1px 2px rgba(13, 148, 136, 0.08);
+}
+
+.aw-save-bar-btn--autofix:hover:not(:disabled) {
+  background: #ccfbf1;
+  border-color: #5eead4;
+  box-shadow: 0 3px 10px rgba(13, 148, 136, 0.14);
+  transform: translateY(-1px);
+}
+
+.aw-save-bar-btn--autofix:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.aw-download-report-link:disabled,
+.aw-view-report-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* "View ACE Report" — ghost outline button */
@@ -2200,19 +2407,31 @@
     height: 140px;
   }
 
-  .aw-sticky-save {
+  .aw-sticky-save,
+  .aw-save-bar {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .aw-sticky-actions {
+  .aw-sticky-actions,
+  .aw-save-bar-actions {
     flex-direction: column;
     width: 100%;
+    align-items: stretch;
+  }
+
+  .aw-save-bar-group--primary {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
   }
 
   .aw-save-btn,
   .aw-view-report-link,
-  .aw-download-report-link {
+  .aw-download-report-link,
+  .aw-save-bar-btn--autofix,
+  .aw-download-btn {
     width: 100%;
     justify-content: center;
     min-height: 44px;

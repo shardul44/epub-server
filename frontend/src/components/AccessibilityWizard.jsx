@@ -28,6 +28,7 @@ import './AccessibilityWizard.css';
 
 const SEVERITIES = ['critical', 'serious', 'moderate', 'minor'];
 const SEVERITY_LABELS = { critical: 'Critical', serious: 'Serious', moderate: 'Moderate', minor: 'Minor' };
+const CODE_VIOLATIONS_PER_PAGE = 5;
 
 // Violations handled automatically by RemedyEngine.applyGlobalFixes.
 // Each entry describes what exact change will be made.
@@ -207,10 +208,11 @@ const AccessibilityWizard = ({ onStateChange }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSeverityFilters, setActiveSeverityFilters] = useState([]);
   const [sortMode, setSortMode] = useState('severity');
-  const [expandedViolations, setExpandedViolations] = useState(() => new Set());
+  const [collapsedViolations, setCollapsedViolations] = useState(() => new Set());
+  const [codeViolationPage, setCodeViolationPage] = useState(1);
 
   const toggleViolationExpanded = (id) => {
-    setExpandedViolations((prev) => {
+    setCollapsedViolations((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -434,6 +436,42 @@ const AccessibilityWizard = ({ onStateChange }) => {
     () => filteredCodeViolations.length > 0 && filteredCodeViolations.every(isAutoFixable),
     [filteredCodeViolations]
   );
+
+  const codeViolationTotalPages = Math.max(
+    1,
+    Math.ceil(filteredCodeViolations.length / CODE_VIOLATIONS_PER_PAGE),
+  );
+  const safeCodeViolationPage = Math.min(codeViolationPage, codeViolationTotalPages);
+  const paginatedCodeViolations = useMemo(
+    () => filteredCodeViolations.slice(
+      (safeCodeViolationPage - 1) * CODE_VIOLATIONS_PER_PAGE,
+      safeCodeViolationPage * CODE_VIOLATIONS_PER_PAGE,
+    ),
+    [filteredCodeViolations, safeCodeViolationPage],
+  );
+  const codeViolationPageNumbers = useMemo(() => {
+    if (codeViolationTotalPages <= 7) {
+      return Array.from({ length: codeViolationTotalPages }, (_, idx) => idx + 1);
+    }
+    const pages = [1];
+    const windowStart = Math.max(2, safeCodeViolationPage - 1);
+    const windowEnd = Math.min(codeViolationTotalPages - 1, safeCodeViolationPage + 1);
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < codeViolationTotalPages - 1) pages.push('ellipsis-right');
+    pages.push(codeViolationTotalPages);
+    return pages;
+  }, [safeCodeViolationPage, codeViolationTotalPages]);
+
+  useEffect(() => {
+    setCodeViolationPage(1);
+  }, [activeTab, searchQuery, activeSeverityFilters, sortMode]);
+
+  useEffect(() => {
+    if (codeViolationPage > codeViolationTotalPages) {
+      setCodeViolationPage(codeViolationTotalPages);
+    }
+  }, [codeViolationPage, codeViolationTotalPages]);
 
   // Count of approved/applied fixes for the sticky status bar
   const approvedCount = useMemo(() => {
@@ -1297,10 +1335,10 @@ const AccessibilityWizard = ({ onStateChange }) => {
                         <span>No violations match the current filter.</span>
                       </div>
                     ) : (
-                      filteredCodeViolations.map((violation) => {
+                      paginatedCodeViolations.map((violation) => {
                         const draftIdx = codeRepairDrafts.findIndex((d) => d.violationId === violation.id);
                         const draft = draftIdx >= 0 ? codeRepairDrafts[draftIdx] : null;
-                        const isExpanded = expandedViolations.has(violation.id);
+                        const isExpanded = !collapsedViolations.has(violation.id);
                         const autoFixed = AUTO_FIXED_RULES[violation.title];
                         const diff = autoFixed ? parsePatchDiff(autoFixed.patch) : null;
                         const sev = violation.severity || 'minor';
@@ -1487,6 +1525,48 @@ const AccessibilityWizard = ({ onStateChange }) => {
                       })
                     )}
                   </div>
+
+                  {activeTab !== 'passed' && filteredCodeViolations.length > CODE_VIOLATIONS_PER_PAGE && (
+                    <div className="aw-pagination" role="navigation" aria-label="Code violations pagination">
+                      <div className="aw-pagination-shell">
+                        <button
+                          type="button"
+                          className="aw-pagination-nav"
+                          onClick={() => setCodeViolationPage((prev) => Math.max(1, prev - 1))}
+                          disabled={safeCodeViolationPage === 1}
+                        >
+                          <span aria-hidden>←</span> Previous
+                        </button>
+                        <div className="aw-pagination-pages">
+                          {codeViolationPageNumbers.map((page, idx) =>
+                            typeof page === 'string' ? (
+                              <span key={`${page}-${idx}`} className="aw-pagination-ellipsis" aria-hidden>
+                                …
+                              </span>
+                            ) : (
+                              <button
+                                key={page}
+                                type="button"
+                                className={`aw-pagination-page${safeCodeViolationPage === page ? ' is-active' : ''}`}
+                                onClick={() => setCodeViolationPage(page)}
+                                aria-current={safeCodeViolationPage === page ? 'page' : undefined}
+                              >
+                                {page}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className="aw-pagination-nav"
+                          onClick={() => setCodeViolationPage((prev) => Math.min(codeViolationTotalPages, prev + 1))}
+                          disabled={safeCodeViolationPage === codeViolationTotalPages}
+                        >
+                          Next <span aria-hidden>→</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
