@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { Play, Upload } from 'lucide-react';
+import {
+  Play,
+  Upload,
+  Download,
+  Save,
+  Loader2,
+  FileJson,
+  FileText,
+  Wrench,
+  CheckCircle2,
+} from 'lucide-react';
 import api from '../services/api';
 import { epubcheckHistoryKey } from '../utils/epubCheckerMeta';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +34,7 @@ const SEVERITY_LABELS = {
   WARNING: 'Warning',
   INFO: 'Info',
 };
+const FILE_ISSUE_GROUPS_PER_PAGE = 5;
 
 function badgeClassForSeverity(sev) {
   const s = String(sev || '').toUpperCase();
@@ -195,6 +206,7 @@ const EpubConformanceCheck = ({
   const [error, setError] = useState('');
   /** When AI drafts exist, EPUBCheck messages are hidden by default (toggle to show). */
   const [showIssuesBesideAi, setShowIssuesBesideAi] = useState(false);
+  const [fileIssueGroupPage, setFileIssueGroupPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -371,9 +383,50 @@ const EpubConformanceCheck = ({
     [result.messages, fileRepairDrafts]
   );
 
+  const fileIssueGroupTotalPages = Math.max(
+    1,
+    Math.ceil(fileIssueGroups.length / FILE_ISSUE_GROUPS_PER_PAGE),
+  );
+  const safeFileIssueGroupPage = Math.min(fileIssueGroupPage, fileIssueGroupTotalPages);
+  const paginatedFileIssueGroups = useMemo(
+    () =>
+      fileIssueGroups.slice(
+        (safeFileIssueGroupPage - 1) * FILE_ISSUE_GROUPS_PER_PAGE,
+        safeFileIssueGroupPage * FILE_ISSUE_GROUPS_PER_PAGE,
+      ),
+    [fileIssueGroups, safeFileIssueGroupPage],
+  );
+  const fileIssueGroupPageNumbers = useMemo(() => {
+    if (fileIssueGroupTotalPages <= 7) {
+      return Array.from({ length: fileIssueGroupTotalPages }, (_, idx) => idx + 1);
+    }
+    const pages = [1];
+    const windowStart = Math.max(2, safeFileIssueGroupPage - 1);
+    const windowEnd = Math.min(fileIssueGroupTotalPages - 1, safeFileIssueGroupPage + 1);
+    if (windowStart > 2) pages.push('ellipsis-left');
+    for (let p = windowStart; p <= windowEnd; p += 1) pages.push(p);
+    if (windowEnd < fileIssueGroupTotalPages - 1) pages.push('ellipsis-right');
+    pages.push(fileIssueGroupTotalPages);
+    return pages;
+  }, [safeFileIssueGroupPage, fileIssueGroupTotalPages]);
+
+  useEffect(() => {
+    setFileIssueGroupPage(1);
+  }, [result.messages, fileRepairDrafts.length]);
+
+  useEffect(() => {
+    if (fileIssueGroupPage > fileIssueGroupTotalPages) {
+      setFileIssueGroupPage(fileIssueGroupTotalPages);
+    }
+  }, [fileIssueGroupPage, fileIssueGroupTotalPages]);
+
   const totalMessages = result.messages?.length ?? 0;
   const hasIssues = totalMessages > 0;
   const busy = loadingCheck || loadingAi || loadingAutoFix || loadingRecheckSession || loadingFix;
+  const approvedDraftCount = useMemo(
+    () => fileRepairDrafts.filter((d) => d.approved).length,
+    [fileRepairDrafts],
+  );
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -1150,7 +1203,8 @@ const EpubConformanceCheck = ({
                 )}
 
                 <div className="epub-file-issue-list">
-                  {fileIssueGroups.map((group, gi) => {
+                  {paginatedFileIssueGroups.map((group, gi) => {
+                    const globalGi = (safeFileIssueGroupPage - 1) * FILE_ISSUE_GROUPS_PER_PAGE + gi;
                     const draftIdx = group.draftIndex;
                     const draft = draftIdx >= 0 ? fileRepairDrafts[draftIdx] : null;
                     const header = group.pathLabel || group.path || 'File';
@@ -1164,7 +1218,7 @@ const EpubConformanceCheck = ({
                       !loadingAi;
 
                     return (
-                      <div key={group.path ?? `pkg-${gi}`} className="epub-file-issue-card">
+                      <div key={group.path ?? `pkg-${globalGi}`} className="epub-file-issue-card">
                         <div className="epub-file-issue-header">{header}</div>
                         <div className="epub-file-issue-body">
                           {showIssueBlock && (
@@ -1282,96 +1336,196 @@ const EpubConformanceCheck = ({
                     );
                   })}
                 </div>
+
+                {fileIssueGroups.length > FILE_ISSUE_GROUPS_PER_PAGE && (
+                  <div className="aw-pagination" role="navigation" aria-label="Issues by file pagination">
+                    <div className="aw-pagination-shell">
+                      <button
+                        type="button"
+                        className="aw-pagination-nav"
+                        onClick={() => setFileIssueGroupPage((prev) => Math.max(1, prev - 1))}
+                        disabled={safeFileIssueGroupPage === 1}
+                      >
+                        <span aria-hidden>←</span> Previous
+                      </button>
+                      <div className="aw-pagination-pages">
+                        {fileIssueGroupPageNumbers.map((page, idx) =>
+                          typeof page === 'string' ? (
+                            <span key={`${page}-${idx}`} className="aw-pagination-ellipsis" aria-hidden>
+                              …
+                            </span>
+                          ) : (
+                            <button
+                              key={page}
+                              type="button"
+                              className={`aw-pagination-page${safeFileIssueGroupPage === page ? ' is-active' : ''}`}
+                              onClick={() => setFileIssueGroupPage(page)}
+                              aria-current={safeFileIssueGroupPage === page ? 'page' : undefined}
+                            >
+                              {page}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className="aw-pagination-nav"
+                        onClick={() =>
+                          setFileIssueGroupPage((prev) =>
+                            Math.min(fileIssueGroupTotalPages, prev + 1),
+                          )
+                        }
+                        disabled={safeFileIssueGroupPage === fileIssueGroupTotalPages}
+                      >
+                        Next <span aria-hidden>→</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="aw-save-bar">
-                <button
-                  type="button"
-                  className="aw-download-report-link"
-                  style={{ border: 'none', cursor: pdfLoading ? 'wait' : 'pointer' }}
-                  onClick={downloadPdf}
-                  disabled={pdfLoading}
-                >
-                  {pdfLoading ? '…' : '⬇'} Report (PDF)
-                </button>
-                <button
-                  type="button"
-                  className="aw-view-report-link"
-                  style={{ border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 12px' }}
-                  onClick={downloadJson}
-                >
-                  ⬇ JSON
-                </button>
-                {lastDownloadId && (
-                  <button
-                    type="button"
-                    className="aw-download-btn"
-                    onClick={downloadFixedEpub}
-                    style={{ border: 'none', cursor: 'pointer' }}
-                  >
-                    ⬇ Download repaired EPUB
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="aw-save-btn"
-                  onClick={handleSaveAndRevalidate}
-                  disabled={loadingFix || !repairSessionId}
-                >
-                  {loadingFix ? '⏳ Applying & Re-validating…' : '💾 Save Changes & Re-validate'}
-                </button>
+                <div className="aw-save-bar-leading">
+                  {fileRepairDrafts.length > 0 ? (
+                    <div className="aw-save-bar-status">
+                      <span className="aw-sticky-dot" aria-hidden />
+                      {approvedDraftCount} of {fileRepairDrafts.length} file fix
+                      {fileRepairDrafts.length === 1 ? '' : 'es'} approved
+                      <span className="aw-sticky-sep">·</span>
+                      <span className="aw-sticky-unsaved">Changes unsaved</span>
+                    </div>
+                  ) : lastDownloadId ? (
+                    <div className="aw-save-bar-status aw-save-bar-status--muted">
+                      Repaired package ready to download
+                    </div>
+                  ) : (
+                    <div className="aw-save-bar-status aw-save-bar-status--muted">
+                      Export reports or save approved fixes to re-validate
+                    </div>
+                  )}
+                </div>
+                <div className="aw-save-bar-actions">
+                  <div className="aw-save-bar-group" aria-label="Export reports">
+                    <button
+                      type="button"
+                      className="aw-download-report-link"
+                      onClick={downloadPdf}
+                      disabled={pdfLoading}
+                    >
+                      {pdfLoading ? (
+                        <>
+                          <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                          <span>Generating PDF…</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText size={14} strokeWidth={2.25} aria-hidden />
+                          <span>Report (PDF)</span>
+                        </>
+                      )}
+                    </button>
+                    <button type="button" className="aw-view-report-link" onClick={downloadJson}>
+                      <FileJson size={14} strokeWidth={2.25} aria-hidden />
+                      <span>JSON</span>
+                    </button>
+                  </div>
+                  <div className="aw-save-bar-group aw-save-bar-group--primary">
+                    {lastDownloadId && (
+                      <button type="button" className="aw-download-btn" onClick={downloadFixedEpub}>
+                        <Download size={14} strokeWidth={2.25} aria-hidden />
+                        <span>Download repaired EPUB</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="aw-save-btn"
+                      onClick={handleSaveAndRevalidate}
+                      disabled={loadingFix || !repairSessionId}
+                    >
+                      {loadingFix ? (
+                        <>
+                          <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                          <span>Applying &amp; Re-validating…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save size={14} strokeWidth={2.25} aria-hidden />
+                          <span>Save Changes &amp; Re-validate</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {!hasIssues && checkDone && (
-            <div className="aw-save-bar" style={{ flexWrap: 'wrap', gap: 10 }}>
-              <button
-                type="button"
-                className="aw-view-report-link"
-                onClick={handleDeterministicAutoFix}
-                disabled={busy || !repairSessionId || (checkerPageLayout && !prefAutoFix)}
-                style={{
-                  border: '1px solid #0d9488',
-                  borderRadius: 8,
-                  padding: '8px 14px',
-                  fontWeight: 600,
-                  color: '#0f766e',
-                  background: '#f0fdfa',
-                }}
-              >
-                {loadingAutoFix ? '⏳ Auto-fix…' : '⚙ Auto-fix (full safe pass)'}
-              </button>
-              {autoFixSummary && (
-                <span style={{ fontSize: '0.88rem', color: '#0f766e', flex: '1 1 100%' }}>{autoFixSummary}</span>
-              )}
-              {lastDownloadId && (
-                <button
-                  type="button"
-                  className="aw-download-btn"
-                  onClick={downloadFixedEpub}
-                  style={{ border: 'none', cursor: 'pointer' }}
-                >
-                  ⬇ Download repaired EPUB
-                </button>
-              )}
-              <button
-                type="button"
-                className="aw-download-report-link"
-                style={{ border: 'none', cursor: pdfLoading ? 'wait' : 'pointer' }}
-                onClick={downloadPdf}
-                disabled={pdfLoading}
-              >
-                ⬇ Report (PDF)
-              </button>
-              <button
-                type="button"
-                className="aw-view-report-link"
-                style={{ border: '1px solid #d1d5db', borderRadius: 6, padding: '6px 12px' }}
-                onClick={downloadJson}
-              >
-                ⬇ JSON
-              </button>
+            <div className="aw-save-bar">
+              <div className="aw-save-bar-leading">
+                {autoFixSummary ? (
+                  <p className="aw-save-bar-hint">{autoFixSummary}</p>
+                ) : (
+                  <div className="aw-save-bar-status aw-save-bar-status--success">
+                    <CheckCircle2 size={16} strokeWidth={2.25} aria-hidden />
+                    <span>EPUB passed validation — optional auto-fix or export below</span>
+                  </div>
+                )}
+              </div>
+              <div className="aw-save-bar-actions">
+                <div className="aw-save-bar-group">
+                  <button
+                    type="button"
+                    className="aw-save-bar-btn--autofix"
+                    onClick={handleDeterministicAutoFix}
+                    disabled={busy || !repairSessionId || (checkerPageLayout && !prefAutoFix)}
+                  >
+                    {loadingAutoFix ? (
+                      <>
+                        <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                        <span>Auto-fixing…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wrench size={14} strokeWidth={2.25} aria-hidden />
+                        <span>Auto-fix (full safe pass)</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <div className="aw-save-bar-group" aria-label="Export reports">
+                  <button
+                    type="button"
+                    className="aw-download-report-link"
+                    onClick={downloadPdf}
+                    disabled={pdfLoading}
+                  >
+                    {pdfLoading ? (
+                      <>
+                        <Loader2 size={14} strokeWidth={2.25} className="aw-icon-spin" aria-hidden />
+                        <span>Generating PDF…</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileText size={14} strokeWidth={2.25} aria-hidden />
+                        <span>Report (PDF)</span>
+                      </>
+                    )}
+                  </button>
+                  <button type="button" className="aw-view-report-link" onClick={downloadJson}>
+                    <FileJson size={14} strokeWidth={2.25} aria-hidden />
+                    <span>JSON</span>
+                  </button>
+                </div>
+                {lastDownloadId && (
+                  <div className="aw-save-bar-group aw-save-bar-group--primary">
+                    <button type="button" className="aw-download-btn" onClick={downloadFixedEpub}>
+                      <Download size={14} strokeWidth={2.25} aria-hidden />
+                      <span>Download repaired EPUB</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

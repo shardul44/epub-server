@@ -117,6 +117,12 @@ const EpubCheckerPage = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    if (!uploadedFile) return;
+    const timer = setTimeout(() => setUploadedFile(null), 1000);
+    return () => clearTimeout(timer);
+  }, [uploadedFile]);
+
   const closeModals = () => {
     setHistoryOpen(false);
     setAboutOpen(false);
