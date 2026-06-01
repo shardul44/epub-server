@@ -86,7 +86,75 @@ function repairInteractiveVideoParams(params) {
   if (!iv.assets || typeof iv.assets !== 'object') {
     iv.assets = { interactions: [], bookmarks: [], endscreens: [] };
   }
+  if (!iv.summary || typeof iv.summary !== 'object') {
+    iv.summary = structuredClone(H5P_CONTENT_PARAM_DEFAULTS['H5P.InteractiveVideo'].interactiveVideo.summary);
+  } else {
+    const summary = { ...iv.summary };
+    let task = summary.task;
+    if (!task || typeof task !== 'object' || typeof task.library !== 'string') {
+      task = structuredClone(H5P_CONTENT_PARAM_DEFAULTS['H5P.InteractiveVideo'].interactiveVideo.summary.task);
+    } else {
+      task = {
+        ...task,
+        params:
+          task.params && typeof task.params === 'object'
+            ? repairKnownNestedLibraryParams(task.library, task.params)
+            : repairKnownNestedLibraryParams(task.library, {}),
+        metadata: task.metadata && typeof task.metadata === 'object' ? task.metadata : {},
+        subContentId: task.subContentId ?? null
+      };
+    }
+    if (summary.displayAt == null) summary.displayAt = 3;
+    summary.task = task;
+    iv.summary = summary;
+  }
   out.interactiveVideo = iv;
+  return out;
+}
+
+/** Branching Scenario content nodes need nested BranchingQuestion params. */
+function repairBranchingScenarioParams(params) {
+  const out = { ...params };
+  if (!out.branchingScenario || typeof out.branchingScenario !== 'object') {
+    out.branchingScenario = structuredClone(H5P_CONTENT_PARAM_DEFAULTS['H5P.BranchingScenario'].branchingScenario);
+    return out;
+  }
+  const bs = { ...out.branchingScenario };
+  if (!Array.isArray(bs.content) || bs.content.length === 0) {
+    bs.content = structuredClone(H5P_CONTENT_PARAM_DEFAULTS['H5P.BranchingScenario'].branchingScenario.content);
+  } else {
+    bs.content = bs.content.map((item, index) => {
+      if (!item || typeof item !== 'object') return item;
+      const row = { ...item };
+      let type = row.type;
+      if (!type || typeof type !== 'object' || typeof type.library !== 'string') {
+        type = structuredClone(H5P_CONTENT_PARAM_DEFAULTS['H5P.BranchingScenario'].branchingScenario.content[0].type);
+      } else if (type.library.startsWith('H5P.BranchingQuestion')) {
+        type = {
+          ...type,
+          params: repairKnownNestedLibraryParams(
+            type.library,
+            type.params && typeof type.params === 'object' ? type.params : {}
+          ),
+          metadata: type.metadata && typeof type.metadata === 'object' ? type.metadata : {},
+          subContentId: type.subContentId ?? null
+        };
+      } else {
+        type = {
+          ...type,
+          params: type.params && typeof type.params === 'object' ? type.params : {},
+          metadata: type.metadata && typeof type.metadata === 'object' ? type.metadata : {},
+          subContentId: type.subContentId ?? null
+        };
+      }
+      row.type = type;
+      return row;
+    });
+  }
+  if (!String(bs.title ?? '').trim()) {
+    bs.title = 'Branching Scenario';
+  }
+  out.branchingScenario = bs;
   return out;
 }
 
@@ -162,6 +230,7 @@ function isEmptyDefaultSlot(value) {
   if (value === undefined || value === null) return true;
   if (typeof value === 'string') return value.trim() === '';
   if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object' && Object.keys(value).length === 0) return true;
   return false;
 }
 
@@ -187,6 +256,81 @@ function deepMergeDefaults(target, source) {
     }
   }
   return out;
+}
+
+const NESTED_TEXT_LIBRARY_DEFAULT = '<p>Add your content here.</p>';
+
+/** H5P.Summary nested in Interactive Video — editor reads `params.intro`. */
+export function defaultSummaryParams() {
+  return {
+    intro: 'Choose the correct statement.',
+    summaries: [
+      {
+        summary: ['<p>Correct statement</p>', '<p>Incorrect statement</p>']
+      }
+    ],
+    solvedLabel: 'Progress:',
+    scoreLabel: 'Wrong answers:',
+    resultLabel: 'Your result',
+    labelCorrect: 'Correct.',
+    labelIncorrect: 'Incorrect! Please try again.',
+    alternativeIncorrectLabel: 'Incorrect',
+    labelCorrectAnswers: 'Correct answers.',
+    tipButtonLabel: 'Show tip',
+    scoreBarLabel: 'You got :num out of :total points',
+    progressText: 'Progress :num of :total'
+  };
+}
+
+/** H5P.BranchingQuestion nested in Branching Scenario — editor reads `params.branchingQuestion`. */
+export function defaultBranchingQuestionParams() {
+  return {
+    branchingQuestion: {
+      question: '<p>What would you like to do?</p>',
+      alternatives: [
+        {
+          text: 'Option A',
+          nextContentId: -1,
+          feedback: { title: '', subtitle: '', endScreenScore: 0 }
+        },
+        {
+          text: 'Option B',
+          nextContentId: -1,
+          feedback: { title: '', subtitle: '', endScreenScore: 0 }
+        }
+      ]
+    }
+  };
+}
+
+function repairKnownNestedLibraryParams(library, params) {
+  if (typeof library !== 'string' || !library) return params ?? {};
+  const base = params && typeof params === 'object' ? { ...params } : {};
+  if (library.startsWith('H5P.Summary')) {
+    return deepMergeDefaults(base, defaultSummaryParams());
+  }
+  if (library.startsWith('H5P.BranchingQuestion')) {
+    return deepMergeDefaults(base, defaultBranchingQuestionParams());
+  }
+  if (library.startsWith('H5P.AdvancedText') || library.startsWith('H5P.Text')) {
+    if (!String(base.text ?? '').trim()) {
+      base.text = NESTED_TEXT_LIBRARY_DEFAULT;
+    }
+    return base;
+  }
+  return base;
+}
+
+function defaultAccordionPanel(title = 'Section 1') {
+  return {
+    title,
+    content: {
+      library: 'H5P.AdvancedText 1.1',
+      params: { text: NESTED_TEXT_LIBRARY_DEFAULT },
+      metadata: {},
+      subContentId: null
+    }
+  };
 }
 
 /** @type {Record<string, Record<string, unknown>>} */
@@ -246,21 +390,20 @@ export const H5P_CONTENT_PARAM_DEFAULTS = {
           defaultTrackLabel: ''
         }
       },
-      assets: { interactions: [], bookmarks: [], endscreens: [] }
+      assets: { interactions: [], bookmarks: [], endscreens: [] },
+      summary: {
+        task: {
+          library: 'H5P.Summary 1.10',
+          params: defaultSummaryParams(),
+          metadata: {},
+          subContentId: null
+        },
+        displayAt: 3
+      }
     }
   },
   'H5P.Accordion': {
-    panels: [
-      {
-        title: 'Section 1',
-        content: {
-          library: 'H5P.AdvancedText 1.1',
-          params: { text: '<p>Add your content here.</p>' },
-          metadata: {},
-          subContentId: null
-        }
-      }
-    ]
+    panels: [defaultAccordionPanel()]
   },
   'H5P.Flashcards': {
     description: 'Study the cards and type the correct answer.',
@@ -319,7 +462,21 @@ export const H5P_CONTENT_PARAM_DEFAULTS = {
   },
   'H5P.BranchingScenario': {
     branchingScenario: {
-      title: 'Branching Scenario'
+      title: 'Branching Scenario',
+      content: [
+        {
+          type: {
+            library: 'H5P.BranchingQuestion 1.0',
+            params: defaultBranchingQuestionParams(),
+            metadata: {},
+            subContentId: null
+          },
+          showContentTitle: false,
+          proceedButtonText: 'Proceed',
+          forceContentFinished: 'useBehavioural',
+          nextContentId: 0
+        }
+      ]
     }
   }
 };
@@ -348,6 +505,49 @@ export const H5P_CONTENT_AUTHORING_HINTS = {
 
 export function getAuthoringHint(machineName) {
   return H5P_CONTENT_AUTHORING_HINTS[machineName] || null;
+}
+
+/** Accordion panels need title + nested AdvancedText with `params.text` or the editor crashes. */
+function repairAccordionParams(params) {
+  const out = { ...params };
+  if (!Array.isArray(out.panels)) {
+    out.panels = [defaultAccordionPanel()];
+    return out;
+  }
+
+  out.panels = out.panels.map((panel, index) => {
+    if (!panel || typeof panel !== 'object') return panel;
+    const p = { ...panel };
+    if (!String(p.title ?? '').trim()) {
+      p.title = `Section ${index + 1}`;
+    }
+
+    let lib = p.content;
+    if (!lib || typeof lib !== 'object' || typeof lib.library !== 'string') {
+      lib = structuredClone(defaultAccordionPanel(p.title).content);
+    } else {
+      lib = {
+        ...lib,
+        params: lib.params && typeof lib.params === 'object' ? { ...lib.params } : {},
+        metadata: lib.metadata && typeof lib.metadata === 'object' ? lib.metadata : {},
+        subContentId: lib.subContentId ?? null
+      };
+      if (
+        (lib.library.startsWith('H5P.AdvancedText') || lib.library.startsWith('H5P.Text')) &&
+        !String(lib.params?.text ?? '').trim()
+      ) {
+        lib.params.text = NESTED_TEXT_LIBRARY_DEFAULT;
+      }
+    }
+    p.content = lib;
+    return p;
+  });
+
+  if (out.panels.length === 0) {
+    out.panels = [defaultAccordionPanel()];
+  }
+
+  return out;
 }
 
 export function mergeContentTypeParamDefaults(machineName, params) {
@@ -382,6 +582,10 @@ export function repairContentParamsForLibrary(machineName, params) {
       return repairImageHotspotsParams(out);
     case 'H5P.Flashcards':
       return repairFlashcardsParams(out);
+    case 'H5P.Accordion':
+      return repairAccordionParams(out);
+    case 'H5P.BranchingScenario':
+      return repairBranchingScenarioParams(out);
     default:
       return out;
   }
@@ -409,10 +613,11 @@ export function repairNestedLibraryMetadata(node) {
   if (typeof node.library === 'string' && node.library) {
     const fixed = {
       ...node,
-      params: node.params != null && typeof node.params === 'object' ? node.params : {},
+      params: node.params != null && typeof node.params === 'object' ? { ...node.params } : {},
       metadata: node.metadata != null && typeof node.metadata === 'object' ? node.metadata : {},
       subContentId: node.subContentId ?? null
     };
+    fixed.params = repairKnownNestedLibraryParams(fixed.library, fixed.params);
     fixed.params = repairNestedLibraryMetadata(fixed.params);
     return fixed;
   }
