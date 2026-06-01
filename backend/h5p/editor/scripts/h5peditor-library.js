@@ -363,6 +363,10 @@ ns.Library.prototype.loadLibrary = function (libraryName, preserveParams) {
     }
 
     that.currentLibrary = libraryName;
+
+    if (!that.params || typeof that.params !== 'object') {
+      that.params = {};
+    }
     that.params.library = libraryName;
 
     if (preserveParams === undefined || !preserveParams) {
@@ -374,7 +378,10 @@ ns.Library.prototype.loadLibrary = function (libraryName, preserveParams) {
     if (that.params.subContentId === undefined) {
       that.params.subContentId = H5P.createUUID();
     }
-    if (that.params.metadata === undefined) {
+    if (!that.params.params || typeof that.params.params !== 'object') {
+      that.params.params = {};
+    }
+    if (that.params.metadata == null || typeof that.params.metadata !== 'object') {
       that.params.metadata = {};
     }
 
@@ -388,6 +395,9 @@ ns.Library.prototype.loadLibrary = function (libraryName, preserveParams) {
     ancestor.addLanguages(library.uberName, ns.libraryCache[library.uberName].languages);
 
     // Store selected Content Type title in metadata for Copyright usage
+    if (that.params.metadata == null || typeof that.params.metadata !== 'object') {
+      that.params.metadata = {};
+    }
     that.params.metadata.contentType = library.title;
 
     // Add metadata form for subcontent

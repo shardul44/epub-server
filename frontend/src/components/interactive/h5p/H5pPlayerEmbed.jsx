@@ -5,14 +5,37 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import { defineElements } from '@lumieducation/h5p-webcomponents';
 import { h5pService, getH5pBaseUrl } from '../../../services/h5pService';
+import {
+  installH5pAuthGetPathPatch,
+  setH5pAuthCookie,
+  clearH5pAuthCookie,
+  syncH5pAuthToken
+} from '../../../utils/h5pAuthGetPath';
+import { installH5pPlayerInitPatch } from '../../../utils/h5pPlayerInitPatch';
+import { installH5pGlobalInitGuard } from '../../../utils/h5pGlobalInitGuard';
 
 defineElements('h5p-player');
+installH5pPlayerInitPatch();
+installH5pGlobalInitGuard();
 
 export default function H5pPlayerEmbed({ h5pContentId, title = 'Interactive content', minHeight = 320 }) {
   const ref = useRef(null);
   const [error, setError] = useState('');
   const [playbackWarning, setPlaybackWarning] = useState('');
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const clearGetPath = installH5pAuthGetPathPatch();
+    const token = localStorage.getItem('token');
+    if (token) {
+      syncH5pAuthToken(token);
+      setH5pAuthCookie(token);
+    }
+    return () => {
+      clearGetPath?.();
+      clearH5pAuthCookie();
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,9 +59,11 @@ export default function H5pPlayerEmbed({ h5pContentId, title = 'Interactive cont
       return data.model;
     };
 
-    const onLoaded = () => {
+    const finishLoading = () => {
       if (!cancelled) setLoading(false);
     };
+
+    const onLoaded = finishLoading;
     const onError = () => {
       if (!cancelled) {
         setError('Unable to load H5P player content.');
@@ -48,13 +73,31 @@ export default function H5pPlayerEmbed({ h5pContentId, title = 'Interactive cont
 
     el.addEventListener('initialized', onLoaded);
     el.addEventListener('xAPI', onLoaded);
-    el.addEventListener('load-error', onError);
+
+    const timeoutId = window.setTimeout(finishLoading, 15000);
+
+    let observer;
+    const observePlayerDom = () => {
+      const root = el.shadowRoot || el;
+      if (!root) return;
+      observer = new MutationObserver(() => {
+        if (root.querySelector('.h5p-content, .h5p-iframe-wrapper')) {
+          finishLoading();
+        }
+      });
+      observer.observe(root, { childList: true, subtree: true });
+      if (root.querySelector('.h5p-content, .h5p-iframe-wrapper')) {
+        finishLoading();
+      }
+    };
+    observePlayerDom();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
+      observer?.disconnect();
       el.removeEventListener('initialized', onLoaded);
       el.removeEventListener('xAPI', onLoaded);
-      el.removeEventListener('load-error', onError);
     };
   }, [h5pContentId]);
 
@@ -73,17 +116,29 @@ export default function H5pPlayerEmbed({ h5pContentId, title = 'Interactive cont
           {playbackWarning}
         </Alert>
       ) : null}
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={32} />
-        </Box>
-      )}
       {error ? (
         <Typography color="error" variant="body2">
           {error}
         </Typography>
       ) : null}
-      <h5p-player ref={ref} content-id={String(h5pContentId)} h5p-url={getH5pBaseUrl()} style={{ minHeight }} />
+      <Box sx={{ position: 'relative', minHeight }}>
+        {loading ? (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(255,255,255,0.75)'
+            }}
+          >
+            <CircularProgress size={32} />
+          </Box>
+        ) : null}
+        <h5p-player ref={ref} content-id={String(h5pContentId)} h5p-url={getH5pBaseUrl()} style={{ minHeight }} />
+      </Box>
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
         {title}
       </Typography>

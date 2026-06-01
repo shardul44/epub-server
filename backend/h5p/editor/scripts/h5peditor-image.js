@@ -219,6 +219,12 @@ ns.widgets.image.prototype.addFile = function () {
   }
 
   var source = H5P.getPath(this.params.path, H5PEditor.contentId);
+  if (H5P.appendAuthTokenToUrl) {
+    source = H5P.appendAuthTokenToUrl(source);
+  }
+  else if (ns.appendAuthToUrl) {
+    source = ns.appendAuthToUrl(source);
+  }
   var altText = (this.field.label === undefined ? '' : this.field.label);
   var fileHtmlString = '<a href="#" id="' + this.id + '" title="' + ns.t('core', 'changeFile') + '" class="thumbnail"';
   if (this.field.description !== undefined) {

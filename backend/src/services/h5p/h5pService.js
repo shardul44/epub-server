@@ -1,5 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createReadStream } from 'fs';
 import fs from 'fs/promises';
 import { createRequire } from 'module';
 import { v4 as uuidv4 } from 'uuid';
@@ -102,6 +103,7 @@ function applyPublicH5pConfig(config, publicBase) {
   config.librariesUrl = '/libraries';
   config.contentFilesUrl = '/content';
   config.contentFilesUrlUserContent = '/content';
+  config.contentFilesUrlPlayerOverride = `${base}/content/{{contentId}}`;
   config.contentUserDataUrl = '/contentUserData';
   config.paramsUrl = '/params';
   config.ajaxUrl = '/ajax';
@@ -150,12 +152,18 @@ export function getH5pPaths() {
   return { H5P_CORE, H5P_EDITOR_CLIENT, H5P_LIBRARIES, H5P_BASE };
 }
 
+function extractJwtFromReq(req) {
+  const header = req.headers?.authorization;
+  return (
+    (header?.startsWith('Bearer ') ? header.slice(7).trim() : null) ||
+    (typeof req.query?.token === 'string' ? req.query.token.trim() : null) ||
+    null
+  );
+}
+
 /** Append JWT for H5P core AJAX (script tags cannot send Authorization headers). */
 function enrichModelWithAuthToken(model, req) {
-  const header = req.headers?.authorization;
-  const token =
-    (header?.startsWith('Bearer ') ? header.slice(7).trim() : null) ||
-    (typeof req.query?.token === 'string' ? req.query.token.trim() : null);
+  const token = extractJwtFromReq(req);
   if (!token) return model;
 
   const appendToken = (url) => {
@@ -172,15 +180,128 @@ function enrichModelWithAuthToken(model, req) {
   const { integration } = model;
   if (!integration) return model;
 
+  integration.authToken = token;
+  integration.user = integration.user || {};
+  integration.user.jwt = token;
+
   if (integration.ajaxPath) integration.ajaxPath = appendToken(integration.ajaxPath);
   if (integration.editor?.ajaxPath) integration.editor.ajaxPath = appendToken(integration.editor.ajaxPath);
-  if (integration.editor?.filesPath) integration.editor.filesPath = appendToken(integration.editor.filesPath);
+  // Do NOT append token to editor.filesPath — H5P concatenates relative paths onto it via getPath.
   if (integration.ajax?.setFinished) integration.ajax.setFinished = appendToken(integration.ajax.setFinished);
   if (integration.ajax?.contentUserData) {
     integration.ajax.contentUserData = appendToken(integration.ajax.contentUserData);
   }
 
   return model;
+}
+
+function isAbsoluteHttpUrl(s) {
+  return typeof s === 'string' && /^https?:\/\//i.test(s);
+}
+
+/** Turn relative H5P media paths into absolute URLs with ?token= for <img> and getPath. */
+function signH5pRelativeMediaPath(relPath, contentId, publicBase, token) {
+  if (!relPath || !token || isAbsoluteHttpUrl(relPath) || relPath.includes('token=')) {
+    return relPath;
+  }
+  const isTmp = relPath.endsWith('#tmp');
+  const pathPart = (isTmp ? relPath.slice(0, -4) : relPath).replace(/^\//, '');
+  const base = publicBase.replace(/\/$/, '');
+  const prefix = isTmp ? `${base}/temp-files` : `${base}/content/${contentId}`;
+  const signed = `${prefix}/${pathPart}?token=${encodeURIComponent(token)}`;
+  return isTmp ? `${signed}#tmp` : signed;
+}
+
+function signH5pMediaUrlsInParams(node, contentId, publicBase, token) {
+  if (!node || !token) return;
+  if (Array.isArray(node)) {
+    for (const item of node) signH5pMediaUrlsInParams(item, contentId, publicBase, token);
+    return;
+  }
+  if (typeof node !== 'object') return;
+
+  for (const key of Object.keys(node)) {
+    const val = node[key];
+    if (key === 'path' && typeof val === 'string' && val && !isAbsoluteHttpUrl(val)) {
+      node[key] = signH5pRelativeMediaPath(val, contentId, publicBase, token);
+    } else if (val && typeof val === 'object') {
+      signH5pMediaUrlsInParams(val, contentId, publicBase, token);
+    }
+  }
+}
+
+function signH5pMediaUrlsInPlayerModel(model, contentId, req) {
+  const token = extractJwtFromReq(req);
+  if (!token || !model?.integration?.contents) return model;
+
+  const cid = `cid-${contentId}`;
+  const entry = model.integration.contents[cid];
+  if (!entry?.jsonContent) return model;
+
+  const publicBase = model.integration.url || resolvePublicH5pBaseUrl(req);
+  try {
+    const params = JSON.parse(entry.jsonContent);
+    signH5pMediaUrlsInParams(params, contentId, publicBase, token);
+    entry.jsonContent = JSON.stringify(params);
+  } catch (e) {
+    console.warn('[H5P] signH5pMediaUrlsInPlayerModel:', e.message);
+  }
+  return model;
+}
+
+/** H5P ships CKEditor in both /editor/ckeditor and H5P.CKEditor — loading both breaks the editor. */
+function dedupeH5pCKEditorScripts(scripts) {
+  if (!Array.isArray(scripts)) return scripts;
+  const withoutEditorBundle = scripts.filter((s) => !/\/editor\/ckeditor\//i.test(String(s)));
+  const ckeditorUrls = withoutEditorBundle.filter((s) => /ckeditor\.js/i.test(String(s)));
+  if (ckeditorUrls.length <= 1) return withoutEditorBundle;
+  const keep =
+    ckeditorUrls.find((s) => /H5P\.CKEditor/i.test(String(s))) ||
+    ckeditorUrls[0];
+  return withoutEditorBundle.filter((s) => !/ckeditor\.js/i.test(String(s)) || s === keep);
+}
+
+function prepareH5pEditorAssets(integration) {
+  const assets = integration?.editor?.assets;
+  if (!assets) return;
+  if (Array.isArray(assets.js)) assets.js = dedupeH5pCKEditorScripts(assets.js);
+  if (Array.isArray(assets.scripts)) assets.scripts = dedupeH5pCKEditorScripts(assets.scripts);
+}
+
+export function buildAuthGetPathScript(token) {
+  const safeToken = JSON.stringify(token);
+  return `(function(){var TOKEN=${safeToken};window.__H5P_AUTH_TOKEN=TOKEN;if(window.H5PIntegration){window.H5PIntegration.authToken=TOKEN;}function patch(h5p){if(!h5p||typeof h5p.getPath!=="function"||h5p.__authGetPathPatched)return;var o=h5p.getPath.bind(h5p);h5p.getPath=function(p,c){var u=o(p,c);if(u&&typeof u==="string"&&u.indexOf("token=")===-1){var hi=u.indexOf("#"),base=hi===-1?u:u.substring(0,hi),hash=hi===-1?"":u.substring(hi);u=base+(base.indexOf("?")===-1?"?":"&")+"token="+encodeURIComponent(TOKEN)+hash;}return u;};h5p.__authGetPathPatched=1;}patch(window.H5P);var cur=window.H5P;try{Object.defineProperty(window,"H5P",{configurable:true,get:function(){return cur;},set:function(v){cur=v;patch(v);}});}catch(e){}var n=0;var t=setInterval(function(){patch(window.H5P);if(window.H5PIntegration&&!window.H5PIntegration.authToken){window.H5PIntegration.authToken=TOKEN;}if(++n>400)clearInterval(t);},50);})();`;
+}
+
+function injectH5pAuthPatchScript(model, req) {
+  const token = extractJwtFromReq(req);
+  if (!token || !Array.isArray(model.scripts)) return model;
+  const publicBase = resolvePublicH5pBaseUrl(req).replace(/\/$/, '');
+  const patchUrl = `${publicBase}/auth-getpath.js?token=${encodeURIComponent(token)}`;
+  if (!model.scripts.some((s) => String(s).includes('auth-getpath.js'))) {
+    model.scripts = [patchUrl, ...model.scripts];
+  }
+  return model;
+}
+
+function prepareH5pClientModel(model, req, contentId) {
+  let out = enrichModelWithAuthToken(model, req);
+  if (out.integration) prepareH5pEditorAssets(out.integration);
+  // Player uses H5P.getPath + auth cookie/query token; do not bake signed URLs into jsonContent.
+  if (Array.isArray(out.scripts)) {
+    out.scripts = dedupeH5pCKEditorScripts(out.scripts);
+    out = injectH5pAuthPatchScript(out, req);
+  }
+  return out;
+}
+
+/** Player embeds in the app: iframe mode avoids multi-instance div init bugs in h5p-webcomponents. */
+function preparePlayerModelForEmbed(model, req, contentId) {
+  const enriched = prepareH5pClientModel(model, req, contentId);
+  if (Array.isArray(enriched.embedTypes) && enriched.embedTypes.includes('iframe')) {
+    enriched.embedTypes = ['iframe'];
+  }
+  return enriched;
 }
 
 /** Maps JWT user to H5P IUser shape without losing auth fields on req.authUser */
@@ -323,13 +444,144 @@ async function resolveInstalledLibraryUberName(editor, machineName, user) {
   return ensureLibraryInstalled(editor, machineName, user);
 }
 
-function normalizeContentParams(params, libraryName = null) {
+function h5pTempFileDiskPath(user, filePath) {
+  return path.join(H5P_TEMP, String(user?.id ?? 'anonymous'), filePath);
+}
+
+async function h5pTempFileExists(editor, filePath, user) {
+  try {
+    if (await editor.temporaryFileManager.fileExists(filePath, user)) return true;
+  } catch {
+    /* fall through to disk */
+  }
+  try {
+    await fs.access(h5pTempFileDiskPath(user, filePath));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function openH5pTempFileStream(editor, filePath, user) {
+  if (await editor.temporaryFileManager.fileExists(filePath, user)) {
+    return editor.temporaryFileManager.getFileStream(filePath, user);
+  }
+  const diskPath = h5pTempFileDiskPath(user, filePath);
+  await fs.access(diskPath);
+  return createReadStream(diskPath);
+}
+
+function collectH5pMediaPaths(node, paths = []) {
+  if (!node || typeof node !== 'object') return paths;
+  if (Array.isArray(node)) {
+    for (const item of node) collectH5pMediaPaths(item, paths);
+    return paths;
+  }
+  if (typeof node.path === 'string' && node.path && !/^https?:\/\//i.test(node.path)) {
+    paths.push(node.path.replace(/#tmp$/, ''));
+  }
+  for (const val of Object.values(node)) {
+    if (val && typeof val === 'object') collectH5pMediaPaths(val, paths);
+  }
+  return paths;
+}
+
+async function h5pContentMediaExists(editor, contentId, filePath, user) {
+  try {
+    if (await editor.contentManager.contentFileExists(contentId, filePath, user)) return true;
+  } catch {
+    /* disk fallback */
+  }
+  try {
+    await fs.access(path.join(H5P_CONTENT, String(contentId), filePath));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function getMissingH5pMediaWarnings(editor, contentId, params, user) {
+  const relPaths = [...new Set(collectH5pMediaPaths(params))];
+  const missing = [];
+  for (const filePath of relPaths) {
+    if (!(await h5pContentMediaExists(editor, contentId, filePath, user))) {
+      missing.push(filePath);
+    }
+  }
+  if (!missing.length) return [];
+  return [
+    {
+      code: 'missing-media',
+      message:
+        'Some uploaded images or files did not save to storage. Open this activity in the editor and upload again.'
+    }
+  ];
+}
+
+/** Re-mark temp uploads with #tmp so ContentStorer copies them into content storage on save. */
+async function prepareH5pParamsForStorage(editor, contentId, parameters, uberName, user) {
+  if (!parameters || !uberName) return parameters;
+  const libraryName = H5P.LibraryName.fromUberName(uberName, { useWhitespace: true });
+  const refs = await editor.contentStorer.contentFileScanner.scanForFiles(parameters, libraryName);
+  for (const ref of refs) {
+    if (ref.temporary) continue;
+    let inContent = false;
+    if (contentId) {
+      inContent = await h5pContentMediaExists(editor, contentId, ref.filePath, user);
+    }
+    if (!inContent && (await h5pTempFileExists(editor, ref.filePath, user))) {
+      ref.context.params.path = `${ref.filePath}#tmp`;
+    }
+  }
+  return parameters;
+}
+
+async function copyMissingH5pFilesToContent(editor, contentId, parameters, uberName, user) {
+  if (!contentId || !parameters || !uberName) return;
+  const libraryName = H5P.LibraryName.fromUberName(uberName, { useWhitespace: true });
+  const refs = await editor.contentStorer.contentFileScanner.scanForFiles(parameters, libraryName);
+  for (const ref of refs) {
+    if (!ref.filePath) continue;
+    if (await h5pContentMediaExists(editor, contentId, ref.filePath, user)) continue;
+    if (!(await h5pTempFileExists(editor, ref.filePath, user))) continue;
+    const stream = await openH5pTempFileStream(editor, ref.filePath, user);
+    try {
+      await editor.contentManager.addContentFile(contentId, ref.filePath, stream, user);
+    } finally {
+      if (stream?.close) stream.close();
+    }
+  }
+}
+
+async function saveH5pContentToStorage(editor, contentId, parameters, metadata, uberName, user) {
+  await prepareH5pParamsForStorage(editor, contentId, parameters, uberName, user);
+  const saved = await editor.saveOrUpdateContentReturnMetaData(
+    contentId,
+    parameters,
+    metadata,
+    uberName,
+    user
+  );
+  const storageId = String(saved.id);
+  await copyMissingH5pFilesToContent(editor, storageId, parameters, uberName, user);
+  try {
+    const fromStorage = await editor.contentManager.getContentParameters(storageId, user);
+    if (fromStorage && typeof fromStorage === 'object') {
+      saved.parameters = fromStorage;
+    }
+  } catch {
+    saved.parameters = parameters;
+  }
+  return saved;
+}
+
+function normalizeContentParams(params, libraryName = null, { forSave = false } = {}) {
   if (params == null) return {};
   if (typeof params === 'object' && params.params != null && typeof params.params === 'object') {
-    return normalizeContentParams(params.params, libraryName);
+    return normalizeContentParams(params.params, libraryName, { forSave });
   }
   if (libraryName) {
-    return repairStoredContentParams(libraryName, params);
+    return repairStoredContentParams(libraryName, params, null, { forSave });
   }
   const out = { ...params };
   if (Array.isArray(out.questions)) {
@@ -362,7 +614,7 @@ async function createDraftForContentType(editor, machineName, language, user, re
   };
 
   // Must be `undefined` (not `null`) — H5P treats null as an existing content id.
-  const h5pId = await editor.saveOrUpdateContent(undefined, defaultParams, meta, uberName, user);
+  const h5pId = (await saveH5pContentToStorage(editor, undefined, defaultParams, meta, uberName, user)).id;
 
   const row = await H5pContentModel.create({
     organizationId: req.user?.organizationId ?? req.user?.organization_id,
@@ -398,7 +650,7 @@ async function buildEditorModelForClient(editor, contentId, language, user, req)
   model.metadata = content.params?.metadata ?? content.h5p;
   model.params = normalizeContentParams(content.params?.params ?? {}, lib.machineName);
 
-  return enrichModelWithAuthToken(model, req);
+  return prepareH5pClientModel(model, req, contentId);
 }
 
 export async function installLibrary(req, machineName) {
@@ -432,7 +684,7 @@ export async function createContent(req, body) {
     uberName = await ensureLibraryInstalled(editor, lib.machineName, user);
   }
   const raw = params ?? {};
-  const contentParams = normalizeContentParams(raw, lib.machineName);
+  const contentParams = normalizeContentParams(raw, lib.machineName, { forSave: true });
   const meta = {
     title: title || raw.metadata?.title || metadata.title || 'Untitled',
     defaultLanguage: metadata.defaultLanguage || raw.metadata?.defaultLanguage || 'en',
@@ -443,15 +695,10 @@ export async function createContent(req, body) {
     ...metadata
   };
 
-  const saved = await editor.saveOrUpdateContentReturnMetaData(
-    undefined,
-    contentParams,
-    meta,
-    uberName,
-    user
-  );
+  const saved = await saveH5pContentToStorage(editor, undefined, contentParams, meta, uberName, user);
   const h5pId = saved.id;
   const savedMeta = saved.metadata || meta;
+  const persistedParams = saved.parameters ?? contentParams;
 
   const row = await H5pContentModel.create({
     organizationId: req.user?.organizationId ?? req.user?.organization_id,
@@ -460,7 +707,7 @@ export async function createContent(req, body) {
     title: savedMeta.title || meta.title,
     libraryName: lib.machineName,
     mainLibraryVersion: `${lib.major}.${lib.minor}`,
-    contentJson: contentParams,
+    contentJson: persistedParams,
     metadataJson: { ...savedMeta, libraryUberName: uberName }
   });
 
@@ -489,7 +736,7 @@ export async function updateContent(req, id, body) {
   );
 
   const rawParams = params !== undefined ? params : row.content_json;
-  const contentParams = normalizeContentParams(rawParams, lib.machineName);
+  const contentParams = normalizeContentParams(rawParams, lib.machineName, { forSave: true });
   const mergedMeta = {
     ...(row.metadata_json || {}),
     ...(rawParams?.metadata || {}),
@@ -497,20 +744,22 @@ export async function updateContent(req, id, body) {
     title: title ?? row.title,
     mainLibrary: lib.machineName
   };
-  const saved = await editor.saveOrUpdateContentReturnMetaData(
+  const saved = await saveH5pContentToStorage(
+    editor,
     row.h5p_content_id,
     contentParams,
     mergedMeta,
     uberName,
     user
   );
+  const persistedParams = saved.parameters ?? contentParams;
 
   const updated = await H5pContentModel.update(row.id, {
     h5pContentId: String(saved.id ?? row.h5p_content_id),
     title: mergedMeta.title,
     libraryName: lib.machineName,
     mainLibraryVersion: `${lib.major}.${lib.minor}`,
-    contentJson: contentParams,
+    contentJson: persistedParams,
     metadataJson: { ...mergedMeta, libraryUberName: uberName }
   });
 
@@ -578,7 +827,7 @@ export async function getEditorModel(req, contentId, { machineName, language = '
     );
     if (contentParamsNeedRepair(row.library_name, row.content_json, fixed)) {
       const meta = { ...(row.metadata_json || {}), title: row.title, mainLibrary: row.library_name };
-      await editor.saveOrUpdateContent(h5pId, fixed, meta, uberName, user);
+      await saveH5pContentToStorage(editor, h5pId, fixed, meta, uberName, user);
       await H5pContentModel.update(row.id, { contentJson: fixed });
     }
   }
@@ -606,22 +855,24 @@ export async function saveEditorContent(req, id, { library, params, metadata }) 
     title: metadata?.title ?? row.title,
     mainLibrary: lib.machineName
   };
-  const contentParams = normalizeContentParams(params, lib.machineName);
+  const contentParams = normalizeContentParams(params, lib.machineName, { forSave: true });
 
-  const saved = await editor.saveOrUpdateContentReturnMetaData(
+  const saved = await saveH5pContentToStorage(
+    editor,
     row.h5p_content_id,
     contentParams,
     meta,
     uberName,
     user
   );
+  const persistedParams = saved.parameters ?? contentParams;
 
   const updated = await H5pContentModel.update(row.id, {
     h5pContentId: String(saved.id ?? row.h5p_content_id),
     title: saved.metadata?.title ?? meta.title,
     libraryName: lib.machineName,
     mainLibraryVersion: `${lib.major}.${lib.minor}`,
-    contentJson: contentParams,
+    contentJson: persistedParams,
     metadataJson: { ...meta, libraryUberName: uberName, draft: false }
   });
 
@@ -635,7 +886,12 @@ export async function getPlayerModel(req, contentId, { language = 'en' } = {}) {
   applyPublicH5pConfig(editor.config, resolvePublicH5pBaseUrl(req));
   await editor.config.save();
   const row = await resolveContentRow(contentId);
-  const h5pId = row?.h5p_content_id ?? String(contentId);
+  if (!row) {
+    const err = new Error('H5P content not found');
+    err.statusCode = 404;
+    throw err;
+  }
+  const h5pId = row.h5p_content_id ?? String(contentId);
   // H5PPlayer ctor is (libraryStorage, contentStorage, config).
   const player = new H5PPlayer(
     editor.libraryManager,
@@ -643,11 +899,18 @@ export async function getPlayerModel(req, contentId, { language = 'en' } = {}) {
     editor.config
   );
   player.setRenderer((model) => model);
-  const contentParams = normalizeContentParams(row?.content_json, row?.library_name);
-  const warnings = getContentPlaybackWarnings(row?.library_name, contentParams);
+  const contentParams = normalizeContentParams(row.content_json, row.library_name);
+  const uberName =
+    row.metadata_json?.libraryUberName ||
+    `${row.library_name} ${row.main_library_version || '1.0'}`;
+  await copyMissingH5pFilesToContent(editor, h5pId, contentParams, uberName, user);
+  const warnings = [
+    ...getContentPlaybackWarnings(row.library_name, contentParams),
+    ...(await getMissingH5pMediaWarnings(editor, h5pId, contentParams, user))
+  ];
 
   try {
-    const model = await player.render(h5pId, user, language);
+    const model = preparePlayerModelForEmbed(await player.render(h5pId, user, language), req, h5pId);
     return { contentId: h5pId, model, warnings };
   } catch (err) {
     // Some legacy rows can point to stale h5p_content_id values; rebuild once from DB JSON.
@@ -662,7 +925,8 @@ export async function getPlayerModel(req, contentId, { language = 'en' } = {}) {
       embedTypes: ['div', 'iframe'],
       defaultLanguage: language || 'en'
     };
-    const recreated = await editor.saveOrUpdateContentReturnMetaData(
+    const recreated = await saveH5pContentToStorage(
+      editor,
       undefined,
       normalizeContentParams(row.content_json, row.library_name),
       fallbackMeta,
@@ -673,7 +937,11 @@ export async function getPlayerModel(req, contentId, { language = 'en' } = {}) {
       h5pContentId: String(recreated.id),
       metadataJson: { ...fallbackMeta, libraryUberName: fallbackUberName }
     });
-    const model = await player.render(String(recreated.id), user, language);
+    const model = preparePlayerModelForEmbed(
+      await player.render(String(recreated.id), user, language),
+      req,
+      String(recreated.id)
+    );
     const repairedWarnings = getContentPlaybackWarnings(
       repaired.library_name,
       normalizeContentParams(repaired.content_json, repaired.library_name)
@@ -684,11 +952,14 @@ export async function getPlayerModel(req, contentId, { language = 'en' } = {}) {
 
 async function resolveContentRow(id) {
   const num = Number(id);
-  if (Number.isFinite(num) && num > 0) {
+  const byStorage = await H5pContentModel.findByH5pContentId(id);
+  if (byStorage) return byStorage;
+  // Large ids are H5P storage ids; small ids are usually h5p_contents.id (DB PK).
+  if (Number.isFinite(num) && num > 0 && num < 1_000_000) {
     const byPk = await H5pContentModel.findById(num);
     if (byPk) return byPk;
   }
-  return await H5pContentModel.findByH5pContentId(id);
+  return null;
 }
 
 function assertContentAccess(req, row) {

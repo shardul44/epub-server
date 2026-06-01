@@ -1,0 +1,216 @@
+/* Lock page scroll + full viewport width while Create/Edit is open (org-admin wide screens) */
+html.h5p-editor-dialog-open,
+html.h5p-editor-viewport-lock {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+html.h5p-editor-dialog-open body,
+html.h5p-editor-viewport-lock body {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box;
+}
+
+html.h5p-editor-viewport-lock .layout--org-admin,
+html.h5p-editor-viewport-lock .layout--user,
+html.h5p-editor-viewport-lock .main-content--org-admin,
+html.h5p-editor-viewport-lock .main-content--user {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+
+/* Full-screen MUI dialog — must cover the viewport, not only the app main column */
+.h5p-editor-mui-dialog.MuiDialog-root,
+.h5p-editor-mui-dialog-root.MuiDialog-root,
+body > .h5p-editor-mui-dialog.MuiDialog-root {
+  position: fixed !important;
+  inset: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 1400 !important;
+}
+
+.h5p-editor-mui-dialog.MuiDialog-root > .MuiBackdrop-root,
+.h5p-editor-mui-dialog-root.MuiDialog-root > .MuiBackdrop-root {
+  position: fixed !important;
+  inset: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.h5p-editor-mui-dialog-paper.MuiDialog-paper,
+.h5p-editor-mui-dialog .MuiDialog-paper {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+.h5p-editor-mui-dialog .MuiDialog-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* H5P overlays on body while the editor is open */
+body > .h5p-metadata-popup-overlay,
+body > .h5p-hub-lightbox,
+body > .h5p-filter-modal,
+body > .h5p-downloading-modal-overlay,
+body > .h5p-confirmation-dialog,
+body > .h5p-add-dialog.h5p-open,
+body > .h5p-confirmation-dialog-background {
+  position: fixed !important;
+  inset: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+/* Metadata popup may still mount under .h5peditor inside the dialog — force full viewport */
+.MuiDialog-root .h5p-metadata-popup-overlay,
+.h5p-metadata-popup-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  z-index: 1500 !important;
+}
+
+/* Host wrapper for H5P editor inside MUI Dialog */
+.h5p-editor-dialog-host {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.h5p-editor-dialog-host h5p-editor {
+  display: block;
+  width: 100%;
+}
+
+.h5p-editor-dialog-host .h5p-editor,
+.h5p-editor-dialog-host .h5p-create {
+  min-height: 360px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.h5p-editor-dialog-host .h5p-create > .h5p-editor {
+  width: 100%;
+  max-width: 100%;
+}
+
+.h5p-editor-dialog-host .h5peditor,
+.h5p-editor-dialog-host .h5p-editor-iframe,
+.h5p-editor-dialog-host iframe.h5p-editor-iframe {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 360px !important;
+  display: block !important;
+}
+
+.h5p-editor-dialog-host .h5p-editor-component-root,
+.h5p-editor-dialog-host .h5p-create {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 360px;
+}
+
+.h5p-editor-dialog-host .h5peditor-form.h5peditor-form-manager > .tree,
+.h5p-editor-dialog-host .h5peditor-form.h5peditor-form-manager > .common,
+.h5p-editor-dialog-host .h5peditor-form.h5peditor-form-manager > .field {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.h5p-editor-dialog-host .h5p-hub {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Content-type picker (hub) inside Create/Edit */
+.h5p-editor-mui-dialog .h5p-editor-dialog-host .h5p-hub,
+.h5p-editor-mui-dialog .h5p-editor-dialog-host .h5p-hub .h5p-hub-tab-panel,
+.h5p-editor-mui-dialog .h5p-editor-dialog-host .h5p-hub .h5p-hub-panel,
+.h5p-editor-mui-dialog .h5p-editor-dialog-host .h5p-hub .h5p-hub-content-list,
+.h5p-editor-mui-dialog .h5p-editor-dialog-host .h5p-hub [role="tabpanel"] {
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+}
+
+body > .h5p-hub-lightbox,
+body > .h5p-hub-lightbox .h5p-hub-lightbox-inner {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Orphan H5P overlays on body must not cover the app when no editor dialog is open */
+body:not(:has(.h5p-editor-mui-dialog)) .h5p-metadata-popup-overlay,
+body:not(:has(.MuiDialog-root)) .h5p-metadata-popup-overlay,
+body:not(:has(.MuiDialog-root)) .h5p-hub-lightbox,
+body:not(:has(.MuiDialog-root)) .h5p-filter-modal {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* MUI dialog stacking — keep H5P popups above the modal surface */
+.MuiDialog-root .h5peditor-selector-outer,
+.MuiDialog-root .h5p-editor-dialog.h5p-open,
+.MuiDialog-root .h5p-confirmation-dialog,
+.MuiDialog-root .h5p-hub-modal {
+  z-index: 1500;
+}
+
+/* Fallback if icon font CSS is slow: still show a visible upload control */
+.h5p-editor-dialog-host .file .add {
+  display: inline-block;
+  cursor: pointer;
+  padding: 0.5em 1.5em 0.5em 2.5em;
+  border: 1px solid #d0d0d1;
+  border-radius: 4px;
+  background: #fbfbfb;
+  color: #222;
+  font-weight: 600;
+  text-decoration: none;
+  margin: 8px 8px 8px 0;
+}
+
+.h5p-editor-dialog-host .file .add:hover {
+  background: #ededed;
+}

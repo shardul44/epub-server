@@ -35,8 +35,9 @@ H5PEditor.MetadataForm = (function (EventDispatcher, $, metadataSemantics) {
     const openPopup = function (event) {
       var offset = event.clientY - 150;
 
-      $('html,body').css('height', '100%');
-      $('.h5peditor').append($overlay);
+      $('html,body').css({ height: '100%', width: '100%', maxWidth: '100%' });
+      // Append to body so the overlay covers the full viewport (not only the MUI dialog column).
+      $(document.body).append($overlay);
       $wrapper.css('margin-top', (offset > 20 ? offset : 20) + 'px');
 
       // Focus title field
@@ -47,7 +48,7 @@ H5PEditor.MetadataForm = (function (EventDispatcher, $, metadataSemantics) {
      * Close the popup
      */
     const closePopup = function () {
-      $('html,body').css('height', '');
+      $('html,body').css({ height: '', width: '', maxWidth: '' });
       $overlay.detach();
     };
 
