@@ -32,3 +32,19 @@
 .main-content--user:has(.user-app-scroll > .erp-root) .user-app-scroll {
   overflow: hidden;
 }
+
+/* Interactive editor: fixed page header, scroll inside editor shell */
+.main-content--user:has(.user-app-scroll > .iee-shell) .user-app-scroll {
+  overflow: hidden;
+}
+
+.main-content--org-admin:has(> .iee-shell) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content--org-admin > .iee-shell {
+  flex: 1;
+  min-height: 0;
+}

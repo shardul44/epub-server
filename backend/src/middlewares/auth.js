@@ -55,10 +55,16 @@ async function hydrateUserFromDb(decoded) {
 export const authenticate = async (req, res, next) => {
   try {
     let authHeader = req.headers.authorization;
-    // Allow JWT on media URLs for native elements (<img>/<audio>) that cannot send Authorization.
+    // Allow JWT in query for assets and H5P editor AJAX (cannot send Authorization headers).
+    const h5pRoute =
+      req.originalUrl?.startsWith('/h5p') || req.baseUrl === '/h5p';
+    const allowQueryToken =
+      req.method === 'GET' ||
+      req.method === 'HEAD' ||
+      h5pRoute;
     if (
       (!authHeader || !authHeader.startsWith('Bearer ')) &&
-      (req.method === 'GET' || req.method === 'HEAD') &&
+      allowQueryToken &&
       req.query?.token &&
       typeof req.query.token === 'string'
     ) {

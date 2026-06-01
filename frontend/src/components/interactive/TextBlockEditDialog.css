@@ -1,0 +1,7 @@
+.text-block-edit-dialog__editor .ck-editor__editable {
+  min-height: 220px;
+}
+
+.text-block-edit-dialog__editor .ck.ck-editor {
+  width: 100%;
+}

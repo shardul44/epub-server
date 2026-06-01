@@ -23,6 +23,7 @@ import authRoutes from './src/routes/authRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import orgTeamRoutes from './src/routes/orgTeamRoutes.js';
 import interactiveRoutes from './src/routes/interactiveRoutes.js';
+import h5pRoutes from './src/routes/h5pRoutes.js';
 import activityRoutes from './src/routes/activityRoutes.js';
 import mediaRoutes from './src/routes/mediaRoutes.js';
 import bootstrapRoutes from './src/routes/bootstrapRoutes.js';
@@ -152,6 +153,7 @@ app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/org', orgTeamRoutes);
 app.use('/interactive', interactiveRoutes);
+app.use('/h5p', h5pRoutes);
 app.use('/activities', activityRoutes);
 app.use('/media', mediaRoutes);
 app.use('/', bootstrapRoutes); // Mount at root for /app-bootstrap and /conversion-status/:id
@@ -206,6 +208,12 @@ async function startServer(retryCount = 0) {
     await ensurePlanRequests();
   } catch (e) {
     console.warn('[bootstrap] ensurePlanRequests failed:', e.message);
+  }
+  try {
+    const { ensureH5pSchema } = await import('./src/bootstrap/ensureH5pSchema.js');
+    await ensureH5pSchema();
+  } catch (e) {
+    console.warn('[bootstrap] ensureH5pSchema failed:', e.message);
   }
 
   const server = app.listen(PORT, () => {
