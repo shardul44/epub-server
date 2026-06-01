@@ -434,7 +434,6 @@ export default function SystemLogs() {
                     </button>
                   </th>
                   <th>Level</th>
-                  <th>Event</th>
                   <th>Message</th>
                   <th>IP Address</th>
                   <th>Organization</th>
@@ -444,7 +443,7 @@ export default function SystemLogs() {
               <tbody>
                 {pageItems.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="slog-empty-cell">
+                    <td colSpan={6} className="slog-empty-cell">
                       No log entries match your filters.
                     </td>
                   </tr>
@@ -454,9 +453,6 @@ export default function SystemLogs() {
                       <td className="slog-td-time">{formatTableTime(log.ts)}</td>
                       <td>
                         <LevelBadge level={log.level} />
-                      </td>
-                      <td>
-                        <span className="slog-event-link">{log.event}</span>
                       </td>
                       <td className="slog-td-message">
                         <span className="slog-msg-title">{log.title}</span>

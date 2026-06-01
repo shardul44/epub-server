@@ -504,7 +504,6 @@ export default function AdminDashboard() {
               <thead>
                 <tr>
                   <th>Time</th>
-                  <th>Action</th>
                   <th>File</th>
                   <th>User</th>
                   <th>Org</th>
@@ -526,9 +525,6 @@ export default function AdminDashboard() {
                       <td>
                         <div style={{ fontWeight: 600, color: '#111827' }}>{clock}</div>
                         <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{day}</div>
-                      </td>
-                      <td>
-                        <span className="adm-badge">{r.action || '—'}</span>
                       </td>
                       <td>{activityFileName(r)}</td>
                       <td>{r.actorEmail || r.actorName || r.userId || '—'}</td>
