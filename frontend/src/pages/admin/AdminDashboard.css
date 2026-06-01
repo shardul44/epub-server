@@ -643,10 +643,10 @@
     min-width: 440px;
   }
 
+  .adm-table th:nth-child(3),
+  .adm-table td:nth-child(3),
   .adm-table th:nth-child(4),
-  .adm-table td:nth-child(4),
-  .adm-table th:nth-child(5),
-  .adm-table td:nth-child(5) {
+  .adm-table td:nth-child(4) {
     display: none;
   }
 

@@ -162,7 +162,6 @@ export default function Activity() {
   const exportCsv = useCallback(() => {
     const cols = [
       { label: 'When', value: (r) => (r.createdAt ? new Date(r.createdAt).toLocaleString() : '') },
-      { label: 'Action', value: (r) => r.action ?? '' },
       { label: 'Summary', value: (r) => r.summary ?? '' },
     ];
     if (listScope === 'org') cols.push({ label: 'User', value: (r) => r.actorEmail || r.actorName || r.userId || '' });
@@ -305,7 +304,6 @@ export default function Activity() {
               <thead>
                 <tr>
                   <th>When</th>
-                  <th>Action</th>
                   <th>Summary</th>
                   {listScope === 'org' && <th>User</th>}
                 </tr>
@@ -314,9 +312,6 @@ export default function Activity() {
                 {pageSlice.map((r) => (
                   <tr key={r.id}>
                     <td className="act-when">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '—'}</td>
-                    <td>
-                      <span className="act-badge">{r.action || '—'}</span>
-                    </td>
                     <td className="act-summary">{r.summary || '—'}</td>
                     {listScope === 'org' && (
                       <td className="act-user">{r.actorEmail || r.actorName || r.userId || '—'}</td>

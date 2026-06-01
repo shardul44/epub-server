@@ -23,6 +23,8 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableItem } from '../../components/SortableItem';
 import { interactiveService } from '../../services/interactiveService';
+import CKEditorEnhanced from '../../components/interactive/CKEditorEnhanced';
+import './InteractiveReader.css';
 import InteractiveContentSidebar from '../../components/interactive/h5p/InteractiveContentSidebar';
 import H5pEditorDialog from '../../components/interactive/h5p/H5pEditorDialog';
 import H5pBlockCard from '../../components/interactive/h5p/H5pBlockCard';

@@ -120,14 +120,13 @@ export default function ActivityPage() {
   );
 
   const exportCsv = useCallback(() => {
-    const header = ['#', 'When', 'Action', 'Summary', 'User', 'Organization', 'Status']
+    const header = ['#', 'When', 'Summary', 'User', 'Organization', 'Status']
       .map(escapeCsvCell)
       .join(',');
     const lines = filteredRows.map((row, i) =>
       [
         String(i + 1).padStart(3, '0'),
         row.createdAt ? new Date(row.createdAt).toLocaleString() : '',
-        row.action ?? '',
         row.summary ?? '',
         row.actorEmail || row.actorName || row.userId || '',
         row.organizationName || row.organizationId || '',
@@ -268,7 +267,6 @@ export default function ActivityPage() {
                 <tr>
                   <th>#</th>
                   <th>When</th>
-                  <th>Action</th>
                   <th>Summary</th>
                   <th>User</th>
                   <th>Organization</th>
@@ -282,9 +280,6 @@ export default function ActivityPage() {
                     <tr key={r.id}>
                       <td className="pap-num">{String(i + 1).padStart(3, '0')}</td>
                       <td className="pap-when">{formatWhenShort(r.createdAt)}</td>
-                      <td>
-                        <span className="pap-badge-action">{r.action || '—'}</span>
-                      </td>
                       <td>{r.summary || '—'}</td>
                       <td>{r.actorEmail || r.actorName || r.userId || '—'}</td>
                       <td>{r.organizationName || r.organizationId || '—'}</td>
