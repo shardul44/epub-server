@@ -73,6 +73,11 @@ export const interactiveService = {
     await api.delete(`/interactive/blocks/${blockId}`);
   },
 
+  async duplicateBlock(blockId) {
+    const res = await api.post(`/interactive/blocks/${blockId}/duplicate`);
+    return res.data?.data;
+  },
+
   async exportEpub(bookId, options = {}) {
     const interactiveEpub = options.interactiveEpub !== false;
     const res = await api.request({

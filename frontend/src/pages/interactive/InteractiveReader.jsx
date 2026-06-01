@@ -15,6 +15,8 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { interactiveService } from '../../services/interactiveService';
+import H5pPlayerEmbed from '../../components/interactive/h5p/H5pPlayerEmbed';
+import ReaderCompatibilityBanner from '../../components/interactive/h5p/ReaderCompatibilityBanner';
 import './InteractiveReader.css';
 
 function getBlockContent(block) {
@@ -361,6 +363,38 @@ function RenderBlock({ block }) {
   if (type === 'quiz') return <QuizBlock block={c} />;
   if (type === 'dragdrop') return <DragDropBlock block={c} />;
   if (type === 'audio') return <AudioBlock block={c} />;
+  if (type === 'h5p') {
+    const layout = block.layout_json ?? c.layout ?? {};
+    const wrapStyle =
+      layout.mode === 'fixed'
+        ? {
+            position: 'relative',
+            minHeight: Number(layout.height) * 4 || 200
+          }
+        : undefined;
+    const innerStyle =
+      layout.mode === 'fixed'
+        ? {
+            position: 'absolute',
+            left: `${layout.x ?? 0}%`,
+            top: `${layout.y ?? 0}%`,
+            width: `${layout.width ?? 50}%`,
+            height: `${layout.height ?? 30}%`,
+            zIndex: layout.zIndex ?? 1
+          }
+        : undefined;
+    return (
+      <div className="irr-block irr-block--h5p" style={wrapStyle}>
+        <div style={innerStyle}>
+          <H5pPlayerEmbed
+            h5pContentId={block.h5p_content_id ?? block.h5pContentId ?? c.h5pContentId ?? c.h5p_content_id}
+            title={c.title || 'Interactive activity'}
+            minHeight={layout.mode === 'fixed' ? '100%' : 320}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="irr-block irr-block-card">
@@ -547,6 +581,10 @@ export default function InteractiveReader() {
       </header>
 
       {book.description ? <p className="irr-desc">{book.description}</p> : null}
+
+      <div style={{ maxWidth: 900, margin: '0 auto 12px', padding: '0 20px' }}>
+        <ReaderCompatibilityBanner compact />
+      </div>
 
       <div className="irr-layout">
         <div className="irr-toc-wrap irr-toc-desktop">

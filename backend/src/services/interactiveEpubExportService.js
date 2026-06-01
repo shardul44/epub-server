@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { escapeXml } from '../utils/epubGenerator.js';
+import { packageH5pForEpub, renderH5pBlockXhtml } from './h5p/h5pEpubPackager.js';
 
 function xhtmlDoc({ title, bodyHtml, includeInteractiveJs = false }) {
   const safeTitle = escapeXml(title || 'Untitled');
@@ -11,6 +12,7 @@ function xhtmlDoc({ title, bodyHtml, includeInteractiveJs = false }) {
     <title>${safeTitle}</title>
     <link rel="stylesheet" type="text/css" href="../styles.css" />
     ${includeInteractiveJs ? '<script type="text/javascript" src="../interactive.js"></script>' : ''}
+    <link rel="stylesheet" type="text/css" href="../h5p/css/h5p.css" />
   </head>
   <body>
 ${bodyHtml}
@@ -256,6 +258,10 @@ function renderBlockFallback(block, options = {}) {
 </section>`;
   }
 
+  if (type === 'h5p') {
+    return renderH5pBlockXhtml(block, options);
+  }
+
   if (type === 'audio_sync' || type === 'readalong') {
     const words = Array.isArray(c.words) ? c.words : [];
     const audio = c.audio ? escapeXml(String(c.audio)) : '';
@@ -451,6 +457,21 @@ export class InteractiveEpubExportService {
     }
     const spineItemIds = [];
 
+    const allH5pIds = [];
+    for (const ch of chapters || []) {
+      const blocks = blocksByChapterId.get(Number(ch.id)) || [];
+      for (const b of blocks) {
+        if (b.type !== 'h5p') continue;
+        const c = b.content_json || {};
+        const id = c.h5pContentId || c.h5p_content_id || b.h5p_content_id;
+        if (id) allH5pIds.push(String(id));
+      }
+    }
+    if (allH5pIds.length > 0) {
+      const h5pManifest = await packageH5pForEpub(oebps, { h5pContentIds: allH5pIds });
+      manifestItems.push(...h5pManifest);
+    }
+
     // Chapters
     for (let i = 0; i < (chapters || []).length; i++) {
       const ch = chapters[i];
@@ -489,7 +510,9 @@ export class InteractiveEpubExportService {
         '.drag-item { border:1px solid #ddd; padding:0.4em; margin:0.2em 0; cursor:grab; }',
         '.drop-target { border:1px dashed #aaa; padding:0.5em; margin:0.2em 0; min-height:1.6em; }',
         '.ra-word { cursor:pointer; padding:0.05em 0.2em; border-radius:3px; }',
-        '.ra-word.active { background:#ffeb3b; }'
+        '.ra-word.active { background:#ffeb3b; }',
+        '.block-h5p--fixed { position: relative; min-height: 120px; }',
+        '.h5p-container[data-layout="fixed"] { position: absolute; }'
       ].join('\n')
     );
     if (includeInteractiveJs) {

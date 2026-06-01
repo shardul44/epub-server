@@ -254,6 +254,10 @@ export default function UserDashboard() {
     ],
     [showConversion, showSyncStudio, showEpubTools, showAccessibility, showKitaboo],
   );
+  const availableQuickActions = useMemo(
+    () => quickActions.filter((a) => a.show),
+    [quickActions],
+  );
 
   const headerActions = showConversion ? (
     <>
@@ -395,6 +399,78 @@ export default function UserDashboard() {
         </div>
         )}
       </section>
+
+      {!showConversion && (
+        <section className="ud-insights" aria-label="Plan overview">
+          <div className="ud-insights-grid">
+            <div className="ud-insight-card">
+              <div className="ud-insight-head">
+                <div className="ud-insight-head-left">
+                  <span className="ud-insight-icon ud-insight-icon--blue">
+                    <BarChart2 size={18} aria-hidden />
+                  </span>
+                  <div>
+                    <h2 className="ud-insight-title">Usage overview</h2>
+                    <p className="ud-insight-sub">Check your current quota and consumption</p>
+                  </div>
+                </div>
+              </div>
+              <div className="ud-insight-body">
+                <Link to="/usage" className="ud-btn ud-btn--solid">
+                  View usage
+                  <ArrowRight size={16} strokeWidth={2.25} aria-hidden />
+                </Link>
+              </div>
+            </div>
+
+            <div className="ud-insight-card">
+              <div className="ud-insight-head">
+                <div className="ud-insight-head-left">
+                  <span className="ud-insight-icon ud-insight-icon--amber">
+                    <Bell size={18} aria-hidden />
+                  </span>
+                  <div>
+                    <h2 className="ud-insight-title">Recent activity</h2>
+                    <p className="ud-insight-sub">Track account and workspace events</p>
+                  </div>
+                </div>
+              </div>
+              <div className="ud-insight-body">
+                <Link to="/activity" className="ud-btn ud-btn--ghost">
+                  Open activity
+                </Link>
+              </div>
+            </div>
+
+            <div className="ud-insight-card">
+              <div className="ud-insight-head">
+                <div className="ud-insight-head-left">
+                  <span className="ud-insight-icon ud-insight-icon--purple">
+                    <Settings size={18} aria-hidden />
+                  </span>
+                  <div>
+                    <h2 className="ud-insight-title">Tools in your plan</h2>
+                    <p className="ud-insight-sub">Features enabled for this account</p>
+                  </div>
+                </div>
+              </div>
+              <div className="ud-insight-body">
+                {availableQuickActions.length > 0 ? (
+                  <div className="ud-hero-actions">
+                    {availableQuickActions.map((a) => (
+                      <Link key={a.to} to={a.to} className="ud-btn ud-btn--ghost">
+                        {a.label}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="ud-insight-empty">No workflow tools are enabled in your current plan.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {showConversion && (
       <>
