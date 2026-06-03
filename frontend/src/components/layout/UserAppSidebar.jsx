@@ -9,7 +9,6 @@ import {
   FolderOpen,
   Accessibility,
   ClipboardCheck,
-  BookOpen,
   Activity,
   SlidersVertical,
   Menu,
@@ -27,7 +26,12 @@ import './UserAppSidebar.css';
 
 function NavRow({ to, icon: Icon, label, end, isActive, onClick }) {
   return (
-    <Link to={to} onClick={onClick} className={`sidebar-link${isActive ? ' active' : ''}`}>
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`sidebar-link${isActive ? ' active' : ''}`}
+      title={label}
+    >
       <Icon className="sidebar-icon" aria-hidden />
       <span className="user-sidebar-label">{label}</span>
       {end}
@@ -46,7 +50,7 @@ function CountBadge({ count, tone = 'mint' }) {
   );
 }
 
-function ExpandableNav({ icon: Icon, label, isActive, navigateTo, end, children }) {
+function ExpandableNav({ icon: Icon, label, isActive, navigateTo, end, children, onNavigate }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(isActive);
@@ -65,6 +69,7 @@ function ExpandableNav({ icon: Icon, label, isActive, navigateTo, end, children 
       } else {
         navigate(navigateTo);
         setOpen(true);
+        onNavigate?.();
       }
     } else {
       setOpen((o) => !o);
@@ -82,6 +87,7 @@ function ExpandableNav({ icon: Icon, label, isActive, navigateTo, end, children 
         }
         onClick={handleClick}
         aria-expanded={open}
+        title={label}
       >
         <Icon className="sidebar-icon" aria-hidden />
         <span className="user-sidebar-label">{label}</span>
@@ -92,9 +98,13 @@ function ExpandableNav({ icon: Icon, label, isActive, navigateTo, end, children 
   );
 }
 
-function SubNav({ to, label, isActive }) {
+function SubNav({ to, label, isActive, onClick }) {
   return (
-    <Link to={to} className={`user-sidebar-sub-item${isActive ? ' active' : ''}`}>
+    <Link
+      to={to}
+      onClick={onClick}
+      className={`user-sidebar-sub-item${isActive ? ' active' : ''}`}
+    >
       <span className="user-sidebar-sub-dot" aria-hidden />
       <span className="user-sidebar-sub-label">{label}</span>
     </Link>
@@ -132,8 +142,19 @@ export default function UserAppSidebar({ onCollapse }) {
   }, [location.pathname]);
 
   useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
     onCollapse?.(false);
   }, [onCollapse]);
+
+  const closeMobile = () => setMobileOpen(false);
 
   const path = location.pathname;
 
@@ -191,14 +212,25 @@ export default function UserAppSidebar({ onCollapse }) {
 
   return (
     <>
-      <button
-        className="user-sidebar-mobile-toggle"
-        onClick={() => setMobileOpen((o) => !o)}
-        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-        type="button"
-      >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      {mobileOpen ? (
+        <button
+          className="user-sidebar-mobile-toggle"
+          onClick={closeMobile}
+          aria-label="Close menu"
+          type="button"
+        >
+          <X size={20} />
+        </button>
+      ) : (
+        <button
+          className="user-sidebar-mobile-toggle"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          type="button"
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       {mobileOpen && (
         <div
@@ -213,7 +245,7 @@ export default function UserAppSidebar({ onCollapse }) {
       >
         <div className="user-sidebar-brand">
           <div className="user-sidebar-brand-mark" aria-hidden>
-            <BookOpen size={22} strokeWidth={2} />
+            <img src="/Tunr_Logo-01.svg" alt="" className="user-sidebar-brand-logo" />
           </div>
           <div className="user-sidebar-brand-text">
             <span className="user-sidebar-brand-title">PDF to EPUB</span>
@@ -226,7 +258,7 @@ export default function UserAppSidebar({ onCollapse }) {
         <nav className="sidebar-nav">
           <span className="user-sidebar-section-label">Workflow</span>
 
-          <NavRow to="/" icon={LayoutGrid} label="Dashboard" isActive={active.home} />
+          <NavRow to="/" icon={LayoutGrid} label="Dashboard" isActive={active.home} onClick={closeMobile} />
 
           {(showConversion || showKitaboo) && (
             <NavRow
@@ -234,6 +266,7 @@ export default function UserAppSidebar({ onCollapse }) {
               icon={Upload}
               label="Upload PDF"
               isActive={active.pdfsUpload}
+              onClick={closeMobile}
             />
           )}
           {showEpubSyncImport && (
@@ -242,6 +275,7 @@ export default function UserAppSidebar({ onCollapse }) {
               icon={RefreshCw}
               label="EPUB Sync"
               isActive={active.epubSync}
+              onClick={closeMobile}
             />
           )}
           {showWorkflowNav && (
@@ -257,18 +291,20 @@ export default function UserAppSidebar({ onCollapse }) {
                     : '/conversions/audio-sync'
               }
               end={<CountBadge count={conversionCount} tone="mint" />}
+              onNavigate={closeMobile}
             >
               {showConversion && (
-                <SubNav to="/conversions" label="Conversion Jobs" isActive={active.convJobs} />
+                <SubNav to="/conversions" label="Conversion Jobs" isActive={active.convJobs} onClick={closeMobile} />
               )}
               {showKitaboo && (
-                <SubNav to="/conversions/fxl-editor" label="FXL Editor" isActive={active.convFxl} />
+                <SubNav to="/conversions/fxl-editor" label="FXL Editor" isActive={active.convFxl} onClick={closeMobile} />
               )}
               {showSyncStudio && (
                 <SubNav
                   to="/conversions/audio-sync"
                   label="Audio Sync Studio"
                   isActive={active.convAudio}
+                  onClick={closeMobile}
                 />
               )}
               {showDownload && (
@@ -276,6 +312,7 @@ export default function UserAppSidebar({ onCollapse }) {
                   to="/conversions/download"
                   label="Download EPUB"
                   isActive={active.convDownload}
+                  onClick={closeMobile}
                 />
               )}
             </ExpandableNav>
@@ -284,7 +321,7 @@ export default function UserAppSidebar({ onCollapse }) {
           {showLibrary && <span className="user-sidebar-section-label">Library</span>}
 
           {showExports && (
-            <NavRow to="/exports" icon={Film} label="Exports" isActive={active.exports} />
+            <NavRow to="/exports" icon={Film} label="Exports" isActive={active.exports} onClick={closeMobile} />
           )}
           {showLibrary && (
             <NavRow
@@ -292,6 +329,7 @@ export default function UserAppSidebar({ onCollapse }) {
               icon={FolderOpen}
               label="Media Library"
               isActive={active.mediaLibrary}
+              onClick={closeMobile}
             />
           )}
 
@@ -305,6 +343,7 @@ export default function UserAppSidebar({ onCollapse }) {
               icon={Accessibility}
               label="Accessibility"
               isActive={active.accessibility}
+              onClick={closeMobile}
             />
           )}
           {showEpubTools && (
@@ -313,6 +352,7 @@ export default function UserAppSidebar({ onCollapse }) {
               icon={ClipboardCheck}
               label="EPUB Checker"
               isActive={active.epubChecker}
+              onClick={closeMobile}
             />
           )}
           {showInteractive && (
@@ -321,6 +361,7 @@ export default function UserAppSidebar({ onCollapse }) {
               icon={SlidersVertical}
               label="Interactive"
               isActive={active.interactive}
+              onClick={closeMobile}
             />
           )}
 
@@ -332,6 +373,7 @@ export default function UserAppSidebar({ onCollapse }) {
             label="Activity"
             isActive={active.activity}
             end={<CountBadge count={activityCount} tone="rose" />}
+            onClick={closeMobile}
           />
         </nav>
 

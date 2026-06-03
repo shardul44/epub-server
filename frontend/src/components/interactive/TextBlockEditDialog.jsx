@@ -7,6 +7,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { getTextBlockCkEditorConfig } from '../../utils/ckeditorTextBlockEditor';
 import './TextBlockEditDialog.css';
 
 function getTextHtml(block) {
@@ -17,11 +18,23 @@ function getTextHtml(block) {
   return '<p></p>';
 }
 
-export default function TextBlockEditDialog({ open, block, onClose, onSave }) {
+export default function TextBlockEditDialog({
+  open,
+  block,
+  onClose,
+  onSave,
+  editorConfig: editorConfigProp,
+}) {
   const isCreate = !block;
   const [html, setHtml] = useState('<p></p>');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const editorConfig =
+    editorConfigProp ??
+    getTextBlockCkEditorConfig(
+      isCreate ? 'Write lesson text…' : 'Edit lesson text…',
+    );
 
   useEffect(() => {
     if (!open) {
@@ -63,9 +76,7 @@ export default function TextBlockEditDialog({ open, block, onClose, onSave }) {
               onChange={(event, editor) => {
                 setHtml(editor.getData());
               }}
-              config={{
-                placeholder: isCreate ? 'Write lesson text…' : 'Edit lesson text…',
-              }}
+              config={editorConfig}
             />
           ) : null}
         </div>

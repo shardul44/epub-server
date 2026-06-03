@@ -17,7 +17,7 @@ import { mediaUrl } from '../utils/mediaUrl';
 import { pdfViewUrl } from '../services/api';
 import { isEpubImportStub } from '../utils/pdfDocumentSource';
 import { resolveSyncStudioJobForPdf } from '../utils/resolveSyncStudioJob';
-import { useConversionsQuery } from '../hooks/queries/useConversionsQuery';
+import { fetchAllJobs, CONVERSIONS_STALE_TIME_MS } from '../hooks/queries/useConversionsQuery';
 import { audioSyncPath } from '../hooks/useWorkflowNavigation';
 import {
   Search,
@@ -115,11 +115,13 @@ const RowThumbnail = memo(({ pdfId, epubOnly = false }) => {
     <div className="upl-thumb">
       <PdfThumbnail
         url={pdfUrl}
+        pdfId={idKey}
         width={44}
         height={56}
         scale={1}
         cacheKey={cacheKey}
         alt=""
+        debugLabel="UploadedPdfsList"
         fallback={
           <div className="upl-thumb upl-thumb-fallback">
             <FileText size={20} />
@@ -246,8 +248,15 @@ export default function UploadedPdfsList({
   const canFxlConvert = hasFeature(user, 'kitaboo.import');
   const copy = COPY[epubOnly ? 'epub' : 'pdf'];
 
-  // Warm conversion job cache so Sync Studio can resolve EPUB import rows.
-  useConversionsQuery({ enabled: epubOnly, excludeEpubImports: false });
+  // One-shot cache warm for EPUB Sync (no extra observer / polling).
+  useEffect(() => {
+    if (!epubOnly) return;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.conversions.list(listScope),
+      queryFn: () => fetchAllJobs(listScope, { source: 'UploadedPdfsList:prefetch' }),
+      staleTime: CONVERSIONS_STALE_TIME_MS,
+    });
+  }, [epubOnly, listScope, queryClient]);
 
   const libraryPdfs = useMemo(
     () => (epubOnly ? pdfs.filter(isEpubImportStub) : pdfs.filter((p) => !isEpubImportStub(p))),

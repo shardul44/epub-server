@@ -9,7 +9,7 @@ import { Outlet } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import UserAppSidebar from '../components/layout/UserAppSidebar';
 import { queryKeys } from '../lib/queryKeys';
-import { fetchAllJobs } from '../hooks/queries/useConversionsQuery';
+import { fetchAllJobs, CONVERSIONS_STALE_TIME_MS } from '../hooks/queries/useConversionsQuery';
 import { pdfService } from '../services/pdfService';
 import { listScopeQueryParams } from '../utils/listScope';
 import { hasAnyFeature, hasFeature, WORKFLOW_LIBRARY_FEATURES } from '../utils/features';
@@ -34,7 +34,7 @@ export default function DefaultLayout() {
         void queryClient.prefetchQuery({
           queryKey: convKey,
           queryFn: () => fetchAllJobs(MEMBER_SCOPE),
-          staleTime: 20 * 1000,
+          staleTime: CONVERSIONS_STALE_TIME_MS,
         });
       }
 

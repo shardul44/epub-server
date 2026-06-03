@@ -803,13 +803,41 @@ H5P.fullScreen = function ($element, instance, exitCallback, body, forceSemiFull
    * @returns {string}
    *   Complete URL to path.
    */
+  function getH5pAuthToken() {
+    if (typeof H5PIntegration !== 'undefined' && H5PIntegration.authToken) {
+      return H5PIntegration.authToken;
+    }
+    if (typeof window !== 'undefined' && window.__H5P_AUTH_TOKEN) {
+      return window.__H5P_AUTH_TOKEN;
+    }
+    return null;
+  }
+
+  function appendH5pAuthToken(url) {
+    var authToken = getH5pAuthToken();
+    if (!authToken || !url || url.indexOf('token=') !== -1) {
+      return url;
+    }
+    var hashIdx = url.indexOf('#');
+    var base = hashIdx === -1 ? url : url.substring(0, hashIdx);
+    var hash = hashIdx === -1 ? '' : url.substring(hashIdx);
+    var sep = base.indexOf('?') === -1 ? '?' : '&';
+    return base + sep + 'token=' + encodeURIComponent(authToken) + hash;
+  }
+
   H5P.getPath = function (path, contentId) {
     if (hasProtocol(path)) {
-      return path;
+      return appendH5pAuthToken(path);
     }
 
     var prefix;
-    var isTmpFile = (path.substr(-4,4) === '#tmp');
+    var hashSuffix = '';
+    var filePath = path;
+    var isTmpFile = (path.substr(-4, 4) === '#tmp');
+    if (isTmpFile) {
+      filePath = path.substr(0, path.length - 4);
+      hashSuffix = '#tmp';
+    }
     if (contentId !== undefined && !isTmpFile) {
       // Check for custom override URL
       if (H5PIntegration.contents !== undefined &&
@@ -832,8 +860,10 @@ H5P.fullScreen = function ($element, instance, exitCallback, body, forceSemiFull
       prefix = window.location.protocol + "//" + window.location.host + prefix;
     }
 
-    return prefix + '/' + path;
+    return appendH5pAuthToken(prefix + '/' + filePath) + hashSuffix;
   };
+
+  H5P.appendAuthTokenToUrl = appendH5pAuthToken;
 })();
 
 /**

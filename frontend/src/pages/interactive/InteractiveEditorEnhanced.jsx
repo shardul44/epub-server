@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useParams } from 'react-router-dom';
 import {
   AlertCircle,
@@ -23,15 +24,18 @@ import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { SortableItem } from '../../components/SortableItem';
 import { interactiveService } from '../../services/interactiveService';
-import CKEditorEnhanced from '../../components/interactive/CKEditorEnhanced';
 import './InteractiveReader.css';
 import InteractiveContentSidebar from '../../components/interactive/h5p/InteractiveContentSidebar';
 import H5pEditorDialog from '../../components/interactive/h5p/H5pEditorDialog';
+import { cleanupH5pEditorDomArtifacts } from '../../utils/h5pEditorDomCleanup';
 import H5pBlockCard from '../../components/interactive/h5p/H5pBlockCard';
 import H5pFixedLayoutDialog from '../../components/interactive/h5p/H5pFixedLayoutDialog';
 import ReaderCompatibilityBanner from '../../components/interactive/h5p/ReaderCompatibilityBanner';
 import TextBlockEditDialog from '../../components/interactive/TextBlockEditDialog';
+import { getTextBlockCkEditorConfig } from '../../utils/ckeditorTextBlockEditor';
 import './InteractiveEditorEnhanced.css';
+
+const textBlockCkEditorConfig = getTextBlockCkEditorConfig();
 
 function stripHtml(html) {
   if (!html || typeof html !== 'string') return '';
@@ -118,7 +122,14 @@ export default function InteractiveEditorEnhanced() {
   }, [book]);
 
   useEffect(() => {
+    cleanupH5pEditorDomArtifacts();
     loadBook();
+    return () => {
+      cleanupH5pEditorDomArtifacts();
+      setH5pEditorOpen(false);
+      setH5pContentType(null);
+      setEditingH5pBlock(null);
+    };
   }, [bookId]);
 
   useEffect(() => {
@@ -308,6 +319,8 @@ export default function InteractiveEditorEnhanced() {
   }
 
   function openH5pEditor(contentType, block = null) {
+    setTextEditOpen(false);
+    setEditingTextBlock(null);
     setH5pContentType(contentType);
     setEditingH5pBlock(block);
     setH5pEditorOpen(true);
@@ -464,10 +477,6 @@ export default function InteractiveEditorEnhanced() {
       <header className="iee-header">
         <div className="iee-header-inner">
           <div>
-            <Link to="/interactive" className="iee-back">
-              <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-              Back to books
-            </Link>
             <div className="iee-title-row">
               <div className="iee-title-icon" aria-hidden>
                 <BookOpen size={22} strokeWidth={2} />
@@ -701,6 +710,7 @@ export default function InteractiveEditorEnhanced() {
                                   index={index}
                                   dragHandleProps={dragHandleProps}
                                   bookLayoutMode={bookLayoutMode}
+                                  suspendPreview={h5pEditorOpen}
                                   onEdit={editH5pBlock}
                                   onDuplicate={duplicateBlock}
                                   onDelete={deleteBlock}
@@ -799,6 +809,7 @@ export default function InteractiveEditorEnhanced() {
         open={h5pEditorOpen}
         onClose={() => {
           setH5pEditorOpen(false);
+          setH5pContentType(null);
           setEditingH5pBlock(null);
         }}
         contentType={h5pContentType}
@@ -812,23 +823,31 @@ export default function InteractiveEditorEnhanced() {
         existingDbId={editingH5pBlock?.h5p_content_id ?? null}
         onSaved={handleH5pSaved}
       />
-      <H5pFixedLayoutDialog
-        open={layoutDialogOpen}
-        onClose={() => {
-          setLayoutDialogOpen(false);
-          setPendingH5pSave(null);
-        }}
-        onConfirm={handleLayoutConfirm}
-      />
-      <TextBlockEditDialog
-        open={textEditOpen}
-        block={editingTextBlock}
-        onClose={() => {
-          setTextEditOpen(false);
-          setEditingTextBlock(null);
-        }}
-        onSave={saveTextBlock}
-      />
+
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <>
+            <H5pFixedLayoutDialog
+              open={layoutDialogOpen}
+              onClose={() => {
+                setLayoutDialogOpen(false);
+                setPendingH5pSave(null);
+              }}
+              onConfirm={handleLayoutConfirm}
+            />
+            <TextBlockEditDialog
+              open={textEditOpen && !h5pEditorOpen}
+              block={editingTextBlock}
+              editorConfig={textBlockCkEditorConfig}
+              onClose={() => {
+                setTextEditOpen(false);
+                setEditingTextBlock(null);
+              }}
+              onSave={saveTextBlock}
+            />
+          </>,
+          document.body,
+        )}
     </div>
   );
 }

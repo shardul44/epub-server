@@ -67,7 +67,7 @@
 }
 
 /* Same icon rail when viewport matches org-admin main (64px gutter), unless mobile drawer is open */
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) {
     width: var(--sb-width-collapsed);
   }
@@ -129,13 +129,20 @@
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #2563eb;
-  color: #fff;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  overflow: hidden;
+  padding: 4px;
+}
+
+.admin-sidebar-brand-logo {
+  width: 120%;
+  height: 120%;
+  object-fit: contain;
+  display: block;
 }
 
 .admin-sidebar-brand .navbar-brand-title {
@@ -390,7 +397,7 @@
   border-right-color: #1976d2;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-chevron,
   .layout--org-admin aside.sidebar:not(.sidebar--mobile-open) .admin-sidebar-sub-items {
     display: none !important;

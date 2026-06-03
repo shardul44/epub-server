@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -275,7 +275,7 @@ function ActivityJobMenuWithConfirm({ job, onDeleted }) {
   );
 }
 
-function ActivityJobCard({ job, onRefresh }) {
+const ActivityJobCard = memo(function ActivityJobCard({ job, onRefresh }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { goToDownload, goToEditor } = useWorkflowNavigation();
@@ -334,12 +334,14 @@ function ActivityJobCard({ job, onRefresh }) {
             {pdfViewUrl ? (
               <PdfThumbnail
                 url={pdfViewUrl}
+                pdfId={pdfDocumentId}
                 width={thumbW}
                 height={thumbH}
                 scale={1.25}
                 cacheKey={thumbCacheKey}
                 className="ds-activity-job-thumb-img"
                 alt=""
+                debugLabel="RecentActivityPanel"
               />
             ) : null}
           </div>
@@ -418,7 +420,7 @@ function ActivityJobCard({ job, onRefresh }) {
       </div>
     </article>
   );
-}
+});
 
 function ActivityEmptyState({ uploadHref }) {
   const navigate = useNavigate();

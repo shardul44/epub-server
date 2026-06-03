@@ -19,7 +19,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { selectSidebarCollapsed, setSidebarCollapsed } from '../slices/uiSlice';
 import { useSidebarBadges } from '../hooks/useSidebarBadges';
 import { queryKeys } from '../lib/queryKeys';
-import { fetchAllJobs } from '../hooks/queries/useConversionsQuery';
+import { fetchAllJobs, CONVERSIONS_STALE_TIME_MS } from '../hooks/queries/useConversionsQuery';
 import { pdfService } from '../services/pdfService';
 import { listScopeQueryParams } from '../utils/listScope';
 import api from '../services/api';
@@ -42,7 +42,7 @@ export default function OrgAdminLayout() {
       void queryClient.prefetchQuery({
         queryKey: convKey,
         queryFn: () => fetchAllJobs(ORG_SCOPE),
-        staleTime: 20 * 1000,
+        staleTime: CONVERSIONS_STALE_TIME_MS,
       });
     }
 

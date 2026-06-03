@@ -247,6 +247,12 @@ ns.File.prototype.addFile = function () {
   if (this.field.type === 'image') {
     thumbnail = {};
     thumbnail.path = H5P.getPath(this.params.path, H5PEditor.contentId);
+    if (H5P.appendAuthTokenToUrl) {
+      thumbnail.path = H5P.appendAuthTokenToUrl(thumbnail.path);
+    }
+    else if (ns.appendAuthToUrl) {
+      thumbnail.path = ns.appendAuthToUrl(thumbnail.path);
+    }
     thumbnail.height = 100;
     if (this.params.width !== undefined) {
       thumbnail.width = thumbnail.height * (this.params.width / this.params.height);

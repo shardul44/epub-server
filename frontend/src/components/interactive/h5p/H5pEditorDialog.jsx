@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -9,8 +10,33 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import { defineElements } from '@lumieducation/h5p-webcomponents';
 import { h5pService, getH5pBaseUrl } from '../../../services/h5pService';
+import {
+  injectH5pStyles,
+  injectH5pEditorLayoutOverrides,
+  patchH5pEditorIframes
+} from '../../../utils/h5pEditorStyles';
+import {
+  installH5pAuthGetPathPatch,
+  forceH5pAuthGetPathPatch,
+  syncH5pAuthToken,
+  setH5pAuthCookie,
+  clearH5pAuthCookie
+} from '../../../utils/h5pAuthGetPath';
+import { installH5pGlobalInitGuard } from '../../../utils/h5pGlobalInitGuard';
+import {
+  cleanupH5pEditorDomArtifacts,
+  scheduleH5pEditorDomCleanup
+} from '../../../utils/h5pEditorDomCleanup';
+import { startH5pEditorViewportLockLoop } from '../../../utils/h5pEditorViewportLock';
+import './H5pEditorDialog.css';
 
 defineElements('h5p-editor');
+
+function applyEditorStyles(model) {
+  if (model?.styles?.length) {
+    injectH5pStyles(model.styles);
+  }
+}
 
 export default function H5pEditorDialog({
   open,
@@ -21,6 +47,9 @@ export default function H5pEditorDialog({
   onSaved
 }) {
   const editorRef = useRef(null);
+  const hostRef = useRef(null);
+  const onEditorLoadedRef = useRef(() => {});
+  const editorLoadedOnceRef = useRef(false);
   const dbIdRef = useRef(existingDbId);
   const contentIdRef = useRef(existingH5pContentId || 'new');
   const [contentId, setContentId] = useState(existingH5pContentId || 'new');
@@ -29,6 +58,58 @@ export default function H5pEditorDialog({
   const [error, setError] = useState('');
   const [editorReady, setEditorReady] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    const clearAuth = installH5pAuthGetPathPatch();
+    const clearGuard = installH5pGlobalInitGuard();
+    return () => {
+      clearAuth?.();
+      clearGuard?.();
+    };
+  }, []);
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    if (typeof window !== 'undefined') {
+      window.h5pIsInitialized = false;
+    }
+
+    const root = document.documentElement;
+    root.classList.add('h5p-editor-dialog-open');
+    injectH5pEditorLayoutOverrides();
+    const stopLock = startH5pEditorViewportLockLoop();
+    return () => {
+      root.classList.remove('h5p-editor-dialog-open');
+      stopLock();
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (open) return undefined;
+    scheduleH5pEditorDomCleanup();
+    return undefined;
+  }, [open]);
+
+  useEffect(() => () => cleanupH5pEditorDomArtifacts(), []);
+
+  useEffect(() => {
+    if (!open) {
+      clearH5pAuthCookie();
+      return undefined;
+    }
+    const token = localStorage.getItem('token');
+    if (token) {
+      setH5pAuthCookie(token);
+      syncH5pAuthToken(token);
+      forceH5pAuthGetPathPatch(token);
+    }
+    return () => clearH5pAuthCookie();
+  }, [open]);
 
   useEffect(() => {
     dbIdRef.current = existingDbId;
@@ -42,6 +123,7 @@ export default function H5pEditorDialog({
       setEditorReady(false);
       setDraftReady(false);
       setError('');
+      editorLoadedOnceRef.current = false;
       return undefined;
     }
 
@@ -65,6 +147,13 @@ export default function H5pEditorDialog({
         contentIdRef.current = cid;
         setContentId(cid);
         if (data.dbId != null) dbIdRef.current = data.dbId;
+        applyEditorStyles(data.model);
+        const bootstrapToken = data.model?.integration?.authToken || localStorage.getItem('token');
+        if (bootstrapToken) {
+          syncH5pAuthToken(bootstrapToken);
+          setH5pAuthCookie(bootstrapToken);
+          forceH5pAuthGetPathPatch(bootstrapToken);
+        }
         setDraftReady(true);
       } catch (e) {
         if (!cancelled) {
@@ -80,15 +169,101 @@ export default function H5pEditorDialog({
     };
   }, [open, contentType?.machineName, existingH5pContentId]);
 
+  onEditorLoadedRef.current = () => {
+    if (editorLoadedOnceRef.current) return;
+    editorLoadedOnceRef.current = true;
+    setEditorReady(true);
+    setError('');
+    injectH5pEditorLayoutOverrides();
+    patchH5pEditorIframes(hostRef.current);
+    const editorEl = editorRef.current;
+    window.requestAnimationFrame(() => {
+      editorEl?.resize?.();
+      patchH5pEditorIframes(hostRef.current);
+    });
+  };
+
+  const bindEditorElement = useCallback(
+    (el) => {
+      editorRef.current = el;
+      if (!el || !draftReady || !contentId || contentId === 'new') return;
+
+      const h5pUrl = getH5pBaseUrl();
+      el.setAttribute('h5p-url', h5pUrl);
+      el.setAttribute('content-id', String(contentId));
+
+      if (!el.__h5pEditorLoadedBound) {
+        el.__h5pEditorLoadedBound = true;
+        el.addEventListener('editorloaded', () => onEditorLoadedRef.current());
+      }
+
+      el.loadContentCallback = async (cid) => {
+        const resolved =
+          cid === undefined || cid === null || cid === 'new'
+            ? contentIdRef.current
+            : String(cid);
+        const requestId = resolved && resolved !== 'new' ? resolved : 'new';
+        const data = await h5pService.getEditorModel(requestId, {
+          machineName: requestId === 'new' ? contentType?.machineName : undefined
+        });
+        if (data.dbId != null) dbIdRef.current = data.dbId;
+        if (data.contentId) {
+          contentIdRef.current = String(data.contentId);
+          setContentId(String(data.contentId));
+        }
+        applyEditorStyles(data.model);
+        const authToken = data.model?.integration?.authToken || localStorage.getItem('token');
+        if (authToken) {
+          syncH5pAuthToken(authToken);
+          setH5pAuthCookie(authToken);
+          forceH5pAuthGetPathPatch(authToken);
+        }
+        return data.model;
+      };
+
+      el.saveContentCallback = async (cid, body) => {
+        const payload = {
+          library: body.library,
+          params: body.params,
+          metadata: body.metadata,
+          title: body.metadata?.title || contentType?.label
+        };
+
+        const h5pCid =
+          cid && cid !== 'new' ? String(cid) : contentIdRef.current !== 'new' ? contentIdRef.current : null;
+        let row;
+
+        if (dbIdRef.current) {
+          row = await h5pService.updateContent(dbIdRef.current, payload);
+        } else if (h5pCid) {
+          row = await h5pService.updateContent(h5pCid, payload);
+          if (row?.id) dbIdRef.current = row.id;
+        } else {
+          row = await h5pService.createContent(payload);
+          dbIdRef.current = row.id;
+        }
+
+        const savedId = String(row.h5pContentId || h5pCid || cid);
+        contentIdRef.current = savedId;
+        setContentId(savedId);
+        el.setAttribute('content-id', savedId);
+
+        return {
+          contentId: savedId,
+          metadata: row.metadataJson || body.metadata
+        };
+      };
+    },
+    [draftReady, contentId, contentType?.machineName, contentType?.label]
+  );
+
   useEffect(() => {
     if (!open || loading || !draftReady || !contentId || contentId === 'new') return undefined;
 
     const el = editorRef.current;
     if (!el) return undefined;
 
-    const h5pUrl = getH5pBaseUrl();
-    el.setAttribute('h5p-url', h5pUrl);
-    el.setAttribute('content-id', String(contentId));
+    setEditorReady(false);
 
     const onSaveError = (event) => {
       setError(event.detail?.message || 'H5P editor error');
@@ -97,63 +272,31 @@ export default function H5pEditorDialog({
     el.addEventListener('save-error', onSaveError);
     el.addEventListener('validation-error', onSaveError);
 
-    el.loadContentCallback = async (cid) => {
-      const resolved =
-        cid === undefined || cid === null || cid === 'new'
-          ? contentIdRef.current
-          : String(cid);
-      const requestId = resolved && resolved !== 'new' ? resolved : 'new';
-      const data = await h5pService.getEditorModel(requestId, {
-        machineName: requestId === 'new' ? contentType?.machineName : undefined
-      });
-      if (data.dbId != null) dbIdRef.current = data.dbId;
-      if (data.contentId) {
-        contentIdRef.current = String(data.contentId);
-        setContentId(String(data.contentId));
+    bindEditorElement(el);
+
+    let polls = 0;
+    const pollId = window.setInterval(() => {
+      polls += 1;
+      const iframe = hostRef.current?.querySelector('iframe.h5p-editor-iframe');
+      const doc = iframe?.contentDocument;
+      const hasUi =
+        doc?.querySelector('.h5peditor .field') ||
+        doc?.querySelector('.h5p-hub .h5p-hub-content-list') ||
+        doc?.querySelector('.h5p-hub .h5p-hub-panel');
+      if (hasUi) {
+        onEditorLoadedRef.current();
+        window.clearInterval(pollId);
+      } else if (polls > 60) {
+        window.clearInterval(pollId);
       }
-      return data.model;
-    };
-
-    el.saveContentCallback = async (cid, body) => {
-      const payload = {
-        library: body.library,
-        params: body.params,
-        metadata: body.metadata,
-        title: body.metadata?.title || contentType?.label
-      };
-
-      const h5pCid =
-        cid && cid !== 'new' ? String(cid) : contentIdRef.current !== 'new' ? contentIdRef.current : null;
-      let row;
-
-      if (dbIdRef.current) {
-        row = await h5pService.updateContent(dbIdRef.current, payload);
-      } else if (h5pCid) {
-        row = await h5pService.updateContent(h5pCid, payload);
-        if (row?.id) dbIdRef.current = row.id;
-      } else {
-        row = await h5pService.createContent(payload);
-        dbIdRef.current = row.id;
-      }
-
-      const savedId = String(row.h5pContentId || h5pCid || cid);
-      contentIdRef.current = savedId;
-      setContentId(savedId);
-      el.setAttribute('content-id', savedId);
-
-      return {
-        contentId: savedId,
-        metadata: row.metadataJson || body.metadata
-      };
-    };
-
-    setEditorReady(true);
+    }, 250);
 
     return () => {
+      window.clearInterval(pollId);
       el.removeEventListener('save-error', onSaveError);
       el.removeEventListener('validation-error', onSaveError);
     };
-  }, [open, loading, draftReady, contentId, contentType]);
+  }, [open, loading, draftReady, contentId, bindEditorElement]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -169,7 +312,7 @@ export default function H5pEditorDialog({
           metadata: result.metadata
         });
       }
-      onClose();
+      handleClose();
     } catch (e) {
       const msg = e?.message || e?.response?.data?.error || 'Save failed';
       if (!String(msg).includes('save-error')) {
@@ -180,19 +323,61 @@ export default function H5pEditorDialog({
     }
   };
 
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth scroll="paper">
-      <DialogTitle>
+  const dialog = (
+    <Dialog
+      className="h5p-editor-mui-dialog"
+      open={open}
+      onClose={handleClose}
+      fullScreen
+      scroll="paper"
+      disableScrollLock
+      disableEnforceFocus
+      container={typeof document !== 'undefined' ? document.body : undefined}
+      slotProps={{
+        root: {
+          className: 'h5p-editor-mui-dialog-root',
+        },
+        backdrop: {
+          sx: {
+            backgroundColor: 'rgba(15, 23, 42, 0.45)',
+          },
+        },
+        paper: {
+          className: 'h5p-editor-mui-dialog-paper',
+          sx: {
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            maxWidth: '100%',
+            height: '100%',
+            maxHeight: '100%',
+            margin: 0,
+          },
+        },
+        transition: { onExited: scheduleH5pEditorDomCleanup },
+      }}
+    >
+      <DialogTitle sx={{ flexShrink: 0 }}>
         {existingH5pContentId ? 'Edit' : 'Create'}: {contentType?.label || 'H5P content'}
       </DialogTitle>
-      <DialogContent dividers sx={{ minHeight: 480, p: 0 }}>
+      <DialogContent
+        dividers
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          p: 0,
+          overflow: 'hidden',
+        }}
+      >
         {contentType?.hint ? (
-          <Alert severity="info" sx={{ m: 2, mb: 0 }}>
+          <Alert severity="info" sx={{ m: 2, mb: 0, flexShrink: 0 }}>
             {contentType.hint}
           </Alert>
         ) : null}
         {error && (
-          <Alert severity="error" sx={{ m: 2 }}>
+          <Alert severity="error" sx={{ m: 2, flexShrink: 0 }}>
             {error}
           </Alert>
         )}
@@ -202,13 +387,18 @@ export default function H5pEditorDialog({
           </Box>
         ) : draftReady && contentId && contentId !== 'new' ? (
           <Box
+            ref={hostRef}
+            className="h5p-editor-dialog-host"
             sx={{
-              minHeight: contentType?.machineName === 'H5P.CoursePresentation' ? 560 : 420,
-              p: 1,
+              flex: 1,
+              minHeight: 0,
+              overflow: 'auto',
+              p: 0,
             }}
           >
             <h5p-editor
-              ref={editorRef}
+              key={contentId}
+              ref={bindEditorElement}
               content-id={String(contentId)}
               h5p-url={getH5pBaseUrl()}
               style={{
@@ -229,8 +419,8 @@ export default function H5pEditorDialog({
           </Box>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={saving}>
+      <DialogActions sx={{ flexShrink: 0 }}>
+        <Button onClick={handleClose} disabled={saving}>
           Cancel
         </Button>
         <Button
@@ -243,4 +433,7 @@ export default function H5pEditorDialog({
       </DialogActions>
     </Dialog>
   );
+
+  if (typeof document === 'undefined') return dialog;
+  return createPortal(dialog, document.body);
 }

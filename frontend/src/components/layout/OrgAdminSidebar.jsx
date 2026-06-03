@@ -18,7 +18,6 @@ import {
   LayoutGrid,
   Upload,
   RefreshCw,
-  FileText,
   ArrowLeftRight,
   Film,
   FolderOpen,
@@ -80,6 +79,7 @@ function ExpandableNav({
   navigateTo,
   end,
   children,
+  onNavigate,
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,6 +100,7 @@ function ExpandableNav({
       } else {
         navigate(navigateTo);
         setOpen(true);
+        onNavigate?.();
       }
     } else {
       setOpen((o) => !o);
@@ -128,10 +129,11 @@ function ExpandableNav({
   );
 }
 
-function SubNav({ to, label, isActive }) {
+function SubNav({ to, label, isActive, onClick }) {
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={`admin-sidebar-sub-item${isActive ? ' active' : ''}`}
     >
       <span className="admin-sidebar-sub-dot" aria-hidden />
@@ -166,16 +168,26 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   const showEpubTools     = hasFeature(user, 'epub_tools');
   const showInteractive   = hasFeature(user, 'interactive.content');
 
-  // Close mobile drawer on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
 
   // Mirror AdminSidebar: this layout always uses the full-width rail (the
   // 1024px media query collapses it automatically). Notify parent once.
   useEffect(() => {
     onCollapse?.(false);
   }, [onCollapse]);
+
+  const closeMobile = () => setMobileOpen(false);
 
   const path = location.pathname;
 
@@ -217,14 +229,25 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
   return (
     <>
       {/* Mobile hamburger — uses shared AdminSidebar mobile styles */}
-      <button
-        className="admin-mobile-toggle"
-        onClick={() => setMobileOpen((o) => !o)}
-        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-        type="button"
-      >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      {mobileOpen ? (
+        <button
+          className="admin-mobile-toggle"
+          onClick={closeMobile}
+          aria-label="Close menu"
+          type="button"
+        >
+          <X size={20} />
+        </button>
+      ) : (
+        <button
+          className="admin-mobile-toggle"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          type="button"
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       {mobileOpen && (
         <div
@@ -238,7 +261,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
         {/* ── Brand block ── */}
         <div className="admin-sidebar-brand">
           <div className="admin-sidebar-brand-mark" aria-hidden>
-            <FileText size={22} strokeWidth={2} />
+            <img src="/Tunr_Logo-01.svg" alt="" className="admin-sidebar-brand-logo" />
           </div>
           <div className="navbar-brand-text">
             <span className="navbar-brand-title">PDF to EPUB</span>
@@ -257,6 +280,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
             icon={LayoutGrid}
             label="Dashboard"
             isActive={active.home}
+            onClick={closeMobile}
           />
           {showEpubSyncImport && (
             <NavRow
@@ -264,6 +288,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
               icon={RefreshCw}
               label="EPUB Sync"
               isActive={active.epubSync}
+              onClick={closeMobile}
             />
           )}
 
@@ -275,6 +300,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                   icon={Upload}
                   label="Upload PDF"
                   isActive={active.pdfsUpload}
+                  onClick={closeMobile}
                 />
               )}
               <ExpandableNav
@@ -289,12 +315,14 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                       : '/conversions/audio-sync'
                 }
                 end={<CountBadge count={conversionCount} tone="mint" />}
+                onNavigate={closeMobile}
               >
                 {showConversion && (
                   <SubNav
                     to="/conversions"
                     label="Conversion Jobs"
                     isActive={active.convJobs}
+                    onClick={closeMobile}
                   />
                 )}
                 {showKitaboo && (
@@ -302,6 +330,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                     to="/conversions/fxl-editor"
                     label="FXL Editor"
                     isActive={active.convFxl}
+                    onClick={closeMobile}
                   />
                 )}
                 {showSyncStudio && (
@@ -309,6 +338,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                     to="/conversions/audio-sync"
                     label="Audio Sync Studio"
                     isActive={active.convAudio}
+                    onClick={closeMobile}
                   />
                 )}
                 {showDownload && (
@@ -316,6 +346,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                     to="/conversions/download"
                     label="Download EPUB"
                     isActive={active.convDownload}
+                    onClick={closeMobile}
                   />
                 )}
               </ExpandableNav>
@@ -331,6 +362,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
               icon={Film}
               label="Exports"
               isActive={active.exports}
+              onClick={closeMobile}
             />
           )}
           <NavRow
@@ -338,12 +370,14 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
             icon={FolderOpen}
             label="Media Library"
             isActive={active.mediaLibrary}
+            onClick={closeMobile}
           />
           <NavRow
             to="/usage"
             icon={Gauge}
             label="Usage"
             isActive={active.usage}
+            onClick={closeMobile}
           />
 
           {/* TOOLS */}
@@ -357,6 +391,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
               icon={Accessibility}
               label="Accessibility"
               isActive={active.accessibility}
+              onClick={closeMobile}
             />
           )}
           {showEpubTools && (
@@ -365,6 +400,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
               icon={ClipboardCheck}
               label="EPUB Checker"
               isActive={active.epubChecker}
+              onClick={closeMobile}
             />
           )}
           {showInteractive && (
@@ -373,6 +409,7 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
               icon={BookOpen}
               label="Interactive"
               isActive={active.interactive}
+              onClick={closeMobile}
             />
           )}
 
@@ -385,12 +422,14 @@ const OrgAdminSidebar = ({ onCollapse, pdfCount = 0, conversionCount = 0 }) => {
                 icon={Activity}
                 label="Activity"
                 isActive={active.activity}
+                onClick={closeMobile}
               />
               <NavRow
                 to="/org/team"
                 icon={Users}
                 label="Team Users"
                 isActive={active.orgTeam}
+                onClick={closeMobile}
               />
             </>
           )}

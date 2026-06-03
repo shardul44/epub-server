@@ -10,7 +10,8 @@
  * refetchOnMount: true — ensures a page always gets data on first mount
  *                         but React Query deduplicates concurrent calls.
  *
- * NOTE: useConversionsQuery sets its own staleTime / refetch rules for jobs.
+ * NOTE: ConversionsJobsPoller + useConversionsQuery set staleTime (~20s).
+ *        Only ConversionsJobsPoller runs refetchInterval while jobs are active.
  *
  * PDF list queries are intentionally excluded from localStorage
  * persistence (shouldDehydrateQuery filter below). Persisting the PDF
@@ -21,6 +22,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
+import { CONVERSIONS_STALE_TIME_MS } from '../hooks/queries/useConversionsQuery';
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +35,18 @@ export const queryClient = new QueryClient({
       refetchOnMount:       true,
     },
   },
+});
+
+queryClient.setQueryDefaults(['conversions'], {
+  staleTime: CONVERSIONS_STALE_TIME_MS,
+  refetchOnWindowFocus: false,
+  refetchOnMount: true,
+});
+
+queryClient.setQueryDefaults(['pdfs'], {
+  staleTime: 30 * 1000,
+  refetchOnWindowFocus: false,
+  refetchOnMount: true,
 });
 
 /* ─── localStorage persistence ────────────────────────────────── */

@@ -17,6 +17,7 @@
 import { useAppSelector } from '../store/hooks';
 import { selectUser } from '../features/auth/authSlice';
 import { ListScopeProvider } from '../context/ListScopeContext';
+import ConversionsJobsPoller from '../providers/ConversionsJobsPoller';
 import OrgAdminLayout from './OrgAdminLayout';
 import PlatformAdminLayout from './PlatformAdminLayout';
 import DefaultLayout from './DefaultLayout';
@@ -31,6 +32,7 @@ export default function RootLayout() {
 
   return (
     <ListScopeProvider user={user}>
+      <ConversionsJobsPoller />
       <Layout />
     </ListScopeProvider>
   );

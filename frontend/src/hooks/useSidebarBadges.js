@@ -16,7 +16,11 @@ import { useConversionsQuery } from './queries/useConversionsQuery';
  */
 export function useSidebarBadges() {
   const { pdfs } = usePdfsQuery({ enabled: false });
-  const { allJobs } = useConversionsQuery({ enabled: false, excludeEpubImports: true });
+  const { allJobs } = useConversionsQuery({
+    enabled: false,
+    excludeEpubImports: true,
+    debugLabel: 'useSidebarBadges',
+  });
 
   return {
     pdfCount: pdfs.length,

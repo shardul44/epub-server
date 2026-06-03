@@ -32,7 +32,8 @@
   border-right-color: #2563eb;
 }
 
-@media (max-width: 1024px) {
+/* Tablet: icon-only rail (769px–1024px). Phones use the off-screen drawer instead. */
+@media (max-width: 1024px) and (min-width: 769px) {
   .layout--user aside.sidebar.user-app-sidebar:not(.sidebar--mobile-open) {
     width: var(--sb-width-collapsed);
   }
@@ -91,7 +92,7 @@
   border-right-color: #2563eb;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .layout--user aside.sidebar.user-app-sidebar:not(.sidebar--mobile-open) .user-sidebar-sub-items {
     display: none !important;
   }
@@ -120,16 +121,23 @@
 }
 
 .user-sidebar-brand-mark {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;   
   border-radius: 10px;
-  background: #2563eb;
-  color: #fff;
+  background: #f3f4f6;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  overflow: hidden;
+  padding: 4px;
+}
+
+.user-sidebar-brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .user-sidebar-brand-text {
@@ -418,7 +426,7 @@
   padding: 10px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px) and (min-width: 769px) {
   .layout--user aside.sidebar.user-app-sidebar:not(.sidebar--mobile-open) .user-sidebar-section-label,
   .layout--user aside.sidebar.user-app-sidebar:not(.sidebar--mobile-open) .user-sidebar-label,
   .layout--user aside.sidebar.user-app-sidebar:not(.sidebar--mobile-open) .user-sidebar-badge,
@@ -454,37 +462,31 @@
     display: flex;
   }
 
-  .user-sidebar-overlay {
-    display: block;
-  }
-
-  .layout--user aside.sidebar.sidebar--mobile-open {
-    transform: translateX(0) !important;
-    z-index: 1000;
-  }
-
   .layout--user aside.sidebar.user-app-sidebar {
-    width: min(280px, 86vw);
     top: 0;
     bottom: 0;
-    padding-top: 52px;
+    padding-top: 0;
     box-sizing: border-box;
   }
 
-  .layout--user aside.sidebar.user-app-sidebar .sidebar-link {
+  .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .user-sidebar-brand {
+    padding-top: 56px;
+  }
+
+  .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .sidebar-link {
     justify-content: flex-start;
     padding: 12px 20px;
     border-left: 3px solid transparent;
     border-right: none;
   }
 
-  .layout--user aside.sidebar.user-app-sidebar .sidebar-link.active {
+  .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .sidebar-link.active {
     border-left-color: #2563eb;
     border-right: none;
   }
 
-  .layout--user aside.sidebar.user-app-sidebar .sidebar-link .user-sidebar-label,
-  .layout--user aside.sidebar.user-app-sidebar .sidebar-link .user-sidebar-badge {
+  .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .sidebar-link .user-sidebar-label,
+  .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .sidebar-link .user-sidebar-badge {
     display: inline-flex !important;
   }
 
@@ -506,7 +508,7 @@
 
   .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .user-sidebar-brand {
     justify-content: flex-start;
-    padding: 20px 24px 16px;
+    padding: 56px 24px 16px;
   }
 
   .layout--user aside.sidebar.user-app-sidebar.sidebar--mobile-open .user-sidebar-footer {

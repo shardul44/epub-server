@@ -32,6 +32,33 @@ function encodeDataAttrJson(obj) {
   }
 }
 
+const EPUB_ALLOWED_INLINE_STYLE_PROPS = new Set(['font-family', 'font-size']);
+
+function sanitizeInlineStyleForEpub(styleValue) {
+  if (!styleValue || typeof styleValue !== 'string') return '';
+  const kept = [];
+  for (const decl of styleValue.split(';')) {
+    const trimmed = decl.trim();
+    if (!trimmed) continue;
+    const colon = trimmed.indexOf(':');
+    if (colon < 0) continue;
+    const prop = trimmed.slice(0, colon).trim().toLowerCase();
+    if (!EPUB_ALLOWED_INLINE_STYLE_PROPS.has(prop)) continue;
+    let val = trimmed.slice(colon + 1).trim();
+    if (!val) continue;
+    val = val.replace(/[\r\n"<>]/g, '');
+    kept.push(`${prop}: ${val}`);
+  }
+  return kept.join('; ');
+}
+
+function preserveFontStylesInXhtml(xhtml) {
+  return xhtml.replace(/\s+style=(?:"([^"]*)"|'([^']*)')/gi, (match, dbl, sgl) => {
+    const sanitized = sanitizeInlineStyleForEpub(dbl ?? sgl ?? '');
+    return sanitized ? ` style="${sanitized}"` : '';
+  });
+}
+
 /**
  * Convert HTML to XHTML by ensuring all self-closing tags are properly formatted
  * and all tags are properly closed for EPUB compliance.
@@ -127,9 +154,8 @@ function htmlToXhtml(html) {
   xhtml = xhtml.replace(/\s+aria-[a-z0-9-]+="[^"]*"/gi, '');
   xhtml = xhtml.replace(/\s+aria-[a-z0-9-]+='[^']*'/gi, '');
   
-  // Remove style attributes (can contain special characters and quotes)
-  xhtml = xhtml.replace(/\s+style="[^"]*"/gi, '');
-  xhtml = xhtml.replace(/\s+style='[^']*'/gi, '');
+  // Keep font-family / font-size from CKEditor; drop other inline styles (quotes/special chars break XHTML).
+  xhtml = preserveFontStylesInXhtml(xhtml);
   
   // Sanitize class attributes - keep only alphanumeric, spaces, hyphens, underscores
   xhtml = xhtml.replace(/\s+class="([^"]*)"/gi, (match, classes) => {

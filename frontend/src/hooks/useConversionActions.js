@@ -72,7 +72,11 @@ export function useConversionActions() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const { jobs, refresh } = useConversionsQuery();
+  const { jobs, refresh } = useConversionsQuery({
+    enabled: false,
+    excludeEpubImports: true,
+    debugLabel: 'useConversionActions',
+  });
   const { goToEditor, goToAudioSync, goToDownload } = useWorkflowNavigation();
 
   // Stable ref so confirmDelete always reads the latest deleteModal state

@@ -12,9 +12,13 @@
 
 .main-content--user .user-app-scroll {
   flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .main-content--user:has(.user-app-scroll > .sync-studio),
@@ -42,9 +46,29 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 .main-content--org-admin > .iee-shell {
   flex: 1;
+  min-width: 0;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Interactive editor studio grid must fill the main column, not shrink-wrap ~740px */
+.main-content--user:has(.iee-shell) .user-app-scroll,
+.main-content--org-admin:has(.iee-shell) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.main-content--user .user-app-scroll > .iee-shell,
+.main-content--org-admin > .iee-shell {
+  width: 100%;
+  max-width: 100%;
 }

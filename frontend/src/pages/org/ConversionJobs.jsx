@@ -247,6 +247,7 @@ const ConversionJobs = () => {
   const { jobs, isPending, isLoading: loading, error: pollError, refresh } = useConversionsQuery({
     statusFilter,
     excludeEpubImports: true,
+    debugLabel: 'ConversionJobs',
   });
 
   // If another page redirects here (e.g. editor opened while job is still running),

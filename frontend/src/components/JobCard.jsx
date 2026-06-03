@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import {
   Trash2,
   Image,
@@ -111,7 +111,7 @@ export const JobGrid = ({ children, className }) => (
  * Displays a single conversion job as a card.
  * Extracted from ConversionJobs.jsx so it can be reused across pages.
  */
-const JobCard = ({
+const JobCard = memo(({
   job,
   onSelect,
   onDelete,
@@ -230,12 +230,14 @@ const JobCard = ({
             <div className="cj-card-thumb-preview-layer">
               <PdfThumbnail
                 url={pdfViewUrl}
+                pdfId={pdfDocumentId}
                 width={200}
                 height={280}
                 scale={1.25}
                 cacheKey={thumbCacheKey}
                 className="cj-job-pdf-thumb"
                 alt=""
+                debugLabel="JobCard"
               />
             </div>
           ) : null}
@@ -411,6 +413,8 @@ const JobCard = ({
       </div>
     </div>
   );
-};
+});
+
+JobCard.displayName = 'JobCard';
 
 export default JobCard;

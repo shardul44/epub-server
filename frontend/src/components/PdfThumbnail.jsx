@@ -2,20 +2,46 @@
  * PdfThumbnail — client-side PDF first-page thumbnail renderer
  *
  * Generates thumbnails in the browser using pdfjs-dist after fetching the PDF
- * bytes (e.g. GET …/pdfs/:id/view).
+ * bytes (e.g. GET …/pdfs/:id/view). Uses in-memory + localStorage cache and
+ * dedupes in-flight fetches so job-list polling does not re-download PDFs.
  *
  * Usage:
  *   <PdfThumbnail file={file} width={200} height={280} />
- *   <PdfThumbnail url="/path/to/file.pdf" width={200} height={280} />
+ *   <PdfThumbnail url="/path/to/file.pdf" pdfId={12} cacheKey="pdf-thumb-12" />
  */
 
 import { useState, useEffect, useRef, memo, useMemo } from 'react';
 import { generatePdfThumbnail } from '../utils/pdfThumbnail';
+import {
+  getMemoryThumbnail,
+  setMemoryThumbnail,
+  fetchPdfViewBlobOnce,
+  loadThumbnailDataUrlOnce,
+} from '../lib/pdfThumbnailCache';
 import './PdfThumbnail.css';
+
+function readLocalThumbnail(cacheKey) {
+  if (!cacheKey) return null;
+  try {
+    return localStorage.getItem(cacheKey);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalThumbnail(cacheKey, dataUrl) {
+  if (!cacheKey || !dataUrl) return;
+  try {
+    localStorage.setItem(cacheKey, dataUrl);
+  } catch {
+    /* storage full */
+  }
+}
 
 const PdfThumbnail = memo(({
   file,
   url,
+  pdfId,
   width  = 200,
   height = 280,
   scale   = 2,
@@ -27,11 +53,11 @@ const PdfThumbnail = memo(({
   fallback  = null,
   onLoad,
   onError,
-  /** Called when the PDF URL returns 404 (no visible error state). */
   onAbsent,
+  debugLabel,
 }) => {
   const [thumbSrc, setThumbSrc]   = useState(null);
-  const [status, setStatus]       = useState('idle'); // idle | loading | ready | error | absent
+  const [status, setStatus]       = useState('idle');
   const [errorMsg, setErrorMsg]   = useState('');
   const objectUrlRef              = useRef(null);
   const onLoadRef   = useRef(onLoad);
@@ -44,30 +70,45 @@ const PdfThumbnail = memo(({
 
   const fetchUrl = useMemo(() => (typeof url === 'string' && url ? url : null), [url]);
 
+  const storageKey = useMemo(() => {
+    if (cacheKey) return cacheKey;
+    if (pdfId != null && pdfId !== '') {
+      return `pdf-thumb-${pdfId}-${width}x${height}@${scale}-${format}`;
+    }
+    return fetchUrl;
+  }, [cacheKey, pdfId, fetchUrl, width, height, scale, format]);
+
   useEffect(() => {
     let cancelled = false;
-    const ac = new AbortController();
 
-    if (cacheKey) {
-      try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          setThumbSrc(cached);
-          setStatus('ready');
-          onLoadRef.current?.();
-          return () => {
-            cancelled = true;
-            ac.abort();
-          };
-        }
-      } catch (_) { /* ignore */ }
+    const applyReady = (dataUrl) => {
+      if (cancelled || !dataUrl) return;
+      setThumbSrc(dataUrl);
+      setStatus('ready');
+      onLoadRef.current?.();
+    };
+
+    const memoryHit = getMemoryThumbnail(storageKey);
+    if (memoryHit) {
+      applyReady(memoryHit);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const localHit = readLocalThumbnail(storageKey);
+    if (localHit) {
+      setMemoryThumbnail(storageKey, localHit);
+      applyReady(localHit);
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (!file && !fetchUrl) {
       setStatus('idle');
       return () => {
         cancelled = true;
-        ac.abort();
       };
     }
 
@@ -75,106 +116,46 @@ const PdfThumbnail = memo(({
     setThumbSrc(null);
     setErrorMsg('');
 
-    async function generate() {
-      try {
-        let pdfBlob;
+    const renderOpts = { width, height, scale, format, quality, pageNumber: 1 };
 
-        if (file) {
-          pdfBlob = file;
-        } else {
-          const response = await fetch(fetchUrl, { signal: ac.signal });
-          if (cancelled) return;
-          if (!response.ok) {
-            const err = new Error(`HTTP ${response.status}`);
-            err.httpStatus = response.status;
-            throw err;
-          }
+    loadThumbnailDataUrlOnce(storageKey, async () => {
+      let pdfBlob;
 
-          // Content-Type sniff — if the server returned HTML/JSON (login page,
-          // error envelope, redirect, etc.) treat it as "absent" rather than
-          // letting pdfjs throw the noisy "Invalid PDF structure" exception.
-          const ct = (response.headers.get('content-type') || '').toLowerCase();
-          const ctLooksWrong =
-            ct.includes('text/html') ||
-            ct.includes('application/json') ||
-            ct.includes('text/plain');
-
-          pdfBlob = await response.blob();
-          if (cancelled) return;
-
-          // Empty body is never a PDF.
-          if (!pdfBlob || pdfBlob.size === 0) {
-            if (!cancelled) {
-              setStatus('absent');
-              onAbsentRef.current?.();
-            }
-            return;
-          }
-
-          // Magic-byte check: every PDF starts with "%PDF-".
-          const head = await pdfBlob.slice(0, 5).arrayBuffer();
-          const bytes = new Uint8Array(head);
-          const isPdf =
-            bytes.length >= 5 &&
-            bytes[0] === 0x25 && // %
-            bytes[1] === 0x50 && // P
-            bytes[2] === 0x44 && // D
-            bytes[3] === 0x46 && // F
-            bytes[4] === 0x2d;   // -
-
-          if (!isPdf || ctLooksWrong) {
-            if (!cancelled) {
-              setStatus('absent');
-              onAbsentRef.current?.();
-            }
-            return;
-          }
+      if (file) {
+        pdfBlob = file;
+      } else {
+        if (import.meta.env.DEV && debugLabel) {
+          // eslint-disable-next-line no-console
+          console.debug('[pdf-thumb] GET /pdfs/view', { pdfId, source: debugLabel });
         }
+        pdfBlob = await fetchPdfViewBlobOnce(fetchUrl);
+      }
 
-        const dataUrl = await generatePdfThumbnail(pdfBlob, {
-          width,
-          height,
-          scale,
-          format,
-          quality,
-          pageNumber: 1,
-        });
-
+      const dataUrl = await generatePdfThumbnail(pdfBlob, renderOpts);
+      writeLocalThumbnail(storageKey, dataUrl);
+      return dataUrl;
+    })
+      .then((dataUrl) => {
         if (cancelled) return;
-
-        if (cacheKey) {
-          try {
-            localStorage.setItem(cacheKey, dataUrl);
-          } catch (_) { /* storage full */ }
-        }
-
-        setThumbSrc(dataUrl);
-        setStatus('ready');
-        onLoadRef.current?.();
-      } catch (err) {
-        if (cancelled || err?.name === 'AbortError') return;
+        applyReady(dataUrl);
+      })
+      .catch((err) => {
+        if (cancelled) return;
 
         const httpStatus = err?.response?.status ?? err?.httpStatus;
         const msg = String(err?.message || '');
         const errName = String(err?.name || '');
         const is404 = httpStatus === 404 || msg.includes('404');
 
-        if (is404) {
-          if (!cancelled) {
-            setStatus('absent');
-            onAbsentRef.current?.();
-          }
+        if (err?.code === 'NOT_PDF' || is404) {
+          setStatus('absent');
+          onAbsentRef.current?.();
           return;
         }
 
-        // pdfjs-dist InvalidPDFException → not a real PDF on disk. Treat as
-        // absent silently so we don't spam the console for legitimately
-        // non-PDF assets (EPUB stubs, partial uploads, etc.).
         if (errName === 'InvalidPDFException' || msg.toLowerCase().includes('invalid pdf')) {
-          if (!cancelled) {
-            setStatus('absent');
-            onAbsentRef.current?.();
-          }
+          setStatus('absent');
+          onAbsentRef.current?.();
           return;
         }
 
@@ -182,20 +163,16 @@ const PdfThumbnail = memo(({
         setErrorMsg(err.message || 'Failed to generate thumbnail');
         setStatus('error');
         onErrorRef.current?.(err);
-      }
-    }
-
-    generate();
+      });
 
     return () => {
       cancelled = true;
-      ac.abort();
       if (objectUrlRef.current) {
         URL.revokeObjectURL(objectUrlRef.current);
         objectUrlRef.current = null;
       }
     };
-  }, [file, fetchUrl, width, height, scale, format, quality, cacheKey]);
+  }, [file, fetchUrl, storageKey, width, height, scale, format, quality, pdfId, debugLabel]);
 
   if (status === 'absent') {
     if (fallback) return fallback;

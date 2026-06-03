@@ -662,7 +662,7 @@ export class GeminiService {
   // Cache for late responses (responses that arrive after timeout)
   static lateResponseCache = new Map();
   static LATE_RESPONSE_GRACE_PERIOD = 30000; // 30 seconds grace period
-  static LATE_RESPONSE_CACHE_TTL = 300000; // 5 minutes TTL for cached responses
+  static LATE_RESPONSE_CACHE_TTL = 900000; // 5 minutes TTL for cached responses
 
   /**
    * Generate a cache key for a page conversion

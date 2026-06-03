@@ -13,6 +13,32 @@ H5PIntegration = H5P.jQuery.extend(false, {}, window.parent.H5PIntegration);
 H5PIntegration.loadedJs = [];
 H5PIntegration.loadedCss = [];
 
+if (window.parent.__H5P_AUTH_TOKEN) {
+  window.__H5P_AUTH_TOKEN = window.parent.__H5P_AUTH_TOKEN;
+}
+if (window.parent.H5PIntegration && window.parent.H5PIntegration.authToken) {
+  H5PIntegration.authToken = window.parent.H5PIntegration.authToken;
+}
+
+/**
+ * Append JWT to H5P media URLs (temp-files/content). Token must be before #hash.
+ */
+ns.appendAuthToUrl = function (url) {
+  if (!url || url.indexOf('token=') !== -1) {
+    return url;
+  }
+  var token = H5PIntegration.authToken || window.__H5P_AUTH_TOKEN ||
+    (window.parent && (window.parent.H5PIntegration.authToken || window.parent.__H5P_AUTH_TOKEN));
+  if (!token) {
+    return url;
+  }
+  var hashIdx = url.indexOf('#');
+  var base = hashIdx === -1 ? url : url.substring(0, hashIdx);
+  var hash = hashIdx === -1 ? '' : url.substring(hashIdx);
+  var sep = base.indexOf('?') === -1 ? '?' : '&';
+  return base + sep + 'token=' + encodeURIComponent(token) + hash;
+};
+
 /**
  * Constants used within editor
  *
@@ -71,6 +97,18 @@ ns.renderableCommonFields = {};
       // Already loaded
       done(); 
       return;
+    }
+
+    // Editor core and H5P.CKEditor both ship ckeditor.js — loading twice throws.
+    if (/ckeditor\.js/i.test(src) && H5PIntegration && H5PIntegration.loadedJs) {
+      var ckLoaded = H5PIntegration.loadedJs.some(function (p) {
+        return /ckeditor\.js/i.test(p);
+      });
+      if (ckLoaded) {
+        H5PIntegration.loadedJs.push(src);
+        done();
+        return;
+      }
     }
 
     if (loading[src] !== undefined) {

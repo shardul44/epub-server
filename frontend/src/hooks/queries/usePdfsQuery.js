@@ -12,7 +12,6 @@ import { useListScope } from '../../context/ListScopeContext';
 import { listScopeQueryParams } from '../../utils/listScope';
 import {
   removePdfFromListCaches,
-  syncPdfAndJobCaches,
   upsertPdfInListCache,
 } from '../../lib/syncPdfCaches';
 
@@ -33,16 +32,15 @@ export function usePdfsQuery({ scope: scopeOverride, enabled = true } = {}) {
       return Array.isArray(data) ? data : [];
     },
     enabled,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData,
   });
 
   const addPdf = (newPdf) => {
     if (!newPdf?.id) return;
     upsertPdfInListCache(queryClient, scope, newPdf);
-    void syncPdfAndJobCaches(queryClient);
   };
 
   const removePdf = (pdfId) => {
