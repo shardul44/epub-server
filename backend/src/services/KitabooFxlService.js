@@ -3898,6 +3898,13 @@ Return ONLY the JSON array.
       }
       return guarded;
     };
+    /** Round times only — used for Sync Studio manual alignment (zone reorder must not shift clipBegin). */
+    const roundFragmentTimes = (frags) =>
+      (frags || []).map((f) => ({
+        ...f,
+        startTime: Number((parseFloat(f.startTime) || 0).toFixed(3)),
+        endTime: Number((parseFloat(f.endTime) || 0).toFixed(3))
+      }));
 
     const outputDir = path.join(getEpubOutputDir(), `fxl_${jobId}`);
     const tempDir = path.join(outputDir, 'temp');
@@ -4522,7 +4529,10 @@ Return ONLY the JSON array.
         if (useGlobalAudio && sharedAudioFileName && globalAlignmentByPage[pageNum]?.length > 0) {
           audioFileName = sharedAudioFileName;
           const alignmentResult = globalAlignmentByPage[pageNum];
-          const guardedAlignment = enforceMonotonic(alignmentResult);
+          const preserveExactSyncTimes = globalAlignmentJsonWritten;
+          const guardedAlignment = preserveExactSyncTimes
+            ? roundFragmentTimes(alignmentResult)
+            : enforceMonotonic(alignmentResult);
           const alignmentMap = Object.fromEntries(guardedAlignment.map(r => [r.id, { startTime: r.startTime, endTime: r.endTime }]));
           const pagePrefix = `p${pageNum}`;
           const xhtmlHasZ0 = (zonesForXhtmlPre || []).some(z => {
@@ -4644,7 +4654,9 @@ Return ONLY the JSON array.
           // Align fragment IDs to expanded XHTML zone IDs so player highlighting works
           smilFragments = KitabooFxlService.alignSmilFragmentsToExpandedZones(smilFragments, zonesForXhtmlPre);
           // SMIL order = reading order (no sort by startTime)
-          let guardedFragments = enforceMonotonic(smilFragments, 0.001);
+          let guardedFragments = preserveExactSyncTimes
+            ? roundFragmentTimes(smilFragments)
+            : enforceMonotonic(smilFragments, 0.001);
           // Include alignment segment ids so word-level Sync Studio data is not stripped vs expanded XHTML ids
           const renderedIds = KitabooFxlService.mergeRenderedIdsForSmilFilter(
             zonesForXhtmlPre,
@@ -4658,7 +4670,7 @@ Return ONLY the JSON array.
               syncLevel,
               globalAlignmentByPage[pageNum]
             );
-            guardedFragments = enforceMonotonic(fb, 0.001);
+            guardedFragments = preserveExactSyncTimes ? roundFragmentTimes(fb) : enforceMonotonic(fb, 0.001);
             if (guardedFragments.length > 0) {
               console.warn(`[KitabooFXL] Page ${pageNum}: zone→time SMIL had 0 pars; using alignment.json fallback (${guardedFragments.length} segments).`);
             }
@@ -4669,6 +4681,7 @@ Return ONLY the JSON array.
           }
           const smilOptions = {
             minDurationSec: 0.001,
+            preserveExactTimes: preserveExactSyncTimes,
             silencePeriods: globalSilencePeriods,
             audioDurationSec: pageDuration
           };
@@ -4782,7 +4795,10 @@ Return ONLY the JSON array.
                   }
                 }
 
-                const guardedAlignment = enforceMonotonic(alignmentResult);
+                const preserveExactSyncTimes = hasSyncStudioPageAlignment;
+                const guardedAlignment = preserveExactSyncTimes
+                  ? roundFragmentTimes(alignmentResult)
+                  : enforceMonotonic(alignmentResult);
                 const alignmentMap = Object.fromEntries(guardedAlignment.map(r => [r.id, { startTime: r.startTime, endTime: r.endTime }]));
                 const pagePrefix = `p${pageNum}`;
                 const xhtmlHasZ0 = (zonesForXhtmlPre || []).some(z => {
@@ -4895,7 +4911,9 @@ Return ONLY the JSON array.
                 // Align fragment IDs to expanded XHTML zone IDs so player highlighting works
                 smilFragments = KitabooFxlService.alignSmilFragmentsToExpandedZones(smilFragments, zonesForXhtmlPre);
                 // SMIL order = reading order (no sort by startTime)
-                let guardedFragments = enforceMonotonic(smilFragments, 0.001);
+                let guardedFragments = preserveExactSyncTimes
+                  ? roundFragmentTimes(smilFragments)
+                  : enforceMonotonic(smilFragments, 0.001);
                 const renderedIdsPerPage = KitabooFxlService.mergeRenderedIdsForSmilFilter(
                   zonesForXhtmlPre,
                   syncLevel,
@@ -4908,7 +4926,7 @@ Return ONLY the JSON array.
                     syncLevel,
                     guardedAlignment
                   );
-                  guardedFragments = enforceMonotonic(fb, 0.001);
+                  guardedFragments = preserveExactSyncTimes ? roundFragmentTimes(fb) : enforceMonotonic(fb, 0.001);
                   if (guardedFragments.length > 0) {
                     pageDuration = guardedFragments.length > 0
                       ? Math.max(...guardedFragments.map(r => r.endTime))
@@ -4921,6 +4939,7 @@ Return ONLY the JSON array.
                 pushSegmentsForSyncStudio(guardedFragments);
                 const smilOptionsPerPage = {
                   minDurationSec: 0.05,
+                  preserveExactTimes: preserveExactSyncTimes,
                   audioDurationSec: audioDurationSec > 0 ? audioDurationSec : undefined
                 };
                 const smilContent = EpubGenerator.generateFxlSmil({

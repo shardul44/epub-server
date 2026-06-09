@@ -1,0 +1,7 @@
+/* Fixed Layout EPUB styles */
+.fxl-page { margin: 0; padding: 0; }
+.page-container { position: relative; }
+.text-layer { pointer-events: none; }
+.word { white-space: pre; }
+.sentence { display: inline; }
+.-epub-media-overlay-active { background-color: rgba(255, 230, 0, 0.35); }

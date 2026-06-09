@@ -1,0 +1,32 @@
+/* Fixed Layout EPUB styles */
+@font-face{font-family:ff1;src:url(../fonts/f1.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff10;src:url(../fonts/f10.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff11;src:url(../fonts/f11.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff12;src:url(../fonts/f12.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2;src:url(../fonts/f2.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3;src:url(../fonts/f3.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4;src:url(../fonts/f4.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff5;src:url(../fonts/f5.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff6;src:url(../fonts/f6.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff7;src:url(../fonts/f7.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff8;src:url(../fonts/f8.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff9;src:url(../fonts/f9.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffa;src:url(../fonts/fa.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffb;src:url(../fonts/fb.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffc;src:url(../fonts/fc.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffd;src:url(../fonts/fd.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffe;src:url(../fonts/fe.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:fff;src:url(../fonts/ff.woff) format("woff");font-style:normal;font-weight:normal;}
+.fxl-page { margin: 0; padding: 0; }
+.page-container { position: relative; }
+.page-bg { z-index: 0; object-fit: fill; }
+.text-layer { pointer-events: none; z-index: 1; }
+.word {
+  white-space: nowrap;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  font-family: ff1, sans-serif;
+}
+.sentence { display: block; position: static; }
+.-epub-media-overlay-active { background-color: rgba(255, 230, 0, 0.35); }

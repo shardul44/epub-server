@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="pages/page_3.xhtml">
+    <par id="par_sentence_000003">
+      <text src="pages/page_3.xhtml#sentence_000003"/>
+      <audio src="../audio/narration.mp3" clipBegin="4.800s" clipEnd="10.400s"/>
+    </par>
+    <par id="par_sentence_000004">
+      <text src="pages/page_3.xhtml#sentence_000004"/>
+      <audio src="../audio/narration.mp3" clipBegin="10.700s" clipEnd="14.200s"/>
+    </par>
+    <par id="par_sentence_000005">
+      <text src="pages/page_3.xhtml#sentence_000005"/>
+      <audio src="../audio/narration.mp3" clipBegin="14.500s" clipEnd="24.300s"/>
+    </par>
+    <par id="par_sentence_000006">
+      <text src="pages/page_3.xhtml#sentence_000006"/>
+      <audio src="../audio/narration.mp3" clipBegin="24.600s" clipEnd="30.550s"/>
+    </par>
+    <par id="par_sentence_000007">
+      <text src="pages/page_3.xhtml#sentence_000007"/>
+      <audio src="../audio/narration.mp3" clipBegin="30.850s" clipEnd="31.900s"/>
+    </par>
+    <par id="par_sentence_000008">
+      <text src="pages/page_3.xhtml#sentence_000008"/>
+      <audio src="../audio/narration.mp3" clipBegin="32.200s" clipEnd="35.700s"/>
+    </par>
+    <par id="par_sentence_000009">
+      <text src="pages/page_3.xhtml#sentence_000009"/>
+      <audio src="../audio/narration.mp3" clipBegin="36.000s" clipEnd="39.500s"/>
+    </par>
+    <par id="par_sentence_000010">
+      <text src="pages/page_3.xhtml#sentence_000010"/>
+      <audio src="../audio/narration.mp3" clipBegin="39.800s" clipEnd="45.400s"/>
+    </par>
+    <par id="par_sentence_000011">
+      <text src="pages/page_3.xhtml#sentence_000011"/>
+      <audio src="../audio/narration.mp3" clipBegin="45.700s" clipEnd="47.450s"/>
+    </par>
+    </seq>
+  </body>
+</smil>
