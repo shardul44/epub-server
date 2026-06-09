@@ -1,0 +1,18 @@
+{
+  "pages": [
+    {
+      "number": 1,
+      "width": 612,
+      "height": 792,
+      "fileName": "page_1.xhtml"
+    }
+  ],
+  "words": [],
+  "sentences": [],
+  "metadata": {
+    "generatedAt": "2026-06-08T10:07:04.681Z",
+    "sourcePdf": "D:\\BYLINE-AACHAL\\prod-epub\\backend\\pdf_pipeline_jobs\\1b4809e6-a6a3-4d50-ba0f-8da0eeb76535\\source.pdf",
+    "totalPages": 1,
+    "idScheme": "sequential-stable-v1"
+  }
+}

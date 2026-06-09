@@ -1,0 +1,1 @@
+{"version":3,"file":"WordSegmentationService.d.ts","sourceRoot":"","sources":["../../../src/pdf-pipeline/services/WordSegmentationService.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,SAAS,EAAE,MAAM,aAAa,CAAC;AAM9D,qBAAa,uBAAuB;IAClC;;;OAGG;IACH,MAAM,CAAC,OAAO,CAAC,QAAQ,EAAE,eAAe,EAAE,GAAG,SAAS,EAAE;IAoDxD,OAAO,CAAC,MAAM,CAAC,QAAQ;CAOxB"}

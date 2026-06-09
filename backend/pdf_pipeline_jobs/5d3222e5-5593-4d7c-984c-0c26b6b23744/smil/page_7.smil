@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="pages/page_7.xhtml">
+    <par id="par_sentence_000210">
+      <text src="pages/page_7.xhtml#sentence_000210"/>
+      <audio src="../audio/narration.mp3" clipBegin="374.050s" clipEnd="377.900s"/>
+    </par>
+    <par id="par_sentence_000211">
+      <text src="pages/page_7.xhtml#sentence_000211"/>
+      <audio src="../audio/narration.mp3" clipBegin="378.200s" clipEnd="380.650s"/>
+    </par>
+    <par id="par_sentence_000212">
+      <text src="pages/page_7.xhtml#sentence_000212"/>
+      <audio src="../audio/narration.mp3" clipBegin="380.950s" clipEnd="383.750s"/>
+    </par>
+    <par id="par_sentence_000213">
+      <text src="pages/page_7.xhtml#sentence_000213"/>
+      <audio src="../audio/narration.mp3" clipBegin="384.050s" clipEnd="384.750s"/>
+    </par>
+    <par id="par_sentence_000214">
+      <text src="pages/page_7.xhtml#sentence_000214"/>
+      <audio src="../audio/narration.mp3" clipBegin="385.050s" clipEnd="387.150s"/>
+    </par>
+    <par id="par_sentence_000215">
+      <text src="pages/page_7.xhtml#sentence_000215"/>
+      <audio src="../audio/narration.mp3" clipBegin="387.450s" clipEnd="390.250s"/>
+    </par>
+    <par id="par_sentence_000216">
+      <text src="pages/page_7.xhtml#sentence_000216"/>
+      <audio src="../audio/narration.mp3" clipBegin="390.550s" clipEnd="393.000s"/>
+    </par>
+    <par id="par_sentence_000217">
+      <text src="pages/page_7.xhtml#sentence_000217"/>
+      <audio src="../audio/narration.mp3" clipBegin="393.300s" clipEnd="393.800s"/>
+    </par>
+    <par id="par_sentence_000218">
+      <text src="pages/page_7.xhtml#sentence_000218"/>
+      <audio src="../audio/narration.mp3" clipBegin="394.100s" clipEnd="396.900s"/>
+    </par>
+    <par id="par_sentence_000219">
+      <text src="pages/page_7.xhtml#sentence_000219"/>
+      <audio src="../audio/narration.mp3" clipBegin="397.200s" clipEnd="401.400s"/>
+    </par>
+    <par id="par_sentence_000220">
+      <text src="pages/page_7.xhtml#sentence_000220"/>
+      <audio src="../audio/narration.mp3" clipBegin="401.700s" clipEnd="406.250s"/>
+    </par>
+    <par id="par_sentence_000221">
+      <text src="pages/page_7.xhtml#sentence_000221"/>
+      <audio src="../audio/narration.mp3" clipBegin="406.550s" clipEnd="409.700s"/>
+    </par>
+    <par id="par_sentence_000222">
+      <text src="pages/page_7.xhtml#sentence_000222"/>
+      <audio src="../audio/narration.mp3" clipBegin="410.000s" clipEnd="414.900s"/>
+    </par>
+    <par id="par_sentence_000223">
+      <text src="pages/page_7.xhtml#sentence_000223"/>
+      <audio src="../audio/narration.mp3" clipBegin="415.200s" clipEnd="419.050s"/>
+    </par>
+    <par id="par_sentence_000224">
+      <text src="pages/page_7.xhtml#sentence_000224"/>
+      <audio src="../audio/narration.mp3" clipBegin="419.350s" clipEnd="420.750s"/>
+    </par>
+    <par id="par_sentence_000225">
+      <text src="pages/page_7.xhtml#sentence_000225"/>
+      <audio src="../audio/narration.mp3" clipBegin="421.050s" clipEnd="424.200s"/>
+    </par>
+    <par id="par_sentence_000226">
+      <text src="pages/page_7.xhtml#sentence_000226"/>
+      <audio src="../audio/narration.mp3" clipBegin="424.500s" clipEnd="425.550s"/>
+    </par>
+    <par id="par_sentence_000227">
+      <text src="pages/page_7.xhtml#sentence_000227"/>
+      <audio src="../audio/narration.mp3" clipBegin="425.850s" clipEnd="428.650s"/>
+    </par>
+    <par id="par_sentence_000228">
+      <text src="pages/page_7.xhtml#sentence_000228"/>
+      <audio src="../audio/narration.mp3" clipBegin="428.950s" clipEnd="429.450s"/>
+    </par>
+    <par id="par_sentence_000229">
+      <text src="pages/page_7.xhtml#sentence_000229"/>
+      <audio src="../audio/narration.mp3" clipBegin="429.750s" clipEnd="432.200s"/>
+    </par>
+    <par id="par_sentence_000230">
+      <text src="pages/page_7.xhtml#sentence_000230"/>
+      <audio src="../audio/narration.mp3" clipBegin="432.500s" clipEnd="436.350s"/>
+    </par>
+    <par id="par_sentence_000231">
+      <text src="pages/page_7.xhtml#sentence_000231"/>
+      <audio src="../audio/narration.mp3" clipBegin="436.650s" clipEnd="440.150s"/>
+    </par>
+    <par id="par_sentence_000232">
+      <text src="pages/page_7.xhtml#sentence_000232"/>
+      <audio src="../audio/narration.mp3" clipBegin="440.450s" clipEnd="440.950s"/>
+    </par>
+    <par id="par_sentence_000233">
+      <text src="pages/page_7.xhtml#sentence_000233"/>
+      <audio src="../audio/narration.mp3" clipBegin="441.250s" clipEnd="452.100s"/>
+    </par>
+    <par id="par_sentence_000234">
+      <text src="pages/page_7.xhtml#sentence_000234"/>
+      <audio src="../audio/narration.mp3" clipBegin="452.400s" clipEnd="462.200s"/>
+    </par>
+    <par id="par_sentence_000235">
+      <text src="pages/page_7.xhtml#sentence_000235"/>
+      <audio src="../audio/narration.mp3" clipBegin="462.500s" clipEnd="463.000s"/>
+    </par>
+    <par id="par_sentence_000236">
+      <text src="pages/page_7.xhtml#sentence_000236"/>
+      <audio src="../audio/narration.mp3" clipBegin="463.300s" clipEnd="464.350s"/>
+    </par>
+    <par id="par_sentence_000237">
+      <text src="pages/page_7.xhtml#sentence_000237"/>
+      <audio src="../audio/narration.mp3" clipBegin="464.650s" clipEnd="465.150s"/>
+    </par>
+    <par id="par_sentence_000238">
+      <text src="pages/page_7.xhtml#sentence_000238"/>
+      <audio src="../audio/narration.mp3" clipBegin="465.450s" clipEnd="470.000s"/>
+    </par>
+    <par id="par_sentence_000239">
+      <text src="pages/page_7.xhtml#sentence_000239"/>
+      <audio src="../audio/narration.mp3" clipBegin="470.300s" clipEnd="473.450s"/>
+    </par>
+    <par id="par_sentence_000240">
+      <text src="pages/page_7.xhtml#sentence_000240"/>
+      <audio src="../audio/narration.mp3" clipBegin="473.750s" clipEnd="477.250s"/>
+    </par>
+    <par id="par_sentence_000241">
+      <text src="pages/page_7.xhtml#sentence_000241"/>
+      <audio src="../audio/narration.mp3" clipBegin="477.550s" clipEnd="483.150s"/>
+    </par>
+    <par id="par_sentence_000242">
+      <text src="pages/page_7.xhtml#sentence_000242"/>
+      <audio src="../audio/narration.mp3" clipBegin="483.450s" clipEnd="486.600s"/>
+    </par>
+    <par id="par_sentence_000243">
+      <text src="pages/page_7.xhtml#sentence_000243"/>
+      <audio src="../audio/narration.mp3" clipBegin="486.900s" clipEnd="487.600s"/>
+    </par>
+    <par id="par_sentence_000244">
+      <text src="pages/page_7.xhtml#sentence_000244"/>
+      <audio src="../audio/narration.mp3" clipBegin="487.900s" clipEnd="493.500s"/>
+    </par>
+    <par id="par_sentence_000245">
+      <text src="pages/page_7.xhtml#sentence_000245"/>
+      <audio src="../audio/narration.mp3" clipBegin="493.800s" clipEnd="497.650s"/>
+    </par>
+    <par id="par_sentence_000246">
+      <text src="pages/page_7.xhtml#sentence_000246"/>
+      <audio src="../audio/narration.mp3" clipBegin="497.950s" clipEnd="504.950s"/>
+    </par>
+    <par id="par_sentence_000247">
+      <text src="pages/page_7.xhtml#sentence_000247"/>
+      <audio src="../audio/narration.mp3" clipBegin="505.250s" clipEnd="510.500s"/>
+    </par>
+    <par id="par_sentence_000248">
+      <text src="pages/page_7.xhtml#sentence_000248"/>
+      <audio src="../audio/narration.mp3" clipBegin="510.800s" clipEnd="514.650s"/>
+    </par>
+    <par id="par_sentence_000249">
+      <text src="pages/page_7.xhtml#sentence_000249"/>
+      <audio src="../audio/narration.mp3" clipBegin="514.950s" clipEnd="518.800s"/>
+    </par>
+    <par id="par_sentence_000250">
+      <text src="pages/page_7.xhtml#sentence_000250"/>
+      <audio src="../audio/narration.mp3" clipBegin="519.100s" clipEnd="525.050s"/>
+    </par>
+    <par id="par_sentence_000251">
+      <text src="pages/page_7.xhtml#sentence_000251"/>
+      <audio src="../audio/narration.mp3" clipBegin="525.350s" clipEnd="529.900s"/>
+    </par>
+    <par id="par_sentence_000252">
+      <text src="pages/page_7.xhtml#sentence_000252"/>
+      <audio src="../audio/narration.mp3" clipBegin="530.200s" clipEnd="534.750s"/>
+    </par>
+    <par id="par_sentence_000253">
+      <text src="pages/page_7.xhtml#sentence_000253"/>
+      <audio src="../audio/narration.mp3" clipBegin="535.050s" clipEnd="541.000s"/>
+    </par>
+    <par id="par_sentence_000254">
+      <text src="pages/page_7.xhtml#sentence_000254"/>
+      <audio src="../audio/narration.mp3" clipBegin="541.300s" clipEnd="545.150s"/>
+    </par>
+    <par id="par_sentence_000255">
+      <text src="pages/page_7.xhtml#sentence_000255"/>
+      <audio src="../audio/narration.mp3" clipBegin="545.450s" clipEnd="550.700s"/>
+    </par>
+    <par id="par_sentence_000256">
+      <text src="pages/page_7.xhtml#sentence_000256"/>
+      <audio src="../audio/narration.mp3" clipBegin="551.000s" clipEnd="556.250s"/>
+    </par>
+    <par id="par_sentence_000257">
+      <text src="pages/page_7.xhtml#sentence_000257"/>
+      <audio src="../audio/narration.mp3" clipBegin="556.550s" clipEnd="562.150s"/>
+    </par>
+    <par id="par_sentence_000258">
+      <text src="pages/page_7.xhtml#sentence_000258"/>
+      <audio src="../audio/narration.mp3" clipBegin="562.450s" clipEnd="565.950s"/>
+    </par>
+    <par id="par_sentence_000259">
+      <text src="pages/page_7.xhtml#sentence_000259"/>
+      <audio src="../audio/narration.mp3" clipBegin="566.250s" clipEnd="568.350s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

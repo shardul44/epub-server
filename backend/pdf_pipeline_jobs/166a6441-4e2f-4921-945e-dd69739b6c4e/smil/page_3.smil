@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="pages/page_3.xhtml">
+    <par id="par_sentence_000012">
+      <text src="pages/page_3.xhtml#sentence_000012"/>
+      <audio src="../audio/narration.mp3" clipBegin="65.600s" clipEnd="68.050s"/>
+    </par>
+    <par id="par_sentence_000013">
+      <text src="pages/page_3.xhtml#sentence_000013"/>
+      <audio src="../audio/narration.mp3" clipBegin="68.350s" clipEnd="78.150s"/>
+    </par>
+    <par id="par_sentence_000014">
+      <text src="pages/page_3.xhtml#sentence_000014"/>
+      <audio src="../audio/narration.mp3" clipBegin="78.450s" clipEnd="83.350s"/>
+    </par>
+    <par id="par_sentence_000015">
+      <text src="pages/page_3.xhtml#sentence_000015"/>
+      <audio src="../audio/narration.mp3" clipBegin="83.650s" clipEnd="87.500s"/>
+    </par>
+    <par id="par_sentence_000016">
+      <text src="pages/page_3.xhtml#sentence_000016"/>
+      <audio src="../audio/narration.mp3" clipBegin="87.800s" clipEnd="90.250s"/>
+    </par>
+    <par id="par_sentence_000017">
+      <text src="pages/page_3.xhtml#sentence_000017"/>
+      <audio src="../audio/narration.mp3" clipBegin="90.550s" clipEnd="94.400s"/>
+    </par>
+    <par id="par_sentence_000018">
+      <text src="pages/page_3.xhtml#sentence_000018"/>
+      <audio src="../audio/narration.mp3" clipBegin="94.700s" clipEnd="99.600s"/>
+    </par>
+    <par id="par_sentence_000019">
+      <text src="pages/page_3.xhtml#sentence_000019"/>
+      <audio src="../audio/narration.mp3" clipBegin="99.900s" clipEnd="104.100s"/>
+    </par>
+    <par id="par_sentence_000020">
+      <text src="pages/page_3.xhtml#sentence_000020"/>
+      <audio src="../audio/narration.mp3" clipBegin="104.400s" clipEnd="105.800s"/>
+    </par>
+    <par id="par_sentence_000021">
+      <text src="pages/page_3.xhtml#sentence_000021"/>
+      <audio src="../audio/narration.mp3" clipBegin="106.100s" clipEnd="123.950s"/>
+    </par>
+    </seq>
+  </body>
+</smil>

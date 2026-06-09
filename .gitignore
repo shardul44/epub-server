@@ -50,4 +50,7 @@ backend/h5p/upload-temp/
 backend/h5p/temporary-storage/
 backend/h5p/content/**
 
+frontend/dist/
+backend/pdf_pipeline_jobs/
+
 

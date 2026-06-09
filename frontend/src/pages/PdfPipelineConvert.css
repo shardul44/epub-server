@@ -1,0 +1,256 @@
+/* FXL Pipeline — pdf2htmlEX conversion page (extends upload page patterns) */
+
+.fxl-pipeline-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f7f7f2;
+  padding-bottom: 48px;
+}
+
+.fxl-pipeline-content {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px clamp(14px, 3vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fxl-pipeline-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.fxl-pipeline-card h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.fxl-pipeline-card p {
+  margin: 0 0 16px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.fxl-pipeline-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .fxl-pipeline-meta {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fxl-pipeline-meta label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.fxl-pipeline-meta input {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.fxl-pipeline-progress {
+  margin-top: 8px;
+}
+
+.fxl-pipeline-progress-bar-wrap {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 12px 0 8px;
+}
+
+.fxl-pipeline-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.fxl-pipeline-step {
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.fxl-pipeline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.fxl-pipeline-stat {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.fxl-pipeline-stat strong {
+  display: block;
+  font-size: 20px;
+  color: #111827;
+}
+
+.fxl-pipeline-stat span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.fxl-pipeline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.fxl-pipeline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.fxl-pipeline-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.fxl-pipeline-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.fxl-pipeline-btn--primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.fxl-pipeline-btn--secondary {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.fxl-pipeline-btn--secondary:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.fxl-pipeline-error {
+  padding: 12px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.fxl-pipeline-success {
+  padding: 12px 14px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  color: #047857;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.fxl-pipeline-coords-preview {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.fxl-pipeline-coords-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+}
+
+.fxl-pipeline-coords-body {
+  padding: 12px 16px;
+  max-height: 280px;
+  overflow: auto;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  background: #fff;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.fxl-pipeline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fxl-pipeline-badge--pending { background: #f3f4f6; color: #6b7280; }
+.fxl-pipeline-badge--progress { background: #eff6ff; color: #2563eb; }
+.fxl-pipeline-badge--done { background: #ecfdf5; color: #047857; }
+.fxl-pipeline-badge--failed { background: #fef2f2; color: #b91c1c; }
+
+.fxl-pipeline-requirements {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fxl-pipeline-requirements li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+@keyframes fxl-pipeline-spin {
+  to { transform: rotate(360deg); }
+}
+
+.fxl-pipeline-btn .spin {
+  animation: fxl-pipeline-spin 1s linear infinite;
+}

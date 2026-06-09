@@ -1,0 +1,104 @@
+/* Fixed Layout EPUB styles */
+@font-face{font-family:ff1;src:url(../fonts/f1.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff10;src:url(../fonts/f10.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff11;src:url(../fonts/f11.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff12;src:url(../fonts/f12.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff13;src:url(../fonts/f13.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff14;src:url(../fonts/f14.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff15;src:url(../fonts/f15.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff16;src:url(../fonts/f16.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff17;src:url(../fonts/f17.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff18;src:url(../fonts/f18.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff19;src:url(../fonts/f19.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff1a;src:url(../fonts/f1a.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff1b;src:url(../fonts/f1b.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff1c;src:url(../fonts/f1c.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff1d;src:url(../fonts/f1d.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff1e;src:url(../fonts/f1e.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff1f;src:url(../fonts/f1f.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2;src:url(../fonts/f2.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff20;src:url(../fonts/f20.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff21;src:url(../fonts/f21.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff22;src:url(../fonts/f22.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff23;src:url(../fonts/f23.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff24;src:url(../fonts/f24.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff25;src:url(../fonts/f25.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff26;src:url(../fonts/f26.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff27;src:url(../fonts/f27.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff28;src:url(../fonts/f28.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff29;src:url(../fonts/f29.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2a;src:url(../fonts/f2a.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2b;src:url(../fonts/f2b.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2c;src:url(../fonts/f2c.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2d;src:url(../fonts/f2d.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2e;src:url(../fonts/f2e.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff2f;src:url(../fonts/f2f.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3;src:url(../fonts/f3.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff30;src:url(../fonts/f30.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff31;src:url(../fonts/f31.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff32;src:url(../fonts/f32.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff33;src:url(../fonts/f33.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff34;src:url(../fonts/f34.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff35;src:url(../fonts/f35.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff36;src:url(../fonts/f36.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff37;src:url(../fonts/f37.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff38;src:url(../fonts/f38.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff39;src:url(../fonts/f39.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3a;src:url(../fonts/f3a.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3b;src:url(../fonts/f3b.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3c;src:url(../fonts/f3c.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3d;src:url(../fonts/f3d.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3e;src:url(../fonts/f3e.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff3f;src:url(../fonts/f3f.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4;src:url(../fonts/f4.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff40;src:url(../fonts/f40.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff41;src:url(../fonts/f41.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff42;src:url(../fonts/f42.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff43;src:url(../fonts/f43.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff44;src:url(../fonts/f44.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff45;src:url(../fonts/f45.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff46;src:url(../fonts/f46.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff47;src:url(../fonts/f47.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff48;src:url(../fonts/f48.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff49;src:url(../fonts/f49.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4a;src:url(../fonts/f4a.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4b;src:url(../fonts/f4b.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4c;src:url(../fonts/f4c.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4d;src:url(../fonts/f4d.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4e;src:url(../fonts/f4e.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff4f;src:url(../fonts/f4f.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff5;src:url(../fonts/f5.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff50;src:url(../fonts/f50.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff51;src:url(../fonts/f51.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff52;src:url(../fonts/f52.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff6;src:url(../fonts/f6.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff7;src:url(../fonts/f7.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff8;src:url(../fonts/f8.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ff9;src:url(../fonts/f9.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffa;src:url(../fonts/fa.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffb;src:url(../fonts/fb.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffc;src:url(../fonts/fc.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffd;src:url(../fonts/fd.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:ffe;src:url(../fonts/fe.woff) format("woff");font-style:normal;font-weight:normal;}
+@font-face{font-family:fff;src:url(../fonts/ff.woff) format("woff");font-style:normal;font-weight:normal;}
+.fxl-page { margin: 0; padding: 0; overflow: hidden; }
+.page-container { position: relative; overflow: hidden; }
+.pdf2html-visual { position: relative; width: 100%; height: 100%; }
+.pdf2html-visual .pf { margin: 0; }
+.sync-layer {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.sync-layer .word { white-space: nowrap; }
+.sentence { display: contents; }
+.-epub-media-overlay-active {
+  opacity: 1 !important;
+  color: #111 !important;
+  background-color: rgba(255, 230, 0, 0.35);
+}

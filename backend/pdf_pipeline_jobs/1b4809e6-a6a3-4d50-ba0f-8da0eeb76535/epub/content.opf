@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="book-id">urn:uuid:394ea3a3-0aca-48f3-bce4-35e2b04ff5a4</dc:identifier>
+    <dc:title>epub (1)</dc:title>
+    <dc:creator>Unknown</dc:creator>
+    <dc:language>en</dc:language>
+    <meta property="dcterms:modified">2026-06-08T10:07:04Z</meta>
+    <meta property="rendition:layout">pre-paginated</meta>
+    <meta property="rendition:orientation">auto</meta>
+    <meta property="rendition:spread">auto</meta>
+    <meta property="rendition:viewport">width=612,height=792</meta>
+    <meta property="media:active-class">-epub-media-overlay-active</meta>
+    <meta property="media:playback-active-class">-epub-media-overlay-playing</meta>
+    <meta property="media:duration">30s</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="css" href="css/fxl.css" media-type="text/css"/>
+    <item id="page_1" href="page_1.xhtml" media-type="application/xhtml+xml" properties="svg"/>
+    <item id="smil_1" href="smil/page_1.smil" media-type="application/smil+xml"/>
+    <item id="img_1" href="images/bg1.png" media-type="image/png"/>
+    <item id="img_2" href="images/bg2.png" media-type="image/png"/>
+    <item id="img_3" href="images/bg3.png" media-type="image/png"/>
+    <item id="img_4" href="images/bg4.png" media-type="image/png"/>
+    <item id="img_5" href="images/bg5.png" media-type="image/png"/>
+    <item id="img_6" href="images/bg6.png" media-type="image/png"/>
+    <item id="img_7" href="images/bg7.png" media-type="image/png"/>
+    <item id="img_8" href="images/bg8.png" media-type="image/png"/>
+    <item id="img_9" href="images/bg9.png" media-type="image/png"/>
+    <item id="img_10" href="images/bga.png" media-type="image/png"/>
+    <item id="img_11" href="images/pdf2htmlEX-64x64.png" media-type="image/png"/>
+  </manifest>
+  <spine>
+    <itemref idref="page_1" media-overlay="smil_1"/>
+  </spine>
+</package>

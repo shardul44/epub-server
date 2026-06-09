@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+  <body>
+    <seq epub:textref="pages/page_11.xhtml">
+    <par id="par_sentence_000227">
+      <text src="pages/page_11.xhtml#sentence_000227"/>
+      <audio src="../audio/narration.mp3" clipBegin="799.400s" clipEnd="803.250s"/>
+    </par>
+    <par id="par_sentence_000228">
+      <text src="pages/page_11.xhtml#sentence_000228"/>
+      <audio src="../audio/narration.mp3" clipBegin="803.550s" clipEnd="807.400s"/>
+    </par>
+    <par id="par_sentence_000229">
+      <text src="pages/page_11.xhtml#sentence_000229"/>
+      <audio src="../audio/narration.mp3" clipBegin="807.700s" clipEnd="814.000s"/>
+    </par>
+    <par id="par_sentence_000230">
+      <text src="pages/page_11.xhtml#sentence_000230"/>
+      <audio src="../audio/narration.mp3" clipBegin="814.300s" clipEnd="818.150s"/>
+    </par>
+    <par id="par_sentence_000231">
+      <text src="pages/page_11.xhtml#sentence_000231"/>
+      <audio src="../audio/narration.mp3" clipBegin="818.450s" clipEnd="820.550s"/>
+    </par>
+    <par id="par_sentence_000232">
+      <text src="pages/page_11.xhtml#sentence_000232"/>
+      <audio src="../audio/narration.mp3" clipBegin="820.850s" clipEnd="827.150s"/>
+    </par>
+    <par id="par_sentence_000233">
+      <text src="pages/page_11.xhtml#sentence_000233"/>
+      <audio src="../audio/narration.mp3" clipBegin="827.450s" clipEnd="828.150s"/>
+    </par>
+    <par id="par_sentence_000234">
+      <text src="pages/page_11.xhtml#sentence_000234"/>
+      <audio src="../audio/narration.mp3" clipBegin="828.450s" clipEnd="836.500s"/>
+    </par>
+    <par id="par_sentence_000235">
+      <text src="pages/page_11.xhtml#sentence_000235"/>
+      <audio src="../audio/narration.mp3" clipBegin="836.800s" clipEnd="837.500s"/>
+    </par>
+    <par id="par_sentence_000236">
+      <text src="pages/page_11.xhtml#sentence_000236"/>
+      <audio src="../audio/narration.mp3" clipBegin="837.800s" clipEnd="838.500s"/>
+    </par>
+    </seq>
+  </body>
+</smil>
