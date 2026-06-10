@@ -335,6 +335,200 @@ export class KitabooFxlService {
   }
 
   /**
+   * Cluster glyphs into visual lines (for sentence polygon outlines).
+   */
+  static buildLineGroupsFromGlyphs(glyphs, opts = {}) {
+    if (!glyphs?.length) return [];
+    const fontSize = opts.fontSize || glyphs[0]?.size || 12;
+    const lineThresholdY = Math.max(fontSize * 0.4, 3);
+    const xResetThreshold = fontSize * 0.5;
+    const columnBoundariesPts = opts.columnBoundariesPts || null;
+    const pageWidthPts = opts.pageWidthPts || 0;
+    const tocPage = opts.tocPage === true;
+    const useLineGroupingThisPage = opts.useLineGroupingThisPage === true;
+    const lineGroups = [];
+
+    glyphs.forEach((g) => {
+      const b = g.bbox && g.bbox.length >= 4
+        ? g.bbox
+        : [g.x, g.y, (g.x || 0) + fontSize * 0.6, (g.y || 0) + fontSize * 1.2];
+      const cy = (b[1] + b[3]) / 2;
+      const cxLeft = b[0];
+      const gCol = columnBoundariesPts
+        ? KitabooFxlService.zoneColumnIndex(
+          { x: b[0], w: b[2] - b[0] },
+          columnBoundariesPts,
+          pageWidthPts
+        )
+        : 0;
+      const last = lineGroups[lineGroups.length - 1];
+      const prevLeft = last ? last.bboxes[last.bboxes.length - 1][0] : null;
+      const isNewLineByX = prevLeft != null && cxLeft < prevLeft - xResetThreshold;
+      const isNewColumn = !tocPage && !useLineGroupingThisPage
+        && last != null && last.col != null && gCol !== last.col;
+      const sameY = last && Math.abs(cy - last.y) <= lineThresholdY;
+      const sameLine = sameY && !isNewLineByX && !isNewColumn;
+      if (sameLine) {
+        last.glyphs.push(g);
+        last.bboxes.push(b);
+        const cySum = last.bboxes.reduce((s, bb) => s + (bb[1] + bb[3]) / 2, 0);
+        last.y = cySum / last.bboxes.length;
+      } else {
+        lineGroups.push({ y: cy, col: gCol, glyphs: [g], bboxes: [b] });
+      }
+    });
+
+    lineGroups.sort((a, b) => {
+      const ya = Math.min(...a.bboxes.map((bb) => bb[1]));
+      const yb = Math.min(...b.bboxes.map((bb) => bb[1]));
+      if (Math.abs(ya - yb) > 0.5) return ya - yb;
+      return Math.min(...a.bboxes.map((bb) => bb[0])) - Math.min(...b.bboxes.map((bb) => bb[0]));
+    });
+    return lineGroups;
+  }
+
+  /**
+   * Merge line records that share the same visual row (Y) into one line bbox.
+   * Fixes corrupted lines[] built by concatenating per-word bboxes during cluster merge.
+   */
+  static collapseZoneLinesToVisualLines(lines, fontSize = 12) {
+    if (!Array.isArray(lines) || lines.length <= 1) return lines;
+    const lineThresholdY = Math.max(fontSize * 0.45, 4);
+    const sorted = [...lines].sort((a, b) => {
+      const ya = a.bbox?.[1] ?? a.origin?.[1] ?? 0;
+      const yb = b.bbox?.[1] ?? b.origin?.[1] ?? 0;
+      if (Math.abs(ya - yb) > 0.5) return ya - yb;
+      return (a.bbox?.[0] ?? a.origin?.[0] ?? 0) - (b.bbox?.[0] ?? b.origin?.[0] ?? 0);
+    });
+    const out = [];
+    for (const ln of sorted) {
+      if (!ln.bbox || ln.bbox.length < 4) {
+        out.push(ln);
+        continue;
+      }
+      const y = ln.bbox[1];
+      const last = out[out.length - 1];
+      const lastY = last?.bbox?.[1];
+      if (last && last.bbox && lastY != null && Math.abs(lastY - y) <= lineThresholdY) {
+        last.text = `${(last.text || '').trim()} ${(ln.text || '').trim()}`.replace(/\s+/g, ' ').trim();
+        last.bbox = [
+          Math.min(last.bbox[0], ln.bbox[0]),
+          Math.min(last.bbox[1], ln.bbox[1]),
+          Math.max(last.bbox[2], ln.bbox[2]),
+          Math.max(last.bbox[3], ln.bbox[3]),
+        ];
+        if (last.origin) last.origin = [last.bbox[0], last.bbox[1]];
+      } else {
+        out.push({
+          ...ln,
+          bbox: [...ln.bbox],
+          origin: ln.origin ? [...ln.origin] : [ln.bbox[0], ln.bbox[1]],
+        });
+      }
+    }
+    return out;
+  }
+
+  static appendZoneLineRecords(existingLines, incomingLines, fontSize = 12) {
+    const merged = [...(existingLines || [])];
+    const incoming = incomingLines || [];
+    const lineThresholdY = Math.max(fontSize * 0.45, 4);
+    for (const ln of incoming) {
+      if (!ln.bbox || ln.bbox.length < 4) {
+        merged.push(ln);
+        continue;
+      }
+      const y = ln.bbox[1];
+      const last = merged[merged.length - 1];
+      const lastY = last?.bbox?.[1];
+      if (last && last.bbox && lastY != null && Math.abs(lastY - y) <= lineThresholdY) {
+        last.text = `${(last.text || '').trim()} ${(ln.text || '').trim()}`.replace(/\s+/g, ' ').trim();
+        last.bbox = [
+          Math.min(last.bbox[0], ln.bbox[0]),
+          Math.min(last.bbox[1], ln.bbox[1]),
+          Math.max(last.bbox[2], ln.bbox[2]),
+          Math.max(last.bbox[3], ln.bbox[3]),
+        ];
+        if (last.origin) last.origin = [last.bbox[0], last.bbox[1]];
+      } else {
+        merged.push({ ...ln, bbox: [...ln.bbox] });
+      }
+    }
+    return merged;
+  }
+
+  /** Glyph-built sentence zone: multi-word content with per-line geometry already computed. */
+  static isGlyphBuiltSentenceZone(z) {
+    const text = (z?.content || z?.text || '').trim();
+    return text.includes(' ')
+      && Array.isArray(z?.lines)
+      && z.lines.length > 0
+      && z.lines.some((ln) => Array.isArray(ln.bbox) && ln.bbox.length >= 4);
+  }
+
+  /** Map line records to tight bboxes for a single sentence (clips partial shared lines). */
+  static linesForSentenceFromZoneLines(sentence, lines, fullContent) {
+    if (!sentence || !Array.isArray(lines) || lines.length === 0) return null;
+    const norm = (s) => (s || '').trim().replace(/\s+/g, ' ');
+    const sent = norm(sentence);
+    if (!sent) return null;
+    const sentWords = sent.split(/\s+/).filter(Boolean);
+    const sentStart = norm(fullContent).indexOf(sent);
+    const sentEnd = sentStart >= 0 ? sentStart + sent.length : -1;
+
+    const clipLine = (ln) => {
+      const lt = norm(ln.text || '');
+      if (!lt || !ln.bbox || ln.bbox.length < 4) return null;
+      if (lt === sent || sent.includes(lt)) return { ...ln, text: lt };
+      const lineWords = lt.split(/\s+/).filter(Boolean);
+      let firstIdx = -1;
+      let lastIdx = -1;
+      for (let i = 0; i < lineWords.length; i++) {
+        const lw = lineWords[i].toLowerCase().replace(/[.,!?;:]+$/g, '');
+        if (sentWords.some((sw) => {
+          const swl = sw.toLowerCase().replace(/[.,!?;:]+$/g, '');
+          return swl === lw || sw.includes(lineWords[i]) || lineWords[i].includes(sw);
+        })) {
+          if (firstIdx < 0) firstIdx = i;
+          lastIdx = i;
+        }
+      }
+      if (firstIdx < 0) return null;
+      const clippedText = lineWords.slice(firstIdx, lastIdx + 1).join(' ');
+      const [l, t, r, b] = ln.bbox;
+      const width = Math.max(r - l, 1);
+      const charLens = lineWords.map((w, i) => w.length + (i > 0 ? 1 : 0));
+      const charsBefore = charLens.slice(0, firstIdx).reduce((s, n) => s + n, 0);
+      const charsThrough = charLens.slice(0, lastIdx + 1).reduce((s, n) => s + n, 0);
+      const totalChars = Math.max(lt.length, 1);
+      const ratioStart = charsBefore / totalChars;
+      const ratioEnd = charsThrough / totalChars;
+      return {
+        ...ln,
+        text: clippedText,
+        bbox: [l + width * ratioStart, t, l + width * ratioEnd, b],
+        origin: [l + width * ratioStart, t],
+      };
+    };
+
+    const out = [];
+    let charCursor = 0;
+    for (const ln of lines) {
+      const lt = norm(ln.text || '');
+      const lnStart = charCursor;
+      const lnEnd = lnStart + lt.length;
+      charCursor = lnEnd + (lt.length > 0 ? 1 : 0);
+      const overlaps = sentEnd < 0
+        || (lnEnd > sentStart && lnStart < sentEnd)
+        || sentWords.some((sw) => lt.includes(sw));
+      if (!overlaps) continue;
+      const clipped = clipLine(ln);
+      if (clipped) out.push(clipped);
+    }
+    return out.length > 0 ? out : null;
+  }
+
+  /**
    * Process a PDF document through the Kitaboo FXL workflow
    * @param {string} jobId - The conversion job ID
    * @param {string} pdfPath - Path to the PDF file
@@ -632,6 +826,8 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       const tocPage = tocEndPage > 0 && img.pageNumber <= tocEndPage;
       const pageType = pageTypeByNumber[img.pageNumber] || (img.pageNumber === 1 ? 'cover' : 'regular');
       const isCoverStylePage = pageType === 'cover' || pageType === 'back' || pageType === 'chapterTitle';
+      // Word-level hero titles only on true cover/back — not chapter openers that also have body paragraphs.
+      const isCoverPage = zoneLevel === 'sentence' && (pageType === 'cover' || pageType === 'back');
 
       // Determine if we use the clean image (if cleanup succeeded and file exists)
       let useCleanImage = false;
@@ -662,15 +858,28 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       // PyMuPDF extraction returns pts, but image is 300 DPI
       const scaleX = pageCoords ? (img.width / pageCoords.width) : 1;
       const scaleY = pageCoords ? (img.height / pageCoords.height) : 1;
+      const pageWidthPx = img.width || img.dimensions?.width || (pageCoords && pageCoords.width * scaleX) || 0;
+      const glyphProbePx = KitabooFxlService.buildWordProbeFromGlyphs(
+        pageCoords?.items || [], scaleX, scaleY
+      );
+      const columnBoundariesPx = (glyphProbePx.length >= 2 && pageWidthPx > 0 && !isCoverPage)
+        ? KitabooFxlService.detectColumnBoundaries(glyphProbePx, pageWidthPx)
+        : null;
+      const columnBoundariesPts = columnBoundariesPx
+        ? columnBoundariesPx.map((b) => b / scaleX)
+        : null;
 
       // Convert coords to KitabooZone format (polygon: every zone has points from bbox)
       // Extraction is always glyph; group by word_id or sentence_id based on zoneLevel for Zoning Studio.
       // Cover-style pages (from Gemini pageType) use word-level grouping even when zoneLevel is 'sentence'
       // so hero titles like "Horses Up Close" have separate zones per word.
-      const isCoverPage = zoneLevel === 'sentence' && isCoverStylePage;
       const useWordGroupingThisPage = isCoverPage || (zoneLevel === 'word');
+      const useLineGroupingThisPage = zoneLevel === 'sentence' && tocPage && !isCoverPage;
       if (isCoverPage) {
         console.log(`[KitabooFXL] Page ${img.pageNumber} (${pageType}) using word-level grouping for hero titles.`);
+      }
+      if (useLineGroupingThisPage) {
+        console.log(`[KitabooFXL] Page ${img.pageNumber}: TOC/credits line-level sentence zones.`);
       }
       // CRITICAL: Grouping is per-page only. sourceItems = this page's glyphs; byGroup is a new Map for this page.
       // (word_id in coords.json is scoped per page by the Python script; we never merge across pages.)
@@ -680,14 +889,28 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       }
       const idSuffix = zoneLevel === 'sentence' ? 's' : 'w';
       if (extractionLevel === 'glyph') {
-        const groupKey = useWordGroupingThisPage ? (item) => item.word_id ?? item.wordId : (item) => item.sentence_id ?? item.sentenceId;
+        const glyphLineKey = (item) => {
+          const y = Array.isArray(item.bbox) ? item.bbox[1] : (item.y ?? 0);
+          const sz = item.size ?? 12;
+          return Math.round(y / Math.max(sz * 0.55, 6));
+        };
+        const groupKey = useWordGroupingThisPage
+          ? (item) => item.word_id ?? item.wordId
+          : useLineGroupingThisPage
+            ? glyphLineKey
+            : (item) => item.sentence_id ?? item.sentenceId;
         const byGroup = new Map(); // New Map per page — do not move outside the page loop.
-        sourceItems.forEach((item, idx) => {
-          const key = groupKey(item);
-          if (key == null) return;
-          if (!byGroup.has(key)) byGroup.set(key, []);
-          byGroup.get(key).push({ item, idx });
-        });
+        const usePunctuationSentenceGroups = zoneLevel === 'sentence'
+          && !useWordGroupingThisPage
+          && !useLineGroupingThisPage;
+        if (!usePunctuationSentenceGroups) {
+          sourceItems.forEach((item, idx) => {
+            const key = groupKey(item);
+            if (key == null) return;
+            if (!byGroup.has(key)) byGroup.set(key, []);
+            byGroup.get(key).push({ item, idx });
+          });
+        }
         const grouped = [];
         // Join glyph text with space between words (glyph extraction does not emit space chars; word_id marks boundaries).
         // Do not add a space before sentence-ending punctuation (. ? ! and full-width ．？！) so "muscles. A" stays one space, not "muscles . A".
@@ -722,7 +945,10 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
           return out;
         };
         // Build grouped items in PDF stream order first; we'll optionally re-sort by Y/X for word-level later.
-        [...byGroup.entries()].sort((a, b) => Math.min(...a[1].map(x => x.idx)) - Math.min(...b[1].map(x => x.idx))).forEach(([, group]) => {
+        const groupEntries = usePunctuationSentenceGroups
+          ? KitabooFxlService.buildSentenceGroupsFromGlyphs(sourceItems).map((group, gi) => [gi, group])
+          : [...byGroup.entries()].sort((a, b) => Math.min(...a[1].map(x => x.idx)) - Math.min(...b[1].map(x => x.idx)));
+        groupEntries.forEach(([, group]) => {
           group.sort((a, b) => a.idx - b.idx);
           const glyphs = group.map(g => g.item);
           const text = joinGlyphsWithSpaces(glyphs);
@@ -750,28 +976,19 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
           };
           // Sentence-level: build lines from glyph y-clustering. On TOC pages: one zone per line (rectangles only); on content pages: polygons.
           // Detect new line using BOTH Y difference AND X reset (next word significantly left = new line).
+          if (zoneLevel === 'sentence' && useLineGroupingThisPage) {
+            grouped.push(item);
+            return;
+          }
           if (zoneLevel === 'sentence' && glyphs.length > 0) {
-            const lineThresholdY = Math.max(fontSize * 0.4, 3);
-            const xResetThreshold = fontSize * 0.5; // if next glyph's X is this much left of previous, it's a new line
-            const lineGroups = [];
-            glyphs.forEach((g) => {
-              const b = g.bbox && g.bbox.length >= 4 ? g.bbox : [g.x, g.y, (g.x || 0) + fontSize * 0.6, (g.y || 0) + fontSize * 1.2];
-              const cy = (b[1] + b[3]) / 2;
-              const cxLeft = b[0];
-              const last = lineGroups[lineGroups.length - 1];
-              const prevLeft = last ? last.bboxes[last.bboxes.length - 1][0] : null;
-              const isNewLineByX = prevLeft != null && cxLeft < prevLeft - xResetThreshold;
-              const sameY = last && Math.abs(cy - last.y) <= lineThresholdY;
-              const sameLine = sameY && !isNewLineByX;
-              if (sameLine) {
-                last.glyphs.push(g);
-                last.bboxes.push(b);
-              } else {
-                lineGroups.push({ y: cy, glyphs: [g], bboxes: [b] });
-              }
+            const lineGroups = KitabooFxlService.buildLineGroupsFromGlyphs(glyphs, {
+              fontSize,
+              columnBoundariesPts,
+              pageWidthPts: pageCoords?.width || 0,
+              tocPage,
+              useLineGroupingThisPage,
             });
-            lineGroups.sort((a, b) => a.y - b.y);
-            if (tocPage && lineGroups.length > 1) {
+            if ((tocPage || useLineGroupingThisPage) && lineGroups.length > 1) {
               // TOC / pre-TOC: one zone per line (rectangle boxes); sentence-level rules do not apply.
               // Use the first glyph of each line for that line's style (color/bold/italic) so TOC title and entries get correct per-line styling.
               lineGroups.forEach((lg) => {
@@ -799,7 +1016,7 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
               });
               return;
             }
-            if (lineGroups.length > 1) {
+            if (lineGroups.length > 0) {
               item.lines = lineGroups.map((lg) => {
                 const bx = lg.bboxes;
                 const lx0 = Math.min(...bx.map(b => b[0]));
@@ -848,8 +1065,9 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
           }
           grouped.push(item);
         });
-        // For Hi-Fi word-level (and cover when sentence-level), reading order = visual layout (top-to-bottom, left-to-right).
-        if (zoneLevel === 'word' || (zoneLevel === 'sentence' && isCoverPage)) {
+        // Cover-style hero titles: spatial top-to-bottom, left-to-right. All other word pages keep
+        // extraction order from coords (column-aware sort in pdf_processor.py).
+        if (isCoverPage) {
           grouped.sort((a, b) => {
             const ay = Array.isArray(a.bbox) && a.bbox.length >= 4 ? a.bbox[1] : 0;
             const byY = Array.isArray(b.bbox) && b.bbox.length >= 4 ? b.bbox[1] : 0;
@@ -900,14 +1118,17 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
             zone.styleRuns = [{ start: 0, end: contentLen, bold, italic, color: item.color || '#000000' }];
           }
         }
-        if (!tocPage && Array.isArray(item.lines) && item.lines.length > 1) {
+        if (!tocPage && Array.isArray(item.lines) && item.lines.length > 0) {
           zone.lines = item.lines.map(ln => ({
             text: ln.text,
             origin: [parseFloat((ln.origin[0] * scaleX).toFixed(3)), parseFloat((ln.origin[1] * scaleY).toFixed(3))],
             bbox: ln.bbox ? [ln.bbox[0] * scaleX, ln.bbox[1] * scaleY, ln.bbox[2] * scaleX, ln.bbox[3] * scaleY] : null,
             align: (ln.align === 'right' || ln.align === 'center') ? ln.align : 'left'
           }));
-          zone.points = KitabooFxlService.linesToOutlinePoints(zone.lines, { defaultW: zone.w / zone.lines.length, defaultH: (zone.fontSize || 12) * 1.2 });
+          zone.points = KitabooFxlService.linesToOutlinePoints(zone.lines, {
+            defaultW: zone.w / zone.lines.length,
+            defaultH: (zone.fontSize || 12) * 1.2,
+          });
         }
         return zone;
       });
@@ -916,12 +1137,17 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       const pageFonts = [...new Set(zones.filter(z => z.fontFamily).map(z => z.fontFamily))];
 
       // tocPage set at start of page loop (pages before and including TOC get rectangle zones, no sentence-level rules)
-      // Multi-column: compute column split before clustering so we don't merge "Consultant" + "Publishing Credits" into one zone
-      const pageWidthForColumns = img.width || img.dimensions?.width || (pageCoords && pageCoords.width) || 0;
-      const colResult = (tocPage && pageWidthForColumns > 0 && zones.length >= 2)
-        ? KitabooFxlService.detectColumnSplitX(zones, pageWidthForColumns)
+      // Multi-column: compute column boundaries before clustering so we don't merge across columns
+      const pageWidthForColumns = pageWidthPx || img.width || img.dimensions?.width || 0;
+      const columnBoundariesForZones = (columnBoundariesPx && columnBoundariesPx.length > 0)
+        ? columnBoundariesPx
+        : ((pageWidthForColumns > 0 && zones.length >= 2)
+          ? KitabooFxlService.detectColumnBoundaries(zones, pageWidthForColumns)
+          : null);
+      const colResult = columnBoundariesForZones?.length
+        ? { splitX: columnBoundariesForZones[0], boundaries: columnBoundariesForZones, twoColumnRowKeys: new Set() }
         : null;
-      const columnSplitX = (colResult && colResult.splitX != null) ? colResult.splitX : null;
+      const columnSplitX = colResult?.splitX ?? null;
 
       // Sentence-level (except cover-style pages): split any zone that contains multiple sentences into one zone per sentence.
       let zonesToCluster = zones;
@@ -938,7 +1164,13 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       const effectiveExtractionLevel = useWordGroupingThisPage ? 'word' : zoneLevel;
       let clusteredZones = (effectiveExtractionLevel === 'word')
         ? zonesToCluster
-        : KitabooFxlService.clusterAndDeduplicateSpans(zonesToCluster, { extractionLevel: effectiveExtractionLevel, tocPage, columnSplitX });
+        : KitabooFxlService.clusterAndDeduplicateSpans(zonesToCluster, {
+          extractionLevel: effectiveExtractionLevel,
+          tocPage,
+          columnSplitX,
+          columnBoundaries: columnBoundariesForZones,
+          pageWidth: pageWidthForColumns,
+        });
       // Rule: one single-line zone for URLs (merge "http://www." + "tcmpub." + "com" into one zone at extraction/grouping).
       if (effectiveExtractionLevel === 'sentence' && clusteredZones.length > 0) {
         clusteredZones = KitabooFxlService.mergeConsecutiveUrlZones(clusteredZones);
@@ -1011,21 +1243,36 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       const clipPadB = tocPage ? 2 : 0;
       clusteredZones.forEach((z) => {
         const useRectBbox = tocPage; // TOC pages: rectangle per line; content pages: polygon outline
-        if (!useRectBbox && Array.isArray(z.lines) && z.lines.length >= 2) {
-          const outline = KitabooFxlService.linesToOutlinePoints(z.lines, { defaultW: (z.w || 100) / z.lines.length, defaultH: (z.fontSize || 12) * 1.2, paddingLeft: clipPadL, paddingTop: clipPadT });
-          if (outline) z.points = outline;
-          else z.points = KitabooFxlService.bboxToPoints(z.x - clipPadL, z.y - clipPadT, (z.w || 0) + clipPadL + clipPadR, (z.h || 0) + clipPadT + clipPadB);
+        if (!useRectBbox && Array.isArray(z.lines) && z.lines.length >= 1) {
+          z.lines = KitabooFxlService.collapseZoneLinesToVisualLines(z.lines, z.fontSize || 12);
+          const outline = KitabooFxlService.linesToOutlinePoints(z.lines, {
+            defaultW: (z.w || 100) / z.lines.length,
+            defaultH: (z.fontSize || 12) * 1.2,
+            paddingLeft: clipPadL,
+            paddingTop: clipPadT,
+          });
+          if (outline) {
+            z.points = outline;
+            const xs = outline.map((p) => p[0]);
+            const ys = outline.map((p) => p[1]);
+            z.x = Math.min(...xs);
+            z.y = Math.min(...ys);
+            z.w = Math.max(...xs) - z.x;
+            z.h = Math.max(...ys) - z.y;
+          } else {
+            z.points = KitabooFxlService.bboxToPoints(z.x - clipPadL, z.y - clipPadT, (z.w || 0) + clipPadL + clipPadR, (z.h || 0) + clipPadT + clipPadB);
+          }
         } else {
           z.points = KitabooFxlService.bboxToPoints(z.x - clipPadL, z.y - clipPadT, (z.w || 0) + clipPadL + clipPadR, (z.h || 0) + clipPadT + clipPadB);
         }
       });
 
-      // Multi-column layout (TOC/intro): first column all rows, then second column all rows; one block per row
+      // Glyph coords already carry layout-aware reading order from pdf_processor.py (block_id + column sort).
+      // Re-sorting word zones here often breaks that order (overlapping bboxes, false gutters).
       const pageWidth = img.width || img.dimensions?.width || (pageCoords && pageCoords.width) || 0;
-      let finalZones = (tocPage && clusteredZones.length >= 2 && pageWidth > 0)
-        ? KitabooFxlService.reorderZonesForMultiColumnLayout(clusteredZones, pageWidth)
-        : clusteredZones;
-      if (tocPage && finalZones !== clusteredZones) {
+      let finalZones = clusteredZones;
+      if (extractionLevel !== 'glyph' && !isCoverPage && clusteredZones.length >= 2 && pageWidth > 0) {
+        finalZones = KitabooFxlService.reorderZonesForMultiColumnLayout(clusteredZones, pageWidth);
         console.log(`[KitabooFXL] Page ${img.pageNumber}: multi-column layout applied (${clusteredZones.length} zones, column-first order).`);
       }
 
@@ -1352,14 +1599,16 @@ Only return JSON.`;
   }
 
   /**
-   * Apply top-to-bottom, left-to-right order to word-level zones by setting readingOrder from Y then X.
-   * Call this only when loading from DB for Studio (ready) so initial display uses visual order;
-   * after that, normalizeZoneIdsForPage sorts by readingOrder so user edits are preserved.
+   * Apply column-first reading order when a gutter is detected; otherwise top-to-bottom, left-to-right.
+   * Call when loading word-level zones for Studio display.
    */
-  static applyYXReadingOrderToWordZones(zones) {
+  static applyYXReadingOrderToWordZones(zones, pageWidth = 0) {
     if (!zones?.length) return zones;
     const wordLevel = zones.every(z => /_w\d+$/.test((z.id && typeof z.id === 'string') ? z.id : ''));
     if (!wordLevel) return zones;
+    if (pageWidth > 0 && KitabooFxlService.detectColumnBoundaries(zones, pageWidth)) {
+      return KitabooFxlService.reorderZonesColumnFirst(zones, pageWidth);
+    }
     const sorted = [...zones].sort((a, b) => {
       const ya = Number(a.y ?? a.top ?? 0);
       const yb = Number(b.y ?? b.top ?? 0);
@@ -1549,24 +1798,15 @@ Only return JSON.`;
         let subStyleRuns = null;
 
         if (lines && lines.length > 0) {
-          const lineStart = Math.floor(i * lines.length / sentences.length);
-          const lineEnd = Math.floor((i + 1) * lines.length / sentences.length);
-          if (lineEnd > lineStart) {
-            subLines = lines.slice(lineStart, lineEnd);
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+          subLines = KitabooFxlService.linesForSentenceFromZoneLines(sent, lines, content);
+          if (subLines && subLines.length > 0) {
+            let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
             for (const ln of subLines) {
               if (ln.bbox && ln.bbox.length >= 4) {
                 minX = Math.min(minX, ln.bbox[0]);
                 minY = Math.min(minY, ln.bbox[1]);
                 maxX = Math.max(maxX, ln.bbox[2]);
                 maxY = Math.max(maxY, ln.bbox[3]);
-              } else if (ln.origin && ln.origin.length >= 2) {
-                const ow = (z.w || 0) / lines.length;
-                const oh = (z.fontSize || 12) * 1.2;
-                minX = Math.min(minX, ln.origin[0]);
-                minY = Math.min(minY, ln.origin[1]);
-                maxX = Math.max(maxX, ln.origin[0] + ow);
-                maxY = Math.max(maxY, ln.origin[1] + oh);
               }
             }
             if (minX !== Infinity) {
@@ -1633,7 +1873,23 @@ Only return JSON.`;
     if (!zones || zones.length === 0) return [];
     const extractionLevel = options.extractionLevel || 'sentence';
     const tocPage = options.tocPage === true; // TOC/intro: line-by-line only, no cross-line merge
-    const columnSplitX = options.columnSplitX != null && typeof options.columnSplitX === 'number' ? options.columnSplitX : null;
+    const columnBoundaries = Array.isArray(options.columnBoundaries) && options.columnBoundaries.length > 0
+      ? options.columnBoundaries
+      : (options.columnSplitX != null && typeof options.columnSplitX === 'number' ? [options.columnSplitX] : null);
+    const pageWidth = options.pageWidth || 0;
+    const zoneColumnSort = (a, b) => {
+      if (columnBoundaries) {
+        const ac = KitabooFxlService.zoneColumnIndex(a, columnBoundaries, pageWidth);
+        const bc = KitabooFxlService.zoneColumnIndex(b, columnBoundaries, pageWidth);
+        if (ac !== bc) return ac - bc;
+      }
+      const ay = a.origin ? a.origin[1] : a.y;
+      const by = b.origin ? b.origin[1] : b.y;
+      if (Math.abs(ay - by) > 1.5) return ay - by;
+      const ax = a.origin ? a.origin[0] : a.x;
+      const bx = b.origin ? b.origin[0] : b.x;
+      return ax - bx;
+    };
 
     // 1. Geography-based Deduplication (tighten misaligned OCR layers and PDF outline/shadow duplicates)
     // Same content + (position close or bbox overlap) => one zone; exclude adjacent same-line (e.g. "Up" "Up" in "Up Up Close").
@@ -1666,12 +1922,10 @@ Only return JSON.`;
         Math.abs((a.y ?? 0) - (b.y ?? 0)) < lineSlop && (b.x ?? 0) >= (a.x ?? 0) + (a.w ?? 0) - 2;
       const wordDeduped = [];
       const byReadingOrder = [...unique].sort((a, b) => {
-        const ay = a.origin ? a.origin[1] : a.y;
-        const by = b.origin ? b.origin[1] : b.y;
-        if (Math.abs(ay - by) > 1.5) return ay - by;
-        const ax = a.origin ? a.origin[0] : a.x;
-        const bx = b.origin ? b.origin[0] : b.x;
-        return ax - bx;
+        const roA = a.readingOrder ?? 999999;
+        const roB = b.readingOrder ?? 999999;
+        if (roA !== roB) return roA - roB;
+        return zoneColumnSort(a, b);
       });
       for (const z of byReadingOrder) {
         const isRedundant = wordDeduped.some(d =>
@@ -1682,14 +1936,12 @@ Only return JSON.`;
       return wordDeduped.map((z, i) => ({ ...z, readingOrder: i + 1 }));
     }
 
-    // 2. Baseline Clustering (sentence-level)
+    // 2. Baseline Clustering (sentence-level) — preserve readingOrder from coords, never column-first sort.
     const sorted = [...unique].sort((a, b) => {
-      const ay = a.origin ? a.origin[1] : a.y;
-      const by = b.origin ? b.origin[1] : b.y;
-      if (Math.abs(ay - by) > 1.5) return ay - by;
-      const ax = a.origin ? a.origin[0] : a.x;
-      const bx = b.origin ? b.origin[0] : b.x;
-      return ax - bx;
+      const roA = a.readingOrder ?? 999999;
+      const roB = b.readingOrder ?? 999999;
+      if (roA !== roB) return roA - roB;
+      return zoneColumnSort(a, b);
     });
 
     const clustered = [];
@@ -1721,6 +1973,17 @@ Only return JSON.`;
     };
 
     for (const z of sorted) {
+      // Hi-fi glyph sentence zones already have correct per-line bboxes — never word-merge them.
+      if (extractionLevel === 'sentence' && KitabooFxlService.isGlyphBuiltSentenceZone(z)) {
+        if (current) {
+          clustered.push(current);
+          current = null;
+        }
+        const collapsed = KitabooFxlService.collapseZoneLinesToVisualLines(z.lines, z.fontSize || 12);
+        clustered.push({ ...z, lines: collapsed });
+        continue;
+      }
+
       if (!current) {
         current = { ...z };
         if (current.content != null) current.content = (current.content || '').replace(/\s+/g, ' ').trim();
@@ -1754,11 +2017,8 @@ Only return JSON.`;
       const nextLineDown = isNextLineDown && verticalGap < maxGap;
       const spaceThreshold = Math.max(current.fontSize * 0.5, 4);
       const adjacent = (zXOrigin - curXEnd) < spaceThreshold;
-      // On TOC pages: merge same-line only within the same column (don't merge "Consultant" + "Publishing Credits").
-      const curCenterX = curXOrigin + (current.w || 0) / 2;
-      const zCenterX = zXOrigin + (z.w || 0) / 2;
-      const sameColumn = !columnSplitX || (curCenterX < columnSplitX && zCenterX < columnSplitX) || (curCenterX >= columnSplitX && zCenterX >= columnSplitX);
-      const sameLineMergeable = sameLine && (adjacent || (tocPage && sameColumn));
+      const sameColumn = !columnBoundaries || KitabooFxlService.zonesSameColumn(current, z, columnBoundaries);
+      const sameLineMergeable = sameLine && sameColumn && (adjacent || tocPage);
       const curRot = (current.origin && current.origin[2]) || 0;
       const zRot = (z.origin && z.origin[2]) || 0;
 
@@ -1787,10 +2047,10 @@ Only return JSON.`;
       const bothShortLabels = !tocPage && isShortLabel(current) && isShortLabel(z);
       const blockMergeForLabels = bothShortLabels;
 
-      const mergeSameLine = !blockMergeForLabels && !isMultiLineSentence && sameLineMergeable && styleOkForMerge && !wouldBeTooTall && !wouldBeTooLong;
+      const mergeSameLine = !blockMergeForLabels && !isMultiLineSentence && sameLineMergeable && styleOkForMerge && !wouldBeTooTall && !wouldBeTooLong && !currentEndsSentence;
       // Content pages: do not merge next line when current ends with . ! ? — each sentence gets its own block.
-      // TOC/intro: never merge across lines (period-ending logic is not used there).
-      const mergeNextLine = !blockMergeForLabels && !tocPage && nextLineDown && sameStyle && !wouldBeTooLong && (current.lines?.length || 0) < 12 && !currentEndsSentence;
+      // Never merge across columns or when current ends a sentence.
+      const mergeNextLine = !blockMergeForLabels && !tocPage && nextLineDown && sameStyle && sameColumn && !wouldBeTooLong && (current.lines?.length || 0) < 12 && !currentEndsSentence;
 
       if (mergeSameLine) {
         // Add a space between words if they were separate in the PDF. Trim trailing/leading to avoid double space.
@@ -1805,7 +2065,7 @@ Only return JSON.`;
         current.h = Math.max(current.h, z.h);
         // Merge line geometry so sentence zone has outline for polygon (first/last line)
         const zLines = Array.isArray(z.lines) && z.lines.length > 0 ? z.lines : [{ text: (z.content || '').trim(), bbox: [z.x, z.y, z.x + (z.w || 0), z.y + (z.h || 0)], origin: [z.x, z.y], align: z.textAlign }];
-        current.lines = (current.lines || []).concat(zLines);
+        current.lines = KitabooFxlService.appendZoneLineRecords(current.lines, zLines, current.fontSize || 12);
         // RCA: Ensure merged zone content is never shorter than lines (Zoning Studio "OCR text not cutting")
         if (Array.isArray(current.lines) && current.lines.length > 0) {
           const fromLines = current.lines.map((l) => (l.text || '').trim()).filter(Boolean).join(' ');
@@ -1826,7 +2086,7 @@ Only return JSON.`;
         current.w = Math.max(1, right - left);
         current.h = Math.max(1, bottom - (current.y ?? 0));
         const zLines = Array.isArray(z.lines) && z.lines.length > 0 ? z.lines : [{ text: (z.content || '').trim(), bbox: [z.x, z.y, z.x + (z.w || 0), z.y + (z.h || 0)], origin: [z.x, z.y], align: z.textAlign }];
-        current.lines = (current.lines || []).concat(zLines);
+        current.lines = KitabooFxlService.appendZoneLineRecords(current.lines, zLines, current.fontSize || 12);
         // RCA: Ensure merged zone content matches lines (Zoning Studio full OCR text)
         if (Array.isArray(current.lines) && current.lines.length > 0) {
           const fromLines = current.lines.map((l) => (l.text || '').trim()).filter(Boolean).join(' ');
@@ -1845,6 +2105,9 @@ Only return JSON.`;
     }
     if (current) {
       if (current.content != null) current.content = (current.content || '').replace(/\s+/g, ' ').trim();
+      if (Array.isArray(current.lines) && current.lines.length > 1) {
+        current.lines = KitabooFxlService.collapseZoneLinesToVisualLines(current.lines, current.fontSize || 12);
+      }
       clustered.push(current);
     }
 
@@ -1921,8 +2184,11 @@ Only return JSON.`;
       if (!isRedundant) deduplicated.push(z);
     }
 
-    // Restore reading order (top-to-bottom, left-to-right) after deduplication
+    // Restore reading order after deduplication (preserve coords readingOrder when present).
     const finalZones = deduplicated.sort((a, b) => {
+      const roA = a.readingOrder ?? 999999;
+      const roB = b.readingOrder ?? 999999;
+      if (roA !== roB) return roA - roB;
       if (Math.abs(a.y - b.y) > 10) return a.y - b.y;
       return a.x - b.x;
     });
@@ -2011,19 +2277,53 @@ Only return JSON.`;
   }
 
   /**
-   * Detect two-column layout: returns splitX and which rows are in the two-column region (top block only).
-   * Used to avoid merging across columns and to reorder only the top block; "Image Credits" and below stay single-column order.
-   * @param {Array} zones - Zones with x, y, w
-   * @param {number} pageWidth - Page width in same units as zone.x
-   * @returns {{ splitX: number, twoColumnRowKeys: Set<number> } | null} splitX and row keys that have the column gap, or null
+   * Build one bbox per word from glyph coords for reliable column-boundary detection.
    */
-  static detectColumnSplitX(zones, pageWidth) {
-    if (!zones || zones.length < 2 || !pageWidth || pageWidth <= 0) return null;
-    const minCenter = pageWidth * 0.2;
-    const maxCenter = pageWidth * 0.8;
-    const minGapForColumns = Math.max(pageWidth * 0.05, 25);
-    const rowSlop = Math.max(25, (pageWidth / 80));
+  static buildWordProbeFromGlyphs(items, scaleX = 1, scaleY = 1) {
+    const byWord = new Map();
+    for (const item of items || []) {
+      const wid = item.word_id ?? item.wordId;
+      const bbox = item.bbox;
+      if (wid == null || !Array.isArray(bbox) || bbox.length < 4) continue;
+      const x0 = bbox[0] * scaleX;
+      const y0 = bbox[1] * scaleY;
+      const x1 = bbox[2] * scaleX;
+      const y1 = bbox[3] * scaleY;
+      if (!byWord.has(wid)) {
+        byWord.set(wid, { x: x0, y: y0, x1, y1 });
+      } else {
+        const w = byWord.get(wid);
+        w.x = Math.min(w.x, x0);
+        w.y = Math.min(w.y, y0);
+        w.x1 = Math.max(w.x1, x1);
+        w.y1 = Math.max(w.y1, y1);
+      }
+    }
+    return [...byWord.values()].map((w) => ({
+      x: w.x,
+      y: w.y,
+      w: Math.max(1, w.x1 - w.x),
+      h: Math.max(1, w.y1 - w.y),
+    }));
+  }
 
+  static mergeBoundaryLists(pageWidth, ...lists) {
+    const tolerance = pageWidth * 0.04;
+    const merged = [];
+    for (const boundaries of lists) {
+      if (!boundaries?.length) continue;
+      for (const b of boundaries) {
+        if (merged.some((existing) => Math.abs(existing - b) < tolerance)) continue;
+        merged.push(b);
+      }
+    }
+    return merged.length ? merged.sort((a, b) => a - b) : null;
+  }
+
+  static detectColumnBoundariesFromRows(zones, pageWidth) {
+    if (!zones || zones.length < 2 || !pageWidth || pageWidth <= 0) return null;
+    const minGap = Math.max(pageWidth * 0.03, 15);
+    const rowSlop = Math.max(20, pageWidth / 80);
     const rowKey = (z) => Math.round((z.y ?? z.origin?.[1] ?? 0) / rowSlop) * rowSlop;
     const byRow = new Map();
     for (const z of zones) {
@@ -2032,34 +2332,297 @@ Only return JSON.`;
       byRow.get(k).push(z);
     }
 
-    let maxGap = 0;
-    let splitX = null;
+    const gapVotes = [];
+    for (const [, rowZones] of byRow) {
+      if (rowZones.length < 2) continue;
+      const byX = [...rowZones].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+      for (let i = 0; i < byX.length - 1; i++) {
+        const rightEdge = (byX[i].x ?? 0) + (byX[i].w ?? 0);
+        const nextLeft = byX[i + 1].x ?? 0;
+        const gap = nextLeft - rightEdge;
+        if (gap < minGap) continue;
+        const gapCenter = (rightEdge + nextLeft) / 2;
+        if (gapCenter < pageWidth * 0.12 || gapCenter > pageWidth * 0.88) continue;
+        gapVotes.push({ center: gapCenter, gap });
+      }
+    }
+    if (gapVotes.length === 0) return null;
+
+    const tolerance = pageWidth * 0.04;
+    gapVotes.sort((a, b) => a.center - b.center);
+    const clusters = [];
+    for (const vote of gapVotes) {
+      let matched = null;
+      for (const cluster of clusters) {
+        if (Math.abs(cluster.center - vote.center) < tolerance) {
+          matched = cluster;
+          break;
+        }
+      }
+      if (matched) {
+        const count = matched.count;
+        matched.center = (matched.center * count + vote.center) / (count + 1);
+        matched.count = count + 1;
+        matched.totalGap += vote.gap;
+      } else {
+        clusters.push({ center: vote.center, count: 1, totalGap: vote.gap });
+      }
+    }
+
+    const significant = clusters.filter((c) =>
+      c.count >= 2 || (c.count >= 1 && c.totalGap / c.count >= pageWidth * 0.05)
+    );
+    if (significant.length === 0) return null;
+    return significant.sort((a, b) => a.center - b.center).map((c) => c.center);
+  }
+
+  static validateColumnBoundaries(zones, boundaries, pageWidth) {
+    if (!boundaries?.length || !zones?.length) return null;
+    const minGutter = Math.max(pageWidth * 0.04, 12);
+    const strongGutter = Math.max(pageWidth * 0.08, 24);
+    const rowSlop = Math.max(20, pageWidth / 80);
+    const rowKey = (z) => Math.round((z.y ?? z.origin?.[1] ?? 0) / rowSlop) * rowSlop;
+    const byRow = new Map();
+    for (const z of zones) {
+      const k = rowKey(z);
+      if (!byRow.has(k)) byRow.set(k, []);
+      byRow.get(k).push(z);
+    }
+
+    const valid = [];
+    for (const boundary of boundaries) {
+      let gutterRows = 0;
+      let strongRows = 0;
+      for (const [, rowZones] of byRow) {
+        const left = rowZones.filter((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) < boundary);
+        const right = rowZones.filter((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) >= boundary);
+        if (!left.length || !right.length) continue;
+        const gap = Math.min(...right.map((z) => z.x ?? 0)) - Math.max(...left.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+        if (gap >= minGutter) gutterRows += 1;
+        if (gap >= strongGutter) strongRows += 1;
+      }
+      if (gutterRows >= 2 || strongRows >= 1) valid.push(boundary);
+    }
+    return valid.length ? valid.sort((a, b) => a - b) : null;
+  }
+
+  static detectCalloutBoundary(zones, pageWidth) {
+    if (!zones || zones.length < 4 || !pageWidth) return null;
+    const minGutter = Math.max(pageWidth * 0.08, 24);
+    const rowSlop = Math.max(20, pageWidth / 80);
+    const rowKey = (z) => Math.round((z.y ?? z.origin?.[1] ?? 0) / rowSlop) * rowSlop;
+    const byRow = new Map();
+    for (const z of zones) {
+      const k = rowKey(z);
+      if (!byRow.has(k)) byRow.set(k, []);
+      byRow.get(k).push(z);
+    }
+
+    let bestMid = null;
+    let bestGap = 0;
+    for (const [, rowZones] of byRow) {
+      if (rowZones.length < 2) continue;
+      const byX = [...rowZones].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+      for (let i = 0; i < byX.length - 1; i++) {
+        const rightEdge = (byX[i].x ?? 0) + (byX[i].w ?? 0);
+        const nextLeft = byX[i + 1].x ?? 0;
+        const gap = nextLeft - rightEdge;
+        const mid = (rightEdge + nextLeft) / 2;
+        if (gap >= minGutter && gap > bestGap && mid > pageWidth * 0.1 && mid < pageWidth * 0.9) {
+          bestGap = gap;
+          bestMid = mid;
+        }
+      }
+    }
+    return bestMid != null ? [bestMid] : null;
+  }
+
+  static detectColumnBoundariesFromXClusters(zones, pageWidth, maxCols = 4) {
+    if (!zones || zones.length < 4 || !pageWidth || pageWidth <= 0) return null;
+    const minSep = Math.max(pageWidth * 0.06, 20);
+    const rowSlop = Math.max(20, pageWidth / 80);
+    const rowKey = (z) => Math.round((z.y ?? z.origin?.[1] ?? 0) / rowSlop) * rowSlop;
+    const byRow = new Map();
+    for (const z of zones) {
+      const k = rowKey(z);
+      if (!byRow.has(k)) byRow.set(k, []);
+      byRow.get(k).push(z);
+    }
+
+    const gapVotes = [];
+    for (const [, rowZones] of byRow) {
+      if (rowZones.length < 2) continue;
+      const byX = [...rowZones].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+      for (let i = 0; i < byX.length - 1; i++) {
+        const rightEdge = (byX[i].x ?? 0) + (byX[i].w ?? 0);
+        const nextLeft = byX[i + 1].x ?? 0;
+        const gap = nextLeft - rightEdge;
+        if (gap < minSep) continue;
+        const mid = (rightEdge + nextLeft) / 2;
+        if (mid < pageWidth * 0.08 || mid > pageWidth * 0.92) continue;
+        gapVotes.push({ gap, mid });
+      }
+    }
+    if (gapVotes.length === 0) return null;
+
+    gapVotes.sort((a, b) => b.gap - a.gap);
+    const boundaries = [];
+    for (const { mid } of gapVotes) {
+      if (boundaries.some((b) => Math.abs(b - mid) < pageWidth * 0.08)) continue;
+      const left = zones.filter((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) < mid).length;
+      const right = zones.length - left;
+      if (left < 2 || right < 2) continue;
+      boundaries.push(mid);
+      if (boundaries.length >= maxCols - 1) break;
+    }
+    return boundaries.length ? boundaries.sort((a, b) => a - b) : null;
+  }
+
+  static detectColumnBoundaryTwoClusters(zones, pageWidth) {
+    if (!zones || zones.length < 4 || !pageWidth || pageWidth <= 0) return null;
+    const tagged = [...zones]
+      .map((z) => ({ cx: (z.x ?? 0) + (z.w ?? 0) / 2, z }))
+      .sort((a, b) => a.cx - b.cx);
+    const midI = Math.floor(tagged.length / 2);
+    const left = tagged.slice(0, midI).map((t) => t.z);
+    const right = tagged.slice(midI).map((t) => t.z);
+    if (!left.length || !right.length) return null;
+    const maxLeftR = Math.max(...left.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+    const minRightL = Math.min(...right.map((z) => z.x ?? 0));
+    const boundary = minRightL > maxLeftR
+      ? (maxLeftR + minRightL) / 2
+      : (tagged[midI - 1].cx + tagged[midI].cx) / 2;
+    if (boundary < pageWidth * 0.10 || boundary > pageWidth * 0.90) return null;
+    const leftFrac = tagged.filter((t) => t.cx < boundary).length / tagged.length;
+    if (leftFrac < 0.15 || leftFrac > 0.85) return null;
+    return [boundary];
+  }
+
+  /** Last-resort: largest edge-to-edge x gap between adjacent zones sorted by center. */
+  static detectColumnBoundaryDirectGap(zones, pageWidth) {
+    if (!zones || zones.length < 2 || !pageWidth || pageWidth <= 0) return null;
+    const byX = [...zones].sort(
+      (a, b) => ((a.x ?? 0) + (a.w ?? 0) / 2) - ((b.x ?? 0) + (b.w ?? 0) / 2)
+    );
+    const minGap = Math.max(pageWidth * 0.05, 12);
+    let bestGap = 0;
+    let bestMid = null;
+    for (let i = 0; i < byX.length - 1; i++) {
+      const rightEdge = (byX[i].x ?? 0) + (byX[i].w ?? 0);
+      const nextLeft = byX[i + 1].x ?? 0;
+      const gap = nextLeft - rightEdge;
+      if (gap < minGap) continue;
+      const mid = (rightEdge + nextLeft) / 2;
+      if (mid < pageWidth * 0.15 || mid > pageWidth * 0.85) continue;
+      const leftCount = zones.filter((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) < mid).length;
+      const leftFrac = leftCount / zones.length;
+      if (leftFrac < 0.20 || leftFrac > 0.80) continue;
+      if (gap > bestGap) {
+        bestGap = gap;
+        bestMid = mid;
+      }
+    }
+    return bestMid != null ? [bestMid] : null;
+  }
+
+  /**
+   * Detect vertical gutter positions between columns using row-gap voting.
+   * @param {Array} zones - Zones with x, y, w
+   * @param {number} pageWidth - Page width in same units as zone.x
+   * @returns {number[]|null} Sorted boundary x-positions, or null for single-column pages
+   */
+  static detectColumnBoundaries(zones, pageWidth) {
+    if (!zones || zones.length < 2 || !pageWidth || pageWidth <= 0) return null;
+
+    const twoCluster = KitabooFxlService.detectColumnBoundaryTwoClusters(zones, pageWidth);
+    if (twoCluster) {
+      const validated = KitabooFxlService.validateColumnBoundaries(zones, twoCluster, pageWidth);
+      if (validated) return validated;
+      return twoCluster;
+    }
+
+    const merged = KitabooFxlService.mergeBoundaryLists(
+      pageWidth,
+      KitabooFxlService.detectColumnBoundariesFromRows(zones, pageWidth),
+      KitabooFxlService.detectColumnBoundariesFromXClusters(zones, pageWidth)
+    );
+    const validated = merged
+      ? KitabooFxlService.validateColumnBoundaries(zones, merged, pageWidth)
+      : null;
+    if (validated) {
+      const sane = validated.filter((b) => {
+        const leftFrac = zones.filter((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) < b).length / zones.length;
+        return leftFrac >= 0.15 && leftFrac <= 0.85;
+      });
+      if (sane.length) return sane;
+    }
+
+    const direct = KitabooFxlService.detectColumnBoundaryDirectGap(zones, pageWidth);
+    if (direct) return direct;
+
+    return KitabooFxlService.validateColumnBoundaries(
+      zones,
+      KitabooFxlService.detectCalloutBoundary(zones, pageWidth),
+      pageWidth
+    );
+  }
+
+  /** 0-based column index for a zone given sorted boundary x-positions. */
+  static zoneColumnIndex(zone, boundaries, pageWidth = 0) {
+    if (!boundaries || boundaries.length === 0) return 0;
+    const zw = zone.w ?? 0;
+    if (pageWidth > 0 && zw > pageWidth * 0.55) return 999;
+    const cx = (zone.x ?? zone.origin?.[0] ?? 0) + zw / 2;
+    for (let i = 0; i < boundaries.length; i++) {
+      if (cx < boundaries[i]) return i;
+    }
+    return boundaries.length;
+  }
+
+  static zonesSameColumn(a, b, boundaries) {
+    if (!boundaries || boundaries.length === 0) return true;
+    return KitabooFxlService.zoneColumnIndex(a, boundaries) === KitabooFxlService.zoneColumnIndex(b, boundaries);
+  }
+
+  /**
+   * Detect two-column layout: returns splitX and which rows are in the two-column region (top block only).
+   * Used to avoid merging across columns and to reorder only the top block; "Image Credits" and below stay single-column order.
+   * @param {Array} zones - Zones with x, y, w
+   * @param {number} pageWidth - Page width in same units as zone.x
+   * @returns {{ splitX: number, twoColumnRowKeys: Set<number> } | null} splitX and row keys that have the column gap, or null
+   */
+  static detectColumnSplitX(zones, pageWidth) {
+    if (!zones || zones.length < 2 || !pageWidth || pageWidth <= 0) return null;
+    const boundaries = KitabooFxlService.detectColumnBoundaries(zones, pageWidth);
+    if (!boundaries || boundaries.length === 0) return null;
+
+    const rowSlop = Math.max(25, (pageWidth / 80));
+    const rowKey = (z) => Math.round((z.y ?? z.origin?.[1] ?? 0) / rowSlop) * rowSlop;
+    const byRow = new Map();
+    for (const z of zones) {
+      const k = rowKey(z);
+      if (!byRow.has(k)) byRow.set(k, []);
+      byRow.get(k).push(z);
+    }
+
     const twoColumnRowKeys = new Set();
+    const minGapForColumns = Math.max(pageWidth * 0.05, 25);
     for (const [rowK, rowZones] of byRow) {
       if (rowZones.length < 2) continue;
       const byX = [...rowZones].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
-      let rowMaxGap = 0;
-      let rowSplitX = null;
       for (let i = 0; i < byX.length - 1; i++) {
         const rightEdge = (byX[i].x ?? 0) + (byX[i].w ?? 0);
         const nextLeft = byX[i + 1].x ?? 0;
         const gap = nextLeft - rightEdge;
         const gapCenter = (rightEdge + nextLeft) / 2;
-        if (gap > rowMaxGap && gapCenter >= minCenter && gapCenter <= maxCenter) {
-          rowMaxGap = gap;
-          rowSplitX = gapCenter;
-        }
-      }
-      if (rowMaxGap >= minGapForColumns && rowSplitX != null) {
-        twoColumnRowKeys.add(rowK);
-        if (rowMaxGap > maxGap) {
-          maxGap = rowMaxGap;
-          splitX = rowSplitX;
+        if (gap >= minGapForColumns && boundaries.some((b) => Math.abs(b - gapCenter) < pageWidth * 0.04)) {
+          twoColumnRowKeys.add(rowK);
+          break;
         }
       }
     }
-    if (splitX == null || twoColumnRowKeys.size === 0) return null;
-    return { splitX, twoColumnRowKeys };
+
+    return { splitX: boundaries[0], boundaries, twoColumnRowKeys };
   }
 
   /**
@@ -2118,59 +2681,334 @@ Only return JSON.`;
   }
 
   /**
-   * Detect multi-column layout and reorder zones so reading order is: first column (all rows), then second column (all rows).
-   * Order: Consultant (1), Timothy Rasinski Ph.D. (2), Kent State University (3), Publishing Credits (4), Dona Herweck Rice (5), ...
-   * Each row remains one block (zone). Only applied when tocPage is true (intro/TOC). Uses horizontal gap to detect columns.
+   * Reorder zones column-first only within rows that have a real column gutter.
+   * Full-width blocks (photo credits, footer) keep top-to-bottom order.
+   */
+  static reorderZonesColumnFirst(zones, pageWidth) {
+    return KitabooFxlService.reorderZonesForMultiColumnLayout(zones, pageWidth);
+  }
+
+  static clusterZonesIntoRows(zones) {
+    const sorted = [...zones].sort((a, b) => {
+      const ya = a.y ?? a.origin?.[1] ?? 0;
+      const yb = b.y ?? b.origin?.[1] ?? 0;
+      if (Math.abs(ya - yb) > 0.5) return ya - yb;
+      return (a.x ?? 0) - (b.x ?? 0);
+    });
+    const rows = [];
+    for (const z of sorted) {
+      const zh = z.h ?? ((z.y ?? 0) + 12);
+      const cy = (z.y ?? z.origin?.[1] ?? 0) + zh / 2;
+      let inserted = false;
+      for (const row of rows) {
+        const rowCy = row.reduce((s, r) => s + ((r.y ?? r.origin?.[1] ?? 0) + (r.h ?? 12) / 2), 0) / row.length;
+        const rowH = Math.max(...row.map((r) => r.h ?? 12));
+        if (Math.abs(cy - rowCy) < rowH * 0.7) {
+          row.push(z);
+          inserted = true;
+          break;
+        }
+      }
+      if (!inserted) rows.push([z]);
+    }
+    return rows;
+  }
+
+  /**
+   * Build sentence groups from glyph stream order for content-page sentence zones.
+   * Splits on ?! and on . (excluding abbreviations and dot leaders). Also splits on
+   * large vertical gaps between lines so titles don't merge with body text.
+   */
+  static buildSentenceGroupsFromGlyphs(glyphs) {
+    if (!glyphs?.length) return [];
+    const groups = [];
+    let current = [];
+
+    const flush = () => {
+      if (current.length) {
+        groups.push(current);
+        current = [];
+      }
+    };
+
+    const wordTextFrom = (idx) => {
+      const start = glyphs[idx];
+      if (!start) return '';
+      const wid = start.word_id ?? start.wordId;
+      let wordStart = idx;
+      while (wordStart > 0 && (glyphs[wordStart - 1].word_id ?? glyphs[wordStart - 1].wordId) === wid) {
+        wordStart--;
+      }
+      let s = '';
+      for (let j = wordStart; j < glyphs.length; j++) {
+        const gg = glyphs[j];
+        const gw = gg.word_id ?? gg.wordId;
+        if (gw !== wid) break;
+        s += gg.text || '';
+      }
+      return s.trim();
+    };
+
+    const endsSentence = (ch, g, i) => {
+      if (/[?!．？！]/.test(ch)) return true;
+      if (!/[.．]/.test(ch)) return false;
+      if (/[.．]$/.test(ch) && ch.length > 1) return true;
+      if (ch !== '.' && ch !== '．') return false;
+      const prevG = glyphs[i - 1];
+      const nextG = glyphs[i + 1];
+      const prevCh = (prevG?.text || '').trim();
+      const nextCh = (nextG?.text || '').trim();
+      if (nextCh === '.' || prevCh === '.' || nextCh === '．' || prevCh === '．') return false;
+      const gWordId = g.word_id ?? g.wordId;
+      const nextWordId = nextG?.word_id ?? nextG?.wordId;
+      if (nextG && gWordId != null && nextWordId != null && nextWordId !== gWordId) {
+        const nextWord = wordTextFrom(i + 1);
+        if (/^[A-Za-z]$/.test(nextWord)) {
+          const prevWord = wordTextFrom(i).replace(/[.．]+$/, '');
+          if (prevWord.length <= 3 && /^[A-Za-z]+$/.test(prevWord)) return false;
+        }
+        return true;
+      }
+      if (/^[A-Za-z]$/.test(prevCh) && /^[A-Za-z]$/.test(nextCh)
+        && prevG?.word_id === nextG?.word_id) {
+        return false;
+      }
+      return true;
+    };
+
+    for (let i = 0; i < glyphs.length; i++) {
+      const g = glyphs[i];
+      const bbox = g.bbox || [g.x, g.y, (g.x || 0) + 1, (g.y || 0) + 1];
+      if (current.length) {
+        const last = current[current.length - 1].item;
+        const lastBbox = last.bbox || [last.x, last.y, (last.x || 0) + 1, (last.y || 0) + 1];
+        const gap = bbox[1] - lastBbox[3];
+        const lastSize = last.size || 12;
+        const thisSize = g.size || lastSize;
+        const lineH = Math.max(Math.max(lastSize, thisSize) * 1.35, 12);
+        const joined = KitabooFxlService._joinGlyphTextsForProbe(current.map((x) => x.item));
+        const sizeDrop = lastSize - thisSize >= 2;
+        if (!/[.?!．？！]$/.test(joined.trim())) {
+          if (gap > lineH * 1.45 || (sizeDrop && gap > lineH * 0.6)) {
+            flush();
+          }
+        }
+        const lastBlock = last.block_id ?? last.blockId;
+        const thisBlock = g.block_id ?? g.blockId;
+        if (lastBlock != null && thisBlock != null && lastBlock !== thisBlock) {
+          flush();
+        }
+      }
+
+      current.push({ item: g, idx: i });
+      const ch = (g.text || '').trim();
+      if (!ch) continue;
+
+      if (endsSentence(ch, g, i)) {
+        flush();
+      }
+    }
+    flush();
+    return groups;
+  }
+
+  static _joinGlyphTextsForProbe(glyphList) {
+    let s = '';
+    let prevWordId = null;
+    for (const g of glyphList) {
+      const wid = g.word_id ?? g.wordId;
+      if (prevWordId != null && wid != null && wid !== prevWordId) s += ' ';
+      s += g.text || '';
+      prevWordId = wid;
+    }
+    return s;
+  }
+
+  static segmentZonesIntoLayoutBlocks(zones) {
+    if (!zones?.length) return [];
+    const rows = KitabooFxlService.clusterZonesIntoRows(zones);
+    rows.sort((a, b) => Math.min(...a.map((z) => z.y ?? z.origin?.[1] ?? 0))
+      - Math.min(...b.map((z) => z.y ?? z.origin?.[1] ?? 0)));
+    const heights = rows.map((row) => Math.max(...row.map((z) => z.h ?? 12)));
+    const medianH = heights.length ? heights.sort((a, b) => a - b)[Math.floor(heights.length / 2)] : 12;
+    const sectionGap = Math.max(medianH * 1.5, 20);
+    const blocks = [];
+    let currentRows = [];
+    let sectionBottom = 0;
+    for (const row of rows) {
+      const rowTop = Math.min(...row.map((z) => z.y ?? z.origin?.[1] ?? 0));
+      const rowBottom = Math.max(...row.map((z) => (z.y ?? z.origin?.[1] ?? 0) + (z.h ?? 12)));
+      if (!currentRows.length) {
+        currentRows.push(row);
+        sectionBottom = rowBottom;
+      } else if (rowTop > sectionBottom + sectionGap) {
+        blocks.push(currentRows.flat());
+        currentRows = [row];
+        sectionBottom = rowBottom;
+      } else {
+        currentRows.push(row);
+        sectionBottom = Math.max(sectionBottom, rowBottom);
+      }
+    }
+    if (currentRows.length) blocks.push(currentRows.flat());
+    return blocks;
+  }
+
+  static refineColumnBoundary(zones, roughBoundary, pageWidth = 0) {
+    const margin = Math.max((pageWidth || roughBoundary) * 0.03, 12);
+    const clearRight = zones.filter((s) => (s.x ?? 0) >= roughBoundary + margin);
+    if (!clearRight.length) return roughBoundary;
+    let minRightL = Math.min(...clearRight.map((s) => s.x ?? 0));
+    const leftSpans = zones.filter((s) => (s.x ?? 0) < minRightL);
+    const rightSpans = zones.filter((s) => (s.x ?? 0) >= minRightL);
+    if (!leftSpans.length || !rightSpans.length) return roughBoundary;
+    const maxLeftR = Math.max(...leftSpans.map((s) => (s.x ?? 0) + (s.w ?? 0)));
+    minRightL = Math.min(...rightSpans.map((s) => s.x ?? 0));
+    return (maxLeftR + minRightL) / 2;
+  }
+
+  static sortZonesRowPrimary(zones) {
+    const rows = KitabooFxlService.clusterZonesIntoRows(zones);
+    rows.sort((a, b) => {
+      const ya = Math.min(...a.map((z) => z.y ?? z.origin?.[1] ?? 0));
+      const yb = Math.min(...b.map((z) => z.y ?? z.origin?.[1] ?? 0));
+      return ya - yb;
+    });
+    const out = [];
+    for (const row of rows) {
+      out.push(...row.sort((a, b) => {
+        const aNum = /^\d+$/.test(String(a.content || '').trim()) ? 1 : 0;
+        const bNum = /^\d+$/.test(String(b.content || '').trim()) ? 1 : 0;
+        if (aNum !== bNum) return aNum - bNum;
+        return (a.x ?? 0) - (b.x ?? 0);
+      }));
+    }
+    return out;
+  }
+
+  static sortZonesYX(zones) {
+    return KitabooFxlService.sortZonesRowPrimary(zones);
+  }
+
+  static isGenuineMultiColumnBlock(zones, boundaries, pageWidth) {
+    if (!boundaries?.length || !zones?.length || zones.length < 4) return false;
+
+    const rows = KitabooFxlService.clusterZonesIntoRows(zones);
+    if (rows.length < 2) return false;
+
+    const blockMinX = Math.min(...zones.map((z) => z.x ?? 0));
+    const blockMaxX = Math.max(...zones.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+    const blockW = blockMaxX - blockMinX;
+    if (blockW > 0) {
+      const wide = zones.filter((z) => (z.w ?? 0) > blockW * 0.45).length;
+      if (wide >= zones.length * 0.5) return false;
+    }
+
+    const minGutter = Math.max(pageWidth * 0.03, 8);
+    const gutterMids = [];
+    let bothSides = 0;
+    let stackedRows = 0;
+    const multiSpanRows = rows.filter((row) => row.length > 1).length;
+
+    for (const row of rows) {
+      const left = row.filter((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth) === 0);
+      const right = row.filter((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth) > 0);
+      if (left.length && right.length) {
+        bothSides += 1;
+        const maxLeftR = Math.max(...left.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+        const minRightL = Math.min(...right.map((z) => z.x ?? 0));
+        const gap = minRightL - maxLeftR;
+        if (gap >= minGutter) {
+          gutterMids.push((maxLeftR + minRightL) / 2);
+        }
+      } else {
+        stackedRows += 1;
+      }
+    }
+
+    const ncols = new Set(zones.map((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth))).size;
+    if (ncols >= 3 && bothSides >= rows.length * 0.5) return false;
+
+    if (multiSpanRows >= 2 && stackedRows >= Math.max(2, rows.length * 0.30)) return true;
+
+    if (gutterMids.length >= 2) {
+      const spread = Math.max(...gutterMids) - Math.min(...gutterMids);
+      if (spread < pageWidth * 0.10) {
+        const gaps = [];
+        for (const row of rows) {
+          const left = row.filter((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth) === 0);
+          const right = row.filter((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth) > 0);
+          if (left.length && right.length) {
+            const maxLeftR = Math.max(...left.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+            const minRightL = Math.min(...right.map((z) => z.x ?? 0));
+            const gap = minRightL - maxLeftR;
+            if (gap >= minGutter) gaps.push(gap);
+          }
+        }
+        const avgGap = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+        if (avgGap >= pageWidth * 0.11) return true;
+      }
+    }
+
+    return bothSides >= Math.max(2, rows.length * 0.5);
+  }
+
+  /**
+   * Reorder zones column-first within each layout block (credit box, then image credits, etc.).
    * @param {Array} zones - Zones with x, y, w, h and id
    * @param {number} pageWidth - Page width in same units as zone.x (e.g. img.width)
    * @returns {Array} Zones reordered by column then row, with readingOrder and ids updated
    */
   static reorderZonesForMultiColumnLayout(zones, pageWidth) {
     if (!zones || zones.length < 2 || !pageWidth || pageWidth <= 0) return zones || [];
-    const colResult = KitabooFxlService.detectColumnSplitX(zones, pageWidth);
-    if (colResult == null) {
-      return zones;
-    }
-    const { splitX, twoColumnRowKeys } = colResult;
-    const rowSlop = Math.max(25, (pageWidth / 80));
-    const rowKey = (z) => Math.round((z.y ?? z.origin?.[1] ?? 0) / rowSlop) * rowSlop;
 
-    const inTwoCol = [];
-    const singleCol = [];
-    for (const z of zones) {
-      if (twoColumnRowKeys.has(rowKey(z))) {
-        inTwoCol.push(z);
-      } else {
-        singleCol.push(z);
+    const pageBoundaries = KitabooFxlService.detectColumnBoundaries(zones, pageWidth);
+    const blocks = KitabooFxlService.segmentZonesIntoLayoutBlocks(zones);
+    const finalZones = [];
+
+    for (const block of blocks) {
+      const blockWidth = Math.max(...block.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+      const avgW = block.reduce((s, z) => s + (z.w ?? 0), 0) / block.length;
+      const denseBlock = avgW < blockWidth * 0.08 && block.length > 20;
+
+      let boundaries = null;
+      if (!denseBlock) {
+        const blockMinX = Math.min(...block.map((z) => z.x ?? 0));
+        const blockMaxX = Math.max(...block.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+        const blockSpanW = blockMaxX - blockMinX;
+        const raw = KitabooFxlService.detectColumnBoundaries(block, blockWidth)
+          || (blockSpanW < pageWidth * 0.72 ? pageBoundaries : null);
+        boundaries = raw
+          ? raw.map((b) => KitabooFxlService.refineColumnBoundary(block, b, blockWidth))
+          : null;
       }
+
+      let sorted;
+      if (boundaries) {
+        const cols = new Set(block.map((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, blockWidth)));
+        if (cols.size > 1 && KitabooFxlService.isGenuineMultiColumnBlock(block, boundaries, pageWidth)) {
+          const byCol = new Map();
+          for (const z of block) {
+            const c = KitabooFxlService.zoneColumnIndex(z, boundaries, blockWidth);
+            if (!byCol.has(c)) byCol.set(c, []);
+            byCol.get(c).push(z);
+          }
+          sorted = [];
+          for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
+            sorted.push(...KitabooFxlService.sortZonesRowPrimary(byCol.get(col)));
+          }
+        } else {
+          sorted = KitabooFxlService.sortZonesRowPrimary(block);
+        }
+      } else {
+        sorted = KitabooFxlService.sortZonesYX(block);
+      }
+      finalZones.push(...sorted);
     }
 
-    const withCol = inTwoCol.map((z) => {
-      const centerX = (z.x ?? 0) + (z.w ?? 0) / 2;
-      const col = centerX < splitX ? 0 : 1;
-      const y = z.y ?? z.origin?.[1] ?? 0;
-      const x = z.x ?? z.origin?.[0] ?? 0;
-      return { ...z, _col: col, _y: y, _x: x };
-    });
-    const twoColSorted = withCol.sort((a, b) => {
-      if (a._col !== b._col) return a._col - b._col;
-      if (Math.abs(a._y - b._y) > 10) return a._y - b._y;
-      return a._x - b._x;
-    });
-    const singleColSorted = singleCol.sort((a, b) => {
-      const ay = a.y ?? a.origin?.[1] ?? 0;
-      const by = b.y ?? b.origin?.[1] ?? 0;
-      if (Math.abs(ay - by) > 5) return ay - by;
-      return (a.x ?? 0) - (b.x ?? 0);
-    });
-
-    const reordered = [...twoColSorted, ...singleColSorted];
-    const m = (reordered[0] && reordered[0].id) ? reordered[0].id.match(/^p(\d+)_/) : null;
+    const m = (finalZones[0] && finalZones[0].id) ? finalZones[0].id.match(/^p(\d+)_/) : null;
     const prefix = m ? `p${m[1]}` : 'pz';
-    return reordered.map((z, i) => {
-      const { _col, _y, _x, ...rest } = z;
-      return { ...rest, id: `${prefix}_z${i}`, readingOrder: i + 1 };
-    });
+    return finalZones.map((z, i) => ({ ...z, id: `${prefix}_z${i}`, readingOrder: i + 1 }));
   }
 
   /**
