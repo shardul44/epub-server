@@ -103,6 +103,8 @@ function buildKitabooZoneObjects(zoneSnapshot, index, previewMode) {
   let zoneLeft;
   let zoneTop;
 
+  // Multi-line sentence zones store stepped outlines (>4 points). Only fall back to Rect for
+  // derived 4-point boxes; never downgrade a stored polygon to a rectangle.
   if (!hadStoredPoints && zonePoints && zonePoints.length === 4) {
     const xs = zonePoints.map((p) => p[0]);
     const ys = zonePoints.map((p) => p[1]);
