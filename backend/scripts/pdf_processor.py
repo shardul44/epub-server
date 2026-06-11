@@ -203,6 +203,21 @@ def _is_sentence_end(text):
     return len(t) > 0 and t[-1] in ".?!"
 
 
+def _glyph_char_ends_sentence(ch, prev_ch="", next_ch=""):
+    """True when a glyph ends a sentence (not dot leaders, not abbreviations like Ph.D.)."""
+    if ch not in ".?!":
+        return False
+    if ch in "?!":
+        return True
+    if prev_ch == "." or next_ch == ".":
+        return False
+    if prev_ch.isalpha() and len(prev_ch) == 1 and next_ch.isalpha():
+        return False
+    if prev_ch.isalpha() and next_ch.isdigit():
+        return False
+    return True
+
+
 def _split_into_sentences(text):
     if not (text or "").strip():
         return []
@@ -217,6 +232,35 @@ def _split_into_sentences(text):
         else:
             out.append(p)
     return out
+
+
+def _looks_like_image_caption(text, page_width, bbox):
+    """Short narrow right-side caption (e.g. 'Nez Perce chief' under a portrait)."""
+    t = (text or "").strip()
+    if not t or not page_width:
+        return False
+    words = t.split()
+    # Wrapped body lines are 4+ words; real captions are brief (1–3 words).
+    if len(words) > 3 or len(t) > 32:
+        return False
+    if any(ch in ".?!" for ch in t):
+        return False
+    # Narrative / sidebar sentences (e.g. "There are seven") are not image captions.
+    if re.match(
+        r"^(There|A|An|The|This|These|It|They|He|She|We|You|In|On|At|As|But|So|If|When|While|Because)\s",
+        t,
+        re.I,
+    ):
+        return False
+    try:
+        x0, _, x1, _ = bbox
+        span_width = abs(x1 - x0)
+    except Exception:
+        return False
+    # Paragraph columns are wide; captions hug the image on the right.
+    if span_width > page_width * 0.34:
+        return False
+    return x0 >= page_width * 0.50
 
 
 def _looks_like_label(text, page_width, bbox):
@@ -338,6 +382,633 @@ def _join_sentence_text(parts_texts):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# VISION-BASED ZONE DETECTION (runs before column / reading-order analysis)
+# ─────────────────────────────────────────────────────────────────────────────
+
+VISION_ZONE_DPI = 96
+
+
+def _render_page_bgr(page, dpi=VISION_ZONE_DPI):
+    """Render a PDF page to a BGR numpy array; return (img, scale_x, scale_y) in PDF pts/px."""
+    zoom = dpi / 72.0
+    mat = fitz.Matrix(zoom, zoom)
+    pix = page.get_pixmap(matrix=mat, alpha=False)
+    arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
+    if pix.n == 4:
+        img = cv2.cvtColor(arr, cv2.COLOR_RGBA2BGR)
+    else:
+        img = cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
+    page_w = page.rect.width
+    page_h = page.rect.height
+    scale_x = page_w / float(pix.w)
+    scale_y = page_h / float(pix.h)
+    return img, scale_x, scale_y
+
+
+def _estimate_background_bgr(img, border=12):
+    """Median color from page border strips (background estimate)."""
+    h, w = img.shape[:2]
+    border = min(border, h // 8, w // 8)
+    if border < 2:
+        return tuple(int(c) for c in np.median(img.reshape(-1, 3), axis=0))
+    strips = [
+        img[:border, :].reshape(-1, 3),
+        img[h - border:, :].reshape(-1, 3),
+        img[:, :border].reshape(-1, 3),
+        img[:, w - border:].reshape(-1, 3),
+    ]
+    samples = np.vstack(strips)
+    return tuple(int(c) for c in np.median(samples, axis=0))
+
+
+def _pdf_bbox_to_px(bbox, scale_x, scale_y):
+    x0 = max(0, int(bbox[0] / scale_x))
+    y0 = max(0, int(bbox[1] / scale_y))
+    x1 = int(bbox[2] / scale_x)
+    y1 = int(bbox[3] / scale_y)
+    return x0, y0, x1, y1
+
+
+def _px_rect_to_pdf_bbox(x0, y0, x1, y1, scale_x, scale_y):
+    return (
+        x0 * scale_x,
+        y0 * scale_y,
+        x1 * scale_x,
+        y1 * scale_y,
+    )
+
+
+def _build_vision_structural_mask(img, bg_bgr):
+    """
+    Structural foreground mask for zone boundaries only.
+    Deliberately excludes span bboxes so vertical whitespace gutters survive XY-cut.
+    """
+    h, w = img.shape[:2]
+    bg = np.array(bg_bgr, dtype=np.uint8)
+    diff = cv2.absdiff(img, bg)
+    diff_gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    _, visual_mask = cv2.threshold(diff_gray, 12, 255, cv2.THRESH_BINARY)
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    sat = hsv[:, :, 1]
+    bg_hsv = cv2.cvtColor(bg.reshape(1, 1, 3), cv2.COLOR_BGR2HSV)[0, 0]
+    val_diff = cv2.absdiff(hsv[:, :, 2], np.full((h, w), int(bg_hsv[2]), dtype=np.uint8))
+    tint_mask = np.zeros((h, w), dtype=np.uint8)
+    tint_mask[(sat > 16) | (val_diff > 12)] = 255
+
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 40, 120)
+    k_h = max(15, int(w * 0.08))
+    horiz_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k_h, 1))
+    horiz_lines = cv2.morphologyEx(edges, cv2.MORPH_OPEN, horiz_kernel, iterations=1)
+
+    combined = cv2.bitwise_or(visual_mask, tint_mask)
+    combined = cv2.bitwise_or(combined, horiz_lines)
+    k = max(3, int(min(w, h) * 0.003))
+    if k % 2 == 0:
+        k += 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
+    combined = cv2.morphologyEx(combined, cv2.MORPH_CLOSE, kernel, iterations=1)
+    return combined
+
+
+def _detect_tinted_panel_rects(img, bg_bgr, scale_x, scale_y, page_width, page_height):
+    """Detect colored/shadowed panels (credit boxes, tinted callout boxes)."""
+    h, w = img.shape[:2]
+    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    bg_lab = cv2.cvtColor(
+        np.array(bg_bgr, dtype=np.uint8).reshape(1, 1, 3), cv2.COLOR_BGR2LAB
+    )[0, 0]
+    l_diff = cv2.absdiff(lab[:, :, 0], np.full((h, w), int(bg_lab[0]), dtype=np.uint8))
+    a_diff = cv2.absdiff(lab[:, :, 1], np.full((h, w), int(bg_lab[1]), dtype=np.uint8))
+    b_diff = cv2.absdiff(lab[:, :, 2], np.full((h, w), int(bg_lab[2]), dtype=np.uint8))
+    panel_mask = ((l_diff > 6) | (a_diff > 5) | (b_diff > 5)).astype(np.uint8) * 255
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    panel_mask = cv2.bitwise_or(panel_mask, ((hsv[:, :, 1] > 14).astype(np.uint8) * 255))
+
+    k = max(5, int(min(w, h) * 0.006))
+    if k % 2 == 0:
+        k += 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k, k))
+    panel_mask = cv2.morphologyEx(panel_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+
+    contours, _ = cv2.findContours(panel_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    min_area = page_width * page_height * 0.015
+    min_h = page_height * 0.04
+    rects = []
+    for contour in contours:
+        x, y, bw, bh = cv2.boundingRect(contour)
+        area_pdf = (bw * scale_x) * (bh * scale_y)
+        if area_pdf < min_area or (bh * scale_y) < min_h:
+            continue
+        if bw < 20 or bh < 12:
+            continue
+        rects.append(_px_rect_to_pdf_bbox(x, y, x + bw, y + bh, scale_x, scale_y))
+    return rects
+
+
+def _compute_inter_row_gaps(rows):
+    gaps = []
+    for i in range(len(rows) - 1):
+        bottom = max(s["bbox"][3] for s in rows[i])
+        top = min(s["bbox"][1] for s in rows[i + 1])
+        gaps.append(max(0.0, top - bottom))
+    return gaps
+
+
+def _gap_is_section_break(gap, all_gaps, median_h):
+    """True when a row gap is large enough to start a new layout section."""
+    if gap >= max(median_h * 2.0, 22.0):
+        return True
+    if not all_gaps:
+        return gap >= max(median_h * 1.5, 20.0)
+    sorted_gaps = sorted(all_gaps)
+    p75 = sorted_gaps[min(len(sorted_gaps) - 1, int(len(sorted_gaps) * 0.75))]
+    p90 = sorted_gaps[min(len(sorted_gaps) - 1, int(len(sorted_gaps) * 0.90))]
+    return gap >= max(p75 * 1.25, p90 * 0.80, median_h * 1.65, 18.0)
+
+
+def _find_whitespace_gap_centers(projection, min_gap, peak_ratio=0.06):
+    """Return center indices of whitespace runs in a 1-D projection."""
+    if len(projection) == 0:
+        return []
+    peak = float(np.max(projection))
+    if peak <= 0:
+        return []
+    threshold = peak * peak_ratio
+    gaps = []
+    in_gap = False
+    gap_start = 0
+    for i, val in enumerate(projection):
+        if val <= threshold:
+            if not in_gap:
+                in_gap = True
+                gap_start = i
+        elif in_gap:
+            gap_len = i - gap_start
+            if gap_len >= min_gap:
+                gaps.append(gap_start + gap_len // 2)
+            in_gap = False
+    if in_gap:
+        gap_len = len(projection) - gap_start
+        if gap_len >= min_gap:
+            gaps.append(gap_start + gap_len // 2)
+    return gaps
+
+
+def _xy_cut_mask_regions(mask, min_gap_h, min_gap_w, min_region_h, min_region_w, depth=0, max_depth=7):
+    """Recursively split a binary mask by horizontal then vertical whitespace."""
+    h, w = mask.shape[:2]
+    if depth >= max_depth or h < min_region_h * 2 or w < min_region_w * 2:
+        return [(0, 0, w, h)]
+
+    h_proj = np.sum(mask > 0, axis=1).astype(np.float32)
+    h_gaps = _find_whitespace_gap_centers(h_proj, min_gap_h)
+    if h_gaps:
+        mid_lo = int(h * 0.08)
+        mid_hi = int(h * 0.92)
+        candidates = [g for g in h_gaps if mid_lo <= g <= mid_hi]
+        if candidates:
+            cut = candidates[len(candidates) // 2]
+            top = mask[:cut, :]
+            bottom = mask[cut:, :]
+            regions = []
+            regions.extend(_xy_cut_mask_regions(top, min_gap_h, min_gap_w, min_region_h, min_region_w, depth + 1, max_depth))
+            for x0, y0, x1, y1 in _xy_cut_mask_regions(
+                bottom, min_gap_h, min_gap_w, min_region_h, min_region_w, depth + 1, max_depth
+            ):
+                regions.append((x0, y0 + cut, x1, y1 + cut))
+            return regions
+
+    v_proj = np.sum(mask > 0, axis=0).astype(np.float32)
+    v_gaps = _find_whitespace_gap_centers(v_proj, min_gap_w)
+    if v_gaps:
+        mid_lo = int(w * 0.08)
+        mid_hi = int(w * 0.92)
+        candidates = [g for g in v_gaps if mid_lo <= g <= mid_hi]
+        if candidates:
+            cut = candidates[len(candidates) // 2]
+            left = mask[:, :cut]
+            right = mask[:, cut:]
+            regions = []
+            regions.extend(_xy_cut_mask_regions(left, min_gap_h, min_gap_w, min_region_h, min_region_w, depth + 1, max_depth))
+            for x0, y0, x1, y1 in _xy_cut_mask_regions(
+                right, min_gap_h, min_gap_w, min_region_h, min_region_w, depth + 1, max_depth
+            ):
+                regions.append((x0 + cut, y0, x1 + cut, y1))
+            return regions
+
+    return [(0, 0, w, h)]
+
+
+def _connected_component_zone_rects(mask, min_area_px, scale_x, scale_y):
+    """Connected-component blobs after dilation — catches cards, callouts, boxed panels."""
+    h, w = mask.shape[:2]
+    kw = max(5, int(w * 0.008))
+    kh = max(5, int(h * 0.005))
+    if kw % 2 == 0:
+        kw += 1
+    if kh % 2 == 0:
+        kh += 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kw, kh))
+    dilated = cv2.dilate(mask, kernel, iterations=1)
+    num_labels, _, stats, _ = cv2.connectedComponentsWithStats(dilated, connectivity=8)
+    rects = []
+    page_area = float(h * w)
+    for label in range(1, num_labels):
+        x, y, bw, bh, area = stats[label]
+        if area < min_area_px or area > page_area * 0.92:
+            continue
+        if bw < 8 or bh < 8:
+            continue
+        rects.append(_px_rect_to_pdf_bbox(x, y, x + bw, y + bh, scale_x, scale_y))
+    return rects
+
+
+def _tighten_zone_to_mask(zone_bbox, mask, scale_x, scale_y, pad_px=2):
+    """Shrink a zone bbox to the tight bounds of mask pixels inside it."""
+    x0, y0, x1, y1 = _pdf_bbox_to_px(zone_bbox, scale_x, scale_y)
+    h, w = mask.shape[:2]
+    x0 = max(0, min(w - 1, x0))
+    y0 = max(0, min(h - 1, y0))
+    x1 = max(x0 + 1, min(w, x1))
+    y1 = max(y0 + 1, min(h, y1))
+    roi = mask[y0:y1, x0:x1]
+    if roi.size == 0 or np.sum(roi > 0) == 0:
+        return zone_bbox
+    ys, xs = np.where(roi > 0)
+    tx0 = max(0, x0 + int(xs.min()) - pad_px)
+    ty0 = max(0, y0 + int(ys.min()) - pad_px)
+    tx1 = min(w, x0 + int(xs.max()) + 1 + pad_px)
+    ty1 = min(h, y0 + int(ys.max()) + 1 + pad_px)
+    return _px_rect_to_pdf_bbox(tx0, ty0, tx1, ty1, scale_x, scale_y)
+
+
+def _split_zone_at_internal_gutters(zone_bbox, mask, scale_x, scale_y, page_width, page_height):
+    """Split an oversized zone at vertical or horizontal whitespace gutters inside it."""
+    x0, y0, x1, y1 = _pdf_bbox_to_px(zone_bbox, scale_x, scale_y)
+    h, w = mask.shape[:2]
+    x0, y0 = max(0, x0), max(0, y0)
+    x1, y1 = min(w, x1), min(h, y1)
+    if x1 <= x0 + 4 or y1 <= y0 + 4:
+        return [zone_bbox]
+
+    roi = mask[y0:y1, x0:x1]
+    zone_w = zone_bbox[2] - zone_bbox[0]
+    zone_h = zone_bbox[3] - zone_bbox[1]
+    page_area = page_width * page_height
+    min_sub_area = page_area * 0.025
+
+    def _sub_rects_from_cuts(cuts, axis):
+        if not cuts:
+            return [zone_bbox]
+        cuts = sorted(set(cuts))
+        bounds = [0] + cuts + [roi.shape[axis]]
+        pieces = []
+        for i in range(len(bounds) - 1):
+            a, b = bounds[i], bounds[i + 1]
+            if b - a < 6:
+                continue
+            if axis == 0:
+                sub_px = (x0 + a, y0, x0 + b, y1)
+            else:
+                sub_px = (x0, y0 + a, x1, y0 + b)
+            sub_pdf = _px_rect_to_pdf_bbox(*sub_px, scale_x, scale_y)
+            sub_area = (sub_pdf[2] - sub_pdf[0]) * (sub_pdf[3] - sub_pdf[1])
+            if axis == 1:
+                sub_roi = roi[bounds[i]:bounds[i + 1], :]
+            else:
+                sub_roi = roi[:, bounds[i]:bounds[i + 1]]
+            if sub_area >= min_sub_area and np.sum(sub_roi > 0) > 0:
+                pieces.append(_tighten_zone_to_mask(sub_pdf, mask, scale_x, scale_y))
+        return pieces if len(pieces) >= 2 else [zone_bbox]
+
+    if zone_w > page_width * 0.34:
+        min_gap = max(4, int(roi.shape[1] * 0.035))
+        v_proj = np.sum(roi > 0, axis=0).astype(np.float32)
+        v_cuts = _find_whitespace_gap_centers(v_proj, min_gap, peak_ratio=0.05)
+        mid_lo = int(roi.shape[1] * 0.12)
+        mid_hi = int(roi.shape[1] * 0.88)
+        v_cuts = [c for c in v_cuts if mid_lo <= c <= mid_hi]
+        if v_cuts:
+            split = _sub_rects_from_cuts(v_cuts, axis=0)
+            if len(split) >= 2:
+                return split
+
+    if zone_h > page_height * 0.18:
+        min_gap = max(5, int(roi.shape[0] * 0.022))
+        h_proj = np.sum(roi > 0, axis=1).astype(np.float32)
+        h_cuts = _find_whitespace_gap_centers(h_proj, min_gap, peak_ratio=0.05)
+        mid_lo = int(roi.shape[0] * 0.08)
+        mid_hi = int(roi.shape[0] * 0.92)
+        h_cuts = [c for c in h_cuts if mid_lo <= c <= mid_hi]
+        if h_cuts:
+            split = _sub_rects_from_cuts(h_cuts, axis=1)
+            if len(split) >= 2:
+                return split
+
+    return [zone_bbox]
+
+
+def _refine_visual_zone_rects(rects, mask, scale_x, scale_y, page_width, page_height):
+    """Split wide/tall merged zones, then drop near-duplicate overlaps."""
+    refined = []
+    for rect in rects:
+        refined.extend(
+            _split_zone_at_internal_gutters(rect, mask, scale_x, scale_y, page_width, page_height)
+        )
+    return _merge_overlapping_zone_rects(refined, overlap_threshold=0.62)
+
+
+def _merge_overlapping_zone_rects(rects, overlap_threshold=0.45):
+    """Merge zone rectangles that substantially overlap (IoU or containment)."""
+    if not rects:
+        return []
+    merged = True
+    current = [tuple(r) for r in rects]
+    while merged:
+        merged = False
+        next_rects = []
+        used = [False] * len(current)
+        for i, a in enumerate(current):
+            if used[i]:
+                continue
+            ax0, ay0, ax1, ay1 = a
+            group = [a]
+            used[i] = True
+            for j in range(i + 1, len(current)):
+                if used[j]:
+                    continue
+                b = current[j]
+                if _bbox_overlap_fraction(a, b) >= overlap_threshold:
+                    group.append(b)
+                    used[j] = True
+                    merged = True
+            xs0 = min(r[0] for r in group)
+            ys0 = min(r[1] for r in group)
+            xs1 = max(r[2] for r in group)
+            ys1 = max(r[3] for r in group)
+            next_rects.append((xs0, ys0, xs1, ys1))
+        current = next_rects
+    return current
+
+
+def _span_zone_overlap(span, zone_bbox):
+    bbox = span.get("bbox")
+    if not bbox or len(bbox) < 4:
+        return 0.0
+    return _bbox_overlap_fraction(bbox, zone_bbox)
+
+
+def _merge_span_groups_within_panels(groups, panel_rects):
+    """Merge macro groups that fall inside the same tinted panel (e.g. credit box header + body)."""
+    if not groups or not panel_rects:
+        return groups
+
+    def _centroid(span_group):
+        bboxes = [s.get("bbox") for s in span_group if s.get("bbox")]
+        if not bboxes:
+            return None
+        return (
+            sum((b[0] + b[2]) / 2.0 for b in bboxes) / len(bboxes),
+            sum((b[1] + b[3]) / 2.0 for b in bboxes) / len(bboxes),
+        )
+
+    def _panel_key_for_point(cx, cy):
+        for panel in panel_rects:
+            if panel[0] <= cx <= panel[2] and panel[1] <= cy <= panel[3]:
+                return tuple(panel)
+        return None
+
+    panel_buckets = {}
+    standalone = []
+    for group in groups:
+        c = _centroid(group)
+        if c is None:
+            standalone.append(group)
+            continue
+        pkey = _panel_key_for_point(c[0], c[1])
+        if pkey is None:
+            standalone.append(group)
+        else:
+            panel_buckets.setdefault(pkey, []).extend(group)
+
+    merged = standalone + [spans for spans in panel_buckets.values() if spans]
+    merged.sort(key=lambda g: min(s["bbox"][1] for s in g if s.get("bbox")) if g else 0.0)
+    return merged
+
+
+def _absorb_rects_into_panels(panel_rects, other_rects, overlap_threshold=0.45):
+    """Drop fragment rects that mostly lie inside a detected panel."""
+    if not panel_rects:
+        return other_rects
+    kept = []
+    for rect in other_rects:
+        if any(_bbox_overlap_fraction(rect, panel) >= overlap_threshold for panel in panel_rects):
+            continue
+        kept.append(rect)
+    return kept
+
+
+def _assign_spans_to_visual_zones(spans, zone_rects, page_width=None):
+    """Partition spans into per-zone groups using max-overlap assignment."""
+    if not spans:
+        return []
+    if not zone_rects:
+        return [list(spans)]
+
+    zone_rects = sorted(zone_rects, key=lambda z: (z[1], z[0]))
+    groups = [[] for _ in zone_rects]
+    unassigned = []
+
+    for span in spans:
+        bbox = span.get("bbox")
+        if not bbox or len(bbox) < 4:
+            unassigned.append(span)
+            continue
+        best_idx = -1
+        best_overlap = 0.0
+        cx = (bbox[0] + bbox[2]) / 2.0
+        cy = (bbox[1] + bbox[3]) / 2.0
+        for zi, zone in enumerate(zone_rects):
+            overlap = _span_zone_overlap(span, zone)
+            if overlap > best_overlap:
+                best_overlap = overlap
+                best_idx = zi
+        if best_idx < 0 or best_overlap < 0.02:
+            inside = [
+                zi for zi, zone in enumerate(zone_rects)
+                if zone[0] <= cx <= zone[2] and zone[1] <= cy <= zone[3]
+            ]
+            best_idx = inside[0] if inside else -1
+        if best_idx >= 0:
+            groups[best_idx].append(span)
+        else:
+            unassigned.append(span)
+
+    result = [g for g in groups if g]
+    if unassigned:
+        result.extend(_segment_spans_into_layout_blocks(unassigned, page_width=page_width))
+    return result
+
+
+def _detect_visual_zones_from_page(page, spans, page_width, page_height):
+    """
+    Detect visually distinct layout zones (boxed panels, image cards, callouts)
+    before reading-order analysis. Returns (zone_rects, panel_rects).
+    """
+    if not spans or page is None:
+        return [], []
+
+    try:
+        img, scale_x, scale_y = _render_page_bgr(page, dpi=VISION_ZONE_DPI)
+    except Exception as exc:
+        print(f"Warning: vision zone render failed: {exc}")
+        return [], []
+
+    h, w = img.shape[:2]
+    bg_bgr = _estimate_background_bgr(img)
+    mask = _build_vision_structural_mask(img, bg_bgr)
+    panel_rects = _detect_tinted_panel_rects(
+        img, bg_bgr, scale_x, scale_y, page_width, page_height
+    )
+
+    min_gap_h = max(5, int(h * 0.014))
+    min_gap_w = max(6, int(w * 0.018))
+    min_region_h = max(10, int(h * 0.04))
+    min_region_w = max(10, int(w * 0.04))
+    min_area_px = max(400, int(h * w * 0.0015))
+
+    xy_regions_px = _xy_cut_mask_regions(
+        mask, min_gap_h, min_gap_w, min_region_h, min_region_w
+    )
+    xy_rects = []
+    for x0, y0, x1, y1 in xy_regions_px:
+        sub = mask[y0:y1, x0:x1]
+        if sub.size == 0 or np.sum(sub > 0) < min_area_px * 0.25:
+            continue
+        tight = _tighten_zone_to_mask(
+            _px_rect_to_pdf_bbox(x0, y0, x1, y1, scale_x, scale_y),
+            mask, scale_x, scale_y,
+        )
+        area = (tight[2] - tight[0]) * (tight[3] - tight[1])
+        if area >= page_width * page_height * 0.002:
+            xy_rects.append(tight)
+
+    cc_rects = _connected_component_zone_rects(mask, min_area_px, scale_x, scale_y)
+
+    other_rects = _merge_overlapping_zone_rects(xy_rects + cc_rects, overlap_threshold=0.50)
+    other_rects = _refine_visual_zone_rects(
+        other_rects, mask, scale_x, scale_y, page_width, page_height
+    )
+    other_rects = _absorb_rects_into_panels(panel_rects, other_rects)
+
+    all_rects = list(panel_rects) + other_rects
+    all_rects = _merge_overlapping_zone_rects(all_rects, overlap_threshold=0.55)
+
+    # Drop zones that are almost the full page (no useful split).
+    page_area = page_width * page_height
+    filtered = []
+    for rect in all_rects:
+        area = (rect[2] - rect[0]) * (rect[3] - rect[1])
+        if area >= page_area * 0.97:
+            continue
+        filtered.append(rect)
+
+    if len(filtered) <= 1:
+        return [], panel_rects
+
+    filtered.sort(key=lambda z: (z[1], z[0]))
+    return filtered, panel_rects
+
+
+def _span_plain_text(span):
+    if span.get("text"):
+        return span.get("text") or ""
+    chars = span.get("chars") or []
+    return "".join(c.get("c", "") for c in chars)
+
+
+def _is_label_grid_spans(spans, page_width):
+    """True for glossary / diagram grids: mostly single-word labels in a spaced layout."""
+    if len(spans) < 3:
+        return False
+    label_count = sum(
+        1 for s in spans
+        if _looks_like_label(_span_plain_text(s), page_width, s.get("bbox") or (0, 0, 0, 0))
+    )
+    return label_count >= 3 and label_count >= len(spans) * 0.55
+
+
+def _split_label_grid_group(spans, page_width):
+    """Split one row of spaced single-word labels (glossary grid) into separate groups."""
+    if len(spans) < 3:
+        return [spans]
+    rows = _cluster_spans_into_rows(spans)
+    if len(rows) != 1:
+        return [spans]
+    label_count = sum(
+        1 for s in spans
+        if _looks_like_label(_span_plain_text(s), page_width, s.get("bbox") or (0, 0, 0, 0))
+    )
+    if label_count < 3 or label_count < len(spans) * 0.6:
+        return [spans]
+    ordered = sorted(spans, key=lambda s: s["bbox"][0])
+    clusters = [[ordered[0]]]
+    min_gap = max(page_width * 0.05, 24.0)
+    for span in ordered[1:]:
+        prev = clusters[-1][-1]
+        gap = span["bbox"][0] - prev["bbox"][2]
+        if gap >= min_gap:
+            clusters.append([span])
+        else:
+            clusters[-1].append(span)
+    if len(clusters) < 2:
+        return [spans]
+    return clusters
+
+
+def _expand_label_grid_groups(groups, page_width):
+    expanded = []
+    for group in groups:
+        expanded.extend(_split_label_grid_group(group, page_width))
+    return expanded
+
+
+def _segment_spans_by_vision_or_layout(spans, page_width, page=None, page_height=None):
+    """
+    Top-level macro segmentation: vision zones when available, else adaptive text gaps.
+    Uses whichever strategy yields more distinct sections (min 2).
+    """
+    if not spans:
+        return []
+
+    text_blocks = _segment_spans_into_layout_blocks(spans, page_width=page_width)
+
+    visual_zones = []
+    panel_rects = []
+    if page is not None and page_height:
+        visual_zones, panel_rects = _detect_visual_zones_from_page(
+            page, spans, page_width, page_height
+        )
+
+    vision_groups = []
+    if len(visual_zones) >= 2:
+        vision_groups = _assign_spans_to_visual_zones(spans, visual_zones, page_width=page_width)
+        if panel_rects:
+            vision_groups = _merge_span_groups_within_panels(vision_groups, panel_rects)
+
+    if len(vision_groups) >= 2 and len(vision_groups) >= len(text_blocks):
+        return _expand_label_grid_groups(vision_groups, page_width)
+    if len(text_blocks) >= 2:
+        return _expand_label_grid_groups(text_blocks, page_width)
+    if len(vision_groups) >= 2:
+        return _expand_label_grid_groups(vision_groups, page_width)
+    return _expand_label_grid_groups(text_blocks, page_width)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # READING ORDER / COLUMN DETECTION
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -380,20 +1051,24 @@ def _segment_spans_into_layout_blocks(spans, page_width=None):
 
     heights = [max(s["bbox"][3] - s["bbox"][1] for s in row) for row in rows]
     median_h = sorted(heights)[len(heights) // 2] if heights else 12.0
-    section_gap = max(median_h * 1.5, 20.0)
+    inter_row_gaps = _compute_inter_row_gaps(rows)
 
     blocks = []
     current_rows = []
     section_bottom = 0.0
 
-    for row in rows:
+    for i, row in enumerate(rows):
         row_top = min(s["bbox"][1] for s in row)
         row_bottom = max(s["bbox"][3] for s in row)
 
         if not current_rows:
             current_rows.append(row)
             section_bottom = row_bottom
-        elif row_top > section_bottom + section_gap:
+            continue
+
+        gap = row_top - section_bottom
+        section_break = _gap_is_section_break(gap, inter_row_gaps, median_h)
+        if section_break:
             blocks.append([s for r in current_rows for s in r])
             current_rows = [row]
             section_bottom = row_bottom
@@ -435,6 +1110,56 @@ def _is_dense_text_block(block_spans, block_width):
         return False
     avg_w = sum(s["bbox"][2] - s["bbox"][0] for s in block_spans) / len(block_spans)
     return avg_w < block_width * 0.08
+
+
+def _is_side_by_side_column_layout(block_spans, page_width):
+    """Credit-box style: repeated rows with content in both left and right halves."""
+    if _is_label_grid_spans(block_spans, page_width):
+        return False
+    if len(block_spans) < 4 or not page_width:
+        return False
+    rows = _cluster_spans_into_rows(block_spans)
+    if len(rows) < 2:
+        return False
+    block_min_x = min(s["bbox"][0] for s in block_spans)
+    block_max_x = max(s["bbox"][2] for s in block_spans)
+    block_w = block_max_x - block_min_x
+    if block_w < page_width * 0.22:
+        return False
+    split_x = block_min_x + block_w * 0.5
+    margin = block_w * 0.12
+    both_sides = 0
+    for row in rows:
+        has_left = any(s["bbox"][0] < split_x - margin for s in row)
+        has_right = any(s["bbox"][0] > split_x + margin for s in row)
+        if has_left and has_right:
+            both_sides += 1
+    return both_sides >= max(2, int(len(rows) * 0.18))
+
+
+def _sort_spans_column_first(block_spans, page_width):
+    """Column-first reading order for side-by-side column layouts."""
+    if not block_spans:
+        return []
+    block_x_max = max(s["bbox"][2] for s in block_spans)
+    boundaries = _detect_column_boundaries(block_spans, page_width=block_x_max)
+    if not boundaries:
+        block_min_x = min(s["bbox"][0] for s in block_spans)
+        block_max_x = max(s["bbox"][2] for s in block_spans)
+        boundaries = [(block_min_x + block_max_x) / 2.0]
+    else:
+        boundaries = [
+            _refine_column_boundary(block_spans, b, page_width=block_x_max)
+            for b in boundaries
+        ]
+    from collections import defaultdict
+    by_col = defaultdict(list)
+    for s in block_spans:
+        by_col[_column_index(s, boundaries)].append(s)
+    out = []
+    for col in sorted(by_col.keys()):
+        out.extend(_sort_spans_row_primary(by_col[col]))
+    return out
 
 
 def _is_genuine_multi_column_block(block_spans, boundaries, page_width):
@@ -510,7 +1235,13 @@ def _sort_spans_within_layout_block(block_spans, page_width, page_boundaries=Non
     if not block_spans:
         return []
 
+    if _is_label_grid_spans(block_spans, page_width):
+        return _sort_spans_row_primary(block_spans)
+
     block_x_max = max(s["bbox"][2] for s in block_spans)
+    if _is_side_by_side_column_layout(block_spans, page_width):
+        return _sort_spans_column_first(block_spans, page_width)
+
     if _is_dense_text_block(block_spans, block_x_max):
         return _sort_spans_row_primary(block_spans)
 
@@ -591,9 +1322,9 @@ def _vertical_projection_column_boundaries(spans, page_width, max_cols=6):
     return merged[: max_cols - 1] if merged else None
 
 
-def analyze_page_layout(spans, page_width=None):
+def analyze_page_layout(spans, page_width=None, page=None, page_height=None):
     """
-    Hierarchical layout: Page → Columns → Blocks → spans.
+    Hierarchical layout: Page → Vision zones → Columns → Blocks → spans.
 
     Returns (layout_blocks, page_column_boundaries) where each layout block is:
       { block_id, column, min_y, min_x, column_boundaries, spans }
@@ -604,9 +1335,13 @@ def analyze_page_layout(spans, page_width=None):
 
     if page_width is None:
         page_width = max(s["bbox"][2] for s in spans)
+    if page_height is None and page is not None:
+        page_height = page.rect.height
 
     page_boundaries = _detect_column_boundaries(spans, page_width)
-    macro_blocks = _segment_spans_into_layout_blocks(spans, page_width=page_width)
+    macro_blocks = _segment_spans_by_vision_or_layout(
+        spans, page_width=page_width, page=page, page_height=page_height
+    )
 
     layout_blocks = []
     for raw_spans in macro_blocks:
@@ -632,8 +1367,8 @@ def analyze_page_layout(spans, page_width=None):
             ),
         })
 
-    # Vertical flow first; column only breaks ties for side-by-side blocks at the same height.
-    layout_blocks.sort(key=lambda b: (b["min_y"], b["column"], b["min_x"]))
+    # Row-primary between macro blocks (glossary grids); column-first stays within each block.
+    layout_blocks = _sort_layout_blocks_reading_order(layout_blocks)
     for i, block in enumerate(layout_blocks):
         block["block_id"] = i + 1
 
@@ -710,6 +1445,49 @@ def _sort_spans_row_primary(spans):
     out = []
     for row in rows:
         out.extend(sorted(row, key=_span_row_sort_key))
+    return out
+
+
+def _layout_block_height(block):
+    spans = block.get("spans") or []
+    if not spans:
+        return 10.0
+    return max(s["bbox"][3] for s in spans) - block["min_y"]
+
+
+def _cluster_layout_blocks_into_rows(blocks):
+    """Group layout blocks on the same visual row (glossary grids, caption rows)."""
+    if not blocks:
+        return []
+    blocks = sorted(blocks, key=lambda b: (b["min_y"], b["min_x"]))
+    rows = []
+    for block in blocks:
+        block_y = block["min_y"]
+        block_h = _layout_block_height(block)
+        inserted = False
+        for row in rows:
+            row_min_y = min(b["min_y"] for b in row)
+            row_h = max(_layout_block_height(b) for b in row)
+            # Tighter than span rows: consecutive paragraphs (e.g. credits) must not merge.
+            if abs(block_y - row_min_y) < (max(block_h, row_h) * 0.5):
+                row.append(block)
+                inserted = True
+                break
+        if not inserted:
+            rows.append([block])
+    return rows
+
+
+def _sort_layout_blocks_reading_order(layout_blocks):
+    """Top-to-bottom rows of layout blocks, left-to-right within each row."""
+    if not layout_blocks:
+        return []
+    rows = _cluster_layout_blocks_into_rows(layout_blocks)
+    rows.sort(key=lambda r: min(b["min_y"] for b in r))
+    out = []
+    for row in rows:
+        row.sort(key=lambda b: (b["min_x"], b["min_y"]))
+        out.extend(row)
     return out
 
 
@@ -1240,29 +2018,82 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             sentence_id = 0
             in_word = False
             glyph_spans = _collect_block_spans_for_reading_order(raw_blocks, include_chars=True)
-            layout_blocks, _page_boundaries = analyze_page_layout(glyph_spans, page_width=width)
+            layout_blocks, _page_boundaries = analyze_page_layout(
+                glyph_spans, page_width=width, page=page, page_height=height
+            )
             last_line_y = None
             current_block_id = None
             block_column_boundaries = []
             prev_span_bbox = None
+            prev_span_size = None
+            prev_span_line_y = None
+            prev_block_min_y = None
+            prev_block_label_grid = False
+            prev_span_ended_sentence = False
+            open_paragraph_sid = None
+            line_sentence_ids = {}
             for layout_block in layout_blocks:
                 block_id = layout_block["block_id"]
                 block_column_boundaries = layout_block["column_boundaries"]
+                block_spans = layout_block["spans"]
+                block_is_label_grid = _is_label_grid_spans(block_spans, width)
+                block_min_y = min(s["bbox"][1] for s in block_spans)
                 if current_block_id is not None and block_id != current_block_id:
-                    sentence_id += 1
+                    # Side-by-side vision blocks (glossary row, columns) break sentences.
+                    # Stacked line blocks keep flowing until .?! — only break on large section gaps.
+                    first_span = block_spans[0]
+                    first_bbox = first_span.get("bbox") or (0, 0, 0, 0)
+                    line_h = max(first_span.get("size", 12) * 1.2, 10.0)
+                    same_row = (
+                        prev_block_min_y is not None
+                        and abs(block_min_y - prev_block_min_y) < line_h * 0.55
+                    )
+                    section_gap = False
+                    if prev_span_bbox is not None:
+                        gap = first_bbox[1] - prev_span_bbox[3]
+                        section_gap = gap > line_h * 4.5
+                    label_row_continuation = (
+                        same_row and prev_block_label_grid and block_is_label_grid
+                    )
+                    if section_gap or (same_row and not label_row_continuation):
+                        sentence_id += 1
+                        open_paragraph_sid = None
+                        line_sentence_ids.clear()
                     in_word = False
-                    prev_span_bbox = None
+                prev_block_min_y = block_min_y
+                prev_block_label_grid = block_is_label_grid
                 current_block_id = block_id
                 for span in layout_block["spans"]:
                     span_bbox = span.get("bbox") or (0, 0, 0, 0)
-                    if prev_span_bbox is not None:
+                    size = span.get("size", 12)
+                    line_y = span["_line_y"]
+                    prior_sentence_ended = prev_span_ended_sentence
+                    if prev_span_bbox is not None and prev_span_line_y is not None and line_y != prev_span_line_y:
                         gap = span_bbox[1] - prev_span_bbox[3]
                         line_h = max(span.get("size", 12) * 1.2, 10.0)
-                        if gap > line_h * 1.45:
+                        prev_line_h = max((prev_span_size or size) * 1.2, 10.0)
+                        size_delta = abs(size - (prev_span_size or size))
+                        style_break = (
+                            prev_span_size is not None
+                            and size_delta >= max(2.0, prev_span_size * 0.12)
+                        )
+                        if gap > line_h * 1.45 and prior_sentence_ended:
                             sentence_id += 1
+                            open_paragraph_sid = None
+                            line_sentence_ids.clear()
                             in_word = False
-                    prev_span_bbox = span_bbox
-                    line_y = span["_line_y"]
+                        elif gap > line_h * 4.5:
+                            # Blank line / section break between paragraphs.
+                            sentence_id += 1
+                            open_paragraph_sid = None
+                            line_sentence_ids.clear()
+                            in_word = False
+                        elif style_break and gap > min(prev_line_h, line_h) * 0.65:
+                            # Chapter title / header (larger type) then body paragraph.
+                            sentence_id += 1
+                            open_paragraph_sid = None
+                            line_sentence_ids.clear()
+                            in_word = False
                     if last_line_y is not None and line_y != last_line_y:
                         in_word = False
                     last_line_y = line_y
@@ -1270,7 +2101,6 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     full_line_text = span["_full_line_text"]
                     full_line_word_count = span["_full_line_word_count"]
                     font_name = span.get("font", "")
-                    size = span.get("size", 12)
                     color = color_to_hex(span.get("color"))
                     flags = span.get("flags", 0)
                     low_font = font_name.lower()
@@ -1281,25 +2111,47 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     chars = span.get("chars", [])
                     span_text = "".join(c.get("c", "") for c in chars).strip()
                     is_page_number_span = bool(re.match(r"^\d+$", span_text))
+                    span_bbox_tuple = span.get("bbox") or (0, 0, 0, 0)
                     is_label_span = (
                         full_line_word_count == 1
-                        and _looks_like_label(span_text, width, span.get("bbox") or (0, 0, 0, 0))
+                        and _looks_like_label(span_text, width, span_bbox_tuple)
+                    )
+                    span_word_count = len(span_text.split()) if span_text else 0
+                    is_caption_span = (
+                        not is_label_span
+                        and full_line_word_count <= 4
+                        and span_word_count >= full_line_word_count
+                        and _looks_like_image_caption(full_line_text, width, span_bbox_tuple)
                     )
                     is_cover_badge_span = (
                         page_num == 0
                         and bool(re.fullmatch(r"[A-Z](\s+[A-Z]){1,7}", span_text or ""))
                     )
-                    if is_page_number_span or is_label_span:
+                    is_special_span = is_page_number_span or is_label_span or is_caption_span
+                    if is_special_span:
                         sentence_id += 1
+                        span_assign_sid = sentence_id
+                    elif open_paragraph_sid is not None and not prior_sentence_ended:
+                        span_assign_sid = open_paragraph_sid
+                    elif line_y in line_sentence_ids and not prior_sentence_ended:
+                        span_assign_sid = line_sentence_ids[line_y]
+                    else:
+                        span_assign_sid = sentence_id
+                        open_paragraph_sid = sentence_id
+                    if not is_special_span:
+                        line_sentence_ids[line_y] = span_assign_sid
                     badge_word_id = None
                     if is_cover_badge_span:
                         word_id += 1
                         badge_word_id = word_id
                         in_word = True
-                    for ch in chars:
+                    active_sid = span_assign_sid
+                    for ci, ch in enumerate(chars):
                         c = ch.get("c", "")
                         if not c:
                             continue
+                        prev_c = chars[ci - 1].get("c", "") if ci > 0 else ""
+                        next_c = chars[ci + 1].get("c", "") if ci + 1 < len(chars) else ""
                         if is_cover_badge_span:
                             if c.isspace():
                                 continue
@@ -1312,7 +2164,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                                 word_id += 1
                                 in_word = True
                             current_word_id = word_id
-                        current_sentence_id = sentence_id
+                        current_sentence_id = active_sid
                         bbox = ch.get("bbox") or span.get("bbox")
                         origin = ch.get("origin") or (bbox[0], bbox[1])
                         extracted_items.append({
@@ -1331,14 +2183,36 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                             "sentence_id": current_sentence_id,
                             "block_id": block_id,
                         })
-                        if c in ".?!":
+                        if _glyph_char_ends_sentence(c, prev_c, next_c):
                             sentence_id += 1
-                    if is_page_number_span or is_label_span:
+                            active_sid = sentence_id
+                            open_paragraph_sid = sentence_id
+                            line_sentence_ids[line_y] = sentence_id
+                            prev_span_ended_sentence = True
+                    if is_label_span or is_caption_span:
                         sentence_id += 1
+                        # Captions/labels are isolated but do not end the surrounding paragraph.
+                        if is_label_span:
+                            prev_span_ended_sentence = True
+                    elif prev_span_ended_sentence and not _is_sentence_end(span_text):
+                        # Sentence ended mid-span; more text on this span belongs to the next sentence.
+                        prev_span_ended_sentence = False
+                    elif prev_span_ended_sentence:
+                        pass
+                    elif _is_sentence_end(span_text):
+                        sentence_id += 1
+                        open_paragraph_sid = None
+                        line_sentence_ids.pop(line_y, None)
+                        prev_span_ended_sentence = True
+                    prev_span_bbox = span_bbox
+                    prev_span_size = size
+                    prev_span_line_y = line_y
         elif extraction_level == "word":
             extracted_items = []
             word_items = _collect_words_for_reading_order(words_list)
-            layout_blocks, _page_boundaries = analyze_page_layout(word_items, page_width=width)
+            layout_blocks, _page_boundaries = analyze_page_layout(
+                word_items, page_width=width, page=page, page_height=height
+            )
             for layout_block in layout_blocks:
                 block_id = layout_block["block_id"]
                 for item in layout_block["spans"]:
@@ -1458,7 +2332,9 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                 sentence_parts.clear()
 
             raw_spans = _collect_block_spans_for_reading_order(blocks)
-            layout_blocks, _page_boundaries = analyze_page_layout(raw_spans, page_width=width)
+            layout_blocks, _page_boundaries = analyze_page_layout(
+                raw_spans, page_width=width, page=page, page_height=height
+            )
             last_col = None
             current_block_id = None
             block_column_boundaries = []
