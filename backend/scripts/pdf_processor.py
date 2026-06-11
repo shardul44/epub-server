@@ -129,6 +129,60 @@ def _bbox_overlap_fraction(a, b):
     return overlap / min(area_a, area_b)
 
 
+def _split_merged_horizontal_words(extracted_items, page_width):
+    """Split word_id groups when one line spans column gutters without PDF space glyphs."""
+    if not extracted_items or not page_width:
+        return extracted_items
+    from collections import defaultdict
+
+    by_wid = defaultdict(list)
+    for it in extracted_items:
+        wid = it.get("word_id")
+        if wid is None:
+            continue
+        by_wid[wid].append(it)
+
+    min_gutter = max(page_width * 0.035, 6.0)
+    next_wid = max(by_wid.keys(), default=0) + 1
+    remap = {}
+
+    for _wid, glyphs in by_wid.items():
+        if len(glyphs) < 3:
+            continue
+        line_h = max(max(g.get("size", 12) for g in glyphs) * 1.2, 8.0)
+        by_line = defaultdict(list)
+        for g in glyphs:
+            cy = (g["bbox"][1] + g["bbox"][3]) / 2
+            lk = round(cy / max(line_h * 0.5, 4.0))
+            by_line[lk].append(g)
+        for line_glyphs in by_line.values():
+            if len(line_glyphs) < 3:
+                continue
+            line_glyphs.sort(key=lambda g: g["bbox"][0])
+            runs = [[line_glyphs[0]]]
+            for g in line_glyphs[1:]:
+                gap = g["bbox"][0] - runs[-1][-1]["bbox"][2]
+                if gap >= min_gutter:
+                    runs.append([g])
+                else:
+                    runs[-1].append(g)
+            if len(runs) <= 1:
+                continue
+            for ri in range(1, len(runs)):
+                new_wid = next_wid
+                next_wid += 1
+                for g in runs[ri]:
+                    remap[id(g)] = new_wid
+
+    if not remap:
+        return extracted_items
+    for it in extracted_items:
+        new_wid = remap.get(id(it))
+        if new_wid is not None:
+            it["word_id"] = new_wid
+    return extracted_items
+
+
 def _deduplicate_glyph_words(extracted_items):
     if not extracted_items:
         return extracted_items
@@ -270,6 +324,8 @@ def _looks_like_label(text, page_width, bbox):
     if " " in t:
         return False
     if len(t) > 16:
+        return False
+    if t.isupper() and len(t) > 2:
         return False
     if any(ch in ".?!" for ch in t):
         return False
@@ -938,7 +994,41 @@ def _is_label_grid_spans(spans, page_width):
         1 for s in spans
         if _looks_like_label(_span_plain_text(s), page_width, s.get("bbox") or (0, 0, 0, 0))
     )
-    return label_count >= 3 and label_count >= len(spans) * 0.55
+    if label_count < 3 or label_count < len(spans) * 0.55:
+        return False
+    # Word-level PDF spans are single tokens; require spaced rows typical of glossary grids.
+    rows = _cluster_spans_into_rows(
+        [s for s in spans if _looks_like_label(_span_plain_text(s), page_width, s.get("bbox") or (0, 0, 0, 0))]
+    )
+    wide_gap_rows = 0
+    min_gap = max(page_width * 0.05, 24.0)
+    for row in rows:
+        if len(row) < 2:
+            continue
+        ordered = sorted(row, key=lambda s: s["bbox"][0])
+        gaps = [ordered[i + 1]["bbox"][0] - ordered[i]["bbox"][2] for i in range(len(ordered) - 1)]
+        if gaps and min(gaps) >= min_gap:
+            wide_gap_rows += 1
+    return wide_gap_rows >= 2 or (wide_gap_rows >= 1 and label_count >= 3)
+
+
+def _is_label_grid_blocks(blocks, page_width):
+    """True when each vision block is a single glossary/diagram label (not directory prose)."""
+    if len(blocks) < 3:
+        return False
+    label_blocks = 0
+    for b in blocks:
+        spans = b.get("spans") or []
+        if not spans:
+            continue
+        x0 = min(s["bbox"][0] for s in spans)
+        y0 = min(s["bbox"][1] for s in spans)
+        x1 = max(s["bbox"][2] for s in spans)
+        y1 = max(s["bbox"][3] for s in spans)
+        combined = " ".join(_span_plain_text(s) for s in spans).strip()
+        if _looks_like_label(combined, page_width, (x0, y0, x1, y1)):
+            label_blocks += 1
+    return label_blocks >= 3 and label_blocks >= len(blocks) * 0.55
 
 
 def _split_label_grid_group(spans, page_width):
@@ -1235,16 +1325,9 @@ def _sort_spans_within_layout_block(block_spans, page_width, page_boundaries=Non
     if not block_spans:
         return []
 
-    if _is_label_grid_spans(block_spans, page_width):
-        return _sort_spans_row_primary(block_spans)
-
     block_x_max = max(s["bbox"][2] for s in block_spans)
-    if _is_side_by_side_column_layout(block_spans, page_width):
-        return _sort_spans_column_first(block_spans, page_width)
 
-    if _is_dense_text_block(block_spans, block_x_max):
-        return _sort_spans_row_primary(block_spans)
-
+    # Multi-column prose before label-grid heuristic (single-word PDF spans are not glossary labels).
     block_boundaries = _detect_column_boundaries(block_spans, page_width=block_x_max)
     effective_boundaries = block_boundaries
     if not effective_boundaries and page_boundaries:
@@ -1259,8 +1342,6 @@ def _sort_spans_within_layout_block(block_spans, page_width, page_boundaries=Non
             _refine_column_boundary(block_spans, b, page_width=block_x_max)
             for b in effective_boundaries
         ]
-
-    if effective_boundaries:
         cols = set(_column_index(s, effective_boundaries) for s in block_spans)
         if len(cols) > 1 and _is_genuine_multi_column_block(
             block_spans, effective_boundaries, page_width
@@ -1273,6 +1354,15 @@ def _sort_spans_within_layout_block(block_spans, page_width, page_boundaries=Non
             for col in sorted(by_col.keys()):
                 out.extend(_sort_spans_row_primary(by_col[col]))
             return out
+
+    if _is_label_grid_spans(block_spans, page_width):
+        return _sort_spans_row_primary(block_spans)
+
+    if _is_side_by_side_column_layout(block_spans, page_width):
+        return _sort_spans_column_first(block_spans, page_width)
+
+    if _is_dense_text_block(block_spans, block_x_max):
+        return _sort_spans_row_primary(block_spans)
 
     return _sort_spans_row_primary(block_spans)
 
@@ -1367,8 +1457,10 @@ def analyze_page_layout(spans, page_width=None, page=None, page_height=None):
             ),
         })
 
-    # Row-primary between macro blocks (glossary grids); column-first stays within each block.
-    layout_blocks = _sort_layout_blocks_reading_order(layout_blocks)
+    # Label grids: row-primary; multi-column directories: column-first block order.
+    layout_blocks = _sort_layout_blocks_reading_order(
+        layout_blocks, page_width=page_width, page_height=page_height
+    )
     for i, block in enumerate(layout_blocks):
         block["block_id"] = i + 1
 
@@ -1478,10 +1570,66 @@ def _cluster_layout_blocks_into_rows(blocks):
     return rows
 
 
-def _sort_layout_blocks_reading_order(layout_blocks):
+def _layout_blocks_are_column_directory(blocks, page_width, page_height=None):
+    """
+    True for multi-column directory/credits pages where blocks stack vertically per column.
+    Excludes label grids (glossary) and narrow callout sidebars beside main body text.
+    """
+    if len(blocks) < 4 or not page_width:
+        return False
+    if _is_label_grid_blocks(blocks, page_width):
+        return False
+
+    from collections import defaultdict
+    by_col = defaultdict(list)
+    for b in blocks:
+        by_col[b.get("column", 0)].append(b)
+    if len(by_col) < 2:
+        return False
+
+    counts = sorted(len(by_col[c]) for c in by_col)
+    if counts[0] <= 2 and counts[-1] >= max(3, counts[0] * 3):
+        return False
+
+    if sum(1 for col_blocks in by_col.values() if len(col_blocks) >= 2) < 2:
+        return False
+
+    multi_word_blocks = 0
+    for b in blocks:
+        combined = " ".join(_span_plain_text(s) for s in b.get("spans", [])).strip()
+        if len(combined.split()) >= 3:
+            multi_word_blocks += 1
+    if multi_word_blocks < max(2, len(blocks) * 0.25):
+        return False
+
+    if page_height:
+        col_spans = []
+        for col_blocks in by_col.values():
+            if len(col_blocks) < 2:
+                continue
+            ys = [b["min_y"] for b in col_blocks]
+            ye = max(max(s["bbox"][3] for s in b["spans"]) for b in col_blocks)
+            col_spans.append(ye - min(ys))
+        if col_spans and max(col_spans) < page_height * 0.18:
+            return False
+
+    return True
+
+
+def _sort_layout_blocks_column_first(blocks):
+    """Read each column top-to-bottom, columns left-to-right."""
+    from collections import defaultdict
+    by_col = defaultdict(list)
+    for b in blocks:
+        by_col[b.get("column", 0)].append(b)
+    out = []
+    for col in sorted(by_col.keys()):
+        out.extend(sorted(by_col[col], key=lambda b: (b["min_y"], b["min_x"])))
+    return out
+
+
+def _sort_layout_blocks_row_primary(layout_blocks):
     """Top-to-bottom rows of layout blocks, left-to-right within each row."""
-    if not layout_blocks:
-        return []
     rows = _cluster_layout_blocks_into_rows(layout_blocks)
     rows.sort(key=lambda r: min(b["min_y"] for b in r))
     out = []
@@ -1489,6 +1637,29 @@ def _sort_layout_blocks_reading_order(layout_blocks):
         row.sort(key=lambda b: (b["min_x"], b["min_y"]))
         out.extend(row)
     return out
+
+
+def _sort_layout_blocks_reading_order(layout_blocks, page_width=None, page_height=None):
+    """
+    Order vision/layout blocks for reading-order block_id assignment.
+    - Label grids (glossary): row-primary
+    - Multi-column directories/credits: column-first
+    - Default: row-primary
+    """
+    if not layout_blocks:
+        return []
+
+    pw = page_width
+    if pw is None:
+        pw = max(max(s["bbox"][2] for s in b["spans"]) for b in layout_blocks)
+
+    if _is_label_grid_blocks(layout_blocks, pw):
+        return _sort_layout_blocks_row_primary(layout_blocks)
+
+    if _layout_blocks_are_column_directory(layout_blocks, pw, page_height):
+        return _sort_layout_blocks_column_first(layout_blocks)
+
+    return _sort_layout_blocks_row_primary(layout_blocks)
 
 
 def _merge_boundary_lists(*lists, page_width):
@@ -2411,6 +2582,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             flush_sentence()
 
         if extraction_level == "glyph" and extracted_items:
+            extracted_items = _split_merged_horizontal_words(extracted_items, width)
             extracted_items = _deduplicate_glyph_words(extracted_items)
 
         pages_data.append({

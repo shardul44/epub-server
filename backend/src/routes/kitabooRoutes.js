@@ -183,13 +183,36 @@ router.get('/ready/:jobId', async (req, res) => {
     const existingZones = await KitabooZoneModel.getZonesByJobId(jobId);
     const finalZones = normalizedAssets.map((_, index) => existingZones[index + 1] || []);
 
+    let coordsPages = null;
+    if (jobMetadata?.extractionLevel === 'glyph' && jobMetadata?.zoneLevel === 'word') {
+      for (const sub of [imageDir, highFiDir, webpDir]) {
+        try {
+          coordsPages = JSON.parse(await fs.readFile(path.join(sub, 'coords.json'), 'utf8'));
+          break;
+        } catch { /* try next */ }
+      }
+    }
+
+    const wordReorderOpts = KitabooFxlService.wordZoneReorderOptsFromJobMetadata(jobMetadata, coordsPages);
     const pages = normalizedAssets.map((asset, index) => {
       const pageNum = index + 1;
-      const rawZones = finalZones[index] || [];
-      const zones = KitabooFxlService.normalizeZoneIdsForPage(pageNum, rawZones);
-      const relativeDir = isHighFi ? 'high_fidelity_render' : 'webp';
-
+      let rawZones = finalZones[index] || [];
       const pageMeta = jobMetadata?.pagesMetadata?.find(p => p.pageNumber === pageNum);
+      const pageWidthPx = pageMeta?.dimensions?.width || asset.dimensions?.width || 0;
+      const pageCoords = coordsPages?.[pageNum - 1];
+      const zones = (coordsPages && pageCoords?.items?.length && pageWidthPx > 0)
+        ? KitabooFxlService.buildStudioPageZones(
+          pageNum,
+          pageCoords,
+          pageMeta,
+          asset.dimensions,
+          wordReorderOpts
+        )
+        : KitabooFxlService.normalizeZoneIdsForPage(
+          pageNum,
+          KitabooFxlService.applyWordZoneReorderForPage(rawZones, pageNum, wordReorderOpts)
+        );
+      const relativeDir = isHighFi ? 'high_fidelity_render' : 'webp';
 
       return {
         pageNumber: pageNum,
@@ -437,6 +460,23 @@ router.get('/job/:jobId', async (req, res) => {
       if (!extractionLevel) extractionLevel = meta.extractionLevel || 'sentence';
       zoneLevel = meta.zoneLevel;
     } catch (_) { /* no metadata */ }
+
+    if (pages?.length && zoneLevel === 'word' && extractionLevel === 'glyph') {
+      try {
+        let jobMetaForHydrate = null;
+        try {
+          const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
+          jobMetaForHydrate = JSON.parse(await fs.readFile(
+            path.join(intermediateDir, 'high_fidelity_render', 'job_metadata.json'),
+            'utf8'
+          ));
+        } catch { /* optional */ }
+        pages = await KitabooFxlService.hydrateStudioPagesFromCoords(jobId, pages, jobMetaForHydrate);
+      } catch (e) {
+        console.warn('[KitabooRoute] Word-level page hydration failed:', e.message);
+      }
+    }
+
     return successResponse(res, {
       jobId: job.jobId,
       pdfId: job.pdfId,
@@ -941,6 +981,15 @@ router.post('/publish/:jobId', async (req, res) => {
       const p = jobMeta?.pagesMetadata?.find(m => m.pageNumber === pageNum);
       return p?.dimensions ? { width: p.dimensions.width, height: p.dimensions.height } : null;
     };
+    let coordsPagesForPublish = null;
+    if (jobMeta?.extractionLevel === 'glyph' && jobMeta?.zoneLevel === 'word') {
+      try {
+        coordsPagesForPublish = JSON.parse(
+          await fs.readFile(path.join(highFiDir, 'coords.json'), 'utf8')
+        );
+      } catch (_) { /* no coords */ }
+    }
+    const wordReorderOpts = KitabooFxlService.wordZoneReorderOptsFromJobMetadata(jobMeta, coordsPagesForPublish);
 
     if (useClassicLayout) {
       const layoutPath = path.join(intermediateDir, 'layout_fragments.json');
@@ -982,6 +1031,7 @@ router.post('/publish/:jobId', async (req, res) => {
           }
           return z;
         });
+        zones = KitabooFxlService.applyWordZoneReorderForPage(zones, pageNum, wordReorderOpts);
         zones = KitabooFxlService.normalizeZoneIdsForPage(pageNum, zones);
         const jobPage = jobPages.find(p => p.pageNumber === pageNum);
         pagesData.push({
@@ -1020,6 +1070,7 @@ router.post('/publish/:jobId', async (req, res) => {
           }
           return z;
         });
+        zones = KitabooFxlService.applyWordZoneReorderForPage(zones, pageNum, wordReorderOpts);
         // Normalize IDs and order by readingOrder so EPUB/SMIL match Studio (including manual reading-order edits)
         zones = KitabooFxlService.normalizeZoneIdsForPage(pageNum, zones);
         pagesData.push({
@@ -1212,7 +1263,18 @@ router.get('/sync-studio/:jobId', async (req, res) => {
     const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
     const humanAudioDir = path.join(intermediateDir, 'human_audio');
     const zonesByPage = await KitabooZoneModel.getZonesByJobId(jobId);
-    const { pages, zoneIdMapByPage } = KitabooFxlService.buildSyncStudioPagesAndZoneMaps(zonesByPage);
+    let wordReorderOpts = null;
+    try {
+      const meta = JSON.parse(await fs.readFile(path.join(intermediateDir, 'job_metadata.json'), 'utf8'));
+      let coordsPagesSync = null;
+      if (meta?.extractionLevel === 'glyph' && meta?.zoneLevel === 'word') {
+        try {
+          coordsPagesSync = JSON.parse(await fs.readFile(path.join(intermediateDir, 'coords.json'), 'utf8'));
+        } catch (_) { /* no coords */ }
+      }
+      wordReorderOpts = KitabooFxlService.wordZoneReorderOptsFromJobMetadata(meta, coordsPagesSync);
+    } catch (_) { /* no metadata */ }
+    const { pages, zoneIdMapByPage } = KitabooFxlService.buildSyncStudioPagesAndZoneMaps(zonesByPage, wordReorderOpts);
 
     let audioUrl = null;
     let audioDuration = 0;
@@ -1377,7 +1439,18 @@ router.put('/sync-studio/:jobId', async (req, res) => {
     const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
     await fs.mkdir(intermediateDir, { recursive: true });
     const zonesByPage = await KitabooZoneModel.getZonesByJobId(jobId);
-    const { pages, zoneIdMapByPage } = KitabooFxlService.buildSyncStudioPagesAndZoneMaps(zonesByPage);
+    let wordReorderOpts = null;
+    try {
+      const meta = JSON.parse(await fs.readFile(path.join(intermediateDir, 'job_metadata.json'), 'utf8'));
+      let coordsPagesSync = null;
+      if (meta?.extractionLevel === 'glyph' && meta?.zoneLevel === 'word') {
+        try {
+          coordsPagesSync = JSON.parse(await fs.readFile(path.join(intermediateDir, 'coords.json'), 'utf8'));
+        } catch (_) { /* no coords */ }
+      }
+      wordReorderOpts = KitabooFxlService.wordZoneReorderOptsFromJobMetadata(meta, coordsPagesSync);
+    } catch (_) { /* no metadata */ }
+    const { pages, zoneIdMapByPage } = KitabooFxlService.buildSyncStudioPagesAndZoneMaps(zonesByPage, wordReorderOpts);
     const remapped = KitabooFxlService.remapAlignmentSegmentsWithMaps(segments, pages, zoneIdMapByPage);
     const normalized = remapped.map((s) => ({
       id: s.id,
