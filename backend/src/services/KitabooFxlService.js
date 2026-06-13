@@ -403,6 +403,10 @@ export class KitabooFxlService {
       }
     });
 
+    const distinctCols = new Set(lineGroups.map((lg) => lg.col).filter((c) => c != null));
+    if (distinctCols.size >= 2 && pageWidthPts > 0) {
+      return KitabooFxlService.sortLineGroupsColumnFirst(lineGroups, pageWidthPts);
+    }
     lineGroups.sort((a, b) => {
       const ya = Math.min(...a.bboxes.map((bb) => bb[1]));
       const yb = Math.min(...b.bboxes.map((bb) => bb[1]));
@@ -1004,7 +1008,7 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
         pageCoords?.items || [], scaleX, scaleY
       );
       const columnBoundariesPx = (glyphProbePx.length >= 2 && pageWidthPx > 0 && !isCoverPage)
-        ? KitabooFxlService.detectColumnBoundaries(glyphProbePx, pageWidthPx)
+        ? KitabooFxlService.validatedColumnBoundaries(glyphProbePx, pageWidthPx)
         : null;
       const columnBoundariesPts = columnBoundariesPx
         ? columnBoundariesPx.map((b) => b / scaleX)
@@ -1185,7 +1189,22 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
             ? KitabooFxlService.buildSentenceGroupsFromGlyphs(sourceItems).map((group, gi) => [gi, group])
             : [...byGroup.entries()]
               .sort((a, b) => Math.min(...a[1].map(x => x.idx)) - Math.min(...b[1].map(x => x.idx)))
-              .flatMap(([, group]) => KitabooFxlService.splitGlyphGroupByVisualBreaks(group));
+              .flatMap(([, group]) => {
+                let parts;
+                if (useWordGroupingThisPage && !isTocListingPage) {
+                  parts = KitabooFxlService.splitGlyphGroupByHorizontalGaps(group, pageCoords?.width || 0);
+                } else {
+                  parts = KitabooFxlService.splitGlyphGroupByVisualBreaks(group);
+                }
+                if (zoneLevel === 'sentence' && !useWordGroupingThisPage && pageCoords?.width) {
+                  parts = parts.flatMap((p) => KitabooFxlService.splitGlyphGroupByColumnGutter(
+                    p,
+                    pageCoords.width,
+                    columnBoundariesPts
+                  ));
+                }
+                return parts;
+              });
         groupEntries.forEach((group) => {
           group.sort((a, b) => a.idx - b.idx);
           const glyphs = group.map(g => g.item);
@@ -1221,13 +1240,21 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
             return;
           }
           if (zoneLevel === 'sentence' && glyphs.length > 0) {
-            const lineGroups = KitabooFxlService.buildLineGroupsFromGlyphs(glyphs, {
+            let lineGroups = KitabooFxlService.buildLineGroupsFromGlyphs(glyphs, {
               fontSize,
               columnBoundariesPts,
               pageWidthPts: pageCoords?.width || 0,
               tocPage,
               useLineGroupingThisPage,
             });
+            if (pageCoords?.width && columnBoundariesPts?.length && lineGroups.length > 1) {
+              lineGroups = KitabooFxlService.splitWideLineGroupsByColumn(
+                lineGroups,
+                pageCoords.width,
+                columnBoundariesPts
+              );
+              lineGroups = KitabooFxlService.sortLineGroupsColumnFirst(lineGroups, pageCoords.width);
+            }
             if ((tocPage || useLineGroupingThisPage) && lineGroups.length > 1) {
               pushLineZonesFromGroups(lineGroups, joinGlyphsWithSpaces);
               return;
@@ -1360,7 +1387,7 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       const columnBoundariesForZones = (columnBoundariesPx && columnBoundariesPx.length > 0)
         ? columnBoundariesPx
         : ((pageWidthForColumns > 0 && zones.length >= 2)
-          ? KitabooFxlService.detectColumnBoundaries(zones, pageWidthForColumns)
+          ? KitabooFxlService.validatedColumnBoundaries(zones, pageWidthForColumns)
           : null);
       const colResult = columnBoundariesForZones?.length
         ? { splitX: columnBoundariesForZones[0], boundaries: columnBoundariesForZones, twoColumnRowKeys: new Set() }
@@ -1394,6 +1421,22 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
       // Skip on credits pages — mergeConsecutiveUrlZones sorts by Y/X and would undo column-first credit-box order.
       if (effectiveExtractionLevel === 'sentence' && clusteredZones.length > 0 && !isCreditsPage) {
         clusteredZones = KitabooFxlService.mergeConsecutiveUrlZones(clusteredZones);
+      }
+
+      // Two-column credit/event boxes only — not wrapped single-column prose.
+      if (zoneLevel === 'sentence' && !useLineLevelZones && pageWidthForColumns > 0 && clusteredZones.length > 0) {
+        const beforeColSplit = clusteredZones.length;
+        clusteredZones = KitabooFxlService.splitMultilineZonesByColumn(
+          clusteredZones,
+          pageWidthForColumns,
+          img.pageNumber,
+          columnBoundariesForZones
+        );
+        if (clusteredZones.length !== beforeColSplit) {
+          console.log(
+            `[KitabooFXL] Page ${img.pageNumber}: split column-spanning sentence zones ${beforeColSplit} -> ${clusteredZones.length}.`
+          );
+        }
       }
 
       // For multi-line sentence zones: recompute bbox from lines so it's tight (prevents elongated/wrong bbox from PDF)
@@ -1509,21 +1552,37 @@ Return ONLY a JSON object of the form: {"pageType":"cover"} with one of the valu
         );
       }
 
-      // Sentence-level: body text keeps PDF stream order; glossary/diagram grids use row-primary sort.
-      if (zoneLevel === 'sentence' && !isCoverPage && !tocPage && !isCreditsPage && finalZones.length > 1) {
-        if (KitabooFxlService.isLabelGridPage(finalZones)) {
-          finalZones = KitabooFxlService.sortZonesRowPrimary(finalZones);
-        } else {
-          finalZones = [...finalZones].sort((a, b) => {
-            const siA = a.streamIndex ?? a.readingOrder ?? 999999;
-            const siB = b.streamIndex ?? b.readingOrder ?? 999999;
-            if (siA !== siB) return siA - siB;
-            const lineSlop = Math.max(8, ((a.fontSize || 12) + (b.fontSize || 12)) * 0.35);
-            if (Math.abs(a.y - b.y) > lineSlop) return a.y - b.y;
-            return (a.x ?? 0) - (b.x ?? 0);
-          });
+      // Word-level: column-first only on Sotheby's directory/contact pages (not TOC or body text).
+      if (zoneLevel === 'word' && !isCoverPage && !tocPage && finalZones.length > 1 && pageWidth > 0) {
+        if (KitabooFxlService.isWordLevelDirectoryPage(finalZones, pageWidth)) {
+          const wordReordered = KitabooFxlService.applyYXReadingOrderToWordZones(
+            finalZones,
+            pageWidth,
+            { pageCoords }
+          );
+          if (wordReordered.length === finalZones.length) {
+            finalZones = wordReordered;
+            console.log(
+              `[KitabooFXL] Page ${img.pageNumber}: word-level directory column order (${finalZones.length} zones).`
+            );
+          }
         }
-        finalZones.forEach((z, i) => { z.readingOrder = i + 1; });
+      }
+
+      // Sentence-level: directory column-first, catalog two-column layout, label grids row-primary.
+      if (zoneLevel === 'sentence' && !isCoverPage && !tocPage && !isCreditsPage && finalZones.length > 1) {
+        const beforeRo = finalZones.map((z) => z.readingOrder);
+        finalZones = KitabooFxlService.applySentenceZoneReadingOrder(finalZones, pageWidth);
+        if (beforeRo.join(',') !== finalZones.map((z) => z.readingOrder).join(',')) {
+          const kind = KitabooFxlService.isWordLevelDirectoryPage(finalZones, pageWidth)
+            ? 'directory column'
+            : KitabooFxlService.isLabelGridPage(finalZones)
+              ? 'label grid row'
+              : 'layout block';
+          console.log(
+            `[KitabooFXL] Page ${img.pageNumber}: sentence-level ${kind} order (${finalZones.length} zones).`
+          );
+        }
       }
 
       // RCA fix: TOC dotted-leader lines may pack multiple entries separated by ";".
@@ -1789,12 +1848,382 @@ Only return JSON.`;
     return String(sameBase[0].id);
   }
 
+  /** Page widths + zoneLevel from job_metadata.json for word-level reading-order repair on load. */
+  static wordZoneReorderOptsFromJobMetadata(jobMetadata, coordsPages = null) {
+    if (jobMetadata?.zoneLevel !== 'word') return null;
+    const pageWidthsByPage = {};
+    const pageCoordsByPage = {};
+    for (const pm of jobMetadata?.pagesMetadata || []) {
+      const n = pm?.pageNumber;
+      const w = pm?.dimensions?.width;
+      if (n > 0 && w > 0) pageWidthsByPage[n] = w;
+      if (coordsPages?.[n - 1]) pageCoordsByPage[n] = coordsPages[n - 1];
+    }
+    return Object.keys(pageWidthsByPage).length
+      ? { zoneLevel: 'word', pageWidthsByPage, pageCoordsByPage }
+      : null;
+  }
+
+  /** Repair word-level reading order for one page (Studio load / publish). */
+  static applyWordZoneReorderForPage(zones, pageNum, reorderOpts) {
+    const pageWidth = reorderOpts?.pageWidthsByPage?.[pageNum];
+    if (reorderOpts?.zoneLevel !== 'word' || !pageWidth || !zones?.length) return zones;
+    const pageCoords = reorderOpts?.pageCoordsByPage?.[pageNum];
+    return KitabooFxlService.applyYXReadingOrderToWordZones(zones, pageWidth, { pageCoords });
+  }
+
+  /** Sotheby's contact/directory pages only — UNIQUE+COLLECTIONS headers at page top. */
+  static isWordLevelDirectoryPage(zones, pageWidth) {
+    const bounds = KitabooFxlService.inferDirectoryColumnBoundariesFromHeaders(zones, pageWidth);
+    if (!bounds?.length) return false;
+    const byY = [...zones].sort((a, b) => (a.y ?? 0) - (b.y ?? 0));
+    const topY = byY[0].y ?? 0;
+    const lineSlop = Math.max(18, pageWidth / 100);
+    const band = byY.filter((z) => Math.abs((z.y ?? 0) - topY) < lineSlop);
+    const upper = new Set(band.map((z) => String(z.content || '').trim().toUpperCase()));
+    return upper.has('UNIQUE') && upper.has('COLLECTIONS')
+      && (upper.has('SPECIALISTS') || upper.has('ENQUIRIES'));
+  }
+
+  static sortWordZonesInBlock(arr) {
+    return [...arr].sort((a, b) => {
+      const siA = a.streamIndex ?? a.readingOrder ?? 999999;
+      const siB = b.streamIndex ?? b.readingOrder ?? 999999;
+      if (siA !== siB) return siA - siB;
+      const ya = a.y ?? 0;
+      const yb = b.y ?? 0;
+      if (Math.abs(ya - yb) > 0.5) return ya - yb;
+      return (a.x ?? 0) - (b.x ?? 0);
+    });
+  }
+
+  static clusterWordZonesIntoRows(zones, pageWidth = 0) {
+    const slop = Math.max(12, (pageWidth || 1200) / 120);
+    const sorted = [...zones].sort((a, b) => (a.y ?? 0) - (b.y ?? 0) || (a.x ?? 0) - (b.x ?? 0));
+    const rows = [];
+    for (const z of sorted) {
+      const y = z.y ?? 0;
+      let row = rows.find((r) => Math.abs((r[0].y ?? 0) - y) < slop);
+      if (!row) {
+        row = [];
+        rows.push(row);
+      }
+      row.push(z);
+    }
+    return rows.map((r) => r.sort((a, b) => (a.x ?? 0) - (b.x ?? 0)));
+  }
+
+  /** Full-width heading band at page top (catalog lot title), not a single-column body paragraph. */
+  static isFullWidthTitleBandBlock(block, pageWidth, pageHeight) {
+    if (!block || !pageWidth || !pageHeight) return false;
+    const titleCutoff = pageHeight * 0.28;
+    if (block.maxY > titleCutoff * 1.15) return false;
+    return (block.maxX - block.minX) > pageWidth * 0.42;
+  }
+
+  /** Catalog lot numeral or title line in the top band (may be split across narrow blocks). */
+  static isCatalogTitleBandBlock(block, pageWidth, pageHeight) {
+    if (!block || !pageWidth || !pageHeight) return false;
+    if (KitabooFxlService.isFullWidthTitleBandBlock(block, pageWidth, pageHeight)) return true;
+    const topCutoff = pageHeight * 0.22;
+    if (block.minY > topCutoff) return false;
+    if (block.arr.length <= 2 && block.arr.every((z) => /^[0-9]{1,2}$/.test(String(z.content || '').trim()))) {
+      return true;
+    }
+    if (block.maxY <= topCutoff && (block.maxX - block.minX) > pageWidth * 0.22) {
+      if (block.minX > pageWidth * 0.45) return false;
+      return block.arr.some((z) => (z.fontSize || 12) >= 24 || String(z.content || '').trim().length >= 5);
+    }
+    return false;
+  }
+
+  static hasTopCatalogLotNumeral(zones, pageHeight, pageWidth = 0) {
+    if (!zones?.length || !pageHeight) return false;
+    const topZones = zones.filter((z) => (z.y ?? 0) < pageHeight * 0.15);
+    for (const z of topZones) {
+      const t = String(z.content || '').trim();
+      if (!/^[0-9]{1,2}$/.test(t)) continue;
+      if ((z.fontSize || 12) >= 40) return true;
+      const y = z.y ?? 0;
+      const rowMates = topZones.filter(
+        (o) => o !== z && Math.abs((o.y ?? 0) - y) < 18 && String(o.content || '').trim().length > 2
+      );
+      if (!rowMates.length) return true;
+      if (pageWidth > 0) {
+        const cx = (z.x ?? 0) + (z.w ?? 0) / 2;
+        if (cx > pageWidth * 0.3 && cx < pageWidth * 0.75 && (z.fontSize || 12) >= 20) return true;
+      }
+    }
+    return false;
+  }
+
+  /** True when zones in one block occupy both sides of the page gutter (multi-column stream). */
+  static blockSpansColumnGutter(blockZones, pageWidth = 0) {
+    if (!blockZones?.length || !pageWidth) return false;
+    const mid = pageWidth * 0.5;
+    const gutter = Math.max(pageWidth * 0.06, 48);
+    let hasLeft = false;
+    let hasRight = false;
+    for (const z of blockZones) {
+      const cx = (z.x ?? 0) + (z.w ?? 0) / 2;
+      if (cx < mid - gutter * 0.35) hasLeft = true;
+      if (cx > mid + gutter * 0.35) hasRight = true;
+      if (hasLeft && hasRight) return true;
+    }
+    return false;
+  }
+
+  /** True when a layout block has same-row content separated by a column gutter (auction info pages). */
+  static blockHasSideBySideColumnRows(blockZones, pageWidth = 0) {
+    if (!blockZones?.length || !pageWidth) return false;
+    const minGap = Math.max(pageWidth * 0.07, 60);
+    for (const row of KitabooFxlService.clusterWordZonesIntoRows(blockZones, pageWidth)) {
+      if (row.length < 2) continue;
+      for (let i = 0; i < row.length - 1; i++) {
+        const left = row[i];
+        const right = row[i + 1];
+        const gap = (right.x ?? 0) - ((left.x ?? 0) + (left.w ?? 0));
+        if (gap < minGap) continue;
+        const gapMid = ((left.x ?? 0) + (left.w ?? 0) + (right.x ?? 0)) / 2;
+        const hasLeft = row.some((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) < gapMid - 20);
+        const hasRight = row.some((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) > gapMid + 20);
+        if (hasLeft && hasRight) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * True when left/right block groups sit side-by-side (overlapping Y band), not stacked vertically.
+   * Prevents wide/centered single-column paragraphs from being misread as a right column.
+   */
+  static blocksHaveParallelColumns(leftBlocks, rightBlocks, pageWidth = 0) {
+    if (!leftBlocks?.length || !rightBlocks?.length) return false;
+    const bandSlop = Math.max(48, (pageWidth || 1200) / 25);
+    for (const l of leftBlocks) {
+      for (const r of rightBlocks) {
+        const yOverlap = l.minY < r.maxY && r.minY < l.maxY;
+        if (!yOverlap) continue;
+        if (Math.abs(l.minY - r.minY) <= bandSlop) return true;
+      }
+    }
+    return false;
+  }
+
+  /** Column-first word order using detected gutter boundaries within one layout block. */
+  static reorderWordZonesByDetectedColumns(zones, pageWidth) {
+    if (!zones?.length || !pageWidth) return null;
+    const boundaries = KitabooFxlService.detectColumnBoundaries(zones, pageWidth);
+    if (!boundaries?.length) return null;
+    const byCol = new Map();
+    for (const z of zones) {
+      const c = KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth);
+      if (!byCol.has(c)) byCol.set(c, []);
+      byCol.get(c).push(z);
+    }
+    if (byCol.size < 2) return null;
+    const sorted = [];
+    for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
+      sorted.push(...KitabooFxlService.sortWordZonesInColumn(byCol.get(col)));
+    }
+    return sorted.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+  }
+
+  static sortWordZonesInBlockWithColumns(arr, pageWidth = 0) {
+    if (pageWidth > 0 && arr?.length >= 2) {
+      const needsColumnSort = KitabooFxlService.blockHasSideBySideColumnRows(arr, pageWidth)
+        || KitabooFxlService.blockSpansColumnGutter(arr, pageWidth);
+      if (!needsColumnSort) {
+        const boundaries = KitabooFxlService.detectColumnBoundaries(arr, pageWidth);
+        if (boundaries?.length) {
+          const cols = new Set(arr.map((z) => KitabooFxlService.zoneColumnIndex(z, boundaries, pageWidth)));
+          if (cols.size >= 2) {
+            const colSorted = KitabooFxlService.reorderWordZonesByDetectedColumns(arr, pageWidth);
+            if (colSorted) return colSorted;
+          }
+        }
+      } else {
+        const colSorted = KitabooFxlService.reorderWordZonesByDetectedColumns(arr, pageWidth);
+        if (colSorted) return colSorted;
+      }
+    }
+    return KitabooFxlService.sortWordZonesInBlock(arr);
+  }
+
+  /**
+   * Order layout blocks by visual position instead of raw block_id.
+   * Side-by-side info pages: blocks top-to-bottom; wide blocks sorted column-first inside.
+   * Catalog body pages: title band → left column blocks → right column blocks.
+   */
+  static sortWordZonesByVisualBlocks(zones, pageWidth = 0) {
+    const groups = new Map();
+    for (const z of zones) {
+      const bid = z.blockId ?? z.block_id ?? 0;
+      if (!groups.has(bid)) groups.set(bid, []);
+      groups.get(bid).push(z);
+    }
+    const blocks = [...groups.entries()].map(([, arr]) => {
+      const minY = Math.min(...arr.map((z) => z.y ?? 0));
+      const minX = Math.min(...arr.map((z) => z.x ?? 0));
+      const maxY = Math.max(...arr.map((z) => (z.y ?? 0) + (z.h ?? 0)));
+      const maxX = Math.max(...arr.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+      return { arr, minY, minX, maxY, maxX };
+    });
+    const pageHeight = Math.max(...blocks.map((b) => b.maxY), 1);
+    const pw = pageWidth || Math.max(...blocks.map((b) => b.maxX), 1200);
+    const titleBlocks = blocks.filter((b) => (
+      KitabooFxlService.isCatalogTitleBandBlock(b, pw, pageHeight)
+    ));
+    const bodyBlocks = blocks.filter((b) => !titleBlocks.includes(b));
+    const mid = pw * 0.52;
+    const gutter = Math.max(pw * 0.06, 48);
+    const leftBlocks = bodyBlocks.filter((b) => b.maxX < mid - gutter * 0.25);
+    const rightBlocks = bodyBlocks.filter((b) => b.minX >= mid - gutter);
+    const ambiguous = bodyBlocks.filter(
+      (b) => !leftBlocks.includes(b) && !rightBlocks.includes(b)
+    );
+    for (const b of ambiguous) {
+      const xs = b.arr.map((z) => (z.x ?? 0) + (z.w ?? 0) / 2).sort((a, c) => a - c);
+      const medX = xs[Math.floor(xs.length / 2)] ?? 0;
+      if (medX < mid) leftBlocks.push(b);
+      else rightBlocks.push(b);
+    }
+    const hasTwoColumns = leftBlocks.length >= 1 && rightBlocks.length >= 1
+      && KitabooFxlService.blocksHaveParallelColumns(leftBlocks, rightBlocks, pw);
+    const sideBySidePage = bodyBlocks.some(
+      (b) => KitabooFxlService.blockHasSideBySideColumnRows(b.arr, pw)
+    );
+
+    const sortBlocks = (arr) => [...arr].sort((a, b) => {
+      if (Math.abs(a.minY - b.minY) > Math.max(36, pw / 45)) return a.minY - b.minY;
+      return a.minX - b.minX;
+    });
+
+    const flattenBlocks = (arr) => arr.flatMap((b) => (
+      KitabooFxlService.sortWordZonesInBlockWithColumns(b.arr, pw)
+    ));
+
+    let ordered;
+    if (sideBySidePage) {
+      const maxWordLen = Math.max(...zones.map((z) => String(z.content || '').trim().length), 0);
+      const usePageColumnSort = zones.length <= 100 && maxWordLen <= 40;
+      if (usePageColumnSort) {
+        const colSorted = KitabooFxlService.reorderWordZonesByDetectedColumns(zones, pw);
+        if (colSorted) return colSorted;
+      }
+      ordered = sortBlocks([...titleBlocks, ...bodyBlocks]);
+    } else if (hasTwoColumns) {
+      // Dense body text without a catalog lot title: PDF blocks can straddle the gutter.
+      if (!titleBlocks.length && zones.length >= 80
+        && !KitabooFxlService.hasTopCatalogLotNumeral(zones, pageHeight, pw)) {
+        const colSorted = KitabooFxlService.reorderWordZonesByDetectedColumns(zones, pw);
+        if (colSorted) return colSorted;
+      }
+      // Catalog lot page: title band first, then body left → right by layout blocks.
+      // Gutter detection can split inline tails (e.g. "LOTS 1–15") from the same row as PROPERTY.
+      if (titleBlocks.length && KitabooFxlService.hasTopCatalogLotNumeral(zones, pageHeight, pw)) {
+        const titleOrdered = sortBlocks(titleBlocks).flatMap((b) => (
+          KitabooFxlService.sortWordZonesInBlockWithColumns(b.arr, pw)
+        ));
+        const bodyOrdered = [
+          ...flattenBlocks(sortBlocks(leftBlocks)),
+          ...flattenBlocks(sortBlocks(rightBlocks)),
+        ];
+        return [...titleOrdered, ...bodyOrdered].map((z, i) => ({ ...z, readingOrder: i + 1 }));
+      }
+      ordered = [
+        ...sortBlocks(titleBlocks),
+        ...sortBlocks(leftBlocks),
+        ...sortBlocks(rightBlocks),
+      ];
+    } else {
+      ordered = sortBlocks(blocks);
+    }
+    return flattenBlocks(ordered);
+  }
+
+  /** Keep PDF / extraction stream order (visual block layout, then glyph index — no column guess). */
+  static preserveWordZoneStreamOrder(zones, pageWidth = 0, opts = {}) {
+    const hasBlocks = zones.some((z) => (z.blockId ?? z.block_id) != null);
+    let sorted;
+    if (hasBlocks && !opts.streamOnly) {
+      sorted = KitabooFxlService.sortWordZonesByVisualBlocks(zones, pageWidth);
+    } else {
+      sorted = [...zones].sort((a, b) => {
+        if (hasBlocks) {
+          const ba = a.blockId ?? a.block_id ?? 999999;
+          const bb = b.blockId ?? b.block_id ?? 999999;
+          if (ba !== bb) return ba - bb;
+        }
+        const siA = a.streamIndex ?? a.readingOrder ?? 999999;
+        const siB = b.streamIndex ?? b.readingOrder ?? 999999;
+        if (siA !== siB) return siA - siB;
+        const ya = a.y ?? 0;
+        const yb = b.y ?? 0;
+        if (Math.abs(ya - yb) > 0.5) return ya - yb;
+        return (a.x ?? 0) - (b.x ?? 0);
+      });
+    }
+    sorted = sorted.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+    return KitabooFxlService.hoistOversizedTopLotNumbers(sorted);
+  }
+
+  static wordZoneStableKey(zone) {
+    return `${zone.blockId ?? zone.block_id ?? 0}:${zone.streamIndex ?? ''}:${zone.x ?? 0}:${zone.y ?? 0}:${zone.content ?? ''}`;
+  }
+
+  /**
+   * Auction catalog pages: large lot numeral above the title (e.g. "2" above ARCHBISHOP PARKER'S GIFT)
+   * can land in a late layout block — hoist it before the title when it sits higher on the page.
+   */
+  static hoistOversizedTopLotNumbers(zones) {
+    if (!zones?.length) return zones;
+    const pageHeight = Math.max(...zones.map((z) => (z.y ?? 0) + (z.h ?? 0)), 1);
+    const fontSizes = zones.map((z) => z.fontSize || 12).filter((f) => f > 0).sort((a, b) => a - b);
+    const medianFs = fontSizes[Math.floor(fontSizes.length / 2)] || 12;
+    const minDisplayFs = Math.max(80, medianFs * 2.5);
+
+    const displayLots = zones.filter((z) => {
+      const t = String(z.content || '').trim();
+      if (!/^[0-9]{1,2}$/.test(t)) return false;
+      if ((z.fontSize || 12) < minDisplayFs) return false;
+      return (z.y ?? 0) < pageHeight * 0.35;
+    });
+    if (!displayLots.length) return zones;
+
+    const titleZones = zones.filter((z) => {
+      const t = String(z.content || '').trim();
+      if (!t || /^[0-9]{1,2}$/.test(t)) return false;
+      if (!/[A-Za-z]/.test(t)) return false;
+      if ((z.fontSize || 12) < Math.max(30, medianFs * 0.8)) return false;
+      return (z.y ?? 0) < pageHeight * 0.45;
+    });
+    if (!titleZones.length) return zones;
+
+    const titleMinRo = Math.min(...titleZones.map((z) => z.readingOrder ?? 999999));
+    const titleMinY = Math.min(...titleZones.map((z) => z.y ?? 0));
+    const toHoist = displayLots.filter(
+      (lot) => (lot.y ?? 0) < titleMinY - 15 && (lot.readingOrder ?? 0) > titleMinRo
+    );
+    if (!toHoist.length) return zones;
+
+    const hoistKeys = new Set(toHoist.map((z) => z.id ?? z.streamIndex ?? z));
+    const rest = zones.filter((z) => !hoistKeys.has(z.id ?? z.streamIndex ?? z));
+    const sortedHoist = [...toHoist].sort(
+      (a, b) => (a.y ?? 0) - (b.y ?? 0) || (a.x ?? 0) - (b.x ?? 0)
+    );
+    const before = rest.filter((z) => (z.readingOrder ?? 0) < titleMinRo);
+    const after = rest.filter((z) => (z.readingOrder ?? 0) >= titleMinRo);
+    return [...before, ...sortedHoist, ...after].map((z, i) => ({ ...z, readingOrder: i + 1 }));
+  }
+
   /**
    * Build normalized pages + zoneIdMapByPage for FXL Sync Studio GET/PUT (same ids as EPUB export).
    * @param {Record<string, object[]>} zonesByPage
+   * @param {{ zoneLevel?: string, pageWidthsByPage?: Record<number, number> }} [reorderOpts]
    * @returns {{ pages: Array<{ pageNumber: number, zones: object[] }>, zoneIdMapByPage: Record<string, Map|string|Set> }}
    */
-  static buildSyncStudioPagesAndZoneMaps(zonesByPage) {
+  static buildSyncStudioPagesAndZoneMaps(zonesByPage, reorderOpts = null) {
     const pageNumbers = Object.keys(zonesByPage || {})
       .map((k) => parseInt(k, 10))
       .filter((n) => n > 0)
@@ -1802,9 +2231,16 @@ Only return JSON.`;
     const zoneIdMapByPage = {};
     const pages = pageNumbers
       .map((pageNum) => {
-        const filtered = (zonesByPage[pageNum] || [])
+        let filtered = (zonesByPage[pageNum] || [])
           .filter((z) => (z.type === 'text' || z.content) && z.id != null && String(z.id).trim())
           .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
+        if (reorderOpts?.zoneLevel === 'word' && reorderOpts.pageWidthsByPage?.[pageNum] > 0) {
+          filtered = KitabooFxlService.applyYXReadingOrderToWordZones(
+            filtered,
+            reorderOpts.pageWidthsByPage[pageNum],
+            { pageCoords: reorderOpts.pageCoordsByPage?.[pageNum] }
+          );
+        }
         const normalizedZones = KitabooFxlService.normalizeZoneIdsForPage(pageNum, filtered);
         const normalizedIdSet = new Set((normalizedZones || []).map((z) => String(z.id || '')));
         const map = new Map();
@@ -1849,23 +2285,259 @@ Only return JSON.`;
   }
 
   /**
+   * Directory header row: cluster titles by gutter gaps (UNIQUE+COLLECTIONS | SPECIALISTS | ENQUIRIES).
+   * Returns boundary x-positions between visual columns, not one anchor per header word.
+   */
+  static inferDirectoryColumnBoundariesFromHeaders(zones, pageWidth) {
+    if (!zones?.length || !pageWidth) return null;
+    const byY = [...zones].sort((a, b) => (a.y ?? 0) - (b.y ?? 0));
+    const topY = byY[0].y ?? 0;
+    const lineSlop = Math.max(18, pageWidth / 100);
+    const band = byY.filter((z) => Math.abs((z.y ?? 0) - topY) < lineSlop);
+    if (band.length < 3 || band.length > 6) return null;
+    const minX = Math.min(...band.map((z) => z.x ?? 0));
+    const maxX = Math.max(...band.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+    if (maxX - minX < pageWidth * 0.35) return null;
+    const allShort = band.every((z) => {
+      const t = String(z.content || '').trim();
+      return t.length > 0 && t.length <= 22 && !/[.!?]/.test(t);
+    });
+    if (!allShort) return null;
+
+    const sorted = [...band].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+    const minGutter = Math.max(pageWidth * 0.05, 50);
+    const groups = [[sorted[0]]];
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      const prevRight = (prev.x ?? 0) + (prev.w ?? 0);
+      const gap = (curr.x ?? 0) - prevRight;
+      if (gap >= minGutter) groups.push([curr]);
+      else groups[groups.length - 1].push(curr);
+    }
+    if (groups.length < 2) return null;
+
+    const boundaries = [];
+    for (let i = 0; i < groups.length - 1; i++) {
+      const maxLeft = Math.max(...groups[i].map((z) => (z.x ?? 0) + (z.w ?? 0)));
+      const minRight = Math.min(...groups[i + 1].map((z) => z.x ?? 0));
+      if (minRight > maxLeft) boundaries.push((maxLeft + minRight) / 2);
+    }
+    return boundaries.length ? boundaries : null;
+  }
+
+  /**
+   * Left-edge x histogram peaks → column anchors (2–4). Gutter boundaries split wrapped
+   * lines inside one column; anchors keep directory middle columns intact.
+   */
+  static inferWordZoneColumnAnchors(zones, pageWidth, maxCols = 4) {
+    if (!zones?.length || !pageWidth || pageWidth <= 0) return null;
+
+    const bucket = Math.max(30, pageWidth / 60);
+    const hist = new Map();
+    for (const z of zones) {
+      const x = z.x ?? z.origin?.[0] ?? 0;
+      const k = Math.round(x / bucket) * bucket;
+      hist.set(k, (hist.get(k) || 0) + 1);
+    }
+    const peaks = [...hist.entries()].sort((a, b) => b[1] - a[1]);
+    const minSep = Math.max(pageWidth * 0.16, 80);
+    const cap = zones.length >= 80 ? maxCols : Math.min(maxCols, 3);
+    const anchors = [];
+    for (const [x, count] of peaks) {
+      if (count < 2) continue;
+      if (anchors.some((a) => Math.abs(a - x) < minSep)) continue;
+      anchors.push(x);
+      if (anchors.length >= cap) break;
+    }
+    return anchors.length >= 2 ? anchors.sort((a, b) => a - b) : null;
+  }
+
+  static wordZoneColumnIndexByAnchors(zone, anchors) {
+    const x = zone.x ?? zone.origin?.[0] ?? 0;
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < anchors.length; i++) {
+      const d = Math.abs(x - anchors[i]);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  static sortWordZonesInColumn(arr) {
+    return [...arr].sort((a, b) => {
+      const ya = a.y ?? a.origin?.[1] ?? 0;
+      const yb = b.y ?? b.origin?.[1] ?? 0;
+      if (Math.abs(ya - yb) > 0.5) return ya - yb;
+      return (a.x ?? 0) - (b.x ?? 0);
+    });
+  }
+
+  /**
+   * Word-level column-first sort (anchor-based; gutter fallback).
+   * Handles 2–3 column directory pages that isGenuineMultiColumnBlock rejects.
+   */
+  static reorderWordZonesByColumns(zones, pageWidth) {
+    if (!zones?.length || !pageWidth || pageWidth <= 0) return null;
+
+    const sortInColumn = KitabooFxlService.sortWordZonesInColumn;
+
+    const headerBounds = KitabooFxlService.inferDirectoryColumnBoundariesFromHeaders(zones, pageWidth);
+    if (headerBounds?.length) {
+      const byCol = new Map();
+      for (const z of zones) {
+        const c = KitabooFxlService.zoneColumnIndex(z, headerBounds, pageWidth);
+        if (!byCol.has(c)) byCol.set(c, []);
+        byCol.get(c).push(z);
+      }
+      if (byCol.size >= 2) {
+        const sorted = [];
+        for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
+          sorted.push(...sortInColumn(byCol.get(col)));
+        }
+        return sorted.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+      }
+    }
+
+    const anchors = KitabooFxlService.inferWordZoneColumnAnchors(zones, pageWidth);
+    if (anchors?.length) {
+      const byCol = new Map();
+      for (const z of zones) {
+        const c = KitabooFxlService.wordZoneColumnIndexByAnchors(z, anchors);
+        if (!byCol.has(c)) byCol.set(c, []);
+        byCol.get(c).push(z);
+      }
+      if (byCol.size >= 2) {
+        const sorted = [];
+        for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
+          sorted.push(...sortInColumn(byCol.get(col)));
+        }
+        return sorted.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Sentence-level Studio reading order: directory columns, catalog two-column blocks, label grids.
+   */
+  static applySentenceZoneReadingOrder(zones, pageWidth = 0) {
+    if (!zones?.length) return zones;
+    if (KitabooFxlService.isLabelGridPage(zones)) {
+      return KitabooFxlService.sortZonesRowPrimary(zones).map((z, i) => ({ ...z, readingOrder: i + 1 }));
+    }
+    if (pageWidth > 0 && KitabooFxlService.isWordLevelDirectoryPage(zones, pageWidth)) {
+      const colSorted = KitabooFxlService.reorderWordZonesByColumns(zones, pageWidth);
+      if (colSorted) return colSorted;
+    }
+    if (pageWidth > 0) {
+      return KitabooFxlService.preserveWordZoneStreamOrder(zones, pageWidth);
+    }
+    return [...zones]
+      .sort((a, b) => {
+        const siA = a.streamIndex ?? a.readingOrder ?? 999999;
+        const siB = b.streamIndex ?? b.readingOrder ?? 999999;
+        if (siA !== siB) return siA - siB;
+        const lineSlop = Math.max(8, ((a.fontSize || 12) + (b.fontSize || 12)) * 0.35);
+        if (Math.abs(a.y - b.y) > lineSlop) return a.y - b.y;
+        return (a.x ?? 0) - (b.x ?? 0);
+      })
+      .map((z, i) => ({ ...z, readingOrder: i + 1 }));
+  }
+
+  /**
    * Apply column-first reading order when a gutter is detected; otherwise top-to-bottom, left-to-right.
    * Call when loading word-level zones for Studio display.
    */
-  static applyYXReadingOrderToWordZones(zones, pageWidth = 0) {
+  static applyYXReadingOrderToWordZones(zones, pageWidth = 0, opts = {}) {
     if (!zones?.length) return zones;
-    const wordLevel = zones.every(z => /_w\d+$/.test((z.id && typeof z.id === 'string') ? z.id : ''));
-    if (!wordLevel) return zones;
-    if (pageWidth > 0 && KitabooFxlService.detectColumnBoundaries(zones, pageWidth)) {
-      return KitabooFxlService.reorderZonesColumnFirst(zones, pageWidth);
+    const pageCoords = opts.pageCoords;
+    if (pageCoords && KitabooFxlService.isTocListingPage(pageCoords)) {
+      return KitabooFxlService.preserveWordZoneStreamOrder(zones, pageWidth, { streamOnly: true });
     }
-    const sorted = [...zones].sort((a, b) => {
-      const ya = Number(a.y ?? a.top ?? 0);
-      const yb = Number(b.y ?? b.top ?? 0);
-      if (Math.abs(ya - yb) > 0.5) return ya - yb;
-      return (Number(a.x ?? a.left ?? 0)) - (Number(b.x ?? b.left ?? 0));
+    if (KitabooFxlService.isLabelGridPage(zones)) {
+      return KitabooFxlService.sortZonesRowPrimary(zones).map((z, i) => ({ ...z, readingOrder: i + 1 }));
+    }
+    if (pageWidth > 0 && KitabooFxlService.isWordLevelDirectoryPage(zones, pageWidth)) {
+      const colSorted = KitabooFxlService.reorderWordZonesByColumns(zones, pageWidth);
+      if (colSorted) return colSorted;
+    }
+    return KitabooFxlService.preserveWordZoneStreamOrder(zones, pageWidth);
+  }
+
+  /**
+   * Rebuild word-level zones from coords + reading-order repair (Studio load / job hydration).
+   */
+  static buildStudioPageZones(pageNum, pageCoords, pageMeta, assetDimensions, reorderOpts) {
+    const pageWidthPx = pageMeta?.dimensions?.width || assetDimensions?.width || pageCoords?.width || 0;
+    if (!pageCoords?.items?.length || pageWidthPx <= 0) return [];
+    const ptsW = pageMeta?.pointsDimensions?.width || pageCoords.width || pageWidthPx;
+    const ptsH = pageMeta?.pointsDimensions?.height || pageCoords.height || pageWidthPx;
+    const scaleX = pageWidthPx / ptsW;
+    const scaleY = (pageMeta?.dimensions?.height || assetDimensions?.height || pageWidthPx) / ptsH;
+    let rawZones = KitabooFxlService.buildWordZonesFromGlyphItems(
+      pageCoords.items,
+      pageNum,
+      scaleX,
+      scaleY,
+      ptsW
+    );
+    rawZones = KitabooFxlService.applyWordZoneReorderForPage(rawZones, pageNum, reorderOpts);
+    return KitabooFxlService.normalizeZoneIdsForPage(pageNum, rawZones);
+  }
+
+  /** Rebuild zones from coords.json for word-level glyph jobs (ready / job poll). */
+  static async hydrateStudioPagesFromCoords(jobId, pages, jobMetadata = null) {
+    if (!pages?.length) return pages;
+    let meta = jobMetadata;
+    const intermediateDir = path.join(getHtmlIntermediateDir(), `kitaboo_${jobId}`);
+    if (!meta) {
+      try {
+        meta = JSON.parse(await fs.readFile(
+          path.join(intermediateDir, 'high_fidelity_render', 'job_metadata.json'),
+          'utf8'
+        ));
+      } catch {
+        try {
+          meta = JSON.parse(await fs.readFile(
+            path.join(intermediateDir, 'webp', 'job_metadata.json'),
+            'utf8'
+          ));
+        } catch { return pages; }
+      }
+    }
+    if (meta?.extractionLevel !== 'glyph' || meta?.zoneLevel !== 'word') return pages;
+
+    let coordsPages = null;
+    for (const sub of ['high_fidelity_render', 'webp']) {
+      try {
+        coordsPages = JSON.parse(await fs.readFile(
+          path.join(intermediateDir, sub, 'coords.json'),
+          'utf8'
+        ));
+        break;
+      } catch { /* try next */ }
+    }
+    if (!coordsPages) return pages;
+
+    const reorderOpts = KitabooFxlService.wordZoneReorderOptsFromJobMetadata(meta, coordsPages);
+    return pages.map((page) => {
+      const pageNum = page.pageNumber;
+      const pageCoords = coordsPages[pageNum - 1];
+      const pageMeta = meta.pagesMetadata?.find((p) => p.pageNumber === pageNum);
+      const zones = KitabooFxlService.buildStudioPageZones(
+        pageNum,
+        pageCoords,
+        pageMeta,
+        page.dimensions,
+        reorderOpts
+      );
+      return zones.length ? { ...page, zones } : page;
     });
-    return sorted.map((z, i) => ({ ...z, readingOrder: i + 1 }));
   }
 
   /**
@@ -2792,6 +3464,38 @@ Only return JSON.`;
   }
 
   /**
+   * True when a boundary lumps two side-by-side column clusters into one column.
+   * A wide left column alone (clean gutter before col1) is not lumpy.
+   */
+  static columnBoundaryLumpsDistinctColumns(zones, boundary, pageWidth) {
+    if (!boundary || !zones?.length || !pageWidth) return false;
+    const col0 = zones.filter((z) => KitabooFxlService.zoneColumnIndex(z, [boundary], pageWidth) === 0);
+    const col1 = zones.filter((z) => KitabooFxlService.zoneColumnIndex(z, [boundary], pageWidth) >= 1);
+    if (col0.length < 4 || col1.length < 4) return false;
+    const xs = col0.map((z) => (z.x ?? 0) + (z.w ?? 0) / 2);
+    if (Math.max(...xs) - Math.min(...xs) <= pageWidth * 0.32) return false;
+    const maxLeftR = Math.max(...col0.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+    const minRightL = Math.min(...col1.map((z) => z.x ?? 0));
+    return minRightL <= maxLeftR + Math.max(pageWidth * 0.012, 10);
+  }
+
+  /** Gutter between anchored left/right column clusters (dense catalog body text). */
+  static detectColumnBoundaryFromColumnMargins(zones, pageWidth) {
+    if (!zones?.length || !pageWidth || zones.length < 80) return null;
+    const leftAnchored = zones.filter((z) => (z.x ?? 0) < pageWidth * 0.38);
+    const rightAnchored = zones.filter((z) => (z.x ?? 0) > pageWidth * 0.46);
+    if (leftAnchored.length < zones.length * 0.15 || rightAnchored.length < zones.length * 0.15) {
+      return null;
+    }
+    const maxLeftR = Math.max(...leftAnchored.map((z) => (z.x ?? 0) + (z.w ?? 0)));
+    const minRightL = Math.min(...rightAnchored.map((z) => z.x ?? 0));
+    if (minRightL <= maxLeftR + Math.max(pageWidth * 0.02, 20)) return null;
+    const boundary = (maxLeftR + minRightL) / 2;
+    if (boundary < pageWidth * 0.25 || boundary > pageWidth * 0.78) return null;
+    return [boundary];
+  }
+
+  /**
    * Detect vertical gutter positions between columns using row-gap voting.
    * @param {Array} zones - Zones with x, y, w
    * @param {number} pageWidth - Page width in same units as zone.x
@@ -2803,12 +3507,17 @@ Only return JSON.`;
     const twoCluster = KitabooFxlService.detectColumnBoundaryTwoClusters(zones, pageWidth);
     if (twoCluster) {
       const validated = KitabooFxlService.validateColumnBoundaries(zones, twoCluster, pageWidth);
-      if (validated) return validated;
-      return twoCluster;
+      if (validated?.length) {
+        const lumps = validated.some(
+          (b) => KitabooFxlService.columnBoundaryLumpsDistinctColumns(zones, b, pageWidth)
+        );
+        if (!lumps) return validated;
+      }
     }
 
     const merged = KitabooFxlService.mergeBoundaryLists(
       pageWidth,
+      KitabooFxlService.detectColumnBoundaryFromColumnMargins(zones, pageWidth),
       KitabooFxlService.detectColumnBoundariesFromRows(zones, pageWidth),
       KitabooFxlService.detectColumnBoundariesFromXClusters(zones, pageWidth)
     );
@@ -2817,10 +3526,21 @@ Only return JSON.`;
       : null;
     if (validated) {
       const sane = validated.filter((b) => {
+        if (KitabooFxlService.columnBoundaryLumpsDistinctColumns(zones, b, pageWidth)) return false;
         const leftFrac = zones.filter((z) => ((z.x ?? 0) + (z.w ?? 0) / 2) < b).length / zones.length;
         return leftFrac >= 0.15 && leftFrac <= 0.85;
       });
-      if (sane.length) return sane;
+      if (sane.length) {
+        const margin = KitabooFxlService.detectColumnBoundaryFromColumnMargins(zones, pageWidth);
+        if (margin?.length && sane.length > 1) {
+          const pick = sane.reduce((best, b) => (
+            Math.abs(b - margin[0]) < Math.abs(best - margin[0]) ? b : best
+          ), sane[0]);
+          return [pick];
+        }
+        if (sane.length === 1) return sane;
+        return [sane.sort((a, b) => b - a)[0]];
+      }
     }
 
     const direct = KitabooFxlService.detectColumnBoundaryDirectGap(zones, pageWidth);
@@ -3069,7 +3789,14 @@ Only return JSON.`;
   static isLabelGridPage(zones) {
     if (!zones?.length) return false;
     const labels = zones.filter((z) => KitabooFxlService.isShortLabelZone(z));
-    return labels.length >= 3 && labels.length >= zones.length * 0.45;
+    if (labels.length < 3 || labels.length < zones.length * 0.45) return false;
+    // Directory/catalog pages are mostly short words too but pack many per row (column blocks).
+    const rows = KitabooFxlService.clusterZonesIntoRows(zones);
+    if (rows.length < 1) return false;
+    const avgPerRow = zones.length / rows.length;
+    const denseRows = rows.filter((row) => row.length >= 3).length;
+    if (zones.length >= 20 && (avgPerRow >= 3 || denseRows >= rows.length * 0.4)) return false;
+    return true;
   }
 
   /**
@@ -3175,6 +3902,355 @@ Only return JSON.`;
    * Split a glyph group that shares one sentence_id but spans title + body (font-size break only).
    * Do not split on line-wrap gap — sentence-level zones intentionally span multiple lines.
    */
+  /**
+   * Split one word_id glyph group when a single line spans column gutters (no PDF space chars).
+   * e.g. "COLLECTIONSSPECIALISTSENQUIRIES" on a three-column header row.
+   */
+  static splitGlyphGroupByHorizontalGaps(group, pageWidthPts) {
+    if (!group?.length || !pageWidthPts) return [group];
+    const entries = group.filter((e) => e?.item?.bbox?.length >= 4);
+    if (entries.length < 3) return [group];
+
+    const minGutter = Math.max(pageWidthPts * 0.035, 6);
+    const lineH = Math.max(...entries.map((e) => (e.item.size || 12) * 1.2), 8);
+    const byLine = [];
+    const sorted = [...entries].sort(
+      (a, b) => a.item.bbox[1] - b.item.bbox[1] || a.item.bbox[0] - b.item.bbox[0]
+    );
+    for (const entry of sorted) {
+      const g = entry.item;
+      const cy = (g.bbox[1] + g.bbox[3]) / 2;
+      let placed = false;
+      for (const line of byLine) {
+        const lcy = line.reduce((s, e) => s + (e.item.bbox[1] + e.item.bbox[3]) / 2, 0) / line.length;
+        if (Math.abs(cy - lcy) < lineH * 0.55) {
+          line.push(entry);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) byLine.push([entry]);
+    }
+
+    const parts = [];
+    for (const line of byLine) {
+      if (line.length < 3) continue;
+      line.sort((a, b) => a.item.bbox[0] - b.item.bbox[0]);
+      const runs = [[line[0]]];
+      for (let i = 1; i < line.length; i++) {
+        const prev = runs[runs.length - 1][runs[runs.length - 1].length - 1].item;
+        const gap = line[i].item.bbox[0] - prev.bbox[2];
+        if (gap >= minGutter) runs.push([line[i]]);
+        else runs[runs.length - 1].push(line[i]);
+      }
+      if (runs.length > 1) {
+        for (const run of runs) parts.push(run);
+      }
+    }
+    return parts.length ? parts : [group];
+  }
+
+  /** True when a single word zone spans multiple columns (merged header row). */
+  static pageHasMergedWordZones(zones, pageWidthPx) {
+    if (!zones?.length || !pageWidthPx) return false;
+    return zones.some(
+      (z) => (z.w ?? 0) > pageWidthPx * 0.22 && String(z.content || '').trim().length > 12
+    );
+  }
+
+  /**
+   * Build word-level zones from glyph coords items (with horizontal-gap word split).
+   */
+  static buildWordZonesFromGlyphItems(sourceItems, pageNum, scaleX, scaleY, pageWidthPts) {
+    if (!sourceItems?.length) return [];
+    const byGroup = new Map();
+    sourceItems.forEach((item, idx) => {
+      const wid = item.word_id ?? item.wordId;
+      if (wid == null) return;
+      if (!byGroup.has(wid)) byGroup.set(wid, []);
+      byGroup.get(wid).push({ item, idx });
+    });
+    const groupEntries = [...byGroup.entries()]
+      .sort((a, b) => Math.min(...a[1].map((x) => x.idx)) - Math.min(...b[1].map((x) => x.idx)))
+      .flatMap(([, g]) => KitabooFxlService.splitGlyphGroupByHorizontalGaps(g, pageWidthPts));
+
+    const grouped = [];
+    groupEntries.forEach((group) => {
+      group.sort((a, b) => a.idx - b.idx);
+      const glyphs = group.map((g) => g.item);
+      const text = glyphs.map((g) => g.text || '').join('').trim();
+      if (!text) return;
+      const bboxes = glyphs.map((g) => g.bbox).filter((b) => Array.isArray(b) && b.length >= 4);
+      if (!bboxes.length) return;
+      const x0 = Math.min(...bboxes.map((b) => b[0]));
+      const y0 = Math.min(...bboxes.map((b) => b[1]));
+      const x1 = Math.max(...bboxes.map((b) => b[2]));
+      const y1 = Math.max(...bboxes.map((b) => b[3]));
+      const first = glyphs[0];
+      grouped.push({
+        text,
+        bbox: [x0, y0, x1, y1],
+        font: first.font,
+        font_file: first.font_file,
+        size: first.size || 12,
+        color: first.color,
+        ascender: first.ascender,
+        descender: first.descender,
+        flags: first.flags,
+        rotation: first.rotation,
+        block_id: first.block_id ?? first.blockId ?? null,
+        streamIndex: Math.min(...group.map((x) => x.idx)),
+      });
+    });
+
+    const zones = grouped.map((item, i) => {
+      const zone = {
+        id: `p${pageNum}_w${i}`,
+        type: 'text',
+        content: item.text,
+        x: parseFloat((item.bbox[0] * scaleX).toFixed(3)),
+        y: parseFloat((item.bbox[1] * scaleY).toFixed(3)),
+        w: parseFloat(((item.bbox[2] - item.bbox[0]) * scaleX).toFixed(3)),
+        h: parseFloat(((item.bbox[3] - item.bbox[1]) * scaleY).toFixed(3)),
+        blockId: item.block_id ?? null,
+        streamIndex: item.streamIndex ?? i,
+        readingOrder: i + 1,
+        fontSize: item.size ? parseFloat((item.size * scaleY).toFixed(3)) : 12,
+        fontFamily: item.font || 'Arial',
+        fontFile: item.font_file || null,
+        color: item.color || '#000000',
+        bold: KitabooFxlService._isBoldStyle(item),
+        italic: KitabooFxlService._isItalicStyle(item),
+        ascender: item.ascender || 0.8,
+        descender: item.descender || -0.2,
+        textAlign: 'left',
+      };
+      zone.points = KitabooFxlService.bboxToPoints(zone.x, zone.y, zone.w || 0, zone.h || 0);
+      return zone;
+    });
+    return KitabooFxlService.filterNoiseWordZones(zones);
+  }
+
+  /** Drop sub-pixel sliver glyphs that are not large display lot numerals. */
+  static filterNoiseWordZones(zones) {
+    const kept = (zones || []).filter((z) => !KitabooFxlService.isNoiseWordZone(z));
+    return kept.map((z, i) => ({ ...z, readingOrder: i + 1 }));
+  }
+
+  static isNoiseWordZone(zone) {
+    const t = String(zone.content || '').trim();
+    if (!t) return true;
+    const w = zone.w ?? 0;
+    const h = zone.h ?? 0;
+    const fs = zone.fontSize || 12;
+    return w < 8 && h < 20 && fs < 60 && t.length <= 1;
+  }
+
+  /** Column boundaries only when a real gutter exists (excludes wrapped single-column body text). */
+  static validatedColumnBoundaries(zones, pageWidth) {
+    const raw = KitabooFxlService.detectColumnBoundaries(zones, pageWidth);
+    if (!raw?.length || !zones?.length) return null;
+    return KitabooFxlService.isGenuineMultiColumnBlock(zones, raw, pageWidth) ? raw : null;
+  }
+
+  /** True when glyphs form a credit-box style gutter, not normal wrapped prose. */
+  static glyphsHaveGenuineColumnGutter(glyphs, pageWidthPts) {
+    if (!glyphs?.length || !pageWidthPts) return false;
+    const minGutter = Math.max(pageWidthPts * 0.07, 36);
+    const byWord = new Map();
+    glyphs.forEach((g, i) => {
+      const wid = g.word_id ?? g.wordId ?? `w${i}`;
+      if (!byWord.has(wid)) byWord.set(wid, []);
+      byWord.get(wid).push(g);
+    });
+    const units = [...byWord.values()].map((gs) => {
+      const bboxes = gs.map((g) => g.bbox).filter((b) => Array.isArray(b) && b.length >= 4);
+      if (!bboxes.length) return null;
+      const x0 = Math.min(...bboxes.map((b) => b[0]));
+      const x1 = Math.max(...bboxes.map((b) => b[2]));
+      const y0 = Math.min(...bboxes.map((b) => b[1]));
+      const y1 = Math.max(...bboxes.map((b) => b[3]));
+      return {
+        x0, x1, y0, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, size: gs[0]?.size ?? 12,
+      };
+    }).filter(Boolean).sort((a, b) => a.x0 - b.x0);
+    if (units.length < 4) return false;
+
+    const blockW = units[units.length - 1].x1 - units[0].x0;
+    if (blockW < pageWidthPts * 0.32) return false;
+    const avgWordW = units.reduce((s, u) => s + (u.x1 - u.x0), 0) / units.length;
+    if (avgWordW > blockW * 0.38) return false;
+
+    const lineSlop = Math.max(units[0].size * 0.55, 6);
+    const rows = [];
+    for (const u of units) {
+      let row = rows.find((r) => Math.abs(r[0].cy - u.cy) < lineSlop);
+      if (!row) {
+        row = [];
+        rows.push(row);
+      }
+      row.push(u);
+    }
+
+    const rowHasGutter = (row) => {
+      if (row.length < 2) return false;
+      const sorted = [...row].sort((a, b) => a.x0 - b.x0);
+      let bestGap = 0;
+      for (let i = 0; i < sorted.length - 1; i++) {
+        bestGap = Math.max(bestGap, sorted[i + 1].x0 - sorted[i].x1);
+      }
+      return bestGap >= minGutter;
+    };
+
+    const gutterRows = rows.filter(rowHasGutter).length;
+    if (gutterRows >= Math.max(2, Math.ceil(rows.length * 0.35))) return true;
+
+    if (rows.length === 1 && rowHasGutter(rows[0])) {
+      const sorted = [...rows[0]].sort((a, b) => a.x0 - b.x0);
+      let bestGap = 0;
+      let boundary = null;
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const gap = sorted[i + 1].x0 - sorted[i].x1;
+        if (gap > bestGap) {
+          bestGap = gap;
+          boundary = (sorted[i].x1 + sorted[i + 1].x0) / 2;
+        }
+      }
+      if (bestGap < pageWidthPts * 0.11 || boundary == null) return false;
+      const left = sorted.filter((u) => u.cx < boundary).length;
+      const right = sorted.length - left;
+      return left >= 2 && right >= 2;
+    }
+    return false;
+  }
+
+  /** Split one sentence glyph group into separate left/right groups (multiline polygon per column). */
+  static splitGlyphGroupByColumnGutter(group, pageWidthPts, columnBoundariesPts) {
+    if (!group?.length || !pageWidthPts) return [group];
+    const glyphs = group.map((entry) => entry.item);
+    if (!KitabooFxlService.glyphsHaveGenuineColumnGutter(glyphs, pageWidthPts)) {
+      return [group];
+    }
+    const minGutter = Math.max(pageWidthPts * 0.07, 36);
+    let boundary = columnBoundariesPts?.[0] ?? pageWidthPts * 0.5;
+    const wordUnits = new Map();
+    group.forEach((entry, i) => {
+      const g = entry.item;
+      const wid = g.word_id ?? g.wordId ?? `g${i}`;
+      if (!wordUnits.has(wid)) wordUnits.set(wid, []);
+      wordUnits.get(wid).push(entry);
+    });
+    const units = [...wordUnits.values()].map((entries) => {
+      const bboxes = entries.map((e) => e.item.bbox).filter((b) => Array.isArray(b) && b.length >= 4);
+      const x0 = Math.min(...bboxes.map((b) => b[0]));
+      const x1 = Math.max(...bboxes.map((b) => b[2]));
+      return { entries, x0, x1, cx: (x0 + x1) / 2 };
+    }).sort((a, b) => a.x0 - b.x0);
+    let bestGap = 0;
+    for (let i = 0; i < units.length - 1; i++) {
+      const gap = units[i + 1].x0 - units[i].x1;
+      if (gap > bestGap) {
+        bestGap = gap;
+        boundary = (units[i].x1 + units[i + 1].x0) / 2;
+      }
+    }
+    if (bestGap < minGutter) return [group];
+    const left = [];
+    const right = [];
+    for (const { entries, cx } of units) {
+      (cx < boundary ? left : right).push(...entries);
+    }
+    const parts = [];
+    if (left.length) parts.push(left);
+    if (right.length) parts.push(right);
+    return parts.length > 1 ? parts : [group];
+  }
+
+  /**
+   * Split a zone whose lines[] span two columns into one zone per column (keeps multiline polygon per column).
+   */
+  static splitMultilineZonesByColumn(zones, pageWidth, pageNumber, pageBoundaries = null) {
+    if (!zones?.length || !pageWidth) return zones;
+    const out = [];
+    for (const z of zones) {
+      const lines = Array.isArray(z.lines) ? z.lines : null;
+      if (!lines || lines.length < 2) {
+        out.push(z);
+        continue;
+      }
+      const lineZones = lines.map((ln) => ({
+        x: ln.bbox?.[0] ?? ln.origin?.[0] ?? 0,
+        y: ln.bbox?.[1] ?? ln.origin?.[1] ?? 0,
+        w: Math.max((ln.bbox?.[2] ?? ln.origin?.[0] ?? 0) - (ln.bbox?.[0] ?? ln.origin?.[0] ?? 0), 1),
+        h: Math.max((ln.bbox?.[3] ?? ln.origin?.[1] ?? 0) - (ln.bbox?.[1] ?? ln.origin?.[1] ?? 0), 1),
+      }));
+      const boundaries = pageBoundaries?.length
+        ? pageBoundaries
+        : KitabooFxlService.validatedColumnBoundaries(lineZones, pageWidth);
+      if (!boundaries?.length) {
+        out.push(z);
+        continue;
+      }
+      if (!KitabooFxlService.isGenuineMultiColumnBlock(lineZones, boundaries, pageWidth)) {
+        out.push(z);
+        continue;
+      }
+      const probe = lineZones;
+      const byCol = new Map();
+      for (let i = 0; i < lines.length; i++) {
+        const c = KitabooFxlService.zoneColumnIndex(probe[i], boundaries, pageWidth);
+        if (!byCol.has(c)) byCol.set(c, []);
+        byCol.get(c).push(lines[i]);
+      }
+      if (byCol.size < 2) {
+        out.push(z);
+        continue;
+      }
+      for (const col of [...byCol.keys()].sort((a, b) => a - b)) {
+        const colLines = byCol.get(col).sort((a, b) => {
+          const ya = a.bbox?.[1] ?? a.origin?.[1] ?? 0;
+          const yb = b.bbox?.[1] ?? b.origin?.[1] ?? 0;
+          if (Math.abs(ya - yb) > 0.5) return ya - yb;
+          return (a.bbox?.[0] ?? a.origin?.[0] ?? 0) - (b.bbox?.[0] ?? b.origin?.[0] ?? 0);
+        });
+        const content = colLines.map((ln) => (ln.text || '').trim()).filter(Boolean).join(' ');
+        if (!content) continue;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        for (const ln of colLines) {
+          if (ln.bbox?.length >= 4) {
+            minX = Math.min(minX, ln.bbox[0]);
+            minY = Math.min(minY, ln.bbox[1]);
+            maxX = Math.max(maxX, ln.bbox[2]);
+            maxY = Math.max(maxY, ln.bbox[3]);
+          }
+        }
+        if (minX === Infinity) {
+          continue;
+        }
+        out.push({
+          ...z,
+          content,
+          lines: colLines,
+          x: minX,
+          y: minY,
+          w: Math.max(maxX - minX, 1),
+          h: Math.max(maxY - minY, 1),
+          styleRuns: content.length > 0
+            ? [{ start: 0, end: content.length, bold: !!z.bold, italic: !!z.italic, color: z.color || '#000000' }]
+            : z.styleRuns,
+        });
+      }
+    }
+    return out.map((zone, i) => ({
+      ...zone,
+      id: `p${pageNumber}_s${i}`,
+      readingOrder: i + 1,
+    }));
+  }
+
   static splitGlyphGroupByVisualBreaks(group) {
     if (!group?.length) return [group];
     const byWord = new Map();
@@ -5118,18 +6194,6 @@ Return ONLY the JSON array.
   }
 
   /**
-   * Heuristic: zone is likely a page number (e.g. "6", "7") — exclude from TTS and SMIL
-   * so it is not read aloud. Content is 1–4 digits only and zone is small.
-   */
-  static isLikelyPageNumber(zone) {
-    const content = (zone.content || '').trim();
-    if (!/^\d{1,4}$/.test(content)) return false;
-    const w = Number(zone.w ?? zone.width ?? 0);
-    const h = Number(zone.h ?? zone.height ?? 0);
-    return w > 0 && h > 0 && w < 80 && h < 60;
-  }
-
-  /**
    * Phase 3: assembly into Fixed Layout EPUB 3
    */
   static async assembleFxlEpub(jobId, pagesData, options = {}) {
@@ -5367,7 +6431,6 @@ Return ONLY the JSON array.
       // Zone Properties READING ORDER drives SMIL/read-aloud order (from DB: reading_order)
       const textZones = pageZones
         .filter(z => z.type === 'text' || z.content)
-        .filter(z => !KitabooFxlService.isLikelyPageNumber(z))
         .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
       const humanAudioPath = path.join(intermediateDir, 'human_audio', `page_${pageNum}.mp3`);
       let hasHumanAudio = false;
@@ -5786,8 +6849,7 @@ Return ONLY the JSON array.
       const zonesForSmilGroup = (syncLevel === 'word' && !useGlyphLayoutThisPage)
         ? (zonesForXhtmlPre || []).filter(z =>
             (z.type === 'text' || z.content) &&
-            (z.content || '').trim() &&
-            !KitabooFxlService.isLikelyPageNumber(z))
+            (z.content || '').trim())
           .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0))
         : textZones;
 
