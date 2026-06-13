@@ -184,7 +184,7 @@ router.get('/ready/:jobId', async (req, res) => {
     const finalZones = normalizedAssets.map((_, index) => existingZones[index + 1] || []);
 
     let coordsPages = null;
-    if (jobMetadata?.extractionLevel === 'glyph' && jobMetadata?.zoneLevel === 'word') {
+    if (jobMetadata?.extractionLevel === 'glyph') {
       for (const sub of [imageDir, highFiDir, webpDir]) {
         try {
           coordsPages = JSON.parse(await fs.readFile(path.join(sub, 'coords.json'), 'utf8'));
@@ -194,13 +194,18 @@ router.get('/ready/:jobId', async (req, res) => {
     }
 
     const wordReorderOpts = KitabooFxlService.wordZoneReorderOptsFromJobMetadata(jobMetadata, coordsPages);
-    const pages = normalizedAssets.map((asset, index) => {
+    let pages = normalizedAssets.map((asset, index) => {
       const pageNum = index + 1;
       let rawZones = finalZones[index] || [];
       const pageMeta = jobMetadata?.pagesMetadata?.find(p => p.pageNumber === pageNum);
       const pageWidthPx = pageMeta?.dimensions?.width || asset.dimensions?.width || 0;
       const pageCoords = coordsPages?.[pageNum - 1];
-      const zones = (coordsPages && pageCoords?.items?.length && pageWidthPx > 0)
+      const zones = (
+        jobMetadata?.zoneLevel === 'word'
+        && coordsPages
+        && pageCoords?.items?.length
+        && pageWidthPx > 0
+      )
         ? KitabooFxlService.buildStudioPageZones(
           pageNum,
           pageCoords,
@@ -222,6 +227,8 @@ router.get('/ready/:jobId', async (req, res) => {
         zones
       };
     });
+
+    pages = await KitabooFxlService.hydrateStudioPagesFromCoords(jobId, pages, jobMetadata);
 
     return successResponse(res, {
       ready: true,
@@ -461,7 +468,7 @@ router.get('/job/:jobId', async (req, res) => {
       zoneLevel = meta.zoneLevel;
     } catch (_) { /* no metadata */ }
 
-    if (pages?.length && zoneLevel === 'word' && extractionLevel === 'glyph') {
+    if (pages?.length && extractionLevel === 'glyph' && (zoneLevel === 'word' || zoneLevel === 'sentence')) {
       try {
         let jobMetaForHydrate = null;
         try {
@@ -473,7 +480,7 @@ router.get('/job/:jobId', async (req, res) => {
         } catch { /* optional */ }
         pages = await KitabooFxlService.hydrateStudioPagesFromCoords(jobId, pages, jobMetaForHydrate);
       } catch (e) {
-        console.warn('[KitabooRoute] Word-level page hydration failed:', e.message);
+        console.warn('[KitabooRoute] Studio page hydration failed:', e.message);
       }
     }
 

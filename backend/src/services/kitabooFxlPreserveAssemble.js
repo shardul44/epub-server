@@ -253,7 +253,6 @@ export async function assembleFxlEpubPreserveImport(
     let pageZones = page.zones || [];
     const textZones = pageZones
       .filter((z) => z.type === 'text' || z.content)
-      .filter((z) => !KitabooFxlService.isLikelyPageNumber(z))
       .sort((a, b) => (a.readingOrder || 0) - (b.readingOrder || 0));
 
     let frags = [];

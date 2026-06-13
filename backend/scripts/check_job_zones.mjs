@@ -49,7 +49,10 @@ function detectZigZag(zones, pageWidth) {
 function detectInvertedVertical(zones) {
   const sorted = [...zones].sort((a, b) => (a.readingOrder ?? 0) - (b.readingOrder ?? 0));
   if (sorted.length < 4) return null;
-  const topBand = sorted.filter((z) => (z.y ?? 0) < Math.min(...zones.map((x) => x.y ?? 0)) + 80);
+  const minY = Math.min(...zones.map((x) => x.y ?? 0));
+  const maxY = Math.max(...zones.map((x) => (x.y ?? 0) + (x.h ?? 0)));
+  if (maxY - minY < 150) return null;
+  const topBand = sorted.filter((z) => (z.y ?? 0) < minY + 80);
   const bottomBand = sorted.filter((z) => {
     const maxY = Math.max(...zones.map((x) => (x.y ?? 0) + (x.h ?? 0)));
     return (z.y ?? 0) > maxY - 120;
@@ -106,7 +109,7 @@ async function main() {
 
     const issues = [];
     if (zigzag.length) issues.push(`zigzag×${zigzag.length}`);
-    if (inverted) issues.push('inverted-vertical');
+    if (inverted && kind !== 'label-grid') issues.push('inverted-vertical');
 
     // Directory page: check Mario follows COLLECTIONS in first column
     if (kind === 'directory') {

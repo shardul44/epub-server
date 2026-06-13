@@ -1203,28 +1203,16 @@ def _is_dense_text_block(block_spans, block_width):
 
 
 def _is_side_by_side_column_layout(block_spans, page_width):
-    """Credit-box style: repeated rows with content in both left and right halves."""
+    """Credit-box style: repeated rows with a real gutter between left and right halves."""
     if _is_label_grid_spans(block_spans, page_width):
         return False
     if len(block_spans) < 4 or not page_width:
         return False
-    rows = _cluster_spans_into_rows(block_spans)
-    if len(rows) < 2:
+    block_x_max = max(s["bbox"][2] for s in block_spans)
+    boundaries = _detect_column_boundaries(block_spans, page_width=block_x_max)
+    if not boundaries:
         return False
-    block_min_x = min(s["bbox"][0] for s in block_spans)
-    block_max_x = max(s["bbox"][2] for s in block_spans)
-    block_w = block_max_x - block_min_x
-    if block_w < page_width * 0.22:
-        return False
-    split_x = block_min_x + block_w * 0.5
-    margin = block_w * 0.12
-    both_sides = 0
-    for row in rows:
-        has_left = any(s["bbox"][0] < split_x - margin for s in row)
-        has_right = any(s["bbox"][0] > split_x + margin for s in row)
-        if has_left and has_right:
-            both_sides += 1
-    return both_sides >= max(2, int(len(rows) * 0.18))
+    return _is_genuine_multi_column_block(block_spans, boundaries, page_width)
 
 
 def _sort_spans_column_first(block_spans, page_width):
@@ -1616,6 +1604,93 @@ def _layout_blocks_are_column_directory(blocks, page_width, page_height=None):
     return True
 
 
+def _layout_block_max_y(block):
+    spans = block.get("spans") or []
+    if not spans:
+        return block.get("min_y", 0) + 10.0
+    return max(s["bbox"][3] for s in spans)
+
+
+def _is_catalog_title_layout_block(block, page_width, page_height):
+    """Full-width or lot-title band at page top (auction catalog pages)."""
+    spans = block.get("spans") or []
+    if not spans or not page_width or not page_height:
+        return False
+    min_y = block.get("min_y", min(s["bbox"][1] for s in spans))
+    max_y = _layout_block_max_y(block)
+    min_x = min(s["bbox"][0] for s in spans)
+    max_x = max(s["bbox"][2] for s in spans)
+    title_cutoff = page_height * 0.28
+    if max_y > title_cutoff * 1.15:
+        return False
+    if (max_x - min_x) > page_width * 0.42:
+        return True
+    top_cutoff = page_height * 0.22
+    if min_y > top_cutoff:
+        return False
+    combined = " ".join(_span_plain_text(s) for s in spans).strip()
+    if len(spans) <= 2 and re.match(r"^[0-9]{1,2}$", combined):
+        return True
+    if max_y <= top_cutoff and (max_x - min_x) > page_width * 0.22:
+        if min_x > page_width * 0.45:
+            return False
+        return len(combined) >= 5 or max(s.get("size", 12) for s in spans) >= 24
+    return False
+
+
+def _layout_blocks_have_parallel_columns(blocks, page_width):
+    """Left/right columns with overlapping Y bands (catalog body pages)."""
+    if len(blocks) < 2 or not page_width:
+        return False
+    if _is_label_grid_blocks(blocks, page_width):
+        return False
+    from collections import defaultdict
+    by_col = defaultdict(list)
+    for b in blocks:
+        by_col[b.get("column", 0)].append(b)
+    if len(by_col) < 2:
+        return False
+    cols = sorted(by_col.keys())
+    left_blocks = by_col[cols[0]]
+    right_blocks = by_col[cols[-1]] if len(cols) == 2 else []
+    if len(cols) > 2:
+        right_blocks = []
+        for c in cols[1:]:
+            right_blocks.extend(by_col[c])
+    band_slop = max(48.0, page_width / 25.0)
+    for l in left_blocks:
+        l_min_y = l["min_y"]
+        l_max_y = _layout_block_max_y(l)
+        for r in right_blocks:
+            r_min_y = r["min_y"]
+            r_max_y = _layout_block_max_y(r)
+            if l_min_y >= r_max_y or r_min_y >= l_max_y:
+                continue
+            if abs(l_min_y - r_min_y) <= band_slop:
+                return True
+    return False
+
+
+def _sort_layout_blocks_catalog_column_first(blocks, page_width, page_height=None):
+    """Title band → left column → right column(s) for auction catalog spreads."""
+    if page_height is None:
+        page_height = max(_layout_block_max_y(b) for b in blocks) if blocks else 792.0
+    title_blocks = [
+        b for b in blocks
+        if _is_catalog_title_layout_block(b, page_width, page_height)
+    ]
+    title_ids = {id(b) for b in title_blocks}
+    body = [b for b in blocks if id(b) not in title_ids]
+    from collections import defaultdict
+    by_col = defaultdict(list)
+    for b in body:
+        by_col[b.get("column", 0)].append(b)
+    out = sorted(title_blocks, key=lambda b: (b["min_y"], b["min_x"]))
+    for col in sorted(by_col.keys()):
+        out.extend(sorted(by_col[col], key=lambda b: (b["min_y"], b["min_x"])))
+    return out
+
+
 def _sort_layout_blocks_column_first(blocks):
     """Read each column top-to-bottom, columns left-to-right."""
     from collections import defaultdict
@@ -1644,6 +1719,7 @@ def _sort_layout_blocks_reading_order(layout_blocks, page_width=None, page_heigh
     Order vision/layout blocks for reading-order block_id assignment.
     - Label grids (glossary): row-primary
     - Multi-column directories/credits: column-first
+    - Parallel catalog columns (lot pages): title band → column-first body
     - Default: row-primary
     """
     if not layout_blocks:
@@ -1658,6 +1734,9 @@ def _sort_layout_blocks_reading_order(layout_blocks, page_width=None, page_heigh
 
     if _layout_blocks_are_column_directory(layout_blocks, pw, page_height):
         return _sort_layout_blocks_column_first(layout_blocks)
+
+    if _layout_blocks_have_parallel_columns(layout_blocks, pw):
+        return _sort_layout_blocks_catalog_column_first(layout_blocks, pw, page_height)
 
     return _sort_layout_blocks_row_primary(layout_blocks)
 
@@ -2189,7 +2268,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
             sentence_id = 0
             in_word = False
             glyph_spans = _collect_block_spans_for_reading_order(raw_blocks, include_chars=True)
-            layout_blocks, _page_boundaries = analyze_page_layout(
+            layout_blocks, page_boundaries = analyze_page_layout(
                 glyph_spans, page_width=width, page=page, page_height=height
             )
             last_line_y = None
@@ -2208,6 +2287,7 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                 block_column_boundaries = layout_block["column_boundaries"]
                 block_spans = layout_block["spans"]
                 block_is_label_grid = _is_label_grid_spans(block_spans, width)
+                block_side_by_side = _is_side_by_side_column_layout(block_spans, width)
                 block_min_y = min(s["bbox"][1] for s in block_spans)
                 if current_block_id is not None and block_id != current_block_id:
                     # Side-by-side vision blocks (glossary row, columns) break sentences.
@@ -2239,6 +2319,24 @@ def extract_coords(pdf_path, output_json, extraction_level="sentence", font_list
                     size = span.get("size", 12)
                     line_y = span["_line_y"]
                     prior_sentence_ended = prev_span_ended_sentence
+                    if (
+                        block_side_by_side
+                        and prev_span_bbox is not None
+                        and prev_span_line_y is not None
+                        and line_y == prev_span_line_y
+                    ):
+                        col_bounds = block_column_boundaries or page_boundaries or []
+                        if col_bounds:
+                            prev_col = _column_index({"bbox": prev_span_bbox}, col_bounds)
+                            curr_col = _column_index(span, col_bounds)
+                            if curr_col != prev_col:
+                                min_gutter = max(width * 0.07, 36.0)
+                                gap = span_bbox[0] - prev_span_bbox[2]
+                                if gap >= min_gutter:
+                                    sentence_id += 1
+                                    open_paragraph_sid = None
+                                    line_sentence_ids.clear()
+                                    in_word = False
                     if prev_span_bbox is not None and prev_span_line_y is not None and line_y != prev_span_line_y:
                         gap = span_bbox[1] - prev_span_bbox[3]
                         line_h = max(span.get("size", 12) * 1.2, 10.0)
